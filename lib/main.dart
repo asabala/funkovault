@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'screens/dashboard_screen.dart';
+import 'screens/home_screen.dart';
 
 void main() {
   runApp(const FunkoVaultApp());
@@ -12,10 +12,10 @@ class FunkoVaultApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'FunkoVault',
+      title: 'Funko Vault',
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark(),
-      home: const DashboardScreen(),
+      home: const HomeScreen(),
     );
   }
 }
