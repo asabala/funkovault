@@ -98,8 +98,7 @@ class VaultRepository {
     final groups = <String, List<Pop>>{};
 
     for (final pop in allPops(appState)) {
-      final key =
-          '${pop.name.trim().toLowerCase()}-${pop.number.toString().trim().toLowerCase()}';
+      final key = _collectorIdentityKey(pop);
 
       groups.putIfAbsent(key, () => []);
       groups[key]!.add(pop);
@@ -108,5 +107,9 @@ class VaultRepository {
     return groups.values
         .where((group) => group.length > 1)
         .toList();
+  }
+
+  String _collectorIdentityKey(Pop pop) {
+    return pop.collectorIdentity;
   }
 }

@@ -20,19 +20,8 @@ class VaultReportPanel extends StatelessWidget {
 
     final allPops = repository.allPops(appState);
 
-    final duplicateTracker = <String, int>{};
-
-    for (final pop in allPops) {
-      final key =
-          '${pop.name.trim().toLowerCase()}-${pop.number.toString().trim().toLowerCase()}';
-
-      duplicateTracker[key] =
-          (duplicateTracker[key] ?? 0) + 1;
-    }
-
-    final duplicateCount = duplicateTracker.values
-        .where((count) => count > 1)
-        .length;
+    final duplicateCount =
+        repository.duplicatePopGroups(appState).length;
 
     final missingValueCount = allPops
         .where((pop) => pop.value <= 0)

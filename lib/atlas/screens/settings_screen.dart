@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/atlas_response.dart';
 import '../services/atlas_service.dart';
+import 'atlas_dashboard_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -84,7 +85,23 @@ class _SettingsScreenState
               fontWeight: FontWeight.bold,
             ),
           ),
+          Card(
 
+            child: ListTile(
+              leading: const Icon(Icons.shield),
+              title: const Text('Atlas Command Center'),
+              subtitle: const Text('View Vault health, tasks, and recommendations'),
+              trailing: const Icon(Icons.arrow_forward_ios),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const AtlasDashboardScreen(),
+                  ),
+                );
+              },
+            ),
+          ),
           const SizedBox(height: 12),
 
           FutureBuilder<String>(

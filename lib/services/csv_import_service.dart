@@ -83,6 +83,7 @@ class CsvImportService {
             number: number,
             category: '',
             series: series,
+            edition: 'Common',
             value: value,
             pricePaid: pricePaid,
             quantity: quantity,

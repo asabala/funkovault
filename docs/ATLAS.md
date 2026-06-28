@@ -1,5 +1,5 @@
 # Atlas Knowledge Philosophy
-
+I don't want Atlas to just have words. I want Atlas to understand and decide for itself.
 ## Atlas Principle #3
 
 **Atlas connects information instead of simply storing it.**

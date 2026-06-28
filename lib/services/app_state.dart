@@ -189,6 +189,7 @@ class AppState extends ChangeNotifier {
         number: existingPop.number,
         category: existingPop.category,
         series: existingPop.series,
+        edition: 'Common',
         value: existingPop.value,
         pricePaid:
         existingPop.pricePaid,
@@ -332,6 +333,7 @@ class AppState extends ChangeNotifier {
           number: oldPop.number,
           category: oldPop.category,
           series: oldPop.series,
+          edition: 'Common',
           value: oldPop.value,
           pricePaid: oldPop.pricePaid,
           quantity: oldPop.quantity,
@@ -389,6 +391,7 @@ class AppState extends ChangeNotifier {
           number: existing.number,
           category: existing.category,
           series: existing.series,
+          edition: 'Common',
           value: existing.value,
           pricePaid: existing.pricePaid,
           quantity:

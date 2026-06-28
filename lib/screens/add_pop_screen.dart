@@ -4,6 +4,12 @@ import 'package:provider/provider.dart';
 import '../models/pop.dart';
 import '../models/funko_catalog_item.dart';
 import '../services/app_state.dart';
+import '../widgets/form_section_title.dart';
+import '../widgets/labeled_dropdown.dart';
+import '../atlas/widgets/atlas_insight_card.dart';
+import '../atlas/engines/atlas_insight_engine.dart';
+import '../atlas/engines/atlas_recommendation_engine.dart';
+import '../atlas/services/atlas_activity_service.dart';
 
 class AddPopScreen extends StatefulWidget {
   final FunkoCatalogItem? catalogItem;
@@ -14,30 +20,91 @@ class AddPopScreen extends StatefulWidget {
   });
 
   @override
-  State<AddPopScreen> createState() =>
-      _AddPopScreenState();
+  State<AddPopScreen> createState() => _AddPopScreenState();
 }
 
-class _AddPopScreenState
-    extends State<AddPopScreen> {
+class _AddPopScreenState extends State<AddPopScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  final _nameController =
-  TextEditingController();
-  final _numberController =
-  TextEditingController();
-  final _categoryController =
-  TextEditingController();
-  final _seriesController =
-  TextEditingController();
-  final _editionController =
-  TextEditingController(text: 'Common');
-  final _valueController =
-  TextEditingController();
-  final _pricePaidController =
-  TextEditingController();
-  final _quantityController =
-  TextEditingController(text: '1');
+  final _nameController = TextEditingController();
+  final _numberController = TextEditingController();
+  final _categoryController = TextEditingController();
+  final _seriesController = TextEditingController();
+  final _valueController = TextEditingController();
+  final _pricePaidController = TextEditingController();
+  final _quantityController = TextEditingController(text: '1');
+
+  String _variant = 'Common';
+  String _retailExclusive = 'None';
+  String _eventSticker = 'None';
+  String _limitedEdition = 'None';
+  String _signature = 'Unsigned';
+
+  final List<String> _variantOptions = const [
+    'Common',
+    'Chase',
+    'Glow',
+    'Flocked',
+    'Blacklight',
+    'Metallic',
+    'Diamond',
+    'Chrome',
+    'Glitter',
+    'Scented',
+    'Art Series',
+    'NFT Redemption',
+    'Prototype',
+    'Error Variant',
+  ];
+
+  final List<String> _retailOptions = const [
+    'None',
+    'Funko Shop',
+    'Hot Topic',
+    'BoxLunch',
+    'Target',
+    'Walmart',
+    'Amazon',
+    'GameStop',
+    'Entertainment Earth',
+    'PX',
+    'Best Buy',
+    'Walgreens',
+    'Barnes & Noble',
+    'FYE',
+    'Books-A-Million',
+    'Specialty Series',
+    'Local Comic Shop',
+  ];
+
+  final List<String> _eventOptions = const [
+    'None',
+    'SDCC',
+    'NYCC',
+    'ECCC',
+    'WonderCon',
+    'C2E2',
+    'Fundays',
+    'Shared Exclusive',
+  ];
+
+  final List<String> _limitedOptions = const [
+    'None',
+    'LE 500',
+    'LE 1000',
+    'LE 1500',
+    'LE 3000',
+    'LE 5000',
+    'LE 10000',
+  ];
+
+  final List<String> _signatureOptions = const [
+    'Unsigned',
+    'Signed',
+    'Beckett Authenticated',
+    'JSA Authenticated',
+    'PSA Authenticated',
+  ];
 
   String _formatCategory(String value) {
     if (value.isEmpty) return '';
@@ -68,37 +135,6 @@ class _AddPopScreenState
         .join(' ');
   }
 
-  String _formatEdition(String value) {
-    final trimmed = value.trim();
-
-    if (trimmed.isEmpty) {
-      return 'Common';
-    }
-
-    const upperEditions = {
-      'nycc': 'NYCC',
-      'sdcc': 'SDCC',
-      'eccc': 'ECCC',
-      'px': 'PX',
-    };
-
-    final lower = trimmed.toLowerCase();
-
-    if (upperEditions.containsKey(lower)) {
-      return upperEditions[lower]!;
-    }
-
-    return trimmed
-        .split(' ')
-        .map(
-          (word) => word.isEmpty
-          ? word
-          : word[0].toUpperCase() +
-          word.substring(1).toLowerCase(),
-    )
-        .join(' ');
-  }
-
   @override
   void initState() {
     super.initState();
@@ -109,11 +145,8 @@ class _AddPopScreenState
       _nameController.text = item.title;
 
       if (item.series.isNotEmpty) {
-        _seriesController.text =
-            item.series.first;
-
-        _categoryController.text =
-            item.series.first;
+        _seriesController.text = item.series.first;
+        _categoryController.text = item.series.first;
       }
     }
   }
@@ -124,7 +157,6 @@ class _AddPopScreenState
     _numberController.dispose();
     _categoryController.dispose();
     _seriesController.dispose();
-    _editionController.dispose();
     _valueController.dispose();
     _pricePaidController.dispose();
     _quantityController.dispose();
@@ -137,225 +169,260 @@ class _AddPopScreenState
     }
 
     final pop = Pop(
-      id: DateTime.now()
-          .millisecondsSinceEpoch
-          .toString(),
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
       name: _nameController.text.trim(),
       number: _numberController.text.trim(),
-      category: _formatCategory(
-        _categoryController.text.trim(),
-      ),
+      category: _formatCategory(_categoryController.text.trim()),
       series: _seriesController.text.trim(),
-      edition: _formatEdition(
-        _editionController.text,
-      ),
-      value:
-      double.tryParse(_valueController.text) ??
-          0,
-      pricePaid: double.tryParse(
-        _pricePaidController.text,
-      ) ??
-          0,
-      quantity:
-      int.tryParse(_quantityController.text) ??
-          1,
+      edition: _variant,
+      variant: _variant,
+      retailExclusive: _retailExclusive,
+      eventSticker: _eventSticker,
+      limitedEdition: _limitedEdition,
+      signature: _signature,
+      value: double.tryParse(_valueController.text) ?? 0,
+      pricePaid: double.tryParse(_pricePaidController.text) ?? 0,
+      quantity: int.tryParse(_quantityController.text) ?? 1,
       itemCondition: '',
       boxCondition: '',
-      imageUrl:
-      widget.catalogItem?.imageName ?? '',
+      imageUrl: widget.catalogItem?.imageName ?? '',
       owner: 'Shared',
       isWishlist: false,
     );
 
     context.read<AppState>().addPop(pop);
 
+    AtlasActivityService.record(
+      title: 'Pop Added',
+      description:
+      '${pop.name} #${pop.number} was added to the Vault.',
+      type: 'pop_added',
+    );
     Navigator.pop(context);
-  }
-
-  void _showCategoryHelp() {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Category Examples'),
-        content: const Text(
-          'Examples:\n\n'
-              '• DC\n'
-              '• Marvel\n'
-              '• Horror\n'
-              '• Anime\n'
-              '• Disney\n'
-              '• Star Wars\n'
-              '• WWE',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () =>
-                Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showEditionHelp() {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Edition Examples'),
-        content: const Text(
-          'Examples:\n\n'
-              '• Common\n'
-              '• Chase\n'
-              '• Glow\n'
-              '• Blacklight\n'
-              '• Flocked\n'
-              '• Metallic\n'
-              '• Funko Shop\n'
-              '• Hot Topic\n'
-              '• Target\n'
-              '• Walmart\n'
-              '• Amazon\n'
-              '• PX\n'
-              '• SDCC\n'
-              '• NYCC\n'
-              '• ECCC\n'
-              '• Shared Exclusive\n'
-              '• Signed',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () =>
-                Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
+    const insightEngine = AtlasInsightEngine();
+
+    final collectorInsight =
+    insightEngine.buildCollectorIdentityInsight(
+      variant: _variant,
+      retailExclusive: _retailExclusive,
+      eventSticker: _eventSticker,
+      limitedEdition: _limitedEdition,
+      signature: _signature,
+    );
+    const recommendationEngine =
+    AtlasRecommendationEngine();
+
+    final collectorRecommendation =
+    recommendationEngine
+        .buildCollectorIdentityRecommendation(
+      variant: _variant,
+      retailExclusive: _retailExclusive,
+      eventSticker: _eventSticker,
+      limitedEdition: _limitedEdition,
+      signature: _signature,
+      value: double.tryParse(_valueController.text) ?? 0,
+      pricePaid:
+      double.tryParse(_pricePaidController.text) ?? 0,
+    );
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: const Text('Add Funko Pop'),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Pop Name',
-                  border: OutlineInputBorder(),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          keyboardDismissBehavior:
+          ScrollViewKeyboardDismissBehavior.onDrag,
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                const FormSectionTitle(
+                  'Basic Information',
                 ),
-              ),
 
-              const SizedBox(height: 16),
-
-              TextFormField(
-                controller: _numberController,
-                decoration: const InputDecoration(
-                  labelText: 'Pop Number',
-                  border: OutlineInputBorder(),
+                AtlasInsightCard(
+                  title: collectorInsight.title,
+                  message: collectorInsight.message,
                 ),
-              ),
+                if (collectorRecommendation != null) ...[
+                  const SizedBox(height: 12),
+                  AtlasInsightCard(
+                    title: collectorRecommendation.title,
+                    message: collectorRecommendation.message,
+                    icon: Icons.lightbulb_outline,
+                  ),
+                ],
+                const SizedBox(height: 16),
 
-              const SizedBox(height: 16),
-
-              TextFormField(
-                controller: _categoryController,
-                decoration: InputDecoration(
-                  labelText: 'Category',
-                  border:
-                  const OutlineInputBorder(),
-                  suffixIcon: IconButton(
-                    icon: const Icon(
-                      Icons.info_outline,
-                    ),
-                    onPressed: _showCategoryHelp,
+                TextFormField(
+                  controller: _nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Pop Name',
+                    border: OutlineInputBorder(),
                   ),
                 ),
-              ),
 
-              const SizedBox(height: 16),
+                const SizedBox(height: 16),
 
-              TextFormField(
-                controller: _seriesController,
-                decoration: const InputDecoration(
-                  labelText: 'Series',
-                  hintText: 'Pop! Marvel',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              TextFormField(
-                controller: _editionController,
-                decoration: InputDecoration(
-                  labelText: 'Edition / Sticker',
-                  hintText: 'Common, Chase, Funko Shop, SDCC',
-                  border:
-                  const OutlineInputBorder(),
-                  suffixIcon: IconButton(
-                    icon: const Icon(
-                      Icons.info_outline,
-                    ),
-                    onPressed: _showEditionHelp,
+                TextFormField(
+                  controller: _numberController,
+                  decoration: const InputDecoration(
+                    labelText: 'Pop Number',
+                    border: OutlineInputBorder(),
                   ),
                 ),
-              ),
 
-              const SizedBox(height: 16),
+                const SizedBox(height: 16),
 
-              TextFormField(
-                controller: _valueController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Estimated Value',
-                  border: OutlineInputBorder(),
+                TextFormField(
+                  controller: _categoryController,
+                  decoration: const InputDecoration(
+                    labelText: 'Category',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
-              ),
 
-              const SizedBox(height: 16),
+                const SizedBox(height: 16),
 
-              TextFormField(
-                controller:
-                _pricePaidController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Price Paid',
-                  border: OutlineInputBorder(),
+                TextFormField(
+                  controller: _seriesController,
+                  decoration: const InputDecoration(
+                    labelText: 'Series',
+                    hintText: 'Pop! Marvel',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
-              ),
 
-              const SizedBox(height: 16),
+                const SizedBox(height: 24),
 
-              TextFormField(
-                controller:
-                _quantityController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Quantity',
-                  border: OutlineInputBorder(),
+                const FormSectionTitle(
+                  'Collector Identity',
                 ),
-              ),
 
-              const SizedBox(height: 24),
-
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: _savePop,
-                  icon: const Icon(Icons.save),
-                  label: const Text('Save Pop'),
+                LabeledDropdown(
+                  label: 'Variant',
+                  value: _variant,
+                  options: _variantOptions,
+                  onChanged: (value) {
+                    setState(() {
+                      _variant = value;
+                    });
+                  },
                 ),
-              ),
-            ],
+
+                const SizedBox(height: 16),
+
+                LabeledDropdown(
+                  label: 'Retail Exclusive',
+                  value: _retailExclusive,
+                  options: _retailOptions,
+                  onChanged: (value) {
+                    setState(() {
+                      _retailExclusive = value;
+                    });
+                  },
+                ),
+
+                const SizedBox(height: 16),
+
+                LabeledDropdown(
+                  label: 'Event Sticker',
+                  value: _eventSticker,
+                  options: _eventOptions,
+                  onChanged: (value) {
+                    setState(() {
+                      _eventSticker = value;
+                    });
+                  },
+                ),
+
+                const SizedBox(height: 16),
+
+                LabeledDropdown(
+                  label: 'Limited Edition',
+                  value: _limitedEdition,
+                  options: _limitedOptions,
+                  onChanged: (value) {
+                    setState(() {
+                      _limitedEdition = value;
+                    });
+                  },
+                ),
+
+                const SizedBox(height: 16),
+
+                LabeledDropdown(
+                  label: 'Signature',
+                  value: _signature,
+                  options: _signatureOptions,
+                  onChanged: (value) {
+                    setState(() {
+                      _signature = value;
+                    });
+                  },
+                ),
+
+                const SizedBox(height: 24),
+
+                const FormSectionTitle(
+                  'Value',
+                ),
+
+                TextFormField(
+                  controller: _valueController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Estimated Value (\$)',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                TextFormField(
+                  controller: _pricePaidController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Price Paid (\$)',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                const FormSectionTitle(
+                  'Ownership',
+                ),
+
+                TextFormField(
+                  controller: _quantityController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Quantity',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: _savePop,
+              icon: const Icon(Icons.save),
+              label: const Text('Save Pop'),
+            ),
           ),
         ),
       ),

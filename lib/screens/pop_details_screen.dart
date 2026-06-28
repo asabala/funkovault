@@ -32,9 +32,7 @@ class _PopDetailsScreenState
     final updatedPop = await Navigator.push<Pop>(
       context,
       MaterialPageRoute(
-        builder: (_) => EditPopScreen(
-          pop: pop,
-        ),
+        builder: (_) => EditPopScreen(pop: pop),
       ),
     );
 
@@ -52,6 +50,12 @@ class _PopDetailsScreenState
       number: pop.number,
       category: pop.category,
       series: pop.series,
+      edition: pop.edition,
+      variant: pop.variant,
+      retailExclusive: pop.retailExclusive,
+      eventSticker: pop.eventSticker,
+      limitedEdition: pop.limitedEdition,
+      signature: pop.signature,
       value: pop.value,
       pricePaid: pop.pricePaid,
       quantity: pop.quantity,
@@ -62,18 +66,14 @@ class _PopDetailsScreenState
       isWishlist: !pop.isWishlist,
     );
 
-    await context
-        .read<AppState>()
-        .updatePop(updatedPop);
+    await context.read<AppState>().updatePop(updatedPop);
 
     setState(() {
       pop = updatedPop;
     });
   }
 
-  Future<void> _updateQuantity(
-      int newQuantity,
-      ) async {
+  Future<void> _updateQuantity(int newQuantity) async {
     if (newQuantity < 1) return;
 
     final updatedPop = Pop(
@@ -82,6 +82,12 @@ class _PopDetailsScreenState
       number: pop.number,
       category: pop.category,
       series: pop.series,
+      edition: pop.edition,
+      variant: pop.variant,
+      retailExclusive: pop.retailExclusive,
+      eventSticker: pop.eventSticker,
+      limitedEdition: pop.limitedEdition,
+      signature: pop.signature,
       value: pop.value,
       pricePaid: pop.pricePaid,
       quantity: newQuantity,
@@ -92,9 +98,7 @@ class _PopDetailsScreenState
       isWishlist: pop.isWishlist,
     );
 
-    await context
-        .read<AppState>()
-        .updatePop(updatedPop);
+    await context.read<AppState>().updatePop(updatedPop);
 
     setState(() {
       pop = updatedPop;
@@ -122,159 +126,216 @@ class _PopDetailsScreenState
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment:
-          CrossAxisAlignment.start,
-          children: [
-            Card(
-              child: Padding(
-                padding:
-                const EdgeInsets.all(20),
-                child: Center(
-                  child: Column(
-                    children: [
-                      pop.imageUrl.isNotEmpty
-                          ? Image.network(
-                        pop.imageUrl,
-                        height: 150,
-                        errorBuilder: (
-                            context,
-                            error,
-                            stackTrace,
-                            ) {
-                          return const Icon(
-                            Icons.inventory_2,
-                            size: 80,
-                          );
-                        },
-                      )
-                          : const Icon(
-                        Icons.inventory_2,
-                        size: 80,
-                      ),
-
-                      const SizedBox(
-                        height: 12,
-                      ),
-
-                      Text(
-                        pop.name,
-                        style:
-                        const TextStyle(
-                          fontSize: 24,
-                          fontWeight:
-                          FontWeight.bold,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment:
+            CrossAxisAlignment.start,
+            children: [
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Center(
+                    child: Column(
+                      children: [
+                        pop.imageUrl.isNotEmpty
+                            ? Image.network(
+                          pop.imageUrl,
+                          height: 150,
+                          errorBuilder: (
+                              context,
+                              error,
+                              stackTrace,
+                              ) {
+                            return const Icon(
+                              Icons.inventory_2,
+                              size: 80,
+                            );
+                          },
+                        )
+                            : const Icon(
+                          Icons.inventory_2,
+                          size: 80,
                         ),
-                        textAlign:
-                        TextAlign.center,
-                      ),
 
-                      const SizedBox(
-                        height: 8,
-                      ),
+                        const SizedBox(height: 12),
 
-                      Chip(
-                        label: Text(
-                          pop.owner,
+                        Text(
+                          pop.name,
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight:
+                            FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
                         ),
-                      ),
-                    ],
+
+                        const SizedBox(height: 8),
+
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          alignment: WrapAlignment.center,
+                          children: [
+                            Chip(label: Text(pop.owner)),
+                            Chip(
+                              label: Text(
+                                pop.collectorLabel,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
 
-            const SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-            _DetailRow(
-              label: 'Number',
-              value: pop.number,
-            ),
+              _sectionTitle('Basic Information'),
 
-            _DetailRow(
-              label: 'Category',
-              value: pop.category,
-            ),
-
-            _DetailRow(
-              label: 'Series',
-              value: pop.series,
-            ),
-
-            _DetailRow(
-              label: 'Owner',
-              value: pop.owner,
-            ),
-
-            _DetailRow(
-              label: 'Value',
-              value:
-              '\$${pop.value.toStringAsFixed(2)}',
-            ),
-
-            _DetailRow(
-              label: 'Paid',
-              value:
-              '\$${pop.pricePaid.toStringAsFixed(2)}',
-            ),
-
-            Padding(
-              padding:
-              const EdgeInsets.symmetric(
-                vertical: 8,
+              _DetailRow(
+                label: 'Number',
+                value: pop.number,
               ),
-              child: Row(
-                children: [
-                  const SizedBox(
-                    width: 120,
-                    child: Text(
-                      'Quantity',
-                      style: TextStyle(
+
+              _DetailRow(
+                label: 'Category',
+                value: pop.category,
+              ),
+
+              _DetailRow(
+                label: 'Series',
+                value: pop.series,
+              ),
+
+              const SizedBox(height: 16),
+
+              _sectionTitle('Collector Identity'),
+
+              _DetailRow(
+                label: 'Variant',
+                value: pop.variant,
+              ),
+
+              _DetailRow(
+                label: 'Retail',
+                value: pop.retailExclusive,
+              ),
+
+              _DetailRow(
+                label: 'Sticker',
+                value: pop.eventSticker,
+              ),
+
+              _DetailRow(
+                label: 'LE',
+                value: pop.limitedEdition,
+              ),
+
+              _DetailRow(
+                label: 'Signature',
+                value: pop.signature,
+              ),
+
+              const SizedBox(height: 16),
+
+              _sectionTitle('Ownership'),
+
+              _DetailRow(
+                label: 'Owner',
+                value: pop.owner,
+              ),
+
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 8,
+                ),
+                child: Row(
+                  children: [
+                    const SizedBox(
+                      width: 120,
+                      child: Text(
+                        'Quantity',
+                        style: TextStyle(
+                          fontWeight:
+                          FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(
+                        Icons.remove_circle,
+                      ),
+                      onPressed: () {
+                        _updateQuantity(
+                          pop.quantity - 1,
+                        );
+                      },
+                    ),
+                    Text(
+                      pop.quantity.toString(),
+                      style: const TextStyle(
+                        fontSize: 18,
                         fontWeight:
                         FontWeight.bold,
                       ),
                     ),
-                  ),
-                  IconButton(
-                    icon: const Icon(
-                      Icons.remove_circle,
+                    IconButton(
+                      icon: const Icon(
+                        Icons.add_circle,
+                      ),
+                      onPressed: () {
+                        _updateQuantity(
+                          pop.quantity + 1,
+                        );
+                      },
                     ),
-                    onPressed: () {
-                      _updateQuantity(
-                        pop.quantity - 1,
-                      );
-                    },
-                  ),
-                  Text(
-                    pop.quantity.toString(),
-                    style:
-                    const TextStyle(
-                      fontSize: 18,
-                      fontWeight:
-                      FontWeight.bold,
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(
-                      Icons.add_circle,
-                    ),
-                    onPressed: () {
-                      _updateQuantity(
-                        pop.quantity + 1,
-                      );
-                    },
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+
+              const SizedBox(height: 16),
+
+              _sectionTitle('Value'),
+
+              _DetailRow(
+                label: 'Value',
+                value:
+                '\$${pop.value.toStringAsFixed(2)}',
+              ),
+
+              _DetailRow(
+                label: 'Paid',
+                value:
+                '\$${pop.pricePaid.toStringAsFixed(2)}',
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _sectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(
+        bottom: 8,
+        top: 8,
+      ),
+      child: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
         ),
       ),
     );
   }
 }
+
 class _DetailRow extends StatelessWidget {
   final String label;
   final String value;
@@ -297,8 +358,7 @@ class _DetailRow extends StatelessWidget {
             child: Text(
               label,
               style: const TextStyle(
-                fontWeight:
-                FontWeight.bold,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ),

@@ -38,18 +38,22 @@ class DuplicateReviewScreen extends StatelessWidget {
           return Card(
             child: ExpansionTile(
               leading: CircleAvatar(
-                child: Text(group.length.toString()),
+                child: Text(
+                  group.length.toString(),
+                ),
               ),
               title: Text(firstPop.name),
               subtitle: Text(
-                'Pop #${firstPop.number} • ${firstPop.category}',
+                'Pop #${firstPop.number} • ${firstPop.collectorLabel}',
               ),
               children: group.map((pop) {
                 return ListTile(
-                  leading: const Icon(Icons.inventory_2),
+                  leading: const Icon(
+                    Icons.inventory_2,
+                  ),
                   title: Text(pop.owner),
                   subtitle: Text(
-                    'Value: \$${pop.value.toStringAsFixed(2)}',
+                    '${pop.collectorLabel} • Value: \$${pop.value.toStringAsFixed(2)}',
                   ),
                   trailing: const Text('Keep'),
                 );

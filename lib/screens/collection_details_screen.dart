@@ -5,6 +5,7 @@ import '../services/app_state.dart';
 import '../models/pop.dart';
 import 'add_pop_screen.dart';
 import 'pop_details_screen.dart';
+import '../widgets/collector_identity_chips.dart';
 
 class CollectionDetailsScreen extends StatefulWidget {
 final String collectionName;
@@ -605,15 +606,16 @@ if (pop
 Text(
 pop.category,
 ),
-if (pop
-    .series
-    .isNotEmpty)
-Text(
-pop.series,
-),
-Text(
-'Owner: ${pop.owner}',
-),
+        if (pop.series.isNotEmpty)
+          Text(pop.series),
+
+        CollectorIdentityChips(
+          pop: pop,
+        ),
+
+        Text(
+          'Owner: ${pop.owner}',
+        ),
 Text(
 'Estimated Value: \$${pop.value.toStringAsFixed(2)}',
 ),
