@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../services/app_state.dart';
-import '../../widgets/atlas_status_banner.dart';
+import '../../widgets/atlas_greeting_card.dart';
 import '../../widgets/vault_scroll_view.dart';
 import '../engines/atlas_achievement_engine.dart';
 import '../repositories/vault_repository.dart';
@@ -30,7 +30,7 @@ class AtlasAchievementsScreen extends StatelessWidget {
       ),
       body: VaultScrollView(
         children: [
-          AtlasStatusBanner(
+          AtlasGreetingCard(
             title: '$unlockedCount / ${achievements.length} Unlocked',
             message:
             'Atlas celebrates important milestones in your collecting journey.',

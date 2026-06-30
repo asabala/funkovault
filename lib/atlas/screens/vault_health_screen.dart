@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../services/app_state.dart';
 import '../../widgets/atlas_evidence_card.dart';
-import '../../widgets/atlas_status_banner.dart';
+import '../../widgets/atlas_greeting_card.dart';
 import '../../widgets/vault_scroll_view.dart';
 import '../repositories/vault_repository.dart';
 
@@ -52,7 +52,7 @@ class VaultHealthScreen extends StatelessWidget {
       ),
       body: VaultScrollView(
         children: [
-          AtlasStatusBanner(
+          AtlasGreetingCard(
             title: 'Vault Health ${score.toStringAsFixed(0)}%',
             message: _assessment(score),
             icon: Icons.health_and_safety,

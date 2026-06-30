@@ -2,14 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../services/app_state.dart';
-import '../../widgets/vault_scroll_view.dart';
+import '../../theme/atlas_spacing.dart';
 import '../../widgets/dashboard/collector_header.dart';
 import '../../widgets/dashboard/health_confidence_panel.dart';
 import '../../widgets/dashboard/mission_card.dart';
+import '../../widgets/dashboard/reflection_card.dart';
+import '../../widgets/vault_scroll_view.dart';
 import '../engines/atlas_confidence_engine.dart';
 import '../engines/atlas_decision_engine.dart';
 import '../engines/atlas_mission_engine.dart';
 import '../engines/atlas_recommendation_engine_v2.dart';
+import '../engines/atlas_reflection_engine.dart';
 import '../repositories/vault_repository.dart';
 import 'atlas_confidence_screen.dart';
 import 'vault_health_screen.dart';
@@ -21,11 +24,14 @@ class AtlasIntelligenceCenter extends StatelessWidget {
   Widget build(BuildContext context) {
     final appState = context.watch<AppState>();
 
+    const collectorName = 'Arthur';
+
     const repository = VaultRepository();
     const confidenceEngine = AtlasConfidenceEngine();
     const recommendationEngine = AtlasRecommendationEngineV2();
     const decisionEngine = AtlasDecisionEngine();
     const missionEngine = AtlasMissionEngine();
+    const reflectionEngine = AtlasReflectionEngine();
 
     final pops = repository.allPops(appState);
 
@@ -41,11 +47,9 @@ class AtlasIntelligenceCenter extends StatelessWidget {
       missingValueCount: missingValueCount,
     );
 
-    final confidence =
-    confidenceEngine.calculate(pops);
+    final confidence = confidenceEngine.calculate(pops);
 
-    final recommendations =
-    recommendationEngine.analyze(
+    final recommendations = recommendationEngine.analyze(
       pops: pops,
       duplicateCount: duplicateCount,
       missingValueCount: missingValueCount,
@@ -59,6 +63,11 @@ class AtlasIntelligenceCenter extends StatelessWidget {
       decision,
     );
 
+    final reflection = reflectionEngine.reflect(
+      collectorName: collectorName,
+      pops: pops,
+    );
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Atlas Intelligence Center'),
@@ -66,11 +75,11 @@ class AtlasIntelligenceCenter extends StatelessWidget {
       body: VaultScrollView(
         children: [
           const CollectorHeader(
-            collectorName: 'Arthur',
+            collectorName: collectorName,
             status: 'Collector Intelligence Platform',
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: AtlasSpacing.lg),
 
           HealthConfidencePanel(
             health: health,
@@ -79,8 +88,7 @@ class AtlasIntelligenceCenter extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) =>
-                  const VaultHealthScreen(),
+                  builder: (_) => const VaultHealthScreen(),
                 ),
               );
             },
@@ -88,14 +96,13 @@ class AtlasIntelligenceCenter extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) =>
-                  const AtlasConfidenceScreen(),
+                  builder: (_) => const AtlasConfidenceScreen(),
                 ),
               );
             },
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: AtlasSpacing.lg),
 
           MissionCard(
             title: mission.title,
@@ -103,6 +110,14 @@ class AtlasIntelligenceCenter extends StatelessWidget {
             reward: mission.reward,
             estimatedTime: mission.estimatedTime,
             severity: decision.severity,
+          ),
+
+          const SizedBox(height: AtlasSpacing.lg),
+
+          ReflectionCard(
+            title: reflection.title,
+            message: reflection.message,
+            tone: reflection.tone,
           ),
         ],
       ),

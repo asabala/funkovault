@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../services/app_state.dart';
 import '../../widgets/atlas_evidence_card.dart';
-import '../../widgets/atlas_status_banner.dart';
+import '../../widgets/atlas_greeting_card.dart';
 import '../../widgets/vault_scroll_view.dart';
 import '../engines/atlas_confidence_engine.dart';
 import '../repositories/vault_repository.dart';
@@ -42,7 +42,7 @@ class AtlasConfidenceScreen extends StatelessWidget {
       ),
       body: VaultScrollView(
         children: [
-          AtlasStatusBanner(
+          AtlasGreetingCard(
             title:
             'Atlas Confidence ${confidence.score.toStringAsFixed(0)}%',
             message: confidence.message,

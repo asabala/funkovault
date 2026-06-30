@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../theme/atlas_colors.dart';
+import '../theme/atlas_radius.dart';
+import '../theme/atlas_spacing.dart';
+import '../theme/atlas_typography.dart';
+
 class AtlasSectionCard extends StatelessWidget {
   const AtlasSectionCard({
     super.key,
@@ -16,7 +21,9 @@ class AtlasSectionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(
+          AtlasSpacing.lg,
+        ),
         child: Column(
           crossAxisAlignment:
           CrossAxisAlignment.start,
@@ -24,19 +31,37 @@ class AtlasSectionCard extends StatelessWidget {
             Row(
               children: [
                 if (icon != null) ...[
-                  Icon(icon),
-                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.all(
+                      AtlasSpacing.sm,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AtlasColors.surface,
+                      borderRadius: BorderRadius.circular(
+                        AtlasRadius.md,
+                      ),
+                      border: Border.all(
+                        color: AtlasColors.border,
+                      ),
+                    ),
+                    child: Icon(
+                      icon,
+                      color: AtlasColors.vaultGold,
+                    ),
+                  ),
+                  const SizedBox(width: AtlasSpacing.md),
                 ],
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
+                Expanded(
+                  child: Text(
+                    title,
+                    style: AtlasTypography.headingMedium,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+
+            const SizedBox(height: AtlasSpacing.md),
+
             child,
           ],
         ),

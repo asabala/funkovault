@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../theme/atlas_animation.dart';
+import '../theme/atlas_colors.dart';
+import '../theme/atlas_radius.dart';
+import '../theme/atlas_spacing.dart';
+import '../theme/atlas_typography.dart';
+
 class AtlasMetricCard extends StatelessWidget {
   const AtlasMetricCard({
     super.key,
@@ -17,17 +23,41 @@ class AtlasMetricCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      child: ListTile(
-        leading: Icon(icon),
-        title: Text(title),
-        trailing: Text(
-          value,
-          style: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(
+          AtlasRadius.lg,
         ),
         onTap: onTap,
+        child: AnimatedContainer(
+          duration: AtlasAnimation.fast,
+          curve: AtlasAnimation.standardCurve,
+          padding: const EdgeInsets.symmetric(
+            horizontal: AtlasSpacing.lg,
+            vertical: AtlasSpacing.md,
+          ),
+          child: Row(
+            children: [
+              Icon(
+                icon,
+                color: AtlasColors.vaultGold,
+              ),
+
+              const SizedBox(width: AtlasSpacing.md),
+
+              Expanded(
+                child: Text(
+                  title,
+                  style: AtlasTypography.bodyLarge,
+                ),
+              ),
+
+              Text(
+                value,
+                style: AtlasTypography.metricSmall,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

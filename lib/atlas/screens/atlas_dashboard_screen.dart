@@ -2,6 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../services/app_state.dart';
+import '../../theme/atlas_colors.dart';
+import '../../theme/atlas_constants.dart';
+import '../../theme/atlas_icons.dart';
+import '../../theme/atlas_spacing.dart';
+import '../../theme/atlas_typography.dart';
+import '../../widgets/atlas_greeting_card.dart';
 import '../../widgets/atlas_priority_chip.dart';
 import '../../widgets/atlas_section_card.dart';
 import '../../widgets/atlas_stat_tile.dart';
@@ -16,33 +22,30 @@ import '../repositories/vault_repository.dart';
 import '../tasks/atlas_task_engine.dart';
 import 'atlas_achievements_screen.dart';
 import 'atlas_confidence_screen.dart';
+import 'atlas_intelligence_center.dart';
 import 'atlas_timeline_screen.dart';
 import 'duplicate_review_screen.dart';
 import 'missing_values_screen.dart';
 import 'vault_health_screen.dart';
 import 'vault_tasks_screen.dart';
-import 'atlas_intelligence_center.dart';
 
 class AtlasDashboardScreen extends StatelessWidget {
   const AtlasDashboardScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final appState = Provider.of<AppState>(context);
+    final appState = context.watch<AppState>();
+
+    const collectorName = 'Arthur';
 
     const briefingEngine = AtlasDailyBriefingEngine();
     const repository = VaultRepository();
     const taskEngine = AtlasTaskEngine();
     const confidenceEngine = AtlasConfidenceEngine();
     const intelligenceEngine = AtlasIntelligenceEngine();
-    const recommendationEngineV2 = AtlasRecommendationEngineV2();
+    const recommendationEngine = AtlasRecommendationEngineV2();
     const decisionEngine = AtlasDecisionEngine();
     const missionEngine = AtlasMissionEngine();
-
-    final briefing = briefingEngine.build(
-      appState,
-      collectorName: 'Arthur',
-    );
 
     final allPops = repository.allPops(appState);
 
@@ -75,7 +78,7 @@ class AtlasDashboardScreen extends StatelessWidget {
     );
 
     final smartRecommendations =
-    recommendationEngineV2.analyze(
+    recommendationEngine.analyze(
       pops: allPops,
       duplicateCount: duplicateCount,
       missingValueCount: missingValueCount,
@@ -89,39 +92,40 @@ class AtlasDashboardScreen extends StatelessWidget {
       decision,
     );
 
+    final briefing = briefingEngine.build(
+      appState,
+      collectorName: collectorName,
+    );
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Atlas Command Center'),
       ),
       body: VaultScrollView(
         children: [
-          AtlasSectionCard(
+          AtlasGreetingCard(
             title: briefing.title,
-            icon: Icons.auto_awesome,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  briefing.summary,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blue,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(briefing.message),
-              ],
+            message: briefing.message,
+            icon: AtlasIcons.atlas,
+          ),
+
+          const SizedBox(height: AtlasSpacing.lg),
+
+          Text(
+            briefing.summary,
+            style: AtlasTypography.label.copyWith(
+              color: AtlasColors.intelligenceBlue,
             ),
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: AtlasSpacing.lg),
 
           Row(
             children: [
               AtlasStatTile(
                 title: 'Health',
                 value: '${vaultHealth.toStringAsFixed(0)}%',
-                icon: Icons.health_and_safety,
+                icon: AtlasIcons.health,
                 onTap: () {
                   Navigator.push(
                     context,
@@ -132,18 +136,18 @@ class AtlasDashboardScreen extends StatelessWidget {
                   );
                 },
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AtlasSpacing.md),
               AtlasStatTile(
                 title: 'Pops',
                 value: repository
                     .totalPops(appState)
                     .toString(),
-                icon: Icons.inventory_2,
+                icon: AtlasIcons.collection,
               ),
             ],
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: AtlasSpacing.md),
 
           Row(
             children: [
@@ -151,13 +155,13 @@ class AtlasDashboardScreen extends StatelessWidget {
                 title: 'Value',
                 value:
                 '\$${repository.totalValue(appState).toStringAsFixed(2)}',
-                icon: Icons.attach_money,
+                icon: AtlasIcons.value,
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AtlasSpacing.md),
               AtlasStatTile(
                 title: 'Tasks',
                 value: tasks.length.toString(),
-                icon: Icons.task_alt,
+                icon: AtlasIcons.recommendation,
                 onTap: () {
                   Navigator.push(
                     context,
@@ -172,7 +176,7 @@ class AtlasDashboardScreen extends StatelessWidget {
             ],
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: AtlasSpacing.md),
 
           Row(
             children: [
@@ -192,7 +196,7 @@ class AtlasDashboardScreen extends StatelessWidget {
                   );
                 },
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AtlasSpacing.md),
               AtlasStatTile(
                 title: 'Missing Values',
                 value: missingValueCount.toString(),
@@ -212,7 +216,7 @@ class AtlasDashboardScreen extends StatelessWidget {
             ],
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: AtlasSpacing.md),
 
           Row(
             children: [
@@ -220,7 +224,7 @@ class AtlasDashboardScreen extends StatelessWidget {
                 title: 'Confidence',
                 value:
                 '${confidence.score.toStringAsFixed(0)}%',
-                icon: Icons.psychology,
+                icon: AtlasIcons.confidence,
                 onTap: () {
                   Navigator.push(
                     context,
@@ -231,11 +235,11 @@ class AtlasDashboardScreen extends StatelessWidget {
                   );
                 },
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AtlasSpacing.md),
               AtlasStatTile(
                 title: 'Timeline',
                 value: 'Live',
-                icon: Icons.timeline,
+                icon: AtlasIcons.timeline,
                 onTap: () {
                   Navigator.push(
                     context,
@@ -249,14 +253,14 @@ class AtlasDashboardScreen extends StatelessWidget {
             ],
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: AtlasSpacing.md),
 
           Row(
             children: [
               AtlasStatTile(
                 title: 'Achievements',
                 value: 'New',
-                icon: Icons.emoji_events,
+                icon: AtlasIcons.achievement,
                 onTap: () {
                   Navigator.push(
                     context,
@@ -267,35 +271,35 @@ class AtlasDashboardScreen extends StatelessWidget {
                   );
                 },
               ),
-              const SizedBox(width: 12),
-              const AtlasStatTile(
-                title: 'Status',
-                value: 'Online',
-                icon: Icons.verified_user,
+              const SizedBox(width: AtlasSpacing.md),
+              AtlasStatTile(
+                title: 'Intelligence',
+                value: 'Open',
+                icon: AtlasIcons.intelligence,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                      const AtlasIntelligenceCenter(),
+                    ),
+                  );
+                },
               ),
             ],
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: AtlasSpacing.xl),
 
-          AtlasStatTile(
-            title: 'Intelligence',
-            value: 'Open',
-            icon: Icons.auto_awesome,
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) =>
-                  const AtlasIntelligenceCenter(),
-                ),
-              );
-            },
+          _SectionLabel(
+            text: 'Today',
           ),
+
+          const SizedBox(height: AtlasSpacing.sm),
 
           AtlasSectionCard(
             title: "Today's Mission",
-            icon: Icons.flag,
+            icon: AtlasIcons.mission,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -303,76 +307,76 @@ class AtlasDashboardScreen extends StatelessWidget {
                   severity: decision.severity,
                 ),
 
-                const SizedBox(height: 12),
+                const SizedBox(height: AtlasSpacing.md),
 
                 Text(
                   mission.title,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: AtlasTypography.headingSmall,
                 ),
 
-                const SizedBox(height: 8),
+                const SizedBox(height: AtlasSpacing.sm),
 
-                Text(mission.description),
+                Text(
+                  mission.description,
+                  style: AtlasTypography.bodyMedium,
+                ),
 
-                const SizedBox(height: 12),
+                const SizedBox(height: AtlasSpacing.md),
 
                 Text(
                   'Estimated Time: ${mission.estimatedTime}',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: AtlasTypography.label,
                 ),
 
-                const SizedBox(height: 8),
+                const SizedBox(height: AtlasSpacing.sm),
 
                 Text(
                   'Reward: ${mission.reward}',
-                ),
-
-                const SizedBox(height: 12),
-
-                Text(
-                  'Why: ${decision.why}',
-                  style: const TextStyle(
-                    color: Colors.grey,
+                  style: AtlasTypography.label.copyWith(
+                    color: AtlasColors.vaultGold,
                   ),
                 ),
               ],
             ),
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: AtlasSpacing.lg),
 
           AtlasSectionCard(
             title: intelligence.primaryFocusTitle,
-            icon: Icons.lightbulb_outline,
+            icon: AtlasIcons.decision,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(intelligence.primaryFocusMessage),
+                Text(
+                  intelligence.primaryFocusMessage,
+                  style: AtlasTypography.bodyMedium,
+                ),
 
-                const SizedBox(height: 12),
+                const SizedBox(height: AtlasSpacing.md),
 
                 Text(
                   'Confidence: ${intelligence.confidenceScore.toStringAsFixed(0)}%',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
+                  style: AtlasTypography.label.copyWith(
+                    color: AtlasColors.intelligenceBlue,
                   ),
                 ),
 
-                const SizedBox(height: 8),
+                const SizedBox(height: AtlasSpacing.sm),
 
-                Text(intelligence.confidenceMessage),
+                Text(
+                  intelligence.confidenceMessage,
+                  style: AtlasTypography.bodySmall,
+                ),
 
                 if (tasks.isNotEmpty) ...[
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AtlasSpacing.lg),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
-                      icon: const Icon(Icons.task_alt),
+                      icon: const Icon(
+                        AtlasIcons.recommendation,
+                      ),
                       label: const Text('Review Vault Tasks'),
                       onPressed: () {
                         Navigator.push(
@@ -387,6 +391,15 @@ class AtlasDashboardScreen extends StatelessWidget {
                   ),
                 ],
               ],
+            ),
+          ),
+
+          const SizedBox(height: AtlasSpacing.xl),
+
+          Center(
+            child: Text(
+              '${AtlasConstants.poweredBy} • ${AtlasConstants.version}',
+              style: AtlasTypography.bodySmall,
             ),
           ),
         ],
@@ -410,5 +423,24 @@ class AtlasDashboardScreen extends StatelessWidget {
         100 - ((issueCount / totalPops) * 100);
 
     return score.clamp(0, 100);
+  }
+}
+
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel({
+    required this.text,
+  });
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text.toUpperCase(),
+      style: AtlasTypography.label.copyWith(
+        letterSpacing: 1.2,
+        color: AtlasColors.textMuted,
+      ),
+    );
   }
 }

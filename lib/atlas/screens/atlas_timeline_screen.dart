@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../widgets/atlas_status_banner.dart';
+import '../../widgets/atlas_greeting_card.dart';
 import '../../widgets/vault_scroll_view.dart';
 import '../models/atlas_activity.dart';
 import '../services/atlas_activity_service.dart';
@@ -21,7 +21,7 @@ class AtlasTimelineScreen extends StatelessWidget {
       ),
       body: VaultScrollView(
         children: [
-          const AtlasStatusBanner(
+          const AtlasGreetingCard(
             title: 'Atlas Timeline',
             message:
             'Atlas remembers important events in your collecting journey.',
