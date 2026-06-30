@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'screens/home_screen.dart';
 import 'services/app_state.dart';
 import 'services/hive_service.dart';
+import 'theme/atlas_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -33,7 +34,7 @@ class FunkoVaultApp extends StatelessWidget {
     return MaterialApp(
       title: 'Funko Vault',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark(),
+      theme: AtlasTheme.dark(),
       home: const HomeScreen(),
     );
   }

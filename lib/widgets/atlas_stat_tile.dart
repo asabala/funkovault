@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../theme/atlas_animation.dart';
+import '../theme/atlas_colors.dart';
+import '../theme/atlas_radius.dart';
+import '../theme/atlas_spacing.dart';
+import '../theme/atlas_typography.dart';
+
 class AtlasStatTile extends StatelessWidget {
   const AtlasStatTile({
     super.key,
@@ -19,29 +25,34 @@ class AtlasStatTile extends StatelessWidget {
     return Expanded(
       child: Card(
         child: InkWell(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(
+            AtlasRadius.lg,
+          ),
           onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.all(16),
+          child: AnimatedContainer(
+            duration: AtlasAnimation.fast,
+            curve: AtlasAnimation.standardCurve,
+            padding: const EdgeInsets.all(
+              AtlasSpacing.lg,
+            ),
             child: Column(
               children: [
-                Icon(icon, size: 28),
-
-                const SizedBox(height: 12),
-
+                Icon(
+                  icon,
+                  size: 28,
+                  color: AtlasColors.vaultGold,
+                ),
+                const SizedBox(height: AtlasSpacing.md),
                 Text(
                   value,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: AtlasTypography.metricMedium,
+                  textAlign: TextAlign.center,
                 ),
-
-                const SizedBox(height: 6),
-
+                const SizedBox(height: AtlasSpacing.sm),
                 Text(
                   title,
                   textAlign: TextAlign.center,
+                  style: AtlasTypography.bodySmall,
                 ),
               ],
             ),
