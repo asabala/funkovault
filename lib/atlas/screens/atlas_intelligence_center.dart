@@ -6,16 +6,15 @@ import '../../theme/atlas_spacing.dart';
 import '../../widgets/dashboard/collector_header.dart';
 import '../../widgets/dashboard/health_confidence_panel.dart';
 import '../../widgets/dashboard/mission_card.dart';
+import '../../widgets/dashboard/recommendation_card.dart';
 import '../../widgets/dashboard/reflection_card.dart';
+import '../../widgets/dashboard/today_memory_card.dart';
 import '../../widgets/vault_scroll_view.dart';
-import '../engines/atlas_confidence_engine.dart';
-import '../engines/atlas_decision_engine.dart';
-import '../engines/atlas_mission_engine.dart';
-import '../engines/atlas_recommendation_engine_v2.dart';
-import '../engines/atlas_reflection_engine.dart';
+import '../core/atlas_core.dart';
 import '../repositories/vault_repository.dart';
 import 'atlas_confidence_screen.dart';
 import 'vault_health_screen.dart';
+import '../../widgets/dashboard/collector_dna_card.dart';
 
 class AtlasIntelligenceCenter extends StatelessWidget {
   const AtlasIntelligenceCenter({super.key});
@@ -27,11 +26,7 @@ class AtlasIntelligenceCenter extends StatelessWidget {
     const collectorName = 'Arthur';
 
     const repository = VaultRepository();
-    const confidenceEngine = AtlasConfidenceEngine();
-    const recommendationEngine = AtlasRecommendationEngineV2();
-    const decisionEngine = AtlasDecisionEngine();
-    const missionEngine = AtlasMissionEngine();
-    const reflectionEngine = AtlasReflectionEngine();
+    const atlasCore = AtlasCore();
 
     final pops = repository.allPops(appState);
 
@@ -47,25 +42,11 @@ class AtlasIntelligenceCenter extends StatelessWidget {
       missingValueCount: missingValueCount,
     );
 
-    final confidence = confidenceEngine.calculate(pops);
-
-    final recommendations = recommendationEngine.analyze(
+    final report = atlasCore.analyze(
+      collectorName: collectorName,
       pops: pops,
       duplicateCount: duplicateCount,
       missingValueCount: missingValueCount,
-    );
-
-    final decision = decisionEngine.decide(
-      recommendations: recommendations,
-    );
-
-    final mission = missionEngine.buildMission(
-      decision,
-    );
-
-    final reflection = reflectionEngine.reflect(
-      collectorName: collectorName,
-      pops: pops,
     );
 
     return Scaffold(
@@ -83,7 +64,7 @@ class AtlasIntelligenceCenter extends StatelessWidget {
 
           HealthConfidencePanel(
             health: health,
-            confidence: confidence.score,
+            confidence: report.confidence.score,
             onHealthTap: () {
               Navigator.push(
                 context,
@@ -104,21 +85,51 @@ class AtlasIntelligenceCenter extends StatelessWidget {
 
           const SizedBox(height: AtlasSpacing.lg),
 
+          CollectorDNACard(
+            primaryTrait: report.collectorDNA.primaryTrait,
+            secondaryTrait: report.collectorDNA.secondaryTrait,
+            confidence: report.collectorDNA.confidence,
+            summary: report.collectorDNA.summary,
+          ),
+
+          const SizedBox(height: AtlasSpacing.lg),
+
           MissionCard(
-            title: mission.title,
-            description: mission.description,
-            reward: mission.reward,
-            estimatedTime: mission.estimatedTime,
-            severity: decision.severity,
+            title: report.mission.title,
+            description: report.mission.description,
+            reward: report.mission.reward,
+            estimatedTime: report.mission.estimatedTime,
+            severity: report.decision.severity,
           ),
 
           const SizedBox(height: AtlasSpacing.lg),
 
           ReflectionCard(
-            title: reflection.title,
-            message: reflection.message,
-            tone: reflection.tone,
+            title: report.reflection.title,
+            message: report.reflection.message,
+            tone: report.reflection.tone,
           ),
+
+          const SizedBox(height: AtlasSpacing.lg),
+
+          TodayMemoryCard(
+            title: report.memory.title,
+            message: report.memory.message,
+            footer: report.memory.footer,
+          ),
+
+          const SizedBox(height: AtlasSpacing.lg),
+
+          RecommendationCard(
+            title: report.decision.title,
+            message: report.decision.message,
+            confidenceScore: report.confidence.score,
+            confidenceMessage: report.confidence.message,
+            severity: report.decision.severity,
+            why: report.decision.why,
+          ),
+
+          const SizedBox(height: AtlasSpacing.xl),
         ],
       ),
     );
