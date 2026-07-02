@@ -3,15 +3,42 @@ import 'package:flutter/material.dart';
 import '../models/pop.dart';
 import 'hive_service.dart';
 import '../models/activity.dart';
+import '../models/collector_profile.dart';
 
 class AppState extends ChangeNotifier {
   String _selectedCollection = 'Entire Family Collection';
   final List<Activity> _activities = [];
+
+  CollectorProfile _collectorProfile =
+  const CollectorProfile(
+    id: 'default',
+    displayName: 'Arthur',
+    collectorTitle: 'Atlas Collector',
+    bio: 'Collector. Curator. Explorer.',
+    favoriteCategory: 'Marvel',
+    collectorLevel: 'Rookie',
+    joinYear: 2026,
+    isPremium: false,
+    atlasId: 'ATL-000001',
+    collectorMotto: 'Collector. Curator. Explorer.',
+    favoriteFranchise: 'Spider-Man',
+    dreamGrail: 'Planet Arlia Vegeta',
+    country: 'United States',
+    countryCode: 'US',
+    countryFlag: '🇺🇸',
+    avatarUrl: '',
+    bannerUrl: '',
+  );
+
   final Map<String, List<Pop>> _collections = {
     'Entire Family Collection': [],
     'Arthur Collection': [],
   };
+
   List<Activity> get activities => _activities;
+
+  CollectorProfile get collectorProfile =>
+      _collectorProfile;
 
   List<Activity> get recentActivities {
     final list = List<Activity>.from(
@@ -52,6 +79,14 @@ class AppState extends ChangeNotifier {
 
       final activitiesData =
       data['activities'];
+
+      final profileData = data['collectorProfile'];
+
+      if (profileData != null) {
+        _collectorProfile = CollectorProfile.fromJson(
+          Map<String, dynamic>.from(profileData),
+        );
+      }
 
       if (activitiesData != null) {
         _activities.addAll(
@@ -120,6 +155,8 @@ class AppState extends ChangeNotifier {
               activity.toJson(),
         )
             .toList(),
+        'collectorProfile':
+        _collectorProfile.toJson(),
       },
     );
   }
@@ -488,5 +525,14 @@ class AppState extends ChangeNotifier {
           (total, pop) =>
       total + pop.value,
     );
+  }
+  Future<void> updateCollectorProfile(
+      CollectorProfile profile,
+      ) async {
+    _collectorProfile = profile;
+
+    await _saveData();
+
+    notifyListeners();
   }
 }

@@ -1,21 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../../navigation/atlas_navigation_shell.dart';
+import '../../screens/auth/login_screen.dart';
+import '../../security/auth_provider.dart';
 import '../../theme/atlas_animation.dart';
 import '../../theme/atlas_colors.dart';
 import '../../theme/atlas_constants.dart';
 import '../../theme/atlas_spacing.dart';
 import '../../theme/atlas_typography.dart';
-import '../../navigation/atlas_navigation_shell.dart';
 import 'atlas_boot_controller.dart';
 import 'atlas_boot_logo.dart';
-
 
 class AtlasBootScreen extends StatefulWidget {
   const AtlasBootScreen({super.key});
 
   @override
-  State<AtlasBootScreen> createState() =>
-      _AtlasBootScreenState();
+  State<AtlasBootScreen> createState() => _AtlasBootScreenState();
 }
 
 class _AtlasBootScreenState extends State<AtlasBootScreen>
@@ -67,41 +68,33 @@ class _AtlasBootScreenState extends State<AtlasBootScreen>
   }
 
   Future<void> _startBoot() async {
+    final authProvider = context.read<AuthProvider>();
+
     _introController.forward();
 
-    await _updateStatus(
-      AtlasConstants.preparing,
-      700,
-    );
+    await _updateStatus(AtlasConstants.preparing, 700);
+    await _updateStatus(AtlasConstants.analyzing, 700);
+    await _updateStatus('Checking Atlas Account...', 700);
 
-    await _updateStatus(
-      AtlasConstants.analyzing,
-      700,
-    );
+    await authProvider.initialize();
 
-    await _updateStatus(
-      'Loading Collector DNA...',
-      700,
-    );
-
-    await _updateStatus(
-      'Restoring Vault Memory...',
-      700,
-    );
+    await _updateStatus('Loading Collector DNA...', 700);
+    await _updateStatus('Restoring Vault Memory...', 700);
 
     await const AtlasBootController().initialize();
 
-    await _updateStatus(
-      AtlasConstants.ready,
-      700,
-    );
+    await _updateStatus(AtlasConstants.ready, 700);
 
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
 
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (_) => const AtlasNavigationShell(),
+        builder: (_) => authProvider.isLoggedIn
+            ? const AtlasNavigationShell()
+            : const LoginScreen(),
       ),
     );
   }
@@ -114,7 +107,9 @@ class _AtlasBootScreenState extends State<AtlasBootScreen>
       Duration(milliseconds: delayMs),
     );
 
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
 
     setState(() {
       _status = status;
@@ -125,6 +120,7 @@ class _AtlasBootScreenState extends State<AtlasBootScreen>
   void dispose() {
     _introController.dispose();
     _pulseController.dispose();
+
     super.dispose();
   }
 
@@ -135,9 +131,7 @@ class _AtlasBootScreenState extends State<AtlasBootScreen>
       body: SafeArea(
         child: Center(
           child: Padding(
-            padding: const EdgeInsets.all(
-              AtlasSpacing.xl,
-            ),
+            padding: const EdgeInsets.all(AtlasSpacing.xl),
             child: FadeTransition(
               opacity: _fadeAnimation,
               child: ScaleTransition(
@@ -148,16 +142,12 @@ class _AtlasBootScreenState extends State<AtlasBootScreen>
                     AtlasBootLogo(
                       pulse: _pulseAnimation,
                     ),
-
                     const SizedBox(height: AtlasSpacing.xl),
-
                     Text(
                       AtlasConstants.platformName.toUpperCase(),
                       style: AtlasTypography.displayLarge,
                     ),
-
                     const SizedBox(height: AtlasSpacing.sm),
-
                     Text(
                       AtlasConstants.platformSubtitle,
                       textAlign: TextAlign.center,
@@ -165,9 +155,7 @@ class _AtlasBootScreenState extends State<AtlasBootScreen>
                         color: AtlasColors.atlasSilver,
                       ),
                     ),
-
                     const SizedBox(height: AtlasSpacing.xxl),
-
                     AnimatedSwitcher(
                       duration: AtlasAnimation.standard,
                       child: Text(
@@ -179,16 +167,12 @@ class _AtlasBootScreenState extends State<AtlasBootScreen>
                         ),
                       ),
                     ),
-
                     const SizedBox(height: AtlasSpacing.lg),
-
                     const SizedBox(
                       width: 190,
                       child: LinearProgressIndicator(),
                     ),
-
                     const SizedBox(height: AtlasSpacing.xl),
-
                     Text(
                       AtlasConstants.poweredBy,
                       style: AtlasTypography.bodySmall,

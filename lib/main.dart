@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'atlas/boot/atlas_boot_screen.dart';
+import 'config/atlas_config.dart';
+import 'security/auth_provider.dart';
 import 'services/app_state.dart';
 import 'services/hive_service.dart';
 import 'theme/atlas_theme.dart';
-import 'atlas/boot/atlas_boot_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -14,13 +17,25 @@ Future<void> main() async {
 
   await HiveService.openBox();
 
+  await Supabase.initialize(
+    url: AtlasConfig.supabaseUrl,
+    publishableKey: AtlasConfig.supabasePublishableKey,
+  );
+
   final appState = AppState();
 
   await appState.loadData();
 
   runApp(
-    ChangeNotifierProvider.value(
-      value: appState,
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider.value(
+          value: appState,
+        ),
+        ChangeNotifierProvider(
+          create: (_) => AuthProvider(),
+        ),
+      ],
       child: const FunkoVaultApp(),
     ),
   );

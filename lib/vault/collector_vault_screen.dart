@@ -3,13 +3,19 @@ import 'package:provider/provider.dart';
 
 import '../atlas/repositories/vault_repository.dart';
 import '../services/app_state.dart';
-import '../theme/atlas_colors.dart';
-import '../theme/atlas_icons.dart';
 import '../theme/atlas_spacing.dart';
-import '../theme/atlas_typography.dart';
-import '../widgets/atlas_section_card.dart';
-import '../widgets/vault/vault_summary_card.dart';
+import '../widgets/vault/atlas_recommendation_card.dart';
+import '../widgets/vault/collection_rooms_card.dart';
+import '../widgets/vault/collector_tools_card.dart';
+import '../widgets/vault/hero_collector_card.dart';
 import '../widgets/vault_scroll_view.dart';
+import '../screens/add_pop_screen.dart';
+import '../screens/scan_screen.dart';
+import '../screens/wishlist_screen.dart';
+import '../screens/funko_catalog_screen.dart';
+import '../screens/edit_collector_profile_screen.dart';
+import '../atlas/core/atlas_intelligence.dart';
+import '../widgets/vault/atlas_mission_card.dart';
 
 class CollectorVaultScreen extends StatelessWidget {
   const CollectorVaultScreen({super.key});
@@ -17,16 +23,30 @@ class CollectorVaultScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appState = context.watch<AppState>();
-
     const repository = VaultRepository();
+    const intelligence = AtlasIntelligence();
 
     final allPops = repository.allPops(appState);
+    final recommendation =
+    intelligence.getRecommendation(allPops);
 
-    final duplicateCount =
-        repository.duplicatePopGroups(appState).length;
+    final mission =
+    intelligence.getTodayMission(allPops);
 
-    final missingValueCount =
-        allPops.where((pop) => pop.value <= 0).length;
+    final confidence =
+    intelligence.getCollectorConfidence(allPops);
+
+    final collectorType =
+    intelligence.getCollectorType(allPops);
+
+    final favoriteCategory =
+    intelligence.getFavoriteCategory(allPops);
+    final totalValue = repository.totalValue(appState);
+    final profile = appState.collectorProfile;
+
+
+    final duplicateCount = repository.duplicatePopGroups(appState).length;
+    final missingValueCount = allPops.where((pop) => pop.value <= 0).length;
 
     final health = _calculateVaultHealth(
       totalPops: allPops.length,
@@ -34,74 +54,112 @@ class CollectorVaultScreen extends StatelessWidget {
       missingValueCount: missingValueCount,
     );
 
-    final totalValue = repository.totalValue(appState);
-
     return Scaffold(
       appBar: AppBar(
         title: const Text("Collector's Vault"),
+        actions: [
+          IconButton(
+            onPressed: () {},
+            icon: const Icon(Icons.search),
+          ),
+          IconButton(
+            onPressed: () {},
+            icon: const Icon(Icons.notifications_none),
+          ),
+        ],
       ),
       body: VaultScrollView(
         children: [
-          Text(
-            "Welcome back, Arthur",
-            style: AtlasTypography.headingLarge,
-          ),
-
-          const SizedBox(height: AtlasSpacing.sm),
-
-          Text(
-            'Your collection is protected, organized, and ready for review.',
-            style: AtlasTypography.bodyMedium.copyWith(
-              color: AtlasColors.textSecondary,
-            ),
-          ),
-
-          const SizedBox(height: AtlasSpacing.lg),
-
-          VaultSummaryCard(
+          HeroCollectorCard(
+            collectorName: profile.displayName,
+            collectorTitle: profile.collectorTitle,
+            collectorBio: profile.bio,
+            favoriteCategory: profile.favoriteCategory,
+            collectorLevel: profile.collectorLevel,
+            isPremium: profile.isPremium,
             totalPops: allPops.length,
             totalValue: totalValue,
             health: health,
+            onEditProfile: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const EditCollectorProfileScreen(),
+                ),
+              );
+            },
           ),
 
           const SizedBox(height: AtlasSpacing.lg),
 
-          AtlasSectionCard(
-            title: 'Vault Collections',
-            icon: AtlasIcons.vault,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                _VaultCollectionTile(
-                  title: 'Entire Collection',
-                  subtitle: 'View every collectible in your Vault.',
-                  icon: AtlasIcons.collection,
-                ),
-                _VaultCollectionTile(
-                  title: 'Personal Collection',
-                  subtitle: 'Your main collector profile.',
-                  icon: AtlasIcons.atlas,
-                ),
-                _VaultCollectionTile(
-                  title: 'Wishlist',
-                  subtitle: 'Items you are hunting for.',
-                  icon: AtlasIcons.wishlist,
-                ),
-              ],
-            ),
+          AtlasMissionCard(
+            mission: mission,
+            collectorType: collectorType,
+            confidence: confidence.round(),
+            onContinue: () {},
           ),
 
           const SizedBox(height: AtlasSpacing.lg),
 
-          AtlasSectionCard(
-            title: 'Atlas Vault Insight',
-            icon: AtlasIcons.intelligence,
-            child: Text(
-              allPops.isEmpty
-                  ? 'Add your first collectible to begin building your Vault intelligence.'
-                  : 'Atlas is monitoring your Vault health, value, and collection growth.',
-              style: AtlasTypography.bodyMedium,
-            ),
+          CollectorToolsCard(
+            onAddPop: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const AddPopScreen(),
+                ),
+              );
+            },
+            onScan: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const ScanScreen(),
+                ),
+              );
+            },
+            onWishlist: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const WishlistScreen(),
+                ),
+              );
+            },
+            onSearch: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const FunkoCatalogScreen(),
+                ),
+              );
+            },
+            onValueLookup: () {},
+            onAtlasAi: () {},
+          ),
+
+          const SizedBox(height: AtlasSpacing.lg),
+
+          CollectionRoomsCard(
+            totalPops: allPops.length,
+            onEntireVault: () {},
+            onWishlist: () {},
+            onAnime: () {},
+            onMarvel: () {},
+            onDc: () {},
+            onStarWars: () {},
+            onMoviesTv: () {},
+            onGaming: () {},
+          ),
+
+          const SizedBox(height: AtlasSpacing.lg),
+
+          AtlasRecommendationCard(
+            message: recommendation,
+            confidence: confidence.round(),
+            estimatedCost: favoriteCategory,
+            difficulty: collectorType,
+            onViewDetails: () {},
           ),
         ],
       ),
@@ -117,46 +175,9 @@ class CollectorVaultScreen extends StatelessWidget {
       return 100;
     }
 
-    final issueCount =
-        duplicateCount + missingValueCount;
-
-    final score =
-        100 - ((issueCount / totalPops) * 100);
+    final issueCount = duplicateCount + missingValueCount;
+    final score = 100 - ((issueCount / totalPops) * 100);
 
     return score.clamp(0, 100);
-  }
-}
-
-class _VaultCollectionTile extends StatelessWidget {
-  const _VaultCollectionTile({
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-  });
-
-  final String title;
-  final String subtitle;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: Icon(
-        icon,
-        color: AtlasColors.vaultGold,
-      ),
-      title: Text(
-        title,
-        style: AtlasTypography.headingSmall,
-      ),
-      subtitle: Text(
-        subtitle,
-        style: AtlasTypography.bodySmall,
-      ),
-      trailing: const Icon(
-        Icons.chevron_right,
-      ),
-    );
   }
 }

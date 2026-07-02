@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../atlas/screens/atlas_intelligence_center.dart';
+import '../screens/atlas_home_screen.dart';
+import '../screens/atlas_insights_screen.dart';
+import '../screens/auth/login_screen.dart';
+import '../security/auth_provider.dart';
 import '../theme/atlas_colors.dart';
-import '../theme/atlas_icons.dart';
 import '../theme/atlas_typography.dart';
+import '../vault/collector_vault_screen.dart';
 import 'atlas_bottom_navigation.dart';
 import 'atlas_navigation_controller.dart';
-import '../vault/collector_vault_screen.dart';
 
 class AtlasNavigationShell extends StatelessWidget {
   const AtlasNavigationShell({super.key});
@@ -26,28 +28,18 @@ class _AtlasNavigationShellView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller =
-    context.watch<AtlasNavigationController>();
+    final controller = context.watch<AtlasNavigationController>();
 
     final pages = [
-      const AtlasIntelligenceCenter(),
+      const AtlasHomeScreen(),
       const CollectorVaultScreen(),
-
       const _ComingSoonPage(
         title: 'Smart Scanner',
         message: 'Barcode and image scanning are coming soon.',
         icon: Icons.qr_code_scanner,
       ),
-      const _ComingSoonPage(
-        title: 'Atlas Insights',
-        message: 'Trends, growth, and intelligence will live here.',
-        icon: AtlasIcons.trend,
-      ),
-      const _ComingSoonPage(
-        title: 'Settings',
-        message: 'Atlas preferences and app settings will live here.',
-        icon: Icons.settings,
-      ),
+      const AtlasInsightsScreen(),
+      const _SettingsPage(),
     ];
 
     return Scaffold(
@@ -58,6 +50,88 @@ class _AtlasNavigationShellView extends StatelessWidget {
       bottomNavigationBar: AtlasBottomNavigation(
         currentIndex: controller.index,
         onTap: controller.goTo,
+      ),
+    );
+  }
+}
+
+class _SettingsPage extends StatelessWidget {
+  const _SettingsPage();
+
+  Future<void> _signOut(BuildContext context) async {
+    await context.read<AuthProvider>().signOut();
+
+    if (!context.mounted) {
+      return;
+    }
+
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const LoginScreen(),
+      ),
+          (_) => false,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final authProvider = context.watch<AuthProvider>();
+
+    return Scaffold(
+      backgroundColor: AtlasColors.background,
+      appBar: AppBar(
+        title: const Text('Settings'),
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(24),
+        children: [
+          Icon(
+            Icons.settings,
+            size: 64,
+            color: AtlasColors.vaultGold,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Atlas Settings',
+            style: AtlasTypography.headingLarge,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Account, preferences, and app settings will live here.',
+            style: AtlasTypography.bodyMedium,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 32),
+          Card(
+            child: ListTile(
+              leading: Icon(
+                authProvider.isLoggedIn
+                    ? Icons.verified_user_outlined
+                    : Icons.person_outline,
+              ),
+              title: Text(
+                authProvider.isLoggedIn
+                    ? 'Signed in to Atlas'
+                    : 'Guest Mode',
+              ),
+              subtitle: Text(
+                authProvider.isPremium
+                    ? 'Premium collector account'
+                    : 'Basic collector account',
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          FilledButton.icon(
+            onPressed: () => _signOut(context),
+            icon: const Icon(Icons.logout),
+            label: Text(
+              authProvider.isLoggedIn ? 'Sign Out' : 'Return to Login',
+            ),
+          ),
+        ],
       ),
     );
   }
