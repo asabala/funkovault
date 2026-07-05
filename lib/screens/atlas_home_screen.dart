@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../atlas/core/atlas_intelligence.dart';
-import '../atlas/repositories/vault_repository.dart';
+import '../atlas/coordinator/atlas_dashboard.dart';
+import '../atlas/coordinator/atlas_dashboard_model.dart';
 import '../services/app_state.dart';
 import '../theme/atlas_colors.dart';
 import '../theme/atlas_icons.dart';
@@ -11,12 +11,11 @@ import '../theme/atlas_typography.dart';
 import '../widgets/atlas/atlas_glass_card.dart';
 import '../widgets/atlas/atlas_glass_panel.dart';
 import '../widgets/atlas/atlas_stat_tile.dart';
+import '../widgets/home/atlas_pulse_card.dart';
 import '../widgets/home/continue_journey_card.dart';
-import 'profile/atlas_vault_profile_screen.dart';
-import '../widgets/vault/atlas_mission_card.dart';
-import '../widgets/vault/atlas_recommendation_card.dart';
+import '../widgets/profile/identity/atlas_identity_card.dart';
 import '../widgets/vault_scroll_view.dart';
-import '../widgets/profile/atlas_identity_card.dart';
+import 'profile/atlas_vault_profile_screen.dart';
 
 class AtlasHomeScreen extends StatelessWidget {
   const AtlasHomeScreen({super.key});
@@ -26,21 +25,16 @@ class AtlasHomeScreen extends StatelessWidget {
     final appState = context.watch<AppState>();
     final profile = appState.collectorProfile;
 
-    const repository = VaultRepository();
-    const intelligence = AtlasIntelligence();
+    const dashboardBuilder = AtlasDashboard();
 
-    final allPops = repository.allPops(appState);
-    final totalValue = repository.totalValue(appState);
+    final AtlasDashboardModel dashboard =
+    dashboardBuilder.build(appState);
 
-    final mission = intelligence.getTodayMission(allPops);
-    final recommendation = intelligence.getRecommendation(allPops);
-    final confidence = intelligence.getCollectorConfidence(allPops);
-    final collectorType = intelligence.getCollectorType(allPops);
-    final favoriteCategory = intelligence.getFavoriteCategory(allPops);
+    final now = DateTime.now();
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Atlas Home'),
+        title: const Text('Atlas Pulse'),
         actions: const [
           Padding(
             padding: EdgeInsets.only(right: AtlasSpacing.md),
@@ -53,6 +47,17 @@ class AtlasHomeScreen extends StatelessWidget {
       ),
       body: VaultScrollView(
         children: [
+          AtlasPulseCard(
+            greeting: _greeting(profile.displayName, now),
+            dateLabel: _dateLabel(now),
+            timeLabel: _timeLabel(now),
+            status: _statusLabel(dashboard.confidence.score),
+            summary: _summaryLabel(
+              totalPops: dashboard.totalPops,
+              confidence: dashboard.confidence.score,
+            ),
+          ),
+          const SizedBox(height: AtlasSpacing.lg),
           AtlasIdentityCard(
             profile: profile,
             onEdit: () {
@@ -65,25 +70,10 @@ class AtlasHomeScreen extends StatelessWidget {
             },
           ),
           const SizedBox(height: AtlasSpacing.lg),
-          AtlasMissionCard(
-            mission: mission,
-            collectorType: collectorType,
-            confidence: confidence.round(),
-            onContinue: () {},
-          ),
-          const SizedBox(height: AtlasSpacing.lg),
           _HomeStatsCard(
-            totalPops: allPops.length,
-            totalValue: totalValue,
-            confidence: confidence,
-          ),
-          const SizedBox(height: AtlasSpacing.lg),
-          AtlasRecommendationCard(
-            message: recommendation,
-            confidence: confidence.round(),
-            estimatedCost: favoriteCategory,
-            difficulty: collectorType,
-            onViewDetails: () {},
+            totalPops: dashboard.totalPops,
+            totalValue: dashboard.totalValue,
+            confidence: dashboard.confidence.score,
           ),
           const SizedBox(height: AtlasSpacing.lg),
           ContinueJourneyCard(
@@ -102,6 +92,87 @@ class AtlasHomeScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  static String _greeting(String name, DateTime now) {
+    if (now.hour < 12) {
+      return 'Good Morning $name';
+    }
+
+    if (now.hour < 17) {
+      return 'Good Afternoon $name';
+    }
+
+    return 'Good Evening $name';
+  }
+
+  static String _dateLabel(DateTime now) {
+    const weekdays = [
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+      'Sunday',
+    ];
+
+    const months = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+
+    return '${weekdays[now.weekday - 1]}, ${months[now.month - 1]} ${now.day}, ${now.year}';
+  }
+
+  static String _timeLabel(DateTime now) {
+    final hour = now.hour == 0
+        ? 12
+        : now.hour > 12
+        ? now.hour - 12
+        : now.hour;
+
+    final minute = now.minute.toString().padLeft(2, '0');
+    final period = now.hour >= 12 ? 'PM' : 'AM';
+
+    return '$hour:$minute $period';
+  }
+
+  static String _statusLabel(double confidence) {
+    if (confidence >= 90) {
+      return 'Atlas systems are operating with high confidence.';
+    }
+
+    if (confidence >= 75) {
+      return 'Atlas is reading your Vault clearly.';
+    }
+
+    if (confidence >= 50) {
+      return 'Atlas can improve with more collection details.';
+    }
+
+    return 'Atlas needs more Vault data to improve accuracy.';
+  }
+
+  static String _summaryLabel({
+    required int totalPops,
+    required double confidence,
+  }) {
+    if (totalPops == 0) {
+      return 'Your Vault is ready. Add your first collectible to begin your collector journey.';
+    }
+
+    return 'Your Vault has $totalPops collectible${totalPops == 1 ? '' : 's'} with ${confidence.toStringAsFixed(0)}% Atlas Confidence.';
   }
 }
 
