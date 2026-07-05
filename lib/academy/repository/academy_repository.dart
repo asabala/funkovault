@@ -1,10 +1,115 @@
+import '../data/academy_tracks.dart';
 import '../data/funko_academy_categories.dart';
+import '../data/funko_academy_topics.dart';
 import '../data/funko_beginner_lessons.dart';
 import '../models/academy_category.dart';
 import '../models/academy_lesson.dart';
+import '../models/academy_topic.dart';
+import '../models/academy_track.dart';
 
 class AcademyRepository {
   const AcademyRepository();
+
+  List<AcademyTrack> getTracks() {
+    return academyTracks;
+  }
+
+  List<AcademyTrack> getAvailableTracks() {
+    return getTracks()
+        .where((track) => track.isAvailable)
+        .toList();
+  }
+
+  List<AcademyTrack> getComingSoonTracks() {
+    return getTracks()
+        .where((track) => !track.isAvailable)
+        .toList();
+  }
+
+  AcademyTrack? getTrackById(String id) {
+    for (final track in getTracks()) {
+      if (track.id == id) {
+        return track;
+      }
+    }
+
+    return null;
+  }
+
+  AcademyTrack? getTrackByTitle(String title) {
+    final normalizedTitle = title.trim().toLowerCase();
+
+    for (final track in getTracks()) {
+      if (track.title.toLowerCase() == normalizedTitle) {
+        return track;
+      }
+    }
+
+    return null;
+  }
+
+  List<AcademyTopic> getTopics() {
+    return funkoAcademyTopics;
+  }
+
+  List<AcademyTopic> getTopicsForTrack(String trackId) {
+    return getTopics()
+        .where((topic) => topic.trackId == trackId)
+        .toList();
+  }
+
+  List<AcademyTopic> getAvailableTopicsForTrack(String trackId) {
+    return getTopicsForTrack(trackId)
+        .where((topic) => topic.isAvailable)
+        .toList();
+  }
+
+  List<AcademyTopic> getRoadmapTopicsForTrack(String trackId) {
+    return getTopicsForTrack(trackId)
+        .where((topic) => !topic.isAvailable)
+        .toList();
+  }
+
+  List<AcademyTopic> getPremiumTopicsForTrack(String trackId) {
+    return getTopicsForTrack(trackId)
+        .where((topic) => topic.isPremium)
+        .toList();
+  }
+
+  List<AcademyTopic> getFreeTopicsForTrack(String trackId) {
+    return getTopicsForTrack(trackId)
+        .where((topic) => !topic.isPremium)
+        .toList();
+  }
+
+  AcademyTopic? getTopicById(String id) {
+    for (final topic in getTopics()) {
+      if (topic.id == id) {
+        return topic;
+      }
+    }
+
+    return null;
+  }
+
+  List<AcademyTopic> searchTopics(String query) {
+    final normalizedQuery = query.trim().toLowerCase();
+
+    if (normalizedQuery.isEmpty) {
+      return [];
+    }
+
+    return getTopics().where((topic) {
+      final searchableText = [
+        topic.title,
+        topic.subtitle,
+        topic.category,
+        ...topic.searchKeywords,
+      ].join(' ').toLowerCase();
+
+      return searchableText.contains(normalizedQuery);
+    }).toList();
+  }
 
   List<AcademyCategory> getCategories() {
     return funkoAcademyCategories;

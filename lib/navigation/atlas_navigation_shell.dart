@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../screens/academy/atlas_academy_screen.dart';
 import '../screens/atlas_home_screen.dart';
 import '../screens/atlas_insights_screen.dart';
 import '../screens/auth/login_screen.dart';
@@ -39,6 +40,7 @@ class _AtlasNavigationShellView extends StatelessWidget {
         icon: Icons.qr_code_scanner,
       ),
       const AtlasInsightsScreen(),
+      const AtlasAcademyScreen(),
       const _SettingsPage(),
     ];
 

@@ -181,22 +181,103 @@ class _EmptyLessonsCard extends StatelessWidget {
       elevation: 0,
       color: const Color(0xFF171717),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(22),
         side: BorderSide(
           color: Colors.white.withValues(alpha: 0.08),
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Text(
-          '${category.title} lessons are planned for a future Atlas Academy update.',
-          style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.65),
-            fontSize: 14,
-            height: 1.45,
-          ),
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 54,
+              height: 54,
+              decoration: BoxDecoration(
+                color: const Color(0xFFD6B25E).withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: const Icon(
+                Icons.auto_stories_outlined,
+                color: Color(0xFFD6B25E),
+                size: 28,
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Lessons Coming Soon',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 22,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              '${category.title} is already part of the Atlas Academy structure. Full lessons for this path are planned for a future update.',
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.68),
+                fontSize: 14,
+                height: 1.45,
+              ),
+            ),
+            const SizedBox(height: 16),
+            _ComingSoonNote(
+              icon: Icons.psychology_outlined,
+              text:
+              'Ask Atlas may already recognize some related terms from the roadmap.',
+            ),
+            const SizedBox(height: 10),
+            _ComingSoonNote(
+              icon: Icons.map_outlined,
+              text:
+              'Check the Funko Academy Roadmap for upcoming topics in this area.',
+            ),
+            const SizedBox(height: 10),
+            _ComingSoonNote(
+              icon: Icons.workspace_premium_outlined,
+              text:
+              'Advanced collector intelligence may become part of Atlas Premium later.',
+            ),
+          ],
         ),
       ),
+    );
+  }
+}
+
+class _ComingSoonNote extends StatelessWidget {
+  const _ComingSoonNote({
+    required this.icon,
+    required this.text,
+  });
+
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(
+          icon,
+          size: 18,
+          color: const Color(0xFFD6B25E).withValues(alpha: 0.90),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            text,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.62),
+              fontSize: 13,
+              height: 1.35,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

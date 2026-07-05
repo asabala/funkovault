@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../academy/models/academy_lesson.dart';
+import '../../academy/repository/academy_repository.dart';
 
 class AcademyLessonScreen extends StatelessWidget {
   const AcademyLessonScreen({
@@ -10,11 +11,18 @@ class AcademyLessonScreen extends StatelessWidget {
 
   final AcademyLesson lesson;
 
+  static const _repository = AcademyRepository();
+
   @override
   Widget build(BuildContext context) {
     final atlasTip = lesson.atlasTips.isEmpty
         ? 'Keep learning. Small details can make a big difference in collecting.'
         : lesson.atlasTips.first;
+
+    final relatedLessons = lesson.relatedLessonIds
+        .map(_repository.getLessonById)
+        .whereType<AcademyLesson>()
+        .toList();
 
     return Scaffold(
       appBar: AppBar(
@@ -87,6 +95,43 @@ class AcademyLessonScreen extends StatelessWidget {
               body: section.body,
             ),
             const SizedBox(height: 14),
+          ],
+          if (relatedLessons.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            const Text(
+              'Related Lessons',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 22,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Keep learning with connected collector topics.',
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.65),
+                fontSize: 14,
+                height: 1.45,
+              ),
+            ),
+            const SizedBox(height: 14),
+            for (final relatedLesson in relatedLessons) ...[
+              _RelatedLessonCard(
+                lesson: relatedLesson,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => AcademyLessonScreen(
+                        lesson: relatedLesson,
+                      ),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 12),
+            ],
           ],
         ],
       ),
@@ -230,6 +275,67 @@ class _AtlasTipCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _RelatedLessonCard extends StatelessWidget {
+  const _RelatedLessonCard({
+    required this.lesson,
+    required this.onTap,
+  });
+
+  final AcademyLesson lesson;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 0,
+      color: const Color(0xFF171717),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(
+          color: Colors.white.withValues(alpha: 0.08),
+        ),
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 18,
+          vertical: 8,
+        ),
+        leading: Container(
+          width: 42,
+          height: 42,
+          decoration: BoxDecoration(
+            color: const Color(0xFFD6B25E).withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: const Icon(
+            Icons.menu_book_outlined,
+            color: Color(0xFFD6B25E),
+          ),
+        ),
+        title: Text(
+          lesson.title,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        subtitle: Text(
+          lesson.subtitle,
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.62),
+            height: 1.35,
+          ),
+        ),
+        trailing: const Icon(
+          Icons.arrow_forward_ios,
+          size: 16,
+        ),
+        onTap: onTap,
       ),
     );
   }

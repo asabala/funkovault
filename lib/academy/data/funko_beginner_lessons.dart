@@ -1,9 +1,11 @@
+import '../academy_ids.dart';
 import '../models/academy_lesson.dart';
+
 
 const funkoBeginnerLessons = [
   AcademyLesson(
-    id: 'funko_common',
-    track: 'Funko Collecting',
+    id: AcademyLessonIds.funkoCommon,
+    track: AcademyTrackTitles.funkoCollecting,
     category: 'Collector Basics',
     title: 'Common',
     subtitle: 'The standard version of a collectible.',
@@ -47,13 +49,13 @@ const funkoBeginnerLessons = [
       'standard figure',
     ],
     relatedLessonIds: [
-      'funko_chase',
-      'funko_vaulted',
+      AcademyLessonIds.funkoChase,
+      AcademyLessonIds.funkoVaulted,
     ],
   ),
   AcademyLesson(
-    id: 'funko_chase',
-    track: 'Funko Collecting',
+    id: AcademyLessonIds.funkoChase,
+    track: AcademyTrackTitles.funkoCollecting,
     category: 'Collector Basics',
     title: 'Chase',
     subtitle: 'A rarer variant randomly packed with Common figures.',
@@ -99,13 +101,13 @@ const funkoBeginnerLessons = [
       'common variant',
     ],
     relatedLessonIds: [
-      'funko_common',
-      'funko_grail',
+      AcademyLessonIds.funkoCommon,
+      AcademyLessonIds.funkoGrail,
     ],
   ),
   AcademyLesson(
-    id: 'funko_grail',
-    track: 'Funko Collecting',
+    id: AcademyLessonIds.funkoGrail,
+    track: AcademyTrackTitles.funkoCollecting,
     category: 'Collector Basics',
     title: 'Grail',
     subtitle: 'A highly desired collectible that collectors hunt for.',
@@ -151,13 +153,13 @@ const funkoBeginnerLessons = [
       'personal grail',
     ],
     relatedLessonIds: [
-      'funko_vaulted',
-      'funko_chase',
+      AcademyLessonIds.funkoVaulted,
+      AcademyLessonIds.funkoChase,
     ],
   ),
   AcademyLesson(
-    id: 'funko_vaulted',
-    track: 'Funko Collecting',
+    id: AcademyLessonIds.funkoVaulted,
+    track: AcademyTrackTitles.funkoCollecting,
     category: 'Collector Basics',
     title: 'Vaulted',
     subtitle: 'A retired collectible that is no longer being produced.',
@@ -202,8 +204,8 @@ const funkoBeginnerLessons = [
       'discontinued',
     ],
     relatedLessonIds: [
-      'funko_common',
-      'funko_grail',
+      AcademyLessonIds.funkoCommon,
+      AcademyLessonIds.funkoGrail,
     ],
   ),
 ];

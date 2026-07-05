@@ -33,7 +33,8 @@ class AtlasBottomNavigation extends StatelessWidget {
           label: 'Vault',
         ),
         NavigationDestination(
-          icon: Icon(Icons.qr_code_scanner),
+          icon: Icon(Icons.qr_code_scanner_outlined),
+          selectedIcon: Icon(Icons.qr_code_scanner),
           label: 'Scan',
         ),
         NavigationDestination(
@@ -41,7 +42,13 @@ class AtlasBottomNavigation extends StatelessWidget {
           label: 'Insights',
         ),
         NavigationDestination(
-          icon: Icon(Icons.settings),
+          icon: Icon(Icons.school_outlined),
+          selectedIcon: Icon(Icons.school),
+          label: 'Academy',
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.settings_outlined),
+          selectedIcon: Icon(Icons.settings),
           label: 'Settings',
         ),
       ],
