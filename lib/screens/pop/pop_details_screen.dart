@@ -2,24 +2,28 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/pop.dart';
-import 'edit_pop_screen.dart';
 import '../../services/app_state.dart';
+import '../../theme/atlas_colors.dart';
+import '../../theme/atlas_spacing.dart';
+import '../../theme/atlas_typography.dart';
+import '../../widgets/atlas/atlas_glass_card.dart';
+import '../../widgets/atlas/atlas_glass_panel.dart';
+import '../../widgets/vault_scroll_view.dart';
+import 'edit_pop_screen.dart';
 
 class PopDetailsScreen extends StatefulWidget {
-  final Pop pop;
-
   const PopDetailsScreen({
     super.key,
     required this.pop,
   });
 
+  final Pop pop;
+
   @override
-  State<PopDetailsScreen> createState() =>
-      _PopDetailsScreenState();
+  State<PopDetailsScreen> createState() => _PopDetailsScreenState();
 }
 
-class _PopDetailsScreenState
-    extends State<PopDetailsScreen> {
+class _PopDetailsScreenState extends State<PopDetailsScreen> {
   late Pop pop;
 
   @override
@@ -74,7 +78,9 @@ class _PopDetailsScreenState
   }
 
   Future<void> _updateQuantity(int newQuantity) async {
-    if (newQuantity < 1) return;
+    if (newQuantity < 1) {
+      return;
+    }
 
     final updatedPop = Pop(
       id: pop.id,
@@ -107,228 +113,416 @@ class _PopDetailsScreenState
 
   @override
   Widget build(BuildContext context) {
+    final numberLabel =
+    pop.number.trim().isEmpty ? 'No #' : '#${pop.number.trim()}';
+    final valueLabel =
+    pop.value <= 0 ? 'Value needed' : '\$${pop.value.toStringAsFixed(2)}';
+    final paidLabel = pop.pricePaid <= 0
+        ? 'Not entered'
+        : '\$${pop.pricePaid.toStringAsFixed(2)}';
+
     return Scaffold(
       appBar: AppBar(
         title: Text(pop.name),
         actions: [
           IconButton(
             icon: Icon(
-              pop.isWishlist
-                  ? Icons.favorite
-                  : Icons.favorite_border,
+              pop.isWishlist ? Icons.favorite : Icons.favorite_border,
               color: Colors.red,
             ),
             onPressed: _toggleWishlist,
           ),
           IconButton(
-            icon: const Icon(Icons.edit),
+            icon: const Icon(Icons.edit_rounded),
             onPressed: _editPop,
           ),
         ],
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment:
-            CrossAxisAlignment.start,
-            children: [
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Center(
-                    child: Column(
-                      children: [
-                        pop.imageUrl.isNotEmpty
-                            ? Image.network(
-                          pop.imageUrl,
-                          height: 150,
-                          errorBuilder: (
-                              context,
-                              error,
-                              stackTrace,
-                              ) {
-                            return const Icon(
-                              Icons.inventory_2,
-                              size: 80,
-                            );
-                          },
-                        )
-                            : const Icon(
-                          Icons.inventory_2,
-                          size: 80,
-                        ),
-
-                        const SizedBox(height: 12),
-
-                        Text(
-                          pop.name,
-                          style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight:
-                            FontWeight.bold,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-
-                        const SizedBox(height: 8),
-
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          alignment: WrapAlignment.center,
-                          children: [
-                            Chip(label: Text(pop.owner)),
-                            Chip(
-                              label: Text(
-                                pop.collectorLabel,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+      body: VaultScrollView(
+        children: [
+          AtlasGlassCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: _PopHeroImage(
+                    imageUrl: pop.imageUrl,
                   ),
                 ),
-              ),
-
-              const SizedBox(height: 20),
-
-              _sectionTitle('Basic Information'),
-
-              _DetailRow(
-                label: 'Number',
-                value: pop.number,
-              ),
-
-              _DetailRow(
-                label: 'Category',
-                value: pop.category,
-              ),
-
-              _DetailRow(
-                label: 'Series',
-                value: pop.series,
-              ),
-
-              const SizedBox(height: 16),
-
-              _sectionTitle('Collector Identity'),
-
-              _DetailRow(
-                label: 'Variant',
-                value: pop.variant,
-              ),
-
-              _DetailRow(
-                label: 'Retail',
-                value: pop.retailExclusive,
-              ),
-
-              _DetailRow(
-                label: 'Sticker',
-                value: pop.eventSticker,
-              ),
-
-              _DetailRow(
-                label: 'LE',
-                value: pop.limitedEdition,
-              ),
-
-              _DetailRow(
-                label: 'Signature',
-                value: pop.signature,
-              ),
-
-              const SizedBox(height: 16),
-
-              _sectionTitle('Ownership'),
-
-              _DetailRow(
-                label: 'Owner',
-                value: pop.owner,
-              ),
-
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 8,
+                const SizedBox(height: AtlasSpacing.lg),
+                Text(
+                  pop.name,
+                  style: AtlasTypography.headingLarge,
+                  textAlign: TextAlign.start,
                 ),
-                child: Row(
+                const SizedBox(height: AtlasSpacing.sm),
+                Wrap(
+                  spacing: AtlasSpacing.sm,
+                  runSpacing: AtlasSpacing.sm,
                   children: [
-                    const SizedBox(
-                      width: 120,
-                      child: Text(
-                        'Quantity',
-                        style: TextStyle(
-                          fontWeight:
-                          FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(
-                        Icons.remove_circle,
-                      ),
-                      onPressed: () {
-                        _updateQuantity(
-                          pop.quantity - 1,
-                        );
-                      },
-                    ),
-                    Text(
-                      pop.quantity.toString(),
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight:
-                        FontWeight.bold,
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(
-                        Icons.add_circle,
-                      ),
-                      onPressed: () {
-                        _updateQuantity(
-                          pop.quantity + 1,
-                        );
-                      },
+                    _DetailBadge(label: numberLabel),
+                    _DetailBadge(label: pop.owner),
+                    _DetailBadge(
+                      label: pop.isWishlist ? 'Wishlist' : 'Owned',
                     ),
                   ],
                 ),
-              ),
-
-              const SizedBox(height: 16),
-
-              _sectionTitle('Value'),
-
-              _DetailRow(
-                label: 'Value',
-                value:
-                '\$${pop.value.toStringAsFixed(2)}',
-              ),
-
-              _DetailRow(
-                label: 'Paid',
-                value:
-                '\$${pop.pricePaid.toStringAsFixed(2)}',
-              ),
-            ],
+                const SizedBox(height: AtlasSpacing.lg),
+                AtlasGlassPanel(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _QuickStatLine(
+                        label: 'Current Value',
+                        value: valueLabel,
+                      ),
+                      const SizedBox(height: AtlasSpacing.xs),
+                      _QuickStatLine(
+                        label: 'Quantity',
+                        value: '${pop.quantity}',
+                      ),
+                      const SizedBox(height: AtlasSpacing.xs),
+                      _QuickStatLine(
+                        label: 'Collector Label',
+                        value: pop.collectorLabel,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
+          const SizedBox(height: AtlasSpacing.lg),
+          AtlasGlassCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _SectionHeader(
+                  title: 'Basic Information',
+                  icon: Icons.info_outline_rounded,
+                ),
+                const SizedBox(height: AtlasSpacing.md),
+                _DetailRow(
+                  label: 'Number',
+                  value: pop.number,
+                ),
+                _DetailRow(
+                  label: 'Category',
+                  value: pop.category,
+                ),
+                _DetailRow(
+                  label: 'Series',
+                  value: pop.series,
+                ),
+                _DetailRow(
+                  label: 'Edition',
+                  value: pop.edition,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AtlasSpacing.lg),
+          AtlasGlassCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _SectionHeader(
+                  title: 'Collector Identity',
+                  icon: Icons.verified_rounded,
+                ),
+                const SizedBox(height: AtlasSpacing.md),
+                _IdentityBadgeWrap(pop: pop),
+                const SizedBox(height: AtlasSpacing.md),
+                _DetailRow(
+                  label: 'Variant',
+                  value: pop.variant,
+                ),
+                _DetailRow(
+                  label: 'Retail Exclusive',
+                  value: pop.retailExclusive,
+                ),
+                _DetailRow(
+                  label: 'Event Sticker',
+                  value: pop.eventSticker,
+                ),
+                _DetailRow(
+                  label: 'Limited Edition',
+                  value: pop.limitedEdition,
+                ),
+                _DetailRow(
+                  label: 'Signature',
+                  value: pop.signature,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AtlasSpacing.lg),
+          AtlasGlassCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _SectionHeader(
+                  title: 'Ownership',
+                  icon: Icons.inventory_2_rounded,
+                ),
+                const SizedBox(height: AtlasSpacing.md),
+                _DetailRow(
+                  label: 'Owner',
+                  value: pop.owner,
+                ),
+                const SizedBox(height: AtlasSpacing.sm),
+                AtlasGlassPanel(
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Quantity',
+                          style: AtlasTypography.bodyMedium.copyWith(
+                            color: AtlasColors.textSecondary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.remove_circle_outline_rounded),
+                        onPressed: () => _updateQuantity(pop.quantity - 1),
+                      ),
+                      Text(
+                        '${pop.quantity}',
+                        style: AtlasTypography.headingSmall.copyWith(
+                          color: AtlasColors.vaultGold,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.add_circle_outline_rounded),
+                        onPressed: () => _updateQuantity(pop.quantity + 1),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AtlasSpacing.lg),
+          AtlasGlassCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _SectionHeader(
+                  title: 'Value',
+                  icon: Icons.attach_money_rounded,
+                ),
+                const SizedBox(height: AtlasSpacing.md),
+                _DetailRow(
+                  label: 'Value',
+                  value: valueLabel,
+                ),
+                _DetailRow(
+                  label: 'Paid',
+                  value: paidLabel,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AtlasSpacing.lg),
+          AtlasGlassCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _SectionHeader(
+                  title: 'Condition',
+                  icon: Icons.shield_rounded,
+                ),
+                const SizedBox(height: AtlasSpacing.md),
+                _DetailRow(
+                  label: 'Item Condition',
+                  value: pop.itemCondition,
+                ),
+                _DetailRow(
+                  label: 'Box Condition',
+                  value: pop.boxCondition,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AtlasSpacing.lg),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: _editPop,
+              icon: const Icon(Icons.edit_rounded),
+              label: const Text('Edit Pop'),
+            ),
+          ),
+        ],
       ),
     );
   }
+}
 
-  Widget _sectionTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(
-        bottom: 8,
-        top: 8,
+class _PopHeroImage extends StatelessWidget {
+  const _PopHeroImage({
+    required this.imageUrl,
+  });
+
+  final String imageUrl;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 170,
+      height: 210,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AtlasSpacing.lg),
+        border: Border.all(
+          color: AtlasColors.vaultGold.withValues(alpha: 0.28),
+        ),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: imageUrl.trim().isEmpty
+          ? const Icon(
+        Icons.inventory_2_rounded,
+        size: 72,
+      )
+          : Image.network(
+        imageUrl,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return const Icon(
+            Icons.inventory_2_rounded,
+            size: 72,
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({
+    required this.title,
+    required this.icon,
+  });
+
+  final String title;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(
+          icon,
+          color: AtlasColors.vaultGold,
+        ),
+        const SizedBox(width: AtlasSpacing.sm),
+        Expanded(
+          child: Text(
+            title,
+            style: AtlasTypography.headingSmall,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _QuickStatLine extends StatelessWidget {
+  const _QuickStatLine({
+    required this.label,
+    required this.value,
+  });
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            label,
+            style: AtlasTypography.bodyMedium.copyWith(
+              color: AtlasColors.textSecondary,
+            ),
+          ),
+        ),
+        Text(
+          _displayValue(value),
+          style: AtlasTypography.bodyMedium.copyWith(
+            color: AtlasColors.vaultGold,
+            fontWeight: FontWeight.bold,
+          ),
+          textAlign: TextAlign.right,
+        ),
+      ],
+    );
+  }
+}
+
+class _DetailRow extends StatelessWidget {
+  const _DetailRow({
+    required this.label,
+    required this.value,
+  });
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return AtlasGlassPanel(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 118,
+            child: Text(
+              label,
+              style: AtlasTypography.bodySmall.copyWith(
+                color: AtlasColors.textSecondary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              _displayValue(value),
+              style: AtlasTypography.bodyMedium,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DetailBadge extends StatelessWidget {
+  const _DetailBadge({
+    required this.label,
+  });
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AtlasSpacing.sm,
+        vertical: 5,
+      ),
+      decoration: BoxDecoration(
+        color: AtlasColors.vaultGold.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: AtlasColors.vaultGold.withValues(alpha: 0.36),
+        ),
       ),
       child: Text(
-        title,
-        style: const TextStyle(
-          fontSize: 18,
+        _displayValue(label),
+        style: AtlasTypography.bodySmall.copyWith(
+          color: AtlasColors.vaultGold,
           fontWeight: FontWeight.bold,
         ),
       ),
@@ -336,37 +530,101 @@ class _PopDetailsScreenState
   }
 }
 
-class _DetailRow extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _DetailRow({
-    required this.label,
-    required this.value,
+class _IdentityBadgeWrap extends StatelessWidget {
+  const _IdentityBadgeWrap({
+    required this.pop,
   });
+
+  final Pop pop;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        vertical: 8,
-      ),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 120,
-            child: Text(
-              label,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(value),
-          ),
-        ],
-      ),
+    final badges = _buildBadges();
+
+    if (badges.isEmpty) {
+      return const _DetailBadge(
+        label: 'Common / Standard',
+      );
+    }
+
+    return Wrap(
+      spacing: AtlasSpacing.sm,
+      runSpacing: AtlasSpacing.sm,
+      children: badges
+          .map(
+            (badge) => _DetailBadge(label: badge),
+      )
+          .toList(),
     );
   }
+
+  List<String> _buildBadges() {
+    final badges = <String>[];
+
+    if (_hasMeaningfulValue(pop.variant)) {
+      badges.add(_cleanBadgeLabel(pop.variant));
+    }
+
+    if (_hasMeaningfulValue(pop.retailExclusive)) {
+      badges.add('Exclusive');
+    }
+
+    if (_hasMeaningfulValue(pop.eventSticker)) {
+      badges.add('Sticker');
+    }
+
+    if (_hasMeaningfulValue(pop.limitedEdition)) {
+      badges.add('Limited');
+    }
+
+    if (_hasMeaningfulValue(pop.signature)) {
+      badges.add('Signed');
+    }
+
+    if (pop.isWishlist) {
+      badges.add('Wishlist');
+    }
+
+    return badges;
+  }
+
+  bool _hasMeaningfulValue(String value) {
+    final cleaned = value.trim().toLowerCase();
+
+    if (cleaned.isEmpty) {
+      return false;
+    }
+
+    return cleaned != 'none' &&
+        cleaned != 'common' &&
+        cleaned != 'standard' &&
+        cleaned != 'unsigned' &&
+        cleaned != 'no' &&
+        cleaned != 'n/a' &&
+        cleaned != 'na';
+  }
+
+  String _cleanBadgeLabel(String value) {
+    final cleaned = value.trim();
+
+    if (cleaned.length <= 18) {
+      return cleaned;
+    }
+
+    return '${cleaned.substring(0, 18)}...';
+  }
+}
+
+String _displayValue(String value) {
+  final cleaned = value.trim();
+
+  if (cleaned.isEmpty) {
+    return 'Not entered';
+  }
+
+  if (cleaned.toLowerCase() == 'none') {
+    return 'None';
+  }
+
+  return cleaned;
 }
