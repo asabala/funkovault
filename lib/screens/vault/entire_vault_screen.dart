@@ -9,7 +9,6 @@ import '../../theme/atlas_spacing.dart';
 import '../../theme/atlas_typography.dart';
 import '../../widgets/atlas/atlas_glass_card.dart';
 import '../../widgets/atlas/atlas_glass_panel.dart';
-import '../../widgets/vault_scroll_view.dart';
 import '../pop/pop_details_screen.dart';
 
 class EntireVaultScreen extends StatefulWidget {
@@ -20,17 +19,67 @@ class EntireVaultScreen extends StatefulWidget {
 }
 
 class _EntireVaultScreenState extends State<EntireVaultScreen> {
+  static const int _pageSize = 50;
+
   final _searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
 
   String _searchQuery = '';
+  int _visibleLimit = _pageSize;
+  bool _showBackToTop = false;
   _VaultSortMode _sortMode = _VaultSortMode.nameAz;
   _VaultFilterMode _filterMode = _VaultFilterMode.all;
 
   @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_handleScrollPosition);
+  }
+
+  void _handleScrollPosition() {
+    final shouldShow = _scrollController.offset > 500;
+
+    if (shouldShow != _showBackToTop) {
+      setState(() {
+        _showBackToTop = shouldShow;
+      });
+    }
+  }
+
+  void _scrollToTop() {
+    if (!_scrollController.hasClients) {
+      return;
+    }
+
+    _scrollController.animateTo(
+      0,
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  @override
   void dispose() {
+    _scrollController.removeListener(_handleScrollPosition);
+    _scrollController.dispose();
     _searchController.dispose();
 
     super.dispose();
+  }
+
+  void _resetVisibleLimit() {
+    _visibleLimit = _pageSize;
+  }
+
+  void _loadMoreResults(int totalResults) {
+    setState(() {
+      _visibleLimit = (_visibleLimit + _pageSize)
+          .clamp(
+        0,
+        totalResults,
+      )
+          .toInt();
+    });
   }
 
   void _resetVaultReviewControls() {
@@ -40,6 +89,7 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
       _searchQuery = '';
       _filterMode = _VaultFilterMode.all;
       _sortMode = _VaultSortMode.nameAz;
+      _resetVisibleLimit();
     });
   }
 
@@ -49,11 +99,15 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
     const repository = VaultRepository();
 
     final pops = repository.allPops(appState);
+    final searchedPops = _filterBySearch(pops);
     final filteredPops = _sortPops(
       _filterByMode(
-        _filterBySearch(pops),
+        searchedPops,
       ),
     );
+
+    final visiblePops = filteredPops.take(_visibleLimit).toList();
+    final hasMoreResults = visiblePops.length < filteredPops.length;
 
     final totalValue = pops.fold<double>(
       0,
@@ -70,8 +124,26 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
       appBar: AppBar(
         title: const Text('Entire Vault'),
       ),
-      body: VaultScrollView(
-        children: [
+      floatingActionButton: _showBackToTop
+          ? FloatingActionButton.extended(
+        onPressed: _scrollToTop,
+        icon: const Icon(Icons.keyboard_arrow_up_rounded),
+        label: const Text('Top'),
+      )
+          : null,
+        body: SafeArea(
+            child: SingleChildScrollView(
+              controller: _scrollController,
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              padding: const EdgeInsets.fromLTRB(
+                AtlasSpacing.md,
+                AtlasSpacing.md,
+                AtlasSpacing.md,
+                100,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
           AtlasGlassCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -123,6 +195,7 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
             onChanged: (value) {
               setState(() {
                 _searchQuery = value;
+                _resetVisibleLimit();
               });
             },
             onClear: () {
@@ -130,6 +203,7 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
 
               setState(() {
                 _searchQuery = '';
+                _resetVisibleLimit();
               });
             },
           ),
@@ -141,14 +215,25 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
             onFilterChanged: (filterMode) {
               setState(() {
                 _filterMode = filterMode;
+                _resetVisibleLimit();
               });
             },
             onSortChanged: (sortMode) {
               setState(() {
                 _sortMode = sortMode;
+                _resetVisibleLimit();
               });
             },
             onReset: _resetVaultReviewControls,
+          ),
+          const SizedBox(height: AtlasSpacing.md),
+          _VaultResultSummaryBar(
+            visibleCount: filteredPops.length,
+            totalCount: pops.length,
+            searchedCount: searchedPops.length,
+            filterMode: _filterMode,
+            sortMode: _sortMode,
+            searchQuery: _searchQuery,
           ),
           const SizedBox(height: AtlasSpacing.lg),
           if (pops.isEmpty)
@@ -157,12 +242,17 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
             const _NoSearchResultsCard()
           else
             _VaultPopListCard(
-              pops: filteredPops,
+              pops: visiblePops,
+              totalFilteredCount: filteredPops.length,
+              hasMoreResults: hasMoreResults,
               sortMode: _sortMode,
               filterMode: _filterMode,
+              onLoadMore: () => _loadMoreResults(filteredPops.length),
             ),
         ],
       ),
+            ),
+        ),
     );
   }
 
@@ -592,6 +682,61 @@ class _VaultDropdown<T> extends StatelessWidget {
   }
 }
 
+class _VaultResultSummaryBar extends StatelessWidget {
+  const _VaultResultSummaryBar({
+    required this.visibleCount,
+    required this.totalCount,
+    required this.searchedCount,
+    required this.filterMode,
+    required this.sortMode,
+    required this.searchQuery,
+  });
+
+  final int visibleCount;
+  final int totalCount;
+  final int searchedCount;
+  final _VaultFilterMode filterMode;
+  final _VaultSortMode sortMode;
+  final String searchQuery;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasSearch = searchQuery.trim().isNotEmpty;
+    final searchLabel = hasSearch ? 'Search: "${searchQuery.trim()}"' : 'Search: None';
+
+    return AtlasGlassPanel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Showing $visibleCount of $totalCount Pops',
+            style: AtlasTypography.bodyMedium.copyWith(
+              color: AtlasColors.vaultGold,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: AtlasSpacing.xs),
+          Text(
+            'Filter: ${filterMode.label} • Sort: ${sortMode.label}',
+            style: AtlasTypography.bodySmall.copyWith(
+              color: AtlasColors.textSecondary,
+            ),
+          ),
+          if (hasSearch) ...[
+            const SizedBox(height: AtlasSpacing.xs),
+            Text(
+              '$searchLabel • Search matched $searchedCount',
+              style: AtlasTypography.bodySmall.copyWith(
+                color: AtlasColors.textSecondary,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
 class _VaultSummaryItem extends StatelessWidget {
   const _VaultSummaryItem({
     required this.value,
@@ -659,13 +804,19 @@ class _NoSearchResultsCard extends StatelessWidget {
 class _VaultPopListCard extends StatelessWidget {
   const _VaultPopListCard({
     required this.pops,
+    required this.totalFilteredCount,
+    required this.hasMoreResults,
     required this.sortMode,
     required this.filterMode,
+    required this.onLoadMore,
   });
 
   final List<Pop> pops;
+  final int totalFilteredCount;
+  final bool hasMoreResults;
   final _VaultSortMode sortMode;
   final _VaultFilterMode filterMode;
+  final VoidCallback onLoadMore;
 
   @override
   Widget build(BuildContext context) {
@@ -679,7 +830,7 @@ class _VaultPopListCard extends StatelessWidget {
           ),
           const SizedBox(height: AtlasSpacing.sm),
           Text(
-            '${pops.length} result${pops.length == 1 ? '' : 's'} • Filtered by ${filterMode.label} • Sorted by ${sortMode.label}. Tap any Pop to open details.',
+            'Showing ${pops.length} of $totalFilteredCount result${totalFilteredCount == 1 ? '' : 's'} • Filtered by ${filterMode.label} • Sorted by ${sortMode.label}. Tap any Pop to open details.',
             style: AtlasTypography.bodySmall.copyWith(
               color: AtlasColors.textSecondary,
             ),
@@ -691,6 +842,17 @@ class _VaultPopListCard extends StatelessWidget {
               child: _VaultPopTile(pop: pop),
             ),
           ),
+          if (hasMoreResults) ...[
+            const SizedBox(height: AtlasSpacing.md),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: onLoadMore,
+                icon: const Icon(Icons.expand_more_rounded),
+                label: const Text('Load More Pops'),
+              ),
+            ),
+          ],
         ],
       ),
     );
