@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../atlas/repositories/vault_repository.dart';
 import '../../models/pop.dart';
 import '../../services/app_state.dart';
+import '../../services/hive_service.dart';
 import '../../theme/atlas_colors.dart';
 import '../../theme/atlas_spacing.dart';
 import '../../theme/atlas_typography.dart';
@@ -20,6 +21,7 @@ class EntireVaultScreen extends StatefulWidget {
 
 class _EntireVaultScreenState extends State<EntireVaultScreen> {
   static const int _pageSize = 50;
+  static const String _preferencesStorageKey = 'entire_vault_preferences';
 
   final _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
@@ -34,6 +36,7 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
   @override
   void initState() {
     super.initState();
+    _loadVaultPreferences();
     _scrollController.addListener(_handleScrollPosition);
   }
 
@@ -44,6 +47,65 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
     _searchController.dispose();
 
     super.dispose();
+  }
+
+  void _loadVaultPreferences() {
+    final data = HiveService.loadData(
+      _preferencesStorageKey,
+    );
+
+    if (data == null) {
+      return;
+    }
+
+    _filterMode = _filterModeFromStorage(
+      data['filterMode'],
+    );
+
+    _sortMode = _sortModeFromStorage(
+      data['sortMode'],
+    );
+
+    _showImages = data['showImages'] == true;
+  }
+
+  Future<void> _saveVaultPreferences() async {
+    await HiveService.saveData(
+      _preferencesStorageKey,
+      {
+        'filterMode': _filterMode.name,
+        'sortMode': _sortMode.name,
+        'showImages': _showImages,
+      },
+    );
+  }
+
+  _VaultFilterMode _filterModeFromStorage(dynamic value) {
+    if (value is! String) {
+      return _VaultFilterMode.all;
+    }
+
+    for (final mode in _VaultFilterMode.values) {
+      if (mode.name == value) {
+        return mode;
+      }
+    }
+
+    return _VaultFilterMode.all;
+  }
+
+  _VaultSortMode _sortModeFromStorage(dynamic value) {
+    if (value is! String) {
+      return _VaultSortMode.nameAz;
+    }
+
+    for (final mode in _VaultSortMode.values) {
+      if (mode.name == value) {
+        return mode;
+      }
+    }
+
+    return _VaultSortMode.nameAz;
   }
 
   void _handleScrollPosition() {
@@ -83,15 +145,18 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
     });
   }
 
-  void _resetVaultReviewControls() {
+  Future<void> _resetVaultReviewControls() async {
     _searchController.clear();
 
     setState(() {
       _searchQuery = '';
       _filterMode = _VaultFilterMode.all;
       _sortMode = _VaultSortMode.nameAz;
+      _showImages = false;
       _resetVisibleLimit();
     });
+
+    await _saveVaultPreferences();
   }
 
   @override
@@ -128,7 +193,8 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
 
     final hasActiveReviewControls = _searchQuery.trim().isNotEmpty ||
         _filterMode != _VaultFilterMode.all ||
-        _sortMode != _VaultSortMode.nameAz;
+        _sortMode != _VaultSortMode.nameAz ||
+        _showImages;
 
     final missingValueCount = pops.where((pop) => pop.value <= 0).length;
 
@@ -224,27 +290,33 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
                 selectedFilter: _filterMode,
                 selectedSort: _sortMode,
                 hasActiveControls: hasActiveReviewControls,
-                onFilterChanged: (filterMode) {
+                onFilterChanged: (filterMode) async {
                   setState(() {
                     _filterMode = filterMode;
                     _resetVisibleLimit();
                   });
+
+                  await _saveVaultPreferences();
                 },
-                onSortChanged: (sortMode) {
+                onSortChanged: (sortMode) async {
                   setState(() {
                     _sortMode = sortMode;
                     _resetVisibleLimit();
                   });
+
+                  await _saveVaultPreferences();
                 },
                 onReset: _resetVaultReviewControls,
               ),
               const SizedBox(height: AtlasSpacing.md),
               _VaultImageToggleCard(
                 showImages: _showImages,
-                onChanged: (value) {
+                onChanged: (value) async {
                   setState(() {
                     _showImages = value;
                   });
+
+                  await _saveVaultPreferences();
                 },
               ),
               const SizedBox(height: AtlasSpacing.md),
@@ -603,7 +675,7 @@ class _VaultControlsCard extends StatelessWidget {
           ),
           const SizedBox(height: AtlasSpacing.sm),
           Text(
-            'Filter and sort your vault without taking up extra space.',
+            'Filter and sort your vault. Filter, sort, and image settings are remembered.',
             style: AtlasTypography.bodyMedium.copyWith(
               color: AtlasColors.textSecondary,
             ),
@@ -642,12 +714,32 @@ class _VaultControlsCard extends StatelessWidget {
           ),
           if (hasActiveControls) ...[
             const SizedBox(height: AtlasSpacing.md),
+            AtlasGlassPanel(
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.bookmark_added_outlined,
+                    color: AtlasColors.vaultGold,
+                  ),
+                  const SizedBox(width: AtlasSpacing.md),
+                  Expanded(
+                    child: Text(
+                      'Custom view active. Filter, sort, and image settings will be remembered.',
+                      style: AtlasTypography.bodySmall.copyWith(
+                        color: AtlasColors.textSecondary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AtlasSpacing.md),
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
                 onPressed: onReset,
                 icon: const Icon(Icons.restart_alt_rounded),
-                label: const Text('Reset Search, Filter, and Sort'),
+                label: const Text('Reset View'),
               ),
             ),
           ],
