@@ -28,6 +28,9 @@ class Pop {
 
   final bool isWishlist;
 
+  final String dateAdded;
+  final String lastUpdated;
+
   const Pop({
     required this.id,
     required this.name,
@@ -48,6 +51,8 @@ class Pop {
     required this.imageUrl,
     required this.owner,
     required this.isWishlist,
+    this.dateAdded = '',
+    this.lastUpdated = '',
   });
 
   factory Pop.fromJson(
@@ -75,6 +80,8 @@ class Pop {
       imageUrl: json['imageUrl'] ?? '',
       owner: json['owner'] ?? 'Shared',
       isWishlist: json['isWishlist'] ?? false,
+      dateAdded: json['dateAdded'] ?? '',
+      lastUpdated: json['lastUpdated'] ?? '',
     );
   }
 
@@ -159,6 +166,8 @@ class Pop {
     String? imageUrl,
     String? owner,
     bool? isWishlist,
+    String? dateAdded,
+    String? lastUpdated,
   }) {
     return Pop(
       id: id ?? this.id,
@@ -180,6 +189,8 @@ class Pop {
       imageUrl: imageUrl ?? this.imageUrl,
       owner: owner ?? this.owner,
       isWishlist: isWishlist ?? this.isWishlist,
+      dateAdded: dateAdded ?? this.dateAdded,
+      lastUpdated: lastUpdated ?? this.lastUpdated,
     );
   }
 
@@ -204,6 +215,8 @@ class Pop {
       'imageUrl': imageUrl,
       'owner': owner,
       'isWishlist': isWishlist,
+      'dateAdded': dateAdded,
+      'lastUpdated': lastUpdated,
     };
   }
 

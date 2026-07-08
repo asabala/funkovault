@@ -68,6 +68,8 @@ class _PopDetailsScreenState extends State<PopDetailsScreen> {
       imageUrl: pop.imageUrl,
       owner: pop.owner,
       isWishlist: !pop.isWishlist,
+      dateAdded: pop.dateAdded,
+      lastUpdated: DateTime.now().toIso8601String(),
     );
 
     await context.read<AppState>().updatePop(updatedPop);
@@ -102,6 +104,8 @@ class _PopDetailsScreenState extends State<PopDetailsScreen> {
       imageUrl: pop.imageUrl,
       owner: pop.owner,
       isWishlist: pop.isWishlist,
+      dateAdded: pop.dateAdded,
+      lastUpdated: DateTime.now().toIso8601String(),
     );
 
     await context.read<AppState>().updatePop(updatedPop);
@@ -117,9 +121,10 @@ class _PopDetailsScreenState extends State<PopDetailsScreen> {
     pop.number.trim().isEmpty ? 'No #' : '#${pop.number.trim()}';
     final valueLabel =
     pop.value <= 0 ? 'Value needed' : '\$${pop.value.toStringAsFixed(2)}';
-    final paidLabel = pop.pricePaid <= 0
-        ? 'Not entered'
-        : '\$${pop.pricePaid.toStringAsFixed(2)}';
+    final paidLabel =
+    pop.pricePaid <= 0 ? 'Not entered' : '\$${pop.pricePaid.toStringAsFixed(2)}';
+    final dateAddedLabel = _formatDateLabel(pop.dateAdded);
+    final lastUpdatedLabel = _formatDateLabel(pop.lastUpdated);
 
     return Scaffold(
       appBar: AppBar(
@@ -188,6 +193,27 @@ class _PopDetailsScreenState extends State<PopDetailsScreen> {
                       ),
                     ],
                   ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AtlasSpacing.lg),
+          AtlasGlassCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _SectionHeader(
+                  title: 'Timeline',
+                  icon: Icons.history_rounded,
+                ),
+                const SizedBox(height: AtlasSpacing.md),
+                _DetailRow(
+                  label: 'Added',
+                  value: dateAddedLabel,
+                ),
+                _DetailRow(
+                  label: 'Updated',
+                  value: lastUpdatedLabel,
                 ),
               ],
             ),
@@ -369,27 +395,43 @@ class _PopHeroImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cleanImageUrl = imageUrl.trim();
+
     return Container(
       width: 170,
       height: 210,
       decoration: BoxDecoration(
+        color: AtlasColors.textSecondary.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(AtlasSpacing.lg),
         border: Border.all(
           color: AtlasColors.vaultGold.withValues(alpha: 0.28),
         ),
       ),
       clipBehavior: Clip.antiAlias,
-      child: imageUrl.trim().isEmpty
+      child: cleanImageUrl.isEmpty
           ? const Icon(
         Icons.inventory_2_rounded,
         size: 72,
       )
           : Image.network(
-        imageUrl,
-        fit: BoxFit.cover,
+        cleanImageUrl,
+        fit: BoxFit.contain,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) {
+            return child;
+          }
+
+          return const Center(
+            child: SizedBox(
+              width: 32,
+              height: 32,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          );
+        },
         errorBuilder: (context, error, stackTrace) {
           return const Icon(
-            Icons.inventory_2_rounded,
+            Icons.broken_image_rounded,
             size: 72,
           );
         },
@@ -613,6 +655,26 @@ class _IdentityBadgeWrap extends StatelessWidget {
 
     return '${cleaned.substring(0, 18)}...';
   }
+}
+
+String _formatDateLabel(String value) {
+  final cleaned = value.trim();
+
+  if (cleaned.isEmpty) {
+    return 'Before date tracking';
+  }
+
+  final parsed = DateTime.tryParse(cleaned);
+
+  if (parsed == null) {
+    return cleaned;
+  }
+
+  final month = parsed.month.toString().padLeft(2, '0');
+  final day = parsed.day.toString().padLeft(2, '0');
+  final year = parsed.year.toString();
+
+  return '$month/$day/$year';
 }
 
 String _displayValue(String value) {

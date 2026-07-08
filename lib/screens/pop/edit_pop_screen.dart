@@ -3,24 +3,28 @@ import 'package:provider/provider.dart';
 
 import '../../atlas/engines/atlas_insight_engine.dart';
 import '../../atlas/engines/atlas_recommendation_engine.dart';
+import '../../atlas/services/atlas_activity_service.dart';
 import '../../atlas/widgets/atlas_insight_card.dart';
 import '../../models/pop.dart';
 import '../../services/app_state.dart';
-import '../../widgets/form_section_title.dart';
+import '../../theme/atlas_colors.dart';
+import '../../theme/atlas_spacing.dart';
+import '../../theme/atlas_typography.dart';
+import '../../widgets/atlas/atlas_glass_card.dart';
+import '../../widgets/atlas/atlas_glass_panel.dart';
 import '../../widgets/labeled_dropdown.dart';
-import '../../atlas/services/atlas_activity_service.dart';
+import '../../widgets/vault_scroll_view.dart';
 
 class EditPopScreen extends StatefulWidget {
-  final Pop pop;
-
   const EditPopScreen({
     super.key,
     required this.pop,
   });
 
+  final Pop pop;
+
   @override
-  State<EditPopScreen> createState() =>
-      _EditPopScreenState();
+  State<EditPopScreen> createState() => _EditPopScreenState();
 }
 
 class _EditPopScreenState extends State<EditPopScreen> {
@@ -125,7 +129,9 @@ class _EditPopScreenState extends State<EditPopScreen> {
   }
 
   String _formatCategory(String value) {
-    if (value.isEmpty) return '';
+    if (value.isEmpty) {
+      return '';
+    }
 
     const upperCategories = {
       'dc': 'DC',
@@ -147,8 +153,7 @@ class _EditPopScreenState extends State<EditPopScreen> {
         .map(
           (word) => word.isEmpty
           ? word
-          : word[0].toUpperCase() +
-          word.substring(1).toLowerCase(),
+          : word[0].toUpperCase() + word.substring(1).toLowerCase(),
     )
         .join(' ');
   }
@@ -157,16 +162,11 @@ class _EditPopScreenState extends State<EditPopScreen> {
   void initState() {
     super.initState();
 
-    _nameController =
-        TextEditingController(text: widget.pop.name);
-    _numberController =
-        TextEditingController(text: widget.pop.number);
-    _categoryController =
-        TextEditingController(text: widget.pop.category);
-    _seriesController =
-        TextEditingController(text: widget.pop.series);
-    _valueController =
-        TextEditingController(text: widget.pop.value.toString());
+    _nameController = TextEditingController(text: widget.pop.name);
+    _numberController = TextEditingController(text: widget.pop.number);
+    _categoryController = TextEditingController(text: widget.pop.category);
+    _seriesController = TextEditingController(text: widget.pop.series);
+    _valueController = TextEditingController(text: widget.pop.value.toString());
     _pricePaidController =
         TextEditingController(text: widget.pop.pricePaid.toString());
     _quantityController =
@@ -181,9 +181,7 @@ class _EditPopScreenState extends State<EditPopScreen> {
     _variant = _safeOption(
       widget.pop.variant,
       _variantOptions,
-      widget.pop.edition.isNotEmpty
-          ? widget.pop.edition
-          : 'Common',
+      widget.pop.edition.isNotEmpty ? widget.pop.edition : 'Common',
     );
 
     if (!_variantOptions.contains(_variant)) {
@@ -227,7 +225,7 @@ class _EditPopScreenState extends State<EditPopScreen> {
     super.dispose();
   }
 
-  void _saveChanges() {
+  Future<void> _saveChanges() async {
     final updatedPop = Pop(
       id: widget.pop.id,
       name: _nameController.text.trim(),
@@ -243,25 +241,29 @@ class _EditPopScreenState extends State<EditPopScreen> {
       limitedEdition: _limitedEdition,
       signature: _signature,
       value: double.tryParse(_valueController.text) ?? 0,
-      pricePaid:
-      double.tryParse(_pricePaidController.text) ?? 0,
-      quantity:
-      int.tryParse(_quantityController.text) ?? 1,
+      pricePaid: double.tryParse(_pricePaidController.text) ?? 0,
+      quantity: int.tryParse(_quantityController.text) ?? 1,
       itemCondition: widget.pop.itemCondition,
       boxCondition: widget.pop.boxCondition,
       imageUrl: widget.pop.imageUrl,
       owner: _owner,
       isWishlist: widget.pop.isWishlist,
+      dateAdded: widget.pop.dateAdded,
+      lastUpdated: DateTime.now().toIso8601String(),
     );
 
-    context.read<AppState>().updatePop(updatedPop);
+    await context.read<AppState>().updatePop(updatedPop);
 
     AtlasActivityService.record(
       title: 'Pop Updated',
-      description:
-      '${updatedPop.name} #${updatedPop.number} was updated.',
+      description: '${updatedPop.name} #${updatedPop.number} was updated.',
       type: 'pop_updated',
     );
+
+    if (!mounted) {
+      return;
+    }
+
     Navigator.pop(context, updatedPop);
   }
 
@@ -269,8 +271,7 @@ class _EditPopScreenState extends State<EditPopScreen> {
   Widget build(BuildContext context) {
     const insightEngine = AtlasInsightEngine();
 
-    final collectorInsight =
-    insightEngine.buildCollectorIdentityInsight(
+    final collectorInsight = insightEngine.buildCollectorIdentityInsight(
       variant: _variant,
       retailExclusive: _retailExclusive,
       eventSticker: _eventSticker,
@@ -278,20 +279,17 @@ class _EditPopScreenState extends State<EditPopScreen> {
       signature: _signature,
     );
 
-    const recommendationEngine =
-    AtlasRecommendationEngine();
+    const recommendationEngine = AtlasRecommendationEngine();
 
     final collectorRecommendation =
-    recommendationEngine
-        .buildCollectorIdentityRecommendation(
+    recommendationEngine.buildCollectorIdentityRecommendation(
       variant: _variant,
       retailExclusive: _retailExclusive,
       eventSticker: _eventSticker,
       limitedEdition: _limitedEdition,
       signature: _signature,
       value: double.tryParse(_valueController.text) ?? 0,
-      pricePaid:
-      double.tryParse(_pricePaidController.text) ?? 0,
+      pricePaid: double.tryParse(_pricePaidController.text) ?? 0,
     );
 
     return Scaffold(
@@ -299,216 +297,383 @@ class _EditPopScreenState extends State<EditPopScreen> {
       appBar: AppBar(
         title: const Text('Edit Pop'),
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          keyboardDismissBehavior:
-          ScrollViewKeyboardDismissBehavior.onDrag,
-          padding:
-          const EdgeInsets.fromLTRB(16, 16, 16, 100),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              children: [
-                const FormSectionTitle(
-                  'Basic Information',
-                ),
-
-                TextFormField(
-                  controller: _nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Pop Name',
-                    border: OutlineInputBorder(),
+      body: Form(
+        key: _formKey,
+        child: VaultScrollView(
+          children: [
+            AtlasGlassCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Edit Pop',
+                    style: AtlasTypography.headingLarge,
                   ),
-                ),
-
-                const SizedBox(height: 16),
-
-                TextFormField(
-                  controller: _numberController,
-                  decoration: const InputDecoration(
-                    labelText: 'Pop Number',
-                    border: OutlineInputBorder(),
+                  const SizedBox(height: AtlasSpacing.sm),
+                  Text(
+                    'Update the Pop details, collector identity, ownership, and value information.',
+                    style: AtlasTypography.bodyMedium.copyWith(
+                      color: AtlasColors.textSecondary,
+                    ),
                   ),
-                ),
-
-                const SizedBox(height: 16),
-
-                TextFormField(
-                  controller: _categoryController,
-                  decoration: const InputDecoration(
-                    labelText: 'Category',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                TextFormField(
-                  controller: _seriesController,
-                  decoration: const InputDecoration(
-                    labelText: 'Series',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-
-                const FormSectionTitle(
-                  'Collector Identity',
-                ),
-
-                AtlasInsightCard(
-                  title: collectorInsight.title,
-                  message: collectorInsight.message,
-                ),
-
-                if (collectorRecommendation != null) ...[
-                  const SizedBox(height: 12),
-                  AtlasInsightCard(
-                    title: collectorRecommendation.title,
-                    message: collectorRecommendation.message,
-                    icon: Icons.lightbulb_outline,
+                  const SizedBox(height: AtlasSpacing.lg),
+                  AtlasGlassPanel(
+                    child: Row(
+                      children: [
+                        _EditPopImage(
+                          imageUrl: widget.pop.imageUrl,
+                        ),
+                        const SizedBox(width: AtlasSpacing.md),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                widget.pop.name,
+                                style: AtlasTypography.headingSmall,
+                              ),
+                              const SizedBox(height: AtlasSpacing.xs),
+                              Text(
+                                widget.pop.number.trim().isEmpty
+                                    ? 'No number saved'
+                                    : '#${widget.pop.number}',
+                                style: AtlasTypography.bodySmall.copyWith(
+                                  color: AtlasColors.textSecondary,
+                                ),
+                              ),
+                              const SizedBox(height: AtlasSpacing.xs),
+                              Text(
+                                widget.pop.collectorLabel,
+                                style: AtlasTypography.bodySmall.copyWith(
+                                  color: AtlasColors.vaultGold,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
-
-                const SizedBox(height: 16),
-
-                LabeledDropdown(
-                  label: 'Variant',
-                  value: _variant,
-                  options: _variantOptions,
-                  onChanged: (value) {
-                    setState(() {
-                      _variant = value;
-                    });
-                  },
-                ),
-
-                const SizedBox(height: 16),
-
-                LabeledDropdown(
-                  label: 'Retail Exclusive',
-                  value: _retailExclusive,
-                  options: _retailOptions,
-                  onChanged: (value) {
-                    setState(() {
-                      _retailExclusive = value;
-                    });
-                  },
-                ),
-
-                const SizedBox(height: 16),
-
-                LabeledDropdown(
-                  label: 'Event Sticker',
-                  value: _eventSticker,
-                  options: _eventOptions,
-                  onChanged: (value) {
-                    setState(() {
-                      _eventSticker = value;
-                    });
-                  },
-                ),
-
-                const SizedBox(height: 16),
-
-                LabeledDropdown(
-                  label: 'Limited Edition',
-                  value: _limitedEdition,
-                  options: _limitedOptions,
-                  onChanged: (value) {
-                    setState(() {
-                      _limitedEdition = value;
-                    });
-                  },
-                ),
-
-                const SizedBox(height: 16),
-
-                LabeledDropdown(
-                  label: 'Signature',
-                  value: _signature,
-                  options: _signatureOptions,
-                  onChanged: (value) {
-                    setState(() {
-                      _signature = value;
-                    });
-                  },
-                ),
-
-                const SizedBox(height: 24),
-
-                const FormSectionTitle('Ownership'),
-
-                LabeledDropdown(
-                  label: 'Owner',
-                  value: _owner,
-                  options: _ownerOptions,
-                  onChanged: (value) {
-                    setState(() {
-                      _owner = value;
-                    });
-                  },
-                ),
-
-                const SizedBox(height: 16),
-
-                TextFormField(
-                  controller: _quantityController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Quantity',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-
-                const FormSectionTitle('Value'),
-
-                TextFormField(
-                  controller: _valueController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Estimated Value (\$)',
-                    border: OutlineInputBorder(),
-                  ),
-                  onChanged: (_) {
-                    setState(() {});
-                  },
-                ),
-
-                const SizedBox(height: 16),
-
-                TextFormField(
-                  controller: _pricePaidController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Price Paid (\$)',
-                    border: OutlineInputBorder(),
-                  ),
-                  onChanged: (_) {
-                    setState(() {});
-                  },
-                ),
-              ],
+              ),
             ),
-          ),
+            const SizedBox(height: AtlasSpacing.lg),
+            AtlasGlassCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const _EditSectionHeader(
+                    title: 'Basic Information',
+                    icon: Icons.info_outline_rounded,
+                  ),
+                  const SizedBox(height: AtlasSpacing.md),
+                  _AtlasTextField(
+                    controller: _nameController,
+                    label: 'Pop Name',
+                    icon: Icons.badge_outlined,
+                  ),
+                  const SizedBox(height: AtlasSpacing.md),
+                  _AtlasTextField(
+                    controller: _numberController,
+                    label: 'Pop Number',
+                    icon: Icons.tag_rounded,
+                  ),
+                  const SizedBox(height: AtlasSpacing.md),
+                  _AtlasTextField(
+                    controller: _categoryController,
+                    label: 'Category',
+                    icon: Icons.category_outlined,
+                  ),
+                  const SizedBox(height: AtlasSpacing.md),
+                  _AtlasTextField(
+                    controller: _seriesController,
+                    label: 'Series',
+                    icon: Icons.collections_bookmark_outlined,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AtlasSpacing.lg),
+            AtlasGlassCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const _EditSectionHeader(
+                    title: 'Collector Identity',
+                    icon: Icons.verified_rounded,
+                  ),
+                  const SizedBox(height: AtlasSpacing.md),
+                  AtlasInsightCard(
+                    title: collectorInsight.title,
+                    message: collectorInsight.message,
+                  ),
+                  if (collectorRecommendation != null) ...[
+                    const SizedBox(height: AtlasSpacing.md),
+                    AtlasInsightCard(
+                      title: collectorRecommendation.title,
+                      message: collectorRecommendation.message,
+                      icon: Icons.lightbulb_outline,
+                    ),
+                  ],
+                  const SizedBox(height: AtlasSpacing.lg),
+                  _AtlasDropdownPanel(
+                    child: LabeledDropdown(
+                      label: 'Variant',
+                      value: _variant,
+                      options: _variantOptions,
+                      onChanged: (value) {
+                        setState(() {
+                          _variant = value;
+                        });
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: AtlasSpacing.md),
+                  _AtlasDropdownPanel(
+                    child: LabeledDropdown(
+                      label: 'Retail Exclusive',
+                      value: _retailExclusive,
+                      options: _retailOptions,
+                      onChanged: (value) {
+                        setState(() {
+                          _retailExclusive = value;
+                        });
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: AtlasSpacing.md),
+                  _AtlasDropdownPanel(
+                    child: LabeledDropdown(
+                      label: 'Event Sticker',
+                      value: _eventSticker,
+                      options: _eventOptions,
+                      onChanged: (value) {
+                        setState(() {
+                          _eventSticker = value;
+                        });
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: AtlasSpacing.md),
+                  _AtlasDropdownPanel(
+                    child: LabeledDropdown(
+                      label: 'Limited Edition',
+                      value: _limitedEdition,
+                      options: _limitedOptions,
+                      onChanged: (value) {
+                        setState(() {
+                          _limitedEdition = value;
+                        });
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: AtlasSpacing.md),
+                  _AtlasDropdownPanel(
+                    child: LabeledDropdown(
+                      label: 'Signature',
+                      value: _signature,
+                      options: _signatureOptions,
+                      onChanged: (value) {
+                        setState(() {
+                          _signature = value;
+                        });
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AtlasSpacing.lg),
+            AtlasGlassCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const _EditSectionHeader(
+                    title: 'Ownership',
+                    icon: Icons.inventory_2_rounded,
+                  ),
+                  const SizedBox(height: AtlasSpacing.md),
+                  _AtlasDropdownPanel(
+                    child: LabeledDropdown(
+                      label: 'Owner',
+                      value: _owner,
+                      options: _ownerOptions,
+                      onChanged: (value) {
+                        setState(() {
+                          _owner = value;
+                        });
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: AtlasSpacing.md),
+                  _AtlasTextField(
+                    controller: _quantityController,
+                    label: 'Quantity',
+                    icon: Icons.format_list_numbered_rounded,
+                    keyboardType: TextInputType.number,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AtlasSpacing.lg),
+            AtlasGlassCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const _EditSectionHeader(
+                    title: 'Value',
+                    icon: Icons.attach_money_rounded,
+                  ),
+                  const SizedBox(height: AtlasSpacing.md),
+                  _AtlasTextField(
+                    controller: _valueController,
+                    label: 'Estimated Value (\$)',
+                    icon: Icons.trending_up_rounded,
+                    keyboardType: TextInputType.number,
+                    onChanged: (_) {
+                      setState(() {});
+                    },
+                  ),
+                  const SizedBox(height: AtlasSpacing.md),
+                  _AtlasTextField(
+                    controller: _pricePaidController,
+                    label: 'Price Paid (\$)',
+                    icon: Icons.payments_outlined,
+                    keyboardType: TextInputType.number,
+                    onChanged: (_) {
+                      setState(() {});
+                    },
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AtlasSpacing.xl),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: _saveChanges,
+                icon: const Icon(Icons.save_rounded),
+                label: const Text('Save Changes'),
+              ),
+            ),
+          ],
         ),
       ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: _saveChanges,
-              icon: const Icon(Icons.save),
-              label: const Text('Save Changes'),
-            ),
-          ),
+    );
+  }
+}
+
+class _EditPopImage extends StatelessWidget {
+  const _EditPopImage({
+    required this.imageUrl,
+  });
+
+  final String imageUrl;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 76,
+      height: 96,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AtlasSpacing.md),
+        border: Border.all(
+          color: AtlasColors.vaultGold.withValues(alpha: 0.28),
         ),
       ),
+      clipBehavior: Clip.antiAlias,
+      child: imageUrl.trim().isEmpty
+          ? const Icon(
+        Icons.inventory_2_rounded,
+        size: 40,
+      )
+          : Image.network(
+        imageUrl,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return const Icon(
+            Icons.inventory_2_rounded,
+            size: 40,
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _EditSectionHeader extends StatelessWidget {
+  const _EditSectionHeader({
+    required this.title,
+    required this.icon,
+  });
+
+  final String title;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(
+          icon,
+          color: AtlasColors.vaultGold,
+        ),
+        const SizedBox(width: AtlasSpacing.sm),
+        Expanded(
+          child: Text(
+            title,
+            style: AtlasTypography.headingSmall,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _AtlasTextField extends StatelessWidget {
+  const _AtlasTextField({
+    required this.controller,
+    required this.label,
+    required this.icon,
+    this.keyboardType,
+    this.onChanged,
+  });
+
+  final TextEditingController controller;
+  final String label;
+  final IconData icon;
+  final TextInputType? keyboardType;
+  final ValueChanged<String>? onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return AtlasGlassPanel(
+      child: TextFormField(
+        controller: controller,
+        keyboardType: keyboardType,
+        onChanged: onChanged,
+        decoration: InputDecoration(
+          labelText: label,
+          prefixIcon: Icon(icon),
+          border: const OutlineInputBorder(),
+        ),
+      ),
+    );
+  }
+}
+
+class _AtlasDropdownPanel extends StatelessWidget {
+  const _AtlasDropdownPanel({
+    required this.child,
+  });
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return AtlasGlassPanel(
+      child: child,
     );
   }
 }

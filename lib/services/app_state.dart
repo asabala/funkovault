@@ -78,7 +78,8 @@ class AppState extends ChangeNotifier {
     );
 
     if (data != null) {
-      _selectedCollection = data['selectedCollection'] ?? 'Entire Family Collection';
+      _selectedCollection =
+          data['selectedCollection'] ?? 'Entire Family Collection';
 
       _collections.clear();
       _activities.clear();
@@ -205,6 +206,8 @@ class AppState extends ChangeNotifier {
       return;
     }
 
+    final now = DateTime.now().toIso8601String();
+
     final existingIndex = pops.indexWhere(
           (existingPop) => existingPop.duplicateKey == pop.duplicateKey,
     );
@@ -214,6 +217,7 @@ class AppState extends ChangeNotifier {
 
       pops[existingIndex] = existingPop.copyWith(
         quantity: existingPop.quantity + pop.quantity,
+        lastUpdated: now,
       );
 
       await addActivity(
@@ -229,17 +233,22 @@ class AppState extends ChangeNotifier {
         ),
       );
     } else {
-      pops.add(pop);
+      final datedPop = pop.copyWith(
+        dateAdded: pop.dateAdded.trim().isEmpty ? now : pop.dateAdded,
+        lastUpdated: pop.lastUpdated.trim().isEmpty ? now : pop.lastUpdated,
+      );
+
+      pops.add(datedPop);
 
       await addActivity(
         Activity(
           id: DateTime.now().millisecondsSinceEpoch.toString(),
           action: 'pop_added',
-          popName: pop.name,
-          popNumber: pop.number,
-          owner: pop.owner,
-          actor: pop.owner,
-          details: '${pop.name} added',
+          popName: datedPop.name,
+          popNumber: datedPop.number,
+          owner: datedPop.owner,
+          actor: datedPop.owner,
+          details: '${datedPop.name} added',
           timestamp: DateTime.now(),
         ),
       );
@@ -275,6 +284,8 @@ class AppState extends ChangeNotifier {
     )
         .toSet();
 
+    final now = DateTime.now().toIso8601String();
+
     var added = 0;
     var skipped = 0;
 
@@ -286,7 +297,16 @@ class AppState extends ChangeNotifier {
         continue;
       }
 
-      currentPops.add(importedPop);
+      final datedPop = importedPop.copyWith(
+        dateAdded: importedPop.dateAdded.trim().isEmpty
+            ? now
+            : importedPop.dateAdded,
+        lastUpdated: importedPop.lastUpdated.trim().isEmpty
+            ? now
+            : importedPop.lastUpdated,
+      );
+
+      currentPops.add(datedPop);
       existingKeys.add(key);
       added++;
     }
@@ -364,7 +384,17 @@ class AppState extends ChangeNotifier {
     );
 
     if (index != -1) {
-      pops[index] = updatedPop;
+      final existingPop = pops[index];
+      final now = DateTime.now().toIso8601String();
+
+      pops[index] = updatedPop.copyWith(
+        dateAdded: updatedPop.dateAdded.trim().isEmpty
+            ? existingPop.dateAdded
+            : updatedPop.dateAdded,
+        lastUpdated: updatedPop.lastUpdated.trim().isEmpty
+            ? now
+            : updatedPop.lastUpdated,
+      );
 
       await _saveData();
 
@@ -382,12 +412,15 @@ class AppState extends ChangeNotifier {
       return;
     }
 
+    final now = DateTime.now().toIso8601String();
+
     for (var i = 0; i < pops.length; i++) {
       if (popIds.contains(pops[i].id)) {
         final oldPop = pops[i];
 
         pops[i] = oldPop.copyWith(
           owner: owner,
+          lastUpdated: now,
         );
 
         await addActivity(
@@ -409,6 +442,7 @@ class AppState extends ChangeNotifier {
 
     notifyListeners();
   }
+
   Future<void> clearSelectedCollection() async {
     final pops = _collections[_selectedCollection];
 
@@ -445,6 +479,7 @@ class AppState extends ChangeNotifier {
       return;
     }
 
+    final now = DateTime.now().toIso8601String();
     final merged = <String, Pop>{};
 
     for (final pop in pops) {
@@ -455,6 +490,7 @@ class AppState extends ChangeNotifier {
 
         merged[key] = existing.copyWith(
           quantity: existing.quantity + pop.quantity,
+          lastUpdated: now,
         );
       } else {
         merged[key] = pop;

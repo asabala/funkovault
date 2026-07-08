@@ -9,7 +9,6 @@ import '../../theme/atlas_spacing.dart';
 import '../../theme/atlas_typography.dart';
 import '../../widgets/atlas/atlas_glass_card.dart';
 import '../../widgets/atlas/atlas_glass_panel.dart';
-import '../../widgets/vault_scroll_view.dart';
 import '../pop/pop_details_screen.dart';
 
 class PossibleDuplicatesScreen extends StatefulWidget {
@@ -21,35 +20,45 @@ class PossibleDuplicatesScreen extends StatefulWidget {
 }
 
 class _PossibleDuplicatesScreenState extends State<PossibleDuplicatesScreen> {
-  final GlobalKey _topKey = GlobalKey();
+  final ScrollController _scrollController = ScrollController();
 
   _DuplicateReviewFilter _filter = _DuplicateReviewFilter.all;
   bool _showBackToTop = false;
+  bool _showImages = false;
 
-  void _scrollToTop() {
-    final topContext = _topKey.currentContext;
-
-    if (topContext == null) {
-      return;
-    }
-
-    Scrollable.ensureVisible(
-      topContext,
-      duration: const Duration(milliseconds: 350),
-      curve: Curves.easeOutCubic,
-    );
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_handleScrollPosition);
   }
 
-  bool _handleScrollNotification(ScrollNotification notification) {
-    final shouldShow = notification.metrics.pixels > 500;
+  @override
+  void dispose() {
+    _scrollController.removeListener(_handleScrollPosition);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _handleScrollPosition() {
+    final shouldShow = _scrollController.offset > 500;
 
     if (shouldShow != _showBackToTop) {
       setState(() {
         _showBackToTop = shouldShow;
       });
     }
+  }
 
-    return false;
+  void _scrollToTop() {
+    if (!_scrollController.hasClients) {
+      return;
+    }
+
+    _scrollController.animateTo(
+      0,
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.easeOutCubic,
+    );
   }
 
   @override
@@ -78,80 +87,123 @@ class _PossibleDuplicatesScreenState extends State<PossibleDuplicatesScreen> {
         label: const Text('Top'),
       )
           : null,
-      body: NotificationListener<ScrollNotification>(
-        onNotification: _handleScrollNotification,
-        child: VaultScrollView(
-          children: [
-            AtlasGlassCard(
-              key: _topKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Duplicate Review',
-                    style: AtlasTypography.headingLarge,
-                  ),
-                  const SizedBox(height: AtlasSpacing.sm),
-                  Text(
-                    'Atlas separates same identity groups from possible variants. Nothing is deleted or merged from this screen.',
-                    style: AtlasTypography.bodyMedium.copyWith(
-                      color: AtlasColors.textSecondary,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          controller: _scrollController,
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          padding: const EdgeInsets.fromLTRB(
+            AtlasSpacing.md,
+            AtlasSpacing.md,
+            AtlasSpacing.md,
+            100,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              AtlasGlassCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Duplicate Review',
+                      style: AtlasTypography.headingLarge,
                     ),
-                  ),
-                  const SizedBox(height: AtlasSpacing.lg),
-                  AtlasGlassPanel(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _SummaryLine(
-                          label: 'Same Identity Groups',
-                          value: '${sameIdentityGroups.length}',
-                        ),
-                        const SizedBox(height: AtlasSpacing.xs),
-                        _SummaryLine(
-                          label: 'Possible Variant Groups',
-                          value: '${possibleVariantGroups.length}',
-                        ),
-                      ],
+                    const SizedBox(height: AtlasSpacing.sm),
+                    Text(
+                      'Atlas separates same identity groups from possible variants. Nothing is deleted or merged from this screen.',
+                      style: AtlasTypography.bodyMedium.copyWith(
+                        color: AtlasColors.textSecondary,
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: AtlasSpacing.lg),
+                    AtlasGlassPanel(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _SummaryLine(
+                            label: 'Same Identity Groups',
+                            value: '${sameIdentityGroups.length}',
+                          ),
+                          const SizedBox(height: AtlasSpacing.xs),
+                          _SummaryLine(
+                            label: 'Possible Variant Groups',
+                            value: '${possibleVariantGroups.length}',
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: AtlasSpacing.lg),
-            _DuplicateFilterCard(
-              selectedFilter: _filter,
-              onChanged: (filter) {
-                setState(() {
-                  _filter = filter;
-                });
-              },
-            ),
-            if (showSameIdentity) ...[
               const SizedBox(height: AtlasSpacing.lg),
-              _DuplicateSection(
-                title: 'Same Identity Groups',
-                subtitle:
-                'These match on the stricter collectible identity key. Review these first because they may be the same Pop with different values or quantities.',
-                emptyMessage: 'No same identity groups found.',
-                groups: sameIdentityGroups,
-                badgeText: 'Identity',
-                badgeColor: AtlasColors.vaultGold,
+              _DuplicateFilterCard(
+                selectedFilter: _filter,
+                onChanged: (filter) {
+                  setState(() {
+                    _filter = filter;
+                  });
+                },
               ),
-            ],
-            if (showPossibleVariants) ...[
-              const SizedBox(height: AtlasSpacing.lg),
-              _DuplicateSection(
-                title: 'Possible Variant Groups',
-                subtitle:
-                'These share the same name and number, but may be legitimate variants such as chase, metallic, exclusive, sticker, limited edition, or signed Pops.',
-                emptyMessage: 'No possible variant groups found.',
-                groups: possibleVariantGroups,
-                badgeText: 'Review',
-                badgeColor: AtlasColors.textSecondary,
+              const SizedBox(height: AtlasSpacing.md),
+              AtlasGlassCard(
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        _showImages
+                            ? 'Images are on. Scrolling may be slower.'
+                            : 'Images are off for faster scrolling.',
+                        style: AtlasTypography.bodyMedium.copyWith(
+                          color: AtlasColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                    TextButton.icon(
+                      onPressed: () {
+                        setState(() {
+                          _showImages = !_showImages;
+                        });
+                      },
+                      icon: Icon(
+                        _showImages
+                            ? Icons.image_not_supported_outlined
+                            : Icons.image_outlined,
+                      ),
+                      label: Text(
+                        _showImages ? 'Hide Images' : 'Show Images',
+                      ),
+                    ),
+                  ],
+                ),
               ),
+              if (showSameIdentity) ...[
+                const SizedBox(height: AtlasSpacing.lg),
+                _DuplicateSection(
+                  title: 'Same Identity Groups',
+                  subtitle:
+                  'These match on the stricter collectible identity key. Review these first because they may be the same Pop with different values or quantities.',
+                  emptyMessage: 'No same identity groups found.',
+                  groups: sameIdentityGroups,
+                  badgeText: 'Identity',
+                  badgeColor: AtlasColors.vaultGold,
+                  showImages: _showImages,
+                ),
+              ],
+              if (showPossibleVariants) ...[
+                const SizedBox(height: AtlasSpacing.lg),
+                _DuplicateSection(
+                  title: 'Possible Variant Groups',
+                  subtitle:
+                  'These share the same name and number, but may be legitimate variants such as chase, metallic, exclusive, sticker, limited edition, or signed Pops.',
+                  emptyMessage: 'No possible variant groups found.',
+                  groups: possibleVariantGroups,
+                  badgeText: 'Review',
+                  badgeColor: AtlasColors.textSecondary,
+                  showImages: _showImages,
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
@@ -292,6 +344,7 @@ class _DuplicateSection extends StatelessWidget {
     required this.groups,
     required this.badgeText,
     required this.badgeColor,
+    required this.showImages,
   });
 
   final String title;
@@ -300,6 +353,7 @@ class _DuplicateSection extends StatelessWidget {
   final List<DuplicateReviewGroup> groups;
   final String badgeText;
   final Color badgeColor;
+  final bool showImages;
 
   @override
   Widget build(BuildContext context) {
@@ -336,6 +390,7 @@ class _DuplicateSection extends StatelessWidget {
                   group: group,
                   badgeText: badgeText,
                   badgeColor: badgeColor,
+                  showImages: showImages,
                 ),
               ),
             ),
@@ -350,11 +405,13 @@ class _DuplicateGroupCard extends StatelessWidget {
     required this.group,
     required this.badgeText,
     required this.badgeColor,
+    required this.showImages,
   });
 
   final DuplicateReviewGroup group;
   final String badgeText;
   final Color badgeColor;
+  final bool showImages;
 
   @override
   Widget build(BuildContext context) {
@@ -403,6 +460,7 @@ class _DuplicateGroupCard extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: AtlasSpacing.sm),
               child: _DuplicatePopTile(
                 pop: pop,
+                showImages: showImages,
               ),
             ),
           ),
@@ -737,9 +795,11 @@ class _DuplicateBadge extends StatelessWidget {
 class _DuplicatePopTile extends StatelessWidget {
   const _DuplicatePopTile({
     required this.pop,
+    required this.showImages,
   });
 
   final Pop pop;
+  final bool showImages;
 
   void _openDetails(BuildContext context) {
     Navigator.push(
@@ -758,6 +818,8 @@ class _DuplicatePopTile extends StatelessWidget {
     pop.series.trim().isEmpty ? 'No series' : pop.series.trim();
     final valueLabel =
     pop.value <= 0 ? 'Value needed' : '\$${pop.value.toStringAsFixed(0)}';
+    final dateAddedLabel = _formatDateLabel(pop.dateAdded);
+    final lastUpdatedLabel = _formatDateLabel(pop.lastUpdated);
 
     return Container(
       width: double.infinity,
@@ -774,6 +836,7 @@ class _DuplicatePopTile extends StatelessWidget {
           Center(
             child: _DuplicatePopImage(
               imageUrl: pop.imageUrl,
+              showImage: showImages,
             ),
           ),
           const SizedBox(height: AtlasSpacing.md),
@@ -816,6 +879,20 @@ class _DuplicatePopTile extends StatelessWidget {
               color: AtlasColors.textSecondary,
             ),
           ),
+          const SizedBox(height: AtlasSpacing.xs),
+          Text(
+            'Added: $dateAddedLabel',
+            style: AtlasTypography.bodySmall.copyWith(
+              color: AtlasColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: AtlasSpacing.xs),
+          Text(
+            'Updated: $lastUpdatedLabel',
+            style: AtlasTypography.bodySmall.copyWith(
+              color: AtlasColors.textSecondary,
+            ),
+          ),
           const SizedBox(height: AtlasSpacing.md),
           SizedBox(
             width: double.infinity,
@@ -829,6 +906,26 @@ class _DuplicatePopTile extends StatelessWidget {
       ),
     );
   }
+}
+
+String _formatDateLabel(String value) {
+  final cleaned = value.trim();
+
+  if (cleaned.isEmpty) {
+    return 'Before date tracking';
+  }
+
+  final parsed = DateTime.tryParse(cleaned);
+
+  if (parsed == null) {
+    return cleaned;
+  }
+
+  final month = parsed.month.toString().padLeft(2, '0');
+  final day = parsed.day.toString().padLeft(2, '0');
+  final year = parsed.year.toString();
+
+  return '$month/$day/$year';
 }
 
 class _DuplicateIdentityBadges extends StatelessWidget {
@@ -963,33 +1060,56 @@ class _IdentityBadge extends StatelessWidget {
 class _DuplicatePopImage extends StatelessWidget {
   const _DuplicatePopImage({
     required this.imageUrl,
+    required this.showImage,
   });
 
   final String imageUrl;
+  final bool showImage;
 
   @override
   Widget build(BuildContext context) {
+    final cleanImageUrl = imageUrl.trim();
+
     return Container(
       width: 120,
       height: 150,
       decoration: BoxDecoration(
+        color: AtlasColors.textSecondary.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(AtlasSpacing.md),
         border: Border.all(
           color: AtlasColors.textSecondary.withValues(alpha: 0.18),
         ),
       ),
       clipBehavior: Clip.antiAlias,
-      child: imageUrl.trim().isEmpty
+      child: !showImage
+          ? const Icon(
+        Icons.image_outlined,
+        size: 48,
+      )
+          : cleanImageUrl.isEmpty
           ? const Icon(
         Icons.inventory_2_rounded,
         size: 48,
       )
           : Image.network(
-        imageUrl,
-        fit: BoxFit.cover,
+        cleanImageUrl,
+        fit: BoxFit.contain,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) {
+            return child;
+          }
+
+          return const Center(
+            child: SizedBox(
+              width: 28,
+              height: 28,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          );
+        },
         errorBuilder: (context, error, stackTrace) {
           return const Icon(
-            Icons.inventory_2_rounded,
+            Icons.broken_image_rounded,
             size: 48,
           );
         },

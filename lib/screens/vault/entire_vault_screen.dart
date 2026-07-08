@@ -10,6 +10,7 @@ import '../../theme/atlas_typography.dart';
 import '../../widgets/atlas/atlas_glass_card.dart';
 import '../../widgets/atlas/atlas_glass_panel.dart';
 import '../../widgets/vault_scroll_view.dart';
+import '../pop/pop_details_screen.dart';
 
 class EntireVaultScreen extends StatefulWidget {
   const EntireVaultScreen({super.key});
@@ -136,10 +137,14 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
       final name = pop.name.toLowerCase();
       final number = pop.number.toLowerCase();
       final category = pop.category.toLowerCase();
+      final series = pop.series.toLowerCase();
+      final owner = pop.owner.toLowerCase();
 
       return name.contains(query) ||
           number.contains(query) ||
-          category.contains(query);
+          category.contains(query) ||
+          series.contains(query) ||
+          owner.contains(query);
     }).toList();
   }
 }
@@ -175,7 +180,7 @@ class _VaultSearchCard extends StatelessWidget {
           TextField(
             controller: controller,
             decoration: InputDecoration(
-              hintText: 'Search by name, number, or category...',
+              hintText: 'Search by name, number, category, series, or owner...',
               prefixIcon: const Icon(Icons.search_rounded),
               suffixIcon: hasSearch
                   ? IconButton(
@@ -258,7 +263,7 @@ class _NoSearchResultsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return AtlasGlassCard(
       child: Text(
-        'No Pops matched your search. Try a different name, number, or category.',
+        'No Pops matched your search. Try a different name, number, category, series, or owner.',
         style: AtlasTypography.bodyMedium.copyWith(
           color: AtlasColors.textSecondary,
         ),
@@ -284,6 +289,13 @@ class _VaultPopListCard extends StatelessWidget {
             'Vault List',
             style: AtlasTypography.headingSmall,
           ),
+          const SizedBox(height: AtlasSpacing.sm),
+          Text(
+            'Tap any Pop to open details.',
+            style: AtlasTypography.bodySmall.copyWith(
+              color: AtlasColors.textSecondary,
+            ),
+          ),
           const SizedBox(height: AtlasSpacing.md),
           ...pops.map(
                 (pop) => Padding(
@@ -304,52 +316,85 @@ class _VaultPopTile extends StatelessWidget {
 
   final Pop pop;
 
+  void _openDetails(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PopDetailsScreen(pop: pop),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final numberLabel = pop.number.trim().isEmpty ? 'No #' : '#${pop.number}';
     final categoryLabel =
     pop.category.trim().isEmpty ? 'No category' : pop.category.trim();
+    final seriesLabel =
+    pop.series.trim().isEmpty ? 'No series' : pop.series.trim();
     final valueLabel =
     pop.value <= 0 ? 'Value needed' : '\$${pop.value.toStringAsFixed(0)}';
 
-    return AtlasGlassPanel(
-      child: Row(
-        children: [
-          const Icon(
-            Icons.inventory_2_outlined,
-            color: AtlasColors.vaultGold,
-          ),
-          const SizedBox(width: AtlasSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    return InkWell(
+      borderRadius: BorderRadius.circular(AtlasSpacing.md),
+      onTap: () => _openDetails(context),
+      child: AtlasGlassPanel(
+        child: Row(
+          children: [
+            const Icon(
+              Icons.inventory_2_outlined,
+              color: AtlasColors.vaultGold,
+            ),
+            const SizedBox(width: AtlasSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    pop.name,
+                    style: AtlasTypography.bodyMedium.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: AtlasSpacing.xs),
+                  Text(
+                    '$numberLabel • $categoryLabel',
+                    style: AtlasTypography.bodySmall.copyWith(
+                      color: AtlasColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: AtlasSpacing.xs),
+                  Text(
+                    seriesLabel,
+                    style: AtlasTypography.bodySmall.copyWith(
+                      color: AtlasColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: AtlasSpacing.md),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  pop.name,
-                  style: AtlasTypography.bodyMedium.copyWith(
+                  valueLabel,
+                  style: AtlasTypography.bodySmall.copyWith(
+                    color: pop.value <= 0
+                        ? AtlasColors.textSecondary
+                        : AtlasColors.vaultGold,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(height: AtlasSpacing.xs),
-                Text(
-                  '$numberLabel • $categoryLabel',
-                  style: AtlasTypography.bodySmall.copyWith(
-                    color: AtlasColors.textSecondary,
-                  ),
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  color: AtlasColors.textSecondary,
                 ),
               ],
             ),
-          ),
-          const SizedBox(width: AtlasSpacing.md),
-          Text(
-            valueLabel,
-            style: AtlasTypography.bodySmall.copyWith(
-              color:
-              pop.value <= 0 ? AtlasColors.textSecondary : AtlasColors.vaultGold,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
