@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../models/collector_profile.dart';
-import '../services/app_state.dart';
-import '../theme/atlas_colors.dart';
-import '../theme/atlas_icons.dart';
-import '../theme/atlas_spacing.dart';
-import '../theme/atlas_typography.dart';
-import '../widgets/atlas/atlas_glass_card.dart';
-import '../widgets/vault_scroll_view.dart';
-import '../data/country_registry.dart';
-import '../models/country_option.dart';
-import '../widgets/profile/country/country_dropdown.dart';
+import '../../models/collector_profile.dart';
+import '../../services/app_state.dart';
+import '../../theme/atlas_colors.dart';
+import '../../theme/atlas_icons.dart';
+import '../../theme/atlas_spacing.dart';
+import '../../theme/atlas_typography.dart';
+import '../../widgets/atlas/atlas_glass_card.dart';
+import '../../widgets/vault_scroll_view.dart';
+import '../../data/country_registry.dart';
+import '../../models/country_option.dart';
+import '../../widgets/profile/country/country_dropdown.dart';
 
 class EditCollectorProfileScreen extends StatefulWidget {
   const EditCollectorProfileScreen({super.key});

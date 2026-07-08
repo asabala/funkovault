@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../models/pop.dart';
+import '../../models/pop.dart';
 import 'edit_pop_screen.dart';
-import '../services/app_state.dart';
+import '../../services/app_state.dart';
 
 class PopDetailsScreen extends StatefulWidget {
   final Pop pop;

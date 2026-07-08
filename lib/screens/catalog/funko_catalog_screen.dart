@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../models/funko_catalog_item.dart';
-import '../services/funko_catalog_service.dart';
+import '../../models/funko_catalog_item.dart';
+import '../../services/funko_catalog_service.dart';
 
-import 'add_pop_screen.dart';
+import '../pop/add_pop_screen.dart';
 
 class FunkoCatalogScreen extends StatefulWidget {
   const FunkoCatalogScreen({

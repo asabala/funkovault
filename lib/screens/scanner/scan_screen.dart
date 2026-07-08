@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
-import '../services/funko_catalog_service.dart';
-import 'funko_catalog_screen.dart';
+import '../../services/funko_catalog_service.dart';
+import '../catalog/funko_catalog_screen.dart';
 
 class ScanScreen extends StatefulWidget {
   const ScanScreen({super.key});

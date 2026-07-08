@@ -3,12 +3,12 @@ import 'package:provider/provider.dart';
 
 import '../atlas/core/atlas_intelligence.dart';
 import '../atlas/repositories/vault_repository.dart';
-import '../screens/add_pop_screen.dart';
-import '../screens/atlas_room_screen.dart';
-import '../screens/edit_collector_profile_screen.dart';
-import '../screens/funko_catalog_screen.dart';
-import '../screens/scan_screen.dart';
-import '../screens/wishlist_screen.dart';
+import '../screens/pop/add_pop_screen.dart';
+import '../screens/vault/atlas_room_screen.dart';
+import '../screens/profile/edit_collector_profile_screen.dart';
+import '../screens/catalog/funko_catalog_screen.dart';
+import '../screens/scanner/scan_screen.dart';
+import '../screens/vault/wishlist_screen.dart';
 import '../services/app_state.dart';
 import '../theme/atlas_colors.dart';
 import '../theme/atlas_spacing.dart';
@@ -18,7 +18,7 @@ import '../widgets/vault/collection_rooms_card.dart';
 import '../widgets/vault/collector_tools_card.dart';
 import '../widgets/vault/hero_collector_card.dart';
 import '../widgets/vault_scroll_view.dart';
-import '../screens/entire_vault_screen.dart';
+import '../screens/vault/entire_vault_screen.dart';
 
 class CollectorVaultScreen extends StatelessWidget {
   const CollectorVaultScreen({super.key});

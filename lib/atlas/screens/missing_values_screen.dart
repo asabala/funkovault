@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../services/app_state.dart';
 import '../repositories/vault_repository.dart';
-import '../../screens/pop_details_screen.dart';
+import '../../screens/pop/pop_details_screen.dart';
 
 class MissingValuesScreen extends StatelessWidget {
   const MissingValuesScreen({super.key});

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../services/app_state.dart';
+import '../../services/app_state.dart';
 import 'collection_details_screen.dart';
 
 class CollectionsScreen extends StatelessWidget {

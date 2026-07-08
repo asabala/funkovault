@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'possible_duplicates_screen.dart';
 
-import '../services/app_state.dart';
-import '../theme/atlas_colors.dart';
-import '../theme/atlas_spacing.dart';
-import '../theme/atlas_typography.dart';
-import '../widgets/atlas/atlas_glass_card.dart';
-import '../widgets/atlas/atlas_glass_panel.dart';
-import '../widgets/vault_scroll_view.dart';
+import '../../services/app_state.dart';
+import '../../theme/atlas_colors.dart';
+import '../../theme/atlas_spacing.dart';
+import '../../theme/atlas_typography.dart';
+import '../../widgets/atlas/atlas_glass_card.dart';
+import '../../widgets/atlas/atlas_glass_panel.dart';
+import '../../widgets/vault_scroll_view.dart';
+
 
 class VaultMaintenanceScreen extends StatelessWidget {
   const VaultMaintenanceScreen({super.key});
@@ -112,6 +114,40 @@ class VaultMaintenanceScreen extends StatelessWidget {
               ],
             ),
           ),
+
+          AtlasGlassCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Duplicate Review',
+                  style: AtlasTypography.headingSmall,
+                ),
+                const SizedBox(height: AtlasSpacing.sm),
+                Text(
+                  'Review possible duplicate Pops before deleting, merging, or resetting anything. This does not change your vault.',
+                  style: AtlasTypography.bodyMedium.copyWith(
+                    color: AtlasColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: AtlasSpacing.lg),
+                FilledButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const PossibleDuplicatesScreen(),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.manage_search_rounded),
+                  label: const Text('Review Possible Duplicates'),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AtlasSpacing.lg),
+
           const SizedBox(height: AtlasSpacing.lg),
           AtlasGlassCard(
             child: Column(

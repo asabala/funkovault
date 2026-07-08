@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'import_csv_screen.dart';
-import 'vault_maintenance_screen.dart';
+import '../vault/vault_maintenance_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});

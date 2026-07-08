@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../models/pop.dart';
-import '../services/app_state.dart';
-import 'pop_details_screen.dart';
+import '../../models/pop.dart';
+import '../../services/app_state.dart';
+import '../pop/pop_details_screen.dart';
 
 class WishlistScreen extends StatelessWidget {
   const WishlistScreen({super.key});

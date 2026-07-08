@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../atlas/coordinator/atlas_dashboard.dart';
-import '../atlas/coordinator/atlas_dashboard_model.dart';
-import '../services/app_state.dart';
-import '../theme/atlas_colors.dart';
-import '../theme/atlas_icons.dart';
-import '../theme/atlas_spacing.dart';
-import '../theme/atlas_typography.dart';
-import '../widgets/atlas/atlas_glass_card.dart';
-import '../widgets/atlas/atlas_glass_panel.dart';
-import '../widgets/atlas/atlas_stat_tile.dart';
-import '../widgets/home/atlas_pulse_card.dart';
-import '../widgets/home/continue_journey_card.dart';
-import '../widgets/vault_scroll_view.dart';
-import '../vault/collector_vault_screen.dart';
+import '../../atlas/coordinator/atlas_dashboard.dart';
+import '../../atlas/coordinator/atlas_dashboard_model.dart';
+import '../../services/app_state.dart';
+import '../../theme/atlas_colors.dart';
+import '../../theme/atlas_icons.dart';
+import '../../theme/atlas_spacing.dart';
+import '../../theme/atlas_typography.dart';
+import '../../widgets/atlas/atlas_glass_card.dart';
+import '../../widgets/atlas/atlas_glass_panel.dart';
+import '../../widgets/atlas/atlas_stat_tile.dart';
+import '../../widgets/home/atlas_pulse_card.dart';
+import '../../widgets/home/continue_journey_card.dart';
+import '../../widgets/vault_scroll_view.dart';
+import '../../vault/collector_vault_screen.dart';
 
 class AtlasHomeScreen extends StatelessWidget {
   const AtlasHomeScreen({super.key});

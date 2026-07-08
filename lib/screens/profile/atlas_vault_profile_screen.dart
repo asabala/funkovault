@@ -16,7 +16,7 @@ import '../../widgets/profile/score/collector_score_card.dart';
 import '../../widgets/profile/stats/profile_stats_card.dart';
 import '../../widgets/profile/status/vault_status_card.dart';
 import '../../widgets/vault_scroll_view.dart';
-import '../edit_collector_profile_screen.dart';
+import 'edit_collector_profile_screen.dart';
 
 class AtlasVaultProfileScreen extends StatelessWidget {
   const AtlasVaultProfileScreen({super.key});

@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../screens/academy/atlas_academy_screen.dart';
-import '../screens/atlas_home_screen.dart';
-import '../screens/atlas_insights_screen.dart';
-import '../screens/settings_screen.dart';
+import '../screens/home/atlas_home_screen.dart';
+import '../screens/insights/atlas_insights_screen.dart';
+import '../screens/settings/settings_screen.dart';
 import '../theme/atlas_colors.dart';
 import '../theme/atlas_typography.dart';
 import '../vault/collector_vault_screen.dart';

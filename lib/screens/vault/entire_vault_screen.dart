@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../atlas/repositories/vault_repository.dart';
-import '../models/pop.dart';
-import '../services/app_state.dart';
-import '../theme/atlas_colors.dart';
-import '../theme/atlas_spacing.dart';
-import '../theme/atlas_typography.dart';
-import '../widgets/atlas/atlas_glass_card.dart';
-import '../widgets/atlas/atlas_glass_panel.dart';
-import '../widgets/vault_scroll_view.dart';
+import '../../atlas/repositories/vault_repository.dart';
+import '../../models/pop.dart';
+import '../../services/app_state.dart';
+import '../../theme/atlas_colors.dart';
+import '../../theme/atlas_spacing.dart';
+import '../../theme/atlas_typography.dart';
+import '../../widgets/atlas/atlas_glass_card.dart';
+import '../../widgets/atlas/atlas_glass_panel.dart';
+import '../../widgets/vault_scroll_view.dart';
 
 class EntireVaultScreen extends StatefulWidget {
   const EntireVaultScreen({super.key});

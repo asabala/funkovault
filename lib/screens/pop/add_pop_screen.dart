@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../models/pop.dart';
-import '../models/funko_catalog_item.dart';
-import '../services/app_state.dart';
-import '../widgets/form_section_title.dart';
-import '../widgets/labeled_dropdown.dart';
-import '../atlas/widgets/atlas_insight_card.dart';
-import '../atlas/engines/atlas_insight_engine.dart';
-import '../atlas/engines/atlas_recommendation_engine.dart';
-import '../atlas/services/atlas_activity_service.dart';
+import '../../models/pop.dart';
+import '../../models/funko_catalog_item.dart';
+import '../../services/app_state.dart';
+import '../../widgets/form_section_title.dart';
+import '../../widgets/labeled_dropdown.dart';
+import '../../atlas/widgets/atlas_insight_card.dart';
+import '../../atlas/engines/atlas_insight_engine.dart';
+import '../../atlas/engines/atlas_recommendation_engine.dart';
+import '../../atlas/services/atlas_activity_service.dart';
 
 class AddPopScreen extends StatefulWidget {
   final FunkoCatalogItem? catalogItem;

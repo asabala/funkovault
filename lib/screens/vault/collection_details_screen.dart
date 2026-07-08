@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../services/app_state.dart';
-import '../models/pop.dart';
-import 'add_pop_screen.dart';
-import 'pop_details_screen.dart';
-import '../widgets/collector_identity_chips.dart';
+import '../../services/app_state.dart';
+import '../../models/pop.dart';
+import '../pop/add_pop_screen.dart';
+import '../pop/pop_details_screen.dart';
+import '../../widgets/collector_identity_chips.dart';
 
 class CollectionDetailsScreen extends StatefulWidget {
 final String collectionName;
