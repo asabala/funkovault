@@ -10,6 +10,7 @@ import '../../theme/atlas_typography.dart';
 import '../../widgets/atlas/atlas_glass_card.dart';
 import '../../widgets/atlas/atlas_glass_panel.dart';
 import '../../widgets/vault_scroll_view.dart';
+import '../pop/pop_details_screen.dart';
 
 class PossibleDuplicatesScreen extends StatefulWidget {
   const PossibleDuplicatesScreen({super.key});
@@ -700,6 +701,15 @@ class _DuplicatePopTile extends StatelessWidget {
 
   final Pop pop;
 
+  void _openDetails(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PopDetailsScreen(pop: pop),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final categoryLabel =
@@ -710,6 +720,7 @@ class _DuplicatePopTile extends StatelessWidget {
     pop.value <= 0 ? 'Value needed' : '\$${pop.value.toStringAsFixed(0)}';
 
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(AtlasSpacing.md),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AtlasSpacing.md),
@@ -720,6 +731,12 @@ class _DuplicatePopTile extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Center(
+            child: _DuplicatePopImage(
+              imageUrl: pop.imageUrl,
+            ),
+          ),
+          const SizedBox(height: AtlasSpacing.md),
           Text(
             pop.collectorLabel,
             style: AtlasTypography.bodyMedium.copyWith(
@@ -755,7 +772,52 @@ class _DuplicatePopTile extends StatelessWidget {
               color: AtlasColors.textSecondary,
             ),
           ),
+          const SizedBox(height: AtlasSpacing.md),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () => _openDetails(context),
+              icon: const Icon(Icons.open_in_new_rounded),
+              label: const Text('Open Details'),
+            ),
+          ),
         ],
+      ),
+    );
+  }
+}class _DuplicatePopImage extends StatelessWidget {
+  const _DuplicatePopImage({
+    required this.imageUrl,
+  });
+
+  final String imageUrl;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 120,
+      height: 150,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AtlasSpacing.md),
+        border: Border.all(
+          color: AtlasColors.textSecondary.withValues(alpha: 0.18),
+        ),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: imageUrl.trim().isEmpty
+          ? const Icon(
+        Icons.inventory_2_rounded,
+        size: 48,
+      )
+          : Image.network(
+        imageUrl,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return const Icon(
+            Icons.inventory_2_rounded,
+            size: 48,
+          );
+        },
       ),
     );
   }
