@@ -27,6 +27,7 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
   String _searchQuery = '';
   int _visibleLimit = _pageSize;
   bool _showBackToTop = false;
+  bool _showImages = false;
   _VaultSortMode _sortMode = _VaultSortMode.nameAz;
   _VaultFilterMode _filterMode = _VaultFilterMode.all;
 
@@ -34,6 +35,15 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
   void initState() {
     super.initState();
     _scrollController.addListener(_handleScrollPosition);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_handleScrollPosition);
+    _scrollController.dispose();
+    _searchController.dispose();
+
+    super.dispose();
   }
 
   void _handleScrollPosition() {
@@ -56,15 +66,6 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
       duration: const Duration(milliseconds: 350),
       curve: Curves.easeOutCubic,
     );
-  }
-
-  @override
-  void dispose() {
-    _scrollController.removeListener(_handleScrollPosition);
-    _scrollController.dispose();
-    _searchController.dispose();
-
-    super.dispose();
   }
 
   void _resetVisibleLimit() {
@@ -114,6 +115,17 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
           (total, pop) => total + pop.value,
     );
 
+    final currentViewValue = filteredPops.fold<double>(
+      0,
+          (total, pop) => total + pop.value,
+    );
+
+    final currentViewMissingValueCount = filteredPops
+        .where(
+          (pop) => pop.value <= 0,
+    )
+        .length;
+
     final hasActiveReviewControls = _searchQuery.trim().isNotEmpty ||
         _filterMode != _VaultFilterMode.all ||
         _sortMode != _VaultSortMode.nameAz;
@@ -131,128 +143,144 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
         label: const Text('Top'),
       )
           : null,
-        body: SafeArea(
-            child: SingleChildScrollView(
-              controller: _scrollController,
-              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-              padding: const EdgeInsets.fromLTRB(
-                AtlasSpacing.md,
-                AtlasSpacing.md,
-                AtlasSpacing.md,
-                100,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          controller: _scrollController,
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          padding: const EdgeInsets.fromLTRB(
+            AtlasSpacing.md,
+            AtlasSpacing.md,
+            AtlasSpacing.md,
+            100,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              AtlasGlassCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Entire Vault',
+                      style: AtlasTypography.headingLarge,
+                    ),
+                    const SizedBox(height: AtlasSpacing.sm),
+                    Text(
+                      'Review every Pop currently saved in your collection.',
+                      style: AtlasTypography.bodyMedium.copyWith(
+                        color: AtlasColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: AtlasSpacing.lg),
+                    AtlasGlassPanel(
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: _VaultSummaryItem(
+                              value: '${pops.length}',
+                              label: 'Pops',
+                            ),
+                          ),
+                          Expanded(
+                            child: _VaultSummaryItem(
+                              value: '\$${totalValue.toStringAsFixed(0)}',
+                              label: 'Value',
+                            ),
+                          ),
+                          Expanded(
+                            child: _VaultSummaryItem(
+                              value: '$missingValueCount',
+                              label: 'Need Value',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-          AtlasGlassCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Entire Vault',
-                  style: AtlasTypography.headingLarge,
-                ),
-                const SizedBox(height: AtlasSpacing.sm),
-                Text(
-                  'Review every Pop currently saved in your collection.',
-                  style: AtlasTypography.bodyMedium.copyWith(
-                    color: AtlasColors.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: AtlasSpacing.lg),
-                AtlasGlassPanel(
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: _VaultSummaryItem(
-                          value: '${pops.length}',
-                          label: 'Pops',
-                        ),
-                      ),
-                      Expanded(
-                        child: _VaultSummaryItem(
-                          value: '\$${totalValue.toStringAsFixed(0)}',
-                          label: 'Value',
-                        ),
-                      ),
-                      Expanded(
-                        child: _VaultSummaryItem(
-                          value: '$missingValueCount',
-                          label: 'Need Value',
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: AtlasSpacing.lg),
-          _VaultSearchCard(
-            controller: _searchController,
-            resultCount: filteredPops.length,
-            totalCount: pops.length,
-            onChanged: (value) {
-              setState(() {
-                _searchQuery = value;
-                _resetVisibleLimit();
-              });
-            },
-            onClear: () {
-              _searchController.clear();
+              const SizedBox(height: AtlasSpacing.lg),
+              _VaultSearchCard(
+                controller: _searchController,
+                resultCount: filteredPops.length,
+                totalCount: pops.length,
+                onChanged: (value) {
+                  setState(() {
+                    _searchQuery = value;
+                    _resetVisibleLimit();
+                  });
+                },
+                onClear: () {
+                  _searchController.clear();
 
-              setState(() {
-                _searchQuery = '';
-                _resetVisibleLimit();
-              });
-            },
+                  setState(() {
+                    _searchQuery = '';
+                    _resetVisibleLimit();
+                  });
+                },
+              ),
+              const SizedBox(height: AtlasSpacing.lg),
+              _VaultControlsCard(
+                selectedFilter: _filterMode,
+                selectedSort: _sortMode,
+                hasActiveControls: hasActiveReviewControls,
+                onFilterChanged: (filterMode) {
+                  setState(() {
+                    _filterMode = filterMode;
+                    _resetVisibleLimit();
+                  });
+                },
+                onSortChanged: (sortMode) {
+                  setState(() {
+                    _sortMode = sortMode;
+                    _resetVisibleLimit();
+                  });
+                },
+                onReset: _resetVaultReviewControls,
+              ),
+              const SizedBox(height: AtlasSpacing.md),
+              _VaultImageToggleCard(
+                showImages: _showImages,
+                onChanged: (value) {
+                  setState(() {
+                    _showImages = value;
+                  });
+                },
+              ),
+              const SizedBox(height: AtlasSpacing.md),
+              _VaultResultSummaryBar(
+                visibleCount: filteredPops.length,
+                totalCount: pops.length,
+                searchedCount: searchedPops.length,
+                filterMode: _filterMode,
+                sortMode: _sortMode,
+                searchQuery: _searchQuery,
+              ),
+              const SizedBox(height: AtlasSpacing.md),
+              _CurrentViewStatsCard(
+                resultCount: filteredPops.length,
+                value: currentViewValue,
+                missingValueCount: currentViewMissingValueCount,
+              ),
+              const SizedBox(height: AtlasSpacing.lg),
+              if (pops.isEmpty)
+                const _EmptyVaultCard()
+              else if (filteredPops.isEmpty)
+                const _NoSearchResultsCard()
+              else
+                _VaultPopListCard(
+                  pops: visiblePops,
+                  totalFilteredCount: filteredPops.length,
+                  hasMoreResults: hasMoreResults,
+                  sortMode: _sortMode,
+                  filterMode: _filterMode,
+                  showImages: _showImages,
+                  onLoadMore: () => _loadMoreResults(filteredPops.length),
+                ),
+            ],
           ),
-          const SizedBox(height: AtlasSpacing.lg),
-          _VaultControlsCard(
-            selectedFilter: _filterMode,
-            selectedSort: _sortMode,
-            hasActiveControls: hasActiveReviewControls,
-            onFilterChanged: (filterMode) {
-              setState(() {
-                _filterMode = filterMode;
-                _resetVisibleLimit();
-              });
-            },
-            onSortChanged: (sortMode) {
-              setState(() {
-                _sortMode = sortMode;
-                _resetVisibleLimit();
-              });
-            },
-            onReset: _resetVaultReviewControls,
-          ),
-          const SizedBox(height: AtlasSpacing.md),
-          _VaultResultSummaryBar(
-            visibleCount: filteredPops.length,
-            totalCount: pops.length,
-            searchedCount: searchedPops.length,
-            filterMode: _filterMode,
-            sortMode: _sortMode,
-            searchQuery: _searchQuery,
-          ),
-          const SizedBox(height: AtlasSpacing.lg),
-          if (pops.isEmpty)
-            const _EmptyVaultCard()
-          else if (filteredPops.isEmpty)
-            const _NoSearchResultsCard()
-          else
-            _VaultPopListCard(
-              pops: visiblePops,
-              totalFilteredCount: filteredPops.length,
-              hasMoreResults: hasMoreResults,
-              sortMode: _sortMode,
-              filterMode: _filterMode,
-              onLoadMore: () => _loadMoreResults(filteredPops.length),
-            ),
-        ],
-      ),
-            ),
         ),
+      ),
     );
   }
 
@@ -682,6 +710,51 @@ class _VaultDropdown<T> extends StatelessWidget {
   }
 }
 
+class _VaultImageToggleCard extends StatelessWidget {
+  const _VaultImageToggleCard({
+    required this.showImages,
+    required this.onChanged,
+  });
+
+  final bool showImages;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return AtlasGlassPanel(
+      child: Row(
+        children: [
+          Icon(
+            showImages
+                ? Icons.image_rounded
+                : Icons.image_not_supported_outlined,
+            color: AtlasColors.vaultGold,
+          ),
+          const SizedBox(width: AtlasSpacing.md),
+          Expanded(
+            child: Text(
+              showImages
+                  ? 'Images are on. Scrolling may be slower.'
+                  : 'Images are off for faster scrolling.',
+              style: AtlasTypography.bodySmall.copyWith(
+                color: AtlasColors.textSecondary,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              onChanged(!showImages);
+            },
+            child: Text(
+              showImages ? 'Hide Images' : 'Show Images',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _VaultResultSummaryBar extends StatelessWidget {
   const _VaultResultSummaryBar({
     required this.visibleCount,
@@ -702,7 +775,8 @@ class _VaultResultSummaryBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasSearch = searchQuery.trim().isNotEmpty;
-    final searchLabel = hasSearch ? 'Search: "${searchQuery.trim()}"' : 'Search: None';
+    final searchLabel =
+    hasSearch ? 'Search: "${searchQuery.trim()}"' : 'Search: None';
 
     return AtlasGlassPanel(
       child: Column(
@@ -731,6 +805,59 @@ class _VaultResultSummaryBar extends StatelessWidget {
               ),
             ),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+class _CurrentViewStatsCard extends StatelessWidget {
+  const _CurrentViewStatsCard({
+    required this.resultCount,
+    required this.value,
+    required this.missingValueCount,
+  });
+
+  final int resultCount;
+  final double value;
+  final int missingValueCount;
+
+  @override
+  Widget build(BuildContext context) {
+    return AtlasGlassPanel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Current View',
+            style: AtlasTypography.bodyMedium.copyWith(
+              color: AtlasColors.vaultGold,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: AtlasSpacing.md),
+          Row(
+            children: [
+              Expanded(
+                child: _VaultSummaryItem(
+                  value: '$resultCount',
+                  label: 'Results',
+                ),
+              ),
+              Expanded(
+                child: _VaultSummaryItem(
+                  value: '\$${value.toStringAsFixed(0)}',
+                  label: 'Value',
+                ),
+              ),
+              Expanded(
+                child: _VaultSummaryItem(
+                  value: '$missingValueCount',
+                  label: 'Need Value',
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -808,6 +935,7 @@ class _VaultPopListCard extends StatelessWidget {
     required this.hasMoreResults,
     required this.sortMode,
     required this.filterMode,
+    required this.showImages,
     required this.onLoadMore,
   });
 
@@ -816,6 +944,7 @@ class _VaultPopListCard extends StatelessWidget {
   final bool hasMoreResults;
   final _VaultSortMode sortMode;
   final _VaultFilterMode filterMode;
+  final bool showImages;
   final VoidCallback onLoadMore;
 
   @override
@@ -839,7 +968,10 @@ class _VaultPopListCard extends StatelessWidget {
           ...pops.map(
                 (pop) => Padding(
               padding: const EdgeInsets.only(bottom: AtlasSpacing.sm),
-              child: _VaultPopTile(pop: pop),
+              child: _VaultPopTile(
+                pop: pop,
+                showImage: showImages,
+              ),
             ),
           ),
           if (hasMoreResults) ...[
@@ -862,9 +994,11 @@ class _VaultPopListCard extends StatelessWidget {
 class _VaultPopTile extends StatelessWidget {
   const _VaultPopTile({
     required this.pop,
+    required this.showImage,
   });
 
   final Pop pop;
+  final bool showImage;
 
   void _openDetails(BuildContext context) {
     Navigator.push(
@@ -891,69 +1025,264 @@ class _VaultPopTile extends StatelessWidget {
       borderRadius: BorderRadius.circular(AtlasSpacing.md),
       onTap: () => _openDetails(context),
       child: AtlasGlassPanel(
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(
-              Icons.inventory_2_outlined,
-              color: AtlasColors.vaultGold,
-            ),
-            const SizedBox(width: AtlasSpacing.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    pop.name,
-                    style: AtlasTypography.bodyMedium.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: AtlasSpacing.xs),
-                  Text(
-                    '$numberLabel • $categoryLabel',
-                    style: AtlasTypography.bodySmall.copyWith(
-                      color: AtlasColors.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: AtlasSpacing.xs),
-                  Text(
-                    seriesLabel,
-                    style: AtlasTypography.bodySmall.copyWith(
-                      color: AtlasColors.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: AtlasSpacing.xs),
-                  Text(
-                    'Added: $addedLabel • Updated: $updatedLabel',
-                    style: AtlasTypography.bodySmall.copyWith(
-                      color: AtlasColors.textSecondary,
-                    ),
-                  ),
-                ],
+            if (showImage) ...[
+              Center(
+                child: _VaultPopThumbnail(
+                  imageUrl: pop.imageUrl,
+                ),
               ),
-            ),
-            const SizedBox(width: AtlasSpacing.md),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
+              const SizedBox(height: AtlasSpacing.md),
+            ],
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  valueLabel,
-                  style: AtlasTypography.bodySmall.copyWith(
-                    color: pop.value <= 0
-                        ? AtlasColors.textSecondary
-                        : AtlasColors.vaultGold,
-                    fontWeight: FontWeight.bold,
+                if (!showImage) ...[
+                  const Icon(
+                    Icons.inventory_2_outlined,
+                    color: AtlasColors.vaultGold,
+                  ),
+                  const SizedBox(width: AtlasSpacing.md),
+                ],
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        pop.name,
+                        style: AtlasTypography.bodyMedium.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: AtlasSpacing.xs),
+                      Text(
+                        '$numberLabel • $categoryLabel',
+                        style: AtlasTypography.bodySmall.copyWith(
+                          color: AtlasColors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: AtlasSpacing.xs),
+                      Text(
+                        seriesLabel,
+                        style: AtlasTypography.bodySmall.copyWith(
+                          color: AtlasColors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: AtlasSpacing.xs),
+                      _VaultPopBadges(
+                        pop: pop,
+                      ),
+                      const SizedBox(height: AtlasSpacing.xs),
+                      Text(
+                        'Added: $addedLabel • Updated: $updatedLabel',
+                        style: AtlasTypography.bodySmall.copyWith(
+                          color: AtlasColors.textSecondary,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: AtlasSpacing.xs),
-                const Icon(
-                  Icons.chevron_right_rounded,
-                  color: AtlasColors.textSecondary,
+                const SizedBox(width: AtlasSpacing.md),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      valueLabel,
+                      style: AtlasTypography.bodySmall.copyWith(
+                        color: pop.value <= 0
+                            ? AtlasColors.textSecondary
+                            : AtlasColors.vaultGold,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: AtlasSpacing.xs),
+                    const Icon(
+                      Icons.chevron_right_rounded,
+                      color: AtlasColors.textSecondary,
+                    ),
+                  ],
                 ),
               ],
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _VaultPopBadges extends StatelessWidget {
+  const _VaultPopBadges({
+    required this.pop,
+  });
+
+  final Pop pop;
+
+  @override
+  Widget build(BuildContext context) {
+    final badges = _buildBadges();
+
+    if (badges.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Wrap(
+      spacing: AtlasSpacing.xs,
+      runSpacing: AtlasSpacing.xs,
+      children: badges
+          .map(
+            (badge) => _VaultPopBadge(
+          label: badge,
+        ),
+      )
+          .toList(),
+    );
+  }
+
+  List<String> _buildBadges() {
+    final badges = <String>[];
+
+    if (pop.value <= 0) {
+      badges.add('Needs Value');
+    }
+
+    if (pop.isWishlist) {
+      badges.add('Wishlist');
+    }
+
+    if (_hasMeaningfulValue(pop.variant)) {
+      badges.add(_cleanBadgeLabel(pop.variant));
+    }
+
+    if (_hasMeaningfulValue(pop.retailExclusive)) {
+      badges.add('Exclusive');
+    }
+
+    if (_hasMeaningfulValue(pop.eventSticker)) {
+      badges.add('Sticker');
+    }
+
+    if (_hasMeaningfulValue(pop.limitedEdition)) {
+      badges.add('Limited');
+    }
+
+    if (_hasMeaningfulValue(pop.signature)) {
+      badges.add('Signed');
+    }
+
+    return badges;
+  }
+
+  bool _hasMeaningfulValue(String value) {
+    final cleaned = value.trim().toLowerCase();
+
+    if (cleaned.isEmpty) {
+      return false;
+    }
+
+    return cleaned != 'none' &&
+        cleaned != 'common' &&
+        cleaned != 'standard' &&
+        cleaned != 'unsigned' &&
+        cleaned != 'no' &&
+        cleaned != 'n/a' &&
+        cleaned != 'na';
+  }
+
+  String _cleanBadgeLabel(String value) {
+    final cleaned = value.trim();
+
+    if (cleaned.length <= 16) {
+      return cleaned;
+    }
+
+    return '${cleaned.substring(0, 16)}...';
+  }
+}
+
+class _VaultPopBadge extends StatelessWidget {
+  const _VaultPopBadge({
+    required this.label,
+  });
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AtlasSpacing.sm,
+        vertical: 3,
+      ),
+      decoration: BoxDecoration(
+        color: AtlasColors.vaultGold.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: AtlasColors.vaultGold.withValues(alpha: 0.34),
+        ),
+      ),
+      child: Text(
+        label,
+        style: AtlasTypography.bodySmall.copyWith(
+          color: AtlasColors.vaultGold,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+}
+
+class _VaultPopThumbnail extends StatelessWidget {
+  const _VaultPopThumbnail({
+    required this.imageUrl,
+  });
+
+  final String imageUrl;
+
+  @override
+  Widget build(BuildContext context) {
+    final cleanImageUrl = imageUrl.trim();
+
+    return Container(
+      width: 54,
+      height: 68,
+      decoration: BoxDecoration(
+        color: AtlasColors.textSecondary.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(AtlasSpacing.sm),
+        border: Border.all(
+          color: AtlasColors.vaultGold.withValues(alpha: 0.28),
+        ),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: cleanImageUrl.isEmpty
+          ? const Icon(
+        Icons.inventory_2_rounded,
+        size: 28,
+      )
+          : Image.network(
+        cleanImageUrl,
+        fit: BoxFit.contain,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) {
+            return child;
+          }
+
+          return const Center(
+            child: SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          );
+        },
+        errorBuilder: (context, error, stackTrace) {
+          return const Icon(
+            Icons.broken_image_rounded,
+            size: 28,
+          );
+        },
       ),
     );
   }
