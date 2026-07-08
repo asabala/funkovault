@@ -537,25 +537,32 @@ class _QuickStatLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(
+        vertical: AtlasSpacing.xs,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
             label,
-            style: AtlasTypography.bodyMedium.copyWith(
+            style: AtlasTypography.bodySmall.copyWith(
               color: AtlasColors.textSecondary,
+              fontWeight: FontWeight.bold,
             ),
           ),
-        ),
-        Text(
-          _displayValue(value),
-          style: AtlasTypography.bodyMedium.copyWith(
-            color: AtlasColors.vaultGold,
-            fontWeight: FontWeight.bold,
+          const SizedBox(height: 4),
+          Text(
+            _displayValue(value),
+            style: AtlasTypography.bodyMedium.copyWith(
+              color: AtlasColors.vaultGold,
+              fontWeight: FontWeight.bold,
+            ),
+            softWrap: true,
           ),
-          textAlign: TextAlign.right,
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

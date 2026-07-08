@@ -24,6 +24,7 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
 
   String _searchQuery = '';
   _VaultSortMode _sortMode = _VaultSortMode.nameAz;
+  _VaultFilterMode _filterMode = _VaultFilterMode.all;
 
   @override
   void dispose() {
@@ -32,18 +33,37 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
     super.dispose();
   }
 
+  void _resetVaultReviewControls() {
+    _searchController.clear();
+
+    setState(() {
+      _searchQuery = '';
+      _filterMode = _VaultFilterMode.all;
+      _sortMode = _VaultSortMode.nameAz;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final appState = context.watch<AppState>();
     const repository = VaultRepository();
 
     final pops = repository.allPops(appState);
-    final filteredPops = _sortPops(_filterPops(pops));
+    final filteredPops = _sortPops(
+      _filterByMode(
+        _filterBySearch(pops),
+      ),
+    );
 
     final totalValue = pops.fold<double>(
       0,
           (total, pop) => total + pop.value,
     );
+
+    final hasActiveReviewControls = _searchQuery.trim().isNotEmpty ||
+        _filterMode != _VaultFilterMode.all ||
+        _sortMode != _VaultSortMode.nameAz;
+
     final missingValueCount = pops.where((pop) => pop.value <= 0).length;
 
     return Scaffold(
@@ -114,13 +134,21 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
             },
           ),
           const SizedBox(height: AtlasSpacing.lg),
-          _VaultSortCard(
+          _VaultControlsCard(
+            selectedFilter: _filterMode,
             selectedSort: _sortMode,
-            onChanged: (sortMode) {
+            hasActiveControls: hasActiveReviewControls,
+            onFilterChanged: (filterMode) {
+              setState(() {
+                _filterMode = filterMode;
+              });
+            },
+            onSortChanged: (sortMode) {
               setState(() {
                 _sortMode = sortMode;
               });
             },
+            onReset: _resetVaultReviewControls,
           ),
           const SizedBox(height: AtlasSpacing.lg),
           if (pops.isEmpty)
@@ -131,13 +159,14 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
             _VaultPopListCard(
               pops: filteredPops,
               sortMode: _sortMode,
+              filterMode: _filterMode,
             ),
         ],
       ),
     );
   }
 
-  List<Pop> _filterPops(List<Pop> pops) {
+  List<Pop> _filterBySearch(List<Pop> pops) {
     final query = _searchQuery.trim().toLowerCase();
 
     if (query.isEmpty) {
@@ -157,6 +186,85 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
           series.contains(query) ||
           owner.contains(query);
     }).toList();
+  }
+
+  List<Pop> _filterByMode(List<Pop> pops) {
+    switch (_filterMode) {
+      case _VaultFilterMode.all:
+        return pops;
+
+      case _VaultFilterMode.owned:
+        return pops
+            .where(
+              (pop) => !pop.isWishlist,
+        )
+            .toList();
+
+      case _VaultFilterMode.wishlist:
+        return pops
+            .where(
+              (pop) => pop.isWishlist,
+        )
+            .toList();
+
+      case _VaultFilterMode.needsValue:
+        return pops
+            .where(
+              (pop) => pop.value <= 0,
+        )
+            .toList();
+
+      case _VaultFilterMode.hasValue:
+        return pops
+            .where(
+              (pop) => pop.value > 0,
+        )
+            .toList();
+
+      case _VaultFilterMode.exclusives:
+        return pops
+            .where(
+              (pop) => _hasMeaningfulValue(pop.retailExclusive),
+        )
+            .toList();
+
+      case _VaultFilterMode.signed:
+        return pops
+            .where(
+              (pop) => _hasMeaningfulValue(pop.signature),
+        )
+            .toList();
+
+      case _VaultFilterMode.limited:
+        return pops
+            .where(
+              (pop) => _hasMeaningfulValue(pop.limitedEdition),
+        )
+            .toList();
+
+      case _VaultFilterMode.variants:
+        return pops
+            .where(
+              (pop) => _hasMeaningfulValue(pop.variant),
+        )
+            .toList();
+    }
+  }
+
+  bool _hasMeaningfulValue(String value) {
+    final cleaned = value.trim().toLowerCase();
+
+    if (cleaned.isEmpty) {
+      return false;
+    }
+
+    return cleaned != 'none' &&
+        cleaned != 'common' &&
+        cleaned != 'standard' &&
+        cleaned != 'unsigned' &&
+        cleaned != 'no' &&
+        cleaned != 'n/a' &&
+        cleaned != 'na';
   }
 
   List<Pop> _sortPops(List<Pop> pops) {
@@ -224,6 +332,43 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
     }
 
     return parsed.millisecondsSinceEpoch;
+  }
+}
+
+enum _VaultFilterMode {
+  all,
+  owned,
+  wishlist,
+  needsValue,
+  hasValue,
+  exclusives,
+  signed,
+  limited,
+  variants,
+}
+
+extension _VaultFilterModeLabel on _VaultFilterMode {
+  String get label {
+    switch (this) {
+      case _VaultFilterMode.all:
+        return 'All';
+      case _VaultFilterMode.owned:
+        return 'Owned';
+      case _VaultFilterMode.wishlist:
+        return 'Wishlist';
+      case _VaultFilterMode.needsValue:
+        return 'Needs Value';
+      case _VaultFilterMode.hasValue:
+        return 'Has Value';
+      case _VaultFilterMode.exclusives:
+        return 'Exclusives';
+      case _VaultFilterMode.signed:
+        return 'Signed';
+      case _VaultFilterMode.limited:
+        return 'Limited';
+      case _VaultFilterMode.variants:
+        return 'Variants';
+    }
   }
 }
 
@@ -311,14 +456,22 @@ class _VaultSearchCard extends StatelessWidget {
   }
 }
 
-class _VaultSortCard extends StatelessWidget {
-  const _VaultSortCard({
+class _VaultControlsCard extends StatelessWidget {
+  const _VaultControlsCard({
+    required this.selectedFilter,
     required this.selectedSort,
-    required this.onChanged,
+    required this.hasActiveControls,
+    required this.onFilterChanged,
+    required this.onSortChanged,
+    required this.onReset,
   });
 
+  final _VaultFilterMode selectedFilter;
   final _VaultSortMode selectedSort;
-  final ValueChanged<_VaultSortMode> onChanged;
+  final bool hasActiveControls;
+  final ValueChanged<_VaultFilterMode> onFilterChanged;
+  final ValueChanged<_VaultSortMode> onSortChanged;
+  final VoidCallback onReset;
 
   @override
   Widget build(BuildContext context) {
@@ -327,47 +480,114 @@ class _VaultSortCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Sort Vault',
+            'Review Controls',
             style: AtlasTypography.headingSmall,
           ),
           const SizedBox(height: AtlasSpacing.sm),
           Text(
-            'Choose how you want to review your collection.',
+            'Filter and sort your vault without taking up extra space.',
             style: AtlasTypography.bodyMedium.copyWith(
               color: AtlasColors.textSecondary,
             ),
           ),
           const SizedBox(height: AtlasSpacing.md),
-          Wrap(
-            spacing: AtlasSpacing.sm,
-            runSpacing: AtlasSpacing.sm,
-            children: _VaultSortMode.values
-                .map(
-                  (sortMode) => ChoiceChip(
-                label: Text(sortMode.label),
-                selected: selectedSort == sortMode,
-                onSelected: (_) => onChanged(sortMode),
-                selectedColor:
-                AtlasColors.vaultGold.withValues(alpha: 0.22),
-                labelStyle: AtlasTypography.bodySmall.copyWith(
-                  color: selectedSort == sortMode
-                      ? AtlasColors.vaultGold
-                      : AtlasColors.textSecondary,
-                  fontWeight: selectedSort == sortMode
-                      ? FontWeight.bold
-                      : FontWeight.normal,
-                ),
-                side: BorderSide(
-                  color: selectedSort == sortMode
-                      ? AtlasColors.vaultGold.withValues(alpha: 0.70)
-                      : AtlasColors.textSecondary.withValues(alpha: 0.22),
+          Row(
+            children: [
+              Expanded(
+                child: _VaultDropdown<_VaultFilterMode>(
+                  label: 'Filter Vault',
+                  icon: Icons.filter_list_rounded,
+                  value: selectedFilter,
+                  values: _VaultFilterMode.values,
+                  labelBuilder: (value) => value.label,
+                  onChanged: onFilterChanged,
                 ),
               ),
-            )
-                .toList(),
+              const SizedBox(width: AtlasSpacing.sm),
+              Container(
+                width: 1,
+                height: 48,
+                color: AtlasColors.textSecondary.withValues(alpha: 0.20),
+              ),
+              const SizedBox(width: AtlasSpacing.sm),
+              Expanded(
+                child: _VaultDropdown<_VaultSortMode>(
+                  label: 'Sort Vault',
+                  icon: Icons.sort_rounded,
+                  value: selectedSort,
+                  values: _VaultSortMode.values,
+                  labelBuilder: (value) => value.label,
+                  onChanged: onSortChanged,
+                ),
+              ),
+            ],
           ),
+          if (hasActiveControls) ...[
+            const SizedBox(height: AtlasSpacing.md),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: onReset,
+                icon: const Icon(Icons.restart_alt_rounded),
+                label: const Text('Reset Search, Filter, and Sort'),
+              ),
+            ),
+          ],
         ],
       ),
+    );
+  }
+}
+
+class _VaultDropdown<T> extends StatelessWidget {
+  const _VaultDropdown({
+    required this.label,
+    required this.icon,
+    required this.value,
+    required this.values,
+    required this.labelBuilder,
+    required this.onChanged,
+  });
+
+  final String label;
+  final IconData icon;
+  final T value;
+  final List<T> values;
+  final String Function(T value) labelBuilder;
+  final ValueChanged<T> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return DropdownButtonFormField<T>(
+      initialValue: value,
+      isExpanded: true,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon),
+        border: const OutlineInputBorder(),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: AtlasSpacing.sm,
+          vertical: AtlasSpacing.sm,
+        ),
+      ),
+      items: values
+          .map(
+            (item) => DropdownMenuItem<T>(
+          value: item,
+          child: Text(
+            labelBuilder(item),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      )
+          .toList(),
+      onChanged: (newValue) {
+        if (newValue == null) {
+          return;
+        }
+
+        onChanged(newValue);
+      },
     );
   }
 }
@@ -427,7 +647,7 @@ class _NoSearchResultsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return AtlasGlassCard(
       child: Text(
-        'No Pops matched your search. Try a different name, number, category, series, or owner.',
+        'No Pops matched your search or filter. Try clearing search, choosing All, or using a different filter.',
         style: AtlasTypography.bodyMedium.copyWith(
           color: AtlasColors.textSecondary,
         ),
@@ -440,10 +660,12 @@ class _VaultPopListCard extends StatelessWidget {
   const _VaultPopListCard({
     required this.pops,
     required this.sortMode,
+    required this.filterMode,
   });
 
   final List<Pop> pops;
   final _VaultSortMode sortMode;
+  final _VaultFilterMode filterMode;
 
   @override
   Widget build(BuildContext context) {
@@ -457,7 +679,7 @@ class _VaultPopListCard extends StatelessWidget {
           ),
           const SizedBox(height: AtlasSpacing.sm),
           Text(
-            '${pops.length} result${pops.length == 1 ? '' : 's'} • Sorted by ${sortMode.label}. Tap any Pop to open details.',
+            '${pops.length} result${pops.length == 1 ? '' : 's'} • Filtered by ${filterMode.label} • Sorted by ${sortMode.label}. Tap any Pop to open details.',
             style: AtlasTypography.bodySmall.copyWith(
               color: AtlasColors.textSecondary,
             ),
