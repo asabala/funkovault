@@ -744,7 +744,11 @@ class _DuplicatePopTile extends StatelessWidget {
               color: AtlasColors.vaultGold,
             ),
           ),
-          const SizedBox(height: AtlasSpacing.xs),
+          const SizedBox(height: AtlasSpacing.sm),
+          _DuplicateIdentityBadges(
+            pop: pop,
+          ),
+          const SizedBox(height: AtlasSpacing.sm),
           Text(
             '$seriesLabel • $categoryLabel',
             style: AtlasTypography.bodySmall.copyWith(
@@ -785,7 +789,138 @@ class _DuplicatePopTile extends StatelessWidget {
       ),
     );
   }
-}class _DuplicatePopImage extends StatelessWidget {
+}
+
+class _DuplicateIdentityBadges extends StatelessWidget {
+  const _DuplicateIdentityBadges({
+    required this.pop,
+  });
+
+  final Pop pop;
+
+  @override
+  Widget build(BuildContext context) {
+    final badges = _buildBadges();
+
+    if (badges.isEmpty) {
+      return Text(
+        'Common / Standard',
+        style: AtlasTypography.bodySmall.copyWith(
+          color: AtlasColors.textSecondary,
+          fontWeight: FontWeight.bold,
+        ),
+      );
+    }
+
+    return Wrap(
+      spacing: AtlasSpacing.xs,
+      runSpacing: AtlasSpacing.xs,
+      children: badges
+          .map(
+            (badge) => _IdentityBadge(
+          label: badge,
+        ),
+      )
+          .toList(),
+    );
+  }
+
+  List<String> _buildBadges() {
+    final badges = <String>[];
+
+    final variant = pop.variant.trim();
+    final retailExclusive = pop.retailExclusive.trim();
+    final eventSticker = pop.eventSticker.trim();
+    final limitedEdition = pop.limitedEdition.trim();
+    final signature = pop.signature.trim();
+
+    if (_hasMeaningfulValue(variant)) {
+      badges.add(_cleanBadgeLabel(variant));
+    }
+
+    if (_hasMeaningfulValue(retailExclusive)) {
+      badges.add('Exclusive');
+    }
+
+    if (_hasMeaningfulValue(eventSticker)) {
+      badges.add('Sticker');
+    }
+
+    if (_hasMeaningfulValue(limitedEdition)) {
+      badges.add('Limited');
+    }
+
+    if (_hasMeaningfulValue(signature)) {
+      badges.add('Signed');
+    }
+
+    if (pop.isWishlist) {
+      badges.add('Wishlist');
+    }
+
+    return badges;
+  }
+
+  bool _hasMeaningfulValue(String value) {
+    final cleaned = value.trim().toLowerCase();
+
+    if (cleaned.isEmpty) {
+      return false;
+    }
+
+    return cleaned != 'none' &&
+        cleaned != 'common' &&
+        cleaned != 'standard' &&
+        cleaned != 'unsigned' &&
+        cleaned != 'no' &&
+        cleaned != 'n/a' &&
+        cleaned != 'na';
+  }
+
+  String _cleanBadgeLabel(String value) {
+    final cleaned = value.trim();
+
+    if (cleaned.length <= 18) {
+      return cleaned;
+    }
+
+    return '${cleaned.substring(0, 18)}...';
+  }
+}
+
+class _IdentityBadge extends StatelessWidget {
+  const _IdentityBadge({
+    required this.label,
+  });
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AtlasSpacing.sm,
+        vertical: 4,
+      ),
+      decoration: BoxDecoration(
+        color: AtlasColors.vaultGold.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: AtlasColors.vaultGold.withValues(alpha: 0.38),
+        ),
+      ),
+      child: Text(
+        label,
+        style: AtlasTypography.bodySmall.copyWith(
+          color: AtlasColors.vaultGold,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+}
+
+class _DuplicatePopImage extends StatelessWidget {
   const _DuplicatePopImage({
     required this.imageUrl,
   });
