@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../models/pop.dart';
 import '../../services/app_state.dart';
+import '../../services/duplicate_review_service.dart';
 import '../../theme/atlas_colors.dart';
 import '../../theme/atlas_spacing.dart';
 import '../../theme/atlas_typography.dart';
@@ -26,15 +27,9 @@ class _PossibleDuplicatesScreenState extends State<PossibleDuplicatesScreen> {
     final appState = context.watch<AppState>();
     final pops = appState.selectedCollectionPops;
 
-    final sameIdentityGroups = _findGroups(
-      pops: pops,
-      keyBuilder: _exactDuplicateKey,
-    );
-
-    final possibleVariantGroups = _findPossibleVariantGroups(
-      pops: pops,
-      sameIdentityGroups: sameIdentityGroups,
-    );
+    final duplicateReport = const DuplicateReviewService().buildReport(pops);
+    final sameIdentityGroups = duplicateReport.sameIdentityGroups;
+    final possibleVariantGroups = duplicateReport.possibleVariantGroups;
 
     final showSameIdentity = _filter == _DuplicateReviewFilter.all ||
         _filter == _DuplicateReviewFilter.sameIdentity;
@@ -120,101 +115,12 @@ class _PossibleDuplicatesScreenState extends State<PossibleDuplicatesScreen> {
       ),
     );
   }
-
-  List<_DuplicateGroup> _findGroups({
-    required List<Pop> pops,
-    required String Function(Pop pop) keyBuilder,
-  }) {
-    final groups = <String, List<Pop>>{};
-
-    for (final pop in pops) {
-      final key = keyBuilder(pop);
-
-      if (key.trim().isEmpty) {
-        continue;
-      }
-
-      groups.putIfAbsent(key, () => []);
-      groups[key]!.add(pop);
-    }
-
-    final duplicateGroups = groups.entries
-        .where((entry) => entry.value.length > 1)
-        .map(
-          (entry) => _DuplicateGroup(
-        key: entry.key,
-        pops: entry.value,
-      ),
-    )
-        .toList();
-
-    duplicateGroups.sort(
-          (a, b) => b.pops.length.compareTo(a.pops.length),
-    );
-
-    return duplicateGroups;
-  }
-
-  List<_DuplicateGroup> _findPossibleVariantGroups({
-    required List<Pop> pops,
-    required List<_DuplicateGroup> sameIdentityGroups,
-  }) {
-    final sameIdentityKeys = sameIdentityGroups
-        .map(
-          (group) => group.key,
-    )
-        .toSet();
-
-    final looseGroups = _findGroups(
-      pops: pops,
-      keyBuilder: _looseReviewKey,
-    );
-
-    return looseGroups.where((group) {
-      final uniqueIdentityKeys = group.pops
-          .map(
-        _exactDuplicateKey,
-      )
-          .toSet();
-
-      final hasOnlyOneIdentityKey = uniqueIdentityKeys.length == 1;
-      final isAlreadySameIdentityGroup = hasOnlyOneIdentityKey &&
-          sameIdentityKeys.contains(uniqueIdentityKeys.first);
-
-      return !isAlreadySameIdentityGroup;
-    }).toList();
-  }
-
-  String _looseReviewKey(Pop pop) {
-    return [
-      pop.name,
-      pop.number,
-    ].map(_normalize).join('|');
-  }
-
-  String _exactDuplicateKey(Pop pop) {
-    return pop.duplicateKey;
-  }
-
-  String _normalize(String value) {
-    return value.trim().toLowerCase();
-  }
 }
 
 enum _DuplicateReviewFilter {
   all,
   sameIdentity,
   possibleVariants,
-}
-
-class _DuplicateGroup {
-  const _DuplicateGroup({
-    required this.key,
-    required this.pops,
-  });
-
-  final String key;
-  final List<Pop> pops;
 }
 
 class _DuplicateFilterCard extends StatelessWidget {
@@ -350,7 +256,7 @@ class _DuplicateSection extends StatelessWidget {
   final String title;
   final String subtitle;
   final String emptyMessage;
-  final List<_DuplicateGroup> groups;
+  final List<DuplicateReviewGroup> groups;
   final String badgeText;
   final Color badgeColor;
 
@@ -405,7 +311,7 @@ class _DuplicateGroupCard extends StatelessWidget {
     required this.badgeColor,
   });
 
-  final _DuplicateGroup group;
+  final DuplicateReviewGroup group;
   final String badgeText;
   final Color badgeColor;
 

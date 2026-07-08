@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'possible_duplicates_screen.dart';
 
 import '../../services/app_state.dart';
+import '../../services/duplicate_review_service.dart';
 import '../../theme/atlas_colors.dart';
 import '../../theme/atlas_spacing.dart';
 import '../../theme/atlas_typography.dart';
 import '../../widgets/atlas/atlas_glass_card.dart';
 import '../../widgets/atlas/atlas_glass_panel.dart';
 import '../../widgets/vault_scroll_view.dart';
-
+import 'possible_duplicates_screen.dart';
 
 class VaultMaintenanceScreen extends StatelessWidget {
   const VaultMaintenanceScreen({super.key});
@@ -69,7 +69,12 @@ class VaultMaintenanceScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final appState = context.watch<AppState>();
     final collectionName = appState.selectedCollection;
-    final popCount = appState.selectedCollectionPops.length;
+    final pops = appState.selectedCollectionPops;
+    final popCount = pops.length;
+
+    final duplicateReport = const DuplicateReviewService().buildReport(pops);
+    final sameIdentityGroups = duplicateReport.sameIdentityGroups;
+    final possibleVariantGroups = duplicateReport.possibleVariantGroups;
 
     return Scaffold(
       appBar: AppBar(
@@ -114,7 +119,7 @@ class VaultMaintenanceScreen extends StatelessWidget {
               ],
             ),
           ),
-
+          const SizedBox(height: AtlasSpacing.lg),
           AtlasGlassCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -128,6 +133,60 @@ class VaultMaintenanceScreen extends StatelessWidget {
                   'Review possible duplicate Pops before deleting, merging, or resetting anything. This does not change your vault.',
                   style: AtlasTypography.bodyMedium.copyWith(
                     color: AtlasColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: AtlasSpacing.lg),
+                AtlasGlassPanel(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _MaintenanceSummaryLine(
+                        label: 'Same Identity Groups',
+                        value: '${sameIdentityGroups.length}',
+                      ),
+                      const SizedBox(height: AtlasSpacing.xs),
+                      _MaintenanceSummaryLine(
+                        label: 'Possible Variant Groups',
+                        value: '${possibleVariantGroups.length}',
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: AtlasSpacing.md),
+                AtlasGlassPanel(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Review Safety Note',
+                        style: AtlasTypography.bodyMedium.copyWith(
+                          color: AtlasColors.vaultGold,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: AtlasSpacing.sm),
+                      Text(
+                        'Same Identity Groups may be cleanup candidates, but they should still be reviewed first.',
+                        style: AtlasTypography.bodySmall.copyWith(
+                          color: AtlasColors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: AtlasSpacing.xs),
+                      Text(
+                        'Possible Variant Groups are often legitimate Funko variants such as chase, glow, metallic, exclusive, stickered, limited edition, or signed Pops.',
+                        style: AtlasTypography.bodySmall.copyWith(
+                          color: AtlasColors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: AtlasSpacing.xs),
+                      Text(
+                        'Atlas will not auto-merge or auto-delete Funko variants.',
+                        style: AtlasTypography.bodySmall.copyWith(
+                          color: AtlasColors.textSecondary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: AtlasSpacing.lg),
@@ -146,8 +205,6 @@ class VaultMaintenanceScreen extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: AtlasSpacing.lg),
-
           const SizedBox(height: AtlasSpacing.lg),
           AtlasGlassCard(
             child: Column(
@@ -186,7 +243,7 @@ class VaultMaintenanceScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: AtlasSpacing.sm),
                 Text(
-                  'Next we can add duplicate review tools here so Atlas can show possible duplicate groups without deleting anything automatically.',
+                  'Next we can add safe cleanup tools for same-identity groups, but only after review. Atlas will not auto-merge Funko variants.',
                   style: AtlasTypography.bodyMedium.copyWith(
                     color: AtlasColors.textSecondary,
                   ),
@@ -196,6 +253,52 @@ class VaultMaintenanceScreen extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _MaintenanceSummaryLine extends StatelessWidget {
+  const _MaintenanceSummaryLine({
+    required this.label,
+    required this.value,
+  });
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            label,
+            style: AtlasTypography.bodyMedium.copyWith(
+              color: AtlasColors.textSecondary,
+            ),
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AtlasSpacing.sm,
+            vertical: 4,
+          ),
+          decoration: BoxDecoration(
+            color: AtlasColors.vaultGold.withValues(alpha: 0.16),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(
+              color: AtlasColors.vaultGold.withValues(alpha: 0.42),
+            ),
+          ),
+          child: Text(
+            value,
+            style: AtlasTypography.bodySmall.copyWith(
+              color: AtlasColors.vaultGold,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
