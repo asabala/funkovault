@@ -21,7 +21,36 @@ class PossibleDuplicatesScreen extends StatefulWidget {
 }
 
 class _PossibleDuplicatesScreenState extends State<PossibleDuplicatesScreen> {
+  final GlobalKey _topKey = GlobalKey();
+
   _DuplicateReviewFilter _filter = _DuplicateReviewFilter.all;
+  bool _showBackToTop = false;
+
+  void _scrollToTop() {
+    final topContext = _topKey.currentContext;
+
+    if (topContext == null) {
+      return;
+    }
+
+    Scrollable.ensureVisible(
+      topContext,
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  bool _handleScrollNotification(ScrollNotification notification) {
+    final shouldShow = notification.metrics.pixels > 500;
+
+    if (shouldShow != _showBackToTop) {
+      setState(() {
+        _showBackToTop = shouldShow;
+      });
+    }
+
+    return false;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,77 +71,88 @@ class _PossibleDuplicatesScreenState extends State<PossibleDuplicatesScreen> {
       appBar: AppBar(
         title: const Text('Possible Duplicates'),
       ),
-      body: VaultScrollView(
-        children: [
-          AtlasGlassCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Duplicate Review',
-                  style: AtlasTypography.headingLarge,
-                ),
-                const SizedBox(height: AtlasSpacing.sm),
-                Text(
-                  'Atlas separates same identity groups from possible variants. Nothing is deleted or merged from this screen.',
-                  style: AtlasTypography.bodyMedium.copyWith(
-                    color: AtlasColors.textSecondary,
+      floatingActionButton: _showBackToTop
+          ? FloatingActionButton.extended(
+        onPressed: _scrollToTop,
+        icon: const Icon(Icons.keyboard_arrow_up_rounded),
+        label: const Text('Top'),
+      )
+          : null,
+      body: NotificationListener<ScrollNotification>(
+        onNotification: _handleScrollNotification,
+        child: VaultScrollView(
+          children: [
+            AtlasGlassCard(
+              key: _topKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Duplicate Review',
+                    style: AtlasTypography.headingLarge,
                   ),
-                ),
-                const SizedBox(height: AtlasSpacing.lg),
-                AtlasGlassPanel(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _SummaryLine(
-                        label: 'Same Identity Groups',
-                        value: '${sameIdentityGroups.length}',
-                      ),
-                      const SizedBox(height: AtlasSpacing.xs),
-                      _SummaryLine(
-                        label: 'Possible Variant Groups',
-                        value: '${possibleVariantGroups.length}',
-                      ),
-                    ],
+                  const SizedBox(height: AtlasSpacing.sm),
+                  Text(
+                    'Atlas separates same identity groups from possible variants. Nothing is deleted or merged from this screen.',
+                    style: AtlasTypography.bodyMedium.copyWith(
+                      color: AtlasColors.textSecondary,
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: AtlasSpacing.lg),
+                  AtlasGlassPanel(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _SummaryLine(
+                          label: 'Same Identity Groups',
+                          value: '${sameIdentityGroups.length}',
+                        ),
+                        const SizedBox(height: AtlasSpacing.xs),
+                        _SummaryLine(
+                          label: 'Possible Variant Groups',
+                          value: '${possibleVariantGroups.length}',
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: AtlasSpacing.lg),
-          _DuplicateFilterCard(
-            selectedFilter: _filter,
-            onChanged: (filter) {
-              setState(() {
-                _filter = filter;
-              });
-            },
-          ),
-          if (showSameIdentity) ...[
             const SizedBox(height: AtlasSpacing.lg),
-            _DuplicateSection(
-              title: 'Same Identity Groups',
-              subtitle:
-              'These match on the stricter collectible identity key. Review these first because they may be the same Pop with different values or quantities.',
-              emptyMessage: 'No same identity groups found.',
-              groups: sameIdentityGroups,
-              badgeText: 'Identity',
-              badgeColor: AtlasColors.vaultGold,
+            _DuplicateFilterCard(
+              selectedFilter: _filter,
+              onChanged: (filter) {
+                setState(() {
+                  _filter = filter;
+                });
+              },
             ),
+            if (showSameIdentity) ...[
+              const SizedBox(height: AtlasSpacing.lg),
+              _DuplicateSection(
+                title: 'Same Identity Groups',
+                subtitle:
+                'These match on the stricter collectible identity key. Review these first because they may be the same Pop with different values or quantities.',
+                emptyMessage: 'No same identity groups found.',
+                groups: sameIdentityGroups,
+                badgeText: 'Identity',
+                badgeColor: AtlasColors.vaultGold,
+              ),
+            ],
+            if (showPossibleVariants) ...[
+              const SizedBox(height: AtlasSpacing.lg),
+              _DuplicateSection(
+                title: 'Possible Variant Groups',
+                subtitle:
+                'These share the same name and number, but may be legitimate variants such as chase, metallic, exclusive, sticker, limited edition, or signed Pops.',
+                emptyMessage: 'No possible variant groups found.',
+                groups: possibleVariantGroups,
+                badgeText: 'Review',
+                badgeColor: AtlasColors.textSecondary,
+              ),
+            ],
           ],
-          if (showPossibleVariants) ...[
-            const SizedBox(height: AtlasSpacing.lg),
-            _DuplicateSection(
-              title: 'Possible Variant Groups',
-              subtitle:
-              'These share the same name and number, but may be legitimate variants such as chase, metallic, exclusive, sticker, limited edition, or signed Pops.',
-              emptyMessage: 'No possible variant groups found.',
-              groups: possibleVariantGroups,
-              badgeText: 'Review',
-              badgeColor: AtlasColors.textSecondary,
-            ),
-          ],
-        ],
+        ),
       ),
     );
   }
