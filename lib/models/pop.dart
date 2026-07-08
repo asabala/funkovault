@@ -53,8 +53,7 @@ class Pop {
   factory Pop.fromJson(
       Map<String, dynamic> json,
       ) {
-    final legacyEdition =
-        json['edition'] ?? 'Common';
+    final legacyEdition = json['edition'] ?? 'Common';
 
     return Pop(
       id: json['id'] ?? '',
@@ -64,26 +63,47 @@ class Pop {
       series: json['series'] ?? '',
       edition: legacyEdition,
       variant: json['variant'] ?? legacyEdition,
-      retailExclusive:
-      json['retailExclusive'] ?? 'None',
-      eventSticker:
-      json['eventSticker'] ?? 'None',
-      limitedEdition:
-      json['limitedEdition'] ?? 'None',
+      retailExclusive: json['retailExclusive'] ?? 'None',
+      eventSticker: json['eventSticker'] ?? 'None',
+      limitedEdition: json['limitedEdition'] ?? 'None',
       signature: json['signature'] ?? 'Unsigned',
       value: (json['value'] ?? 0).toDouble(),
-      pricePaid:
-      (json['pricePaid'] ?? 0).toDouble(),
+      pricePaid: (json['pricePaid'] ?? 0).toDouble(),
       quantity: json['quantity'] ?? 1,
-      itemCondition:
-      json['itemCondition'] ?? '',
-      boxCondition:
-      json['boxCondition'] ?? '',
+      itemCondition: json['itemCondition'] ?? '',
+      boxCondition: json['boxCondition'] ?? '',
       imageUrl: json['imageUrl'] ?? '',
       owner: json['owner'] ?? 'Shared',
-      isWishlist:
-      json['isWishlist'] ?? false,
+      isWishlist: json['isWishlist'] ?? false,
     );
+  }
+
+  String get csvImportKey {
+    return [
+      name,
+      number,
+      series,
+      retailExclusive,
+      eventSticker,
+      limitedEdition,
+      signature,
+      isWishlist ? 'wishlist' : 'owned',
+    ].map(_normalizeKeyPart).join('|');
+  }
+
+  String get duplicateKey {
+    return [
+      name,
+      number,
+      category,
+      owner,
+      variant,
+      retailExclusive,
+      eventSticker,
+      limitedEdition,
+      signature,
+      isWishlist ? 'wishlist' : 'owned',
+    ].map(_normalizeKeyPart).join('|');
   }
 
   String get collectorIdentity {
@@ -95,9 +115,7 @@ class Pop {
       eventSticker,
       limitedEdition,
       signature,
-    ]
-        .map((value) => value.trim().toLowerCase())
-        .join('|');
+    ].map(_normalizeKeyPart).join('|');
   }
 
   String get collectorLabel {
@@ -119,6 +137,50 @@ class Pop {
     }
 
     return parts.join(' • ');
+  }
+
+  Pop copyWith({
+    String? id,
+    String? name,
+    String? number,
+    String? category,
+    String? series,
+    String? edition,
+    String? variant,
+    String? retailExclusive,
+    String? eventSticker,
+    String? limitedEdition,
+    String? signature,
+    double? value,
+    double? pricePaid,
+    int? quantity,
+    String? itemCondition,
+    String? boxCondition,
+    String? imageUrl,
+    String? owner,
+    bool? isWishlist,
+  }) {
+    return Pop(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      number: number ?? this.number,
+      category: category ?? this.category,
+      series: series ?? this.series,
+      edition: edition ?? this.edition,
+      variant: variant ?? this.variant,
+      retailExclusive: retailExclusive ?? this.retailExclusive,
+      eventSticker: eventSticker ?? this.eventSticker,
+      limitedEdition: limitedEdition ?? this.limitedEdition,
+      signature: signature ?? this.signature,
+      value: value ?? this.value,
+      pricePaid: pricePaid ?? this.pricePaid,
+      quantity: quantity ?? this.quantity,
+      itemCondition: itemCondition ?? this.itemCondition,
+      boxCondition: boxCondition ?? this.boxCondition,
+      imageUrl: imageUrl ?? this.imageUrl,
+      owner: owner ?? this.owner,
+      isWishlist: isWishlist ?? this.isWishlist,
+    );
   }
 
   Map<String, dynamic> toJson() {
@@ -143,5 +205,9 @@ class Pop {
       'owner': owner,
       'isWishlist': isWishlist,
     };
+  }
+
+  static String _normalizeKeyPart(String value) {
+    return value.trim().toLowerCase();
   }
 }

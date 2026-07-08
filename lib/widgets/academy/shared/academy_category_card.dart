@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../academy/models/academy_category.dart';
+import '../../../academy/models/academy_category.dart';
 
 class AcademyCategoryCard extends StatelessWidget {
   const AcademyCategoryCard({

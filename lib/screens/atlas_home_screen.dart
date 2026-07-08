@@ -13,9 +13,8 @@ import '../widgets/atlas/atlas_glass_panel.dart';
 import '../widgets/atlas/atlas_stat_tile.dart';
 import '../widgets/home/atlas_pulse_card.dart';
 import '../widgets/home/continue_journey_card.dart';
-import '../widgets/profile/identity/atlas_identity_card.dart';
 import '../widgets/vault_scroll_view.dart';
-import 'profile/atlas_vault_profile_screen.dart';
+import '../vault/collector_vault_screen.dart';
 
 class AtlasHomeScreen extends StatelessWidget {
   const AtlasHomeScreen({super.key});
@@ -27,22 +26,22 @@ class AtlasHomeScreen extends StatelessWidget {
 
     const dashboardBuilder = AtlasDashboard();
 
-    final AtlasDashboardModel dashboard =
-    dashboardBuilder.build(appState);
+    final AtlasDashboardModel dashboard = dashboardBuilder.build(appState);
 
     final now = DateTime.now();
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Atlas Pulse'),
-        actions: const [
-          Padding(
-            padding: EdgeInsets.only(right: AtlasSpacing.md),
-            child: Icon(
-              AtlasIcons.atlas,
-              color: AtlasColors.vaultGold,
+        actions: [
+          IconButton(
+            tooltip: 'Signed in as ${profile.displayName}',
+            onPressed: () => _openVault(context),
+            icon: _HomeAvatar(
+              displayName: profile.displayName,
             ),
           ),
+          const SizedBox(width: AtlasSpacing.sm),
         ],
       ),
       body: VaultScrollView(
@@ -58,16 +57,12 @@ class AtlasHomeScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: AtlasSpacing.lg),
-          AtlasIdentityCard(
-            profile: profile,
-            onEdit: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const AtlasVaultProfileScreen(),
-                ),
-              );
-            },
+          _HomeAccountStatusCard(
+            displayName: profile.displayName,
+            collectorTitle: profile.collectorTitle,
+            totalPops: dashboard.totalPops,
+            confidence: dashboard.confidence.score,
+            onOpenVault: () => _openVault(context),
           ),
           const SizedBox(height: AtlasSpacing.lg),
           _HomeStatsCard(
@@ -80,7 +75,7 @@ class AtlasHomeScreen extends StatelessWidget {
             title: 'Collector Vault',
             subtitle:
             'Continue organizing your collection and reviewing your Vault Rooms.',
-            onContinue: () {},
+            onContinue: () => _openVault(context),
           ),
           const SizedBox(height: AtlasSpacing.lg),
           _RecentActivityCard(
@@ -90,6 +85,15 @@ class AtlasHomeScreen extends StatelessWidget {
                 : appState.recentActivities.first.details,
           ),
         ],
+      ),
+    );
+  }
+
+  static void _openVault(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const CollectorVaultScreen(),
       ),
     );
   }
@@ -173,6 +177,116 @@ class AtlasHomeScreen extends StatelessWidget {
     }
 
     return 'Your Vault has $totalPops collectible${totalPops == 1 ? '' : 's'} with ${confidence.toStringAsFixed(0)}% Atlas Confidence.';
+  }
+}
+
+class _HomeAvatar extends StatelessWidget {
+  const _HomeAvatar({
+    required this.displayName,
+  });
+
+  final String displayName;
+
+  @override
+  Widget build(BuildContext context) {
+    final initial = displayName.trim().isEmpty
+        ? 'A'
+        : displayName.trim()[0].toUpperCase();
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        CircleAvatar(
+          radius: 16,
+          backgroundColor: AtlasColors.vaultGold,
+          child: Text(
+            initial,
+            style: const TextStyle(
+              color: AtlasColors.background,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        Positioned(
+          right: -1,
+          bottom: -1,
+          child: Container(
+            width: 9,
+            height: 9,
+            decoration: BoxDecoration(
+              color: Colors.greenAccent,
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: AtlasColors.background,
+                width: 1.5,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _HomeAccountStatusCard extends StatelessWidget {
+  const _HomeAccountStatusCard({
+    required this.displayName,
+    required this.collectorTitle,
+    required this.totalPops,
+    required this.confidence,
+    required this.onOpenVault,
+  });
+
+  final String displayName;
+  final String collectorTitle;
+  final int totalPops;
+  final double confidence;
+  final VoidCallback onOpenVault;
+
+  @override
+  Widget build(BuildContext context) {
+    return AtlasGlassCard(
+      child: Row(
+        children: [
+          const Icon(
+            AtlasIcons.atlas,
+            color: AtlasColors.vaultGold,
+            size: 36,
+          ),
+          const SizedBox(width: AtlasSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Signed in as $displayName',
+                  style: AtlasTypography.headingSmall,
+                ),
+                const SizedBox(height: AtlasSpacing.xs),
+                Text(
+                  collectorTitle,
+                  style: AtlasTypography.bodySmall.copyWith(
+                    color: AtlasColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: AtlasSpacing.xs),
+                Text(
+                  '$totalPops Pops • ${confidence.toStringAsFixed(0)}% Atlas Confidence',
+                  style: AtlasTypography.bodySmall.copyWith(
+                    color: AtlasColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: AtlasSpacing.md),
+          OutlinedButton(
+            onPressed: onOpenVault,
+            child: const Text('Vault'),
+          ),
+        ],
+      ),
+    );
   }
 }
 

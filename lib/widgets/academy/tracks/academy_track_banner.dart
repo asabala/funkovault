@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../theme/atlas_colors.dart';
-import '../../theme/atlas_spacing.dart';
-import '../../theme/atlas_typography.dart';
+import '../../../theme/atlas_colors.dart';
+import '../../../theme/atlas_spacing.dart';
+import '../../../theme/atlas_typography.dart';
 
 class AcademyTrackBanner extends StatelessWidget {
   const AcademyTrackBanner({

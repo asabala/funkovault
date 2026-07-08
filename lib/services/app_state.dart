@@ -1,16 +1,27 @@
 import 'package:flutter/material.dart';
 
-import '../models/pop.dart';
-import 'hive_service.dart';
 import '../models/activity.dart';
 import '../models/collector_profile.dart';
+import '../models/pop.dart';
+import 'hive_service.dart';
+
+class PopImportResult {
+  const PopImportResult({
+    required this.attempted,
+    required this.added,
+    required this.skipped,
+  });
+
+  final int attempted;
+  final int added;
+  final int skipped;
+}
 
 class AppState extends ChangeNotifier {
   String _selectedCollection = 'Entire Family Collection';
   final List<Activity> _activities = [];
 
-  CollectorProfile _collectorProfile =
-  const CollectorProfile(
+  CollectorProfile _collectorProfile = const CollectorProfile(
     id: 'default',
     displayName: 'Arthur',
     collectorTitle: 'Atlas Collector',
@@ -37,8 +48,7 @@ class AppState extends ChangeNotifier {
 
   List<Activity> get activities => _activities;
 
-  CollectorProfile get collectorProfile =>
-      _collectorProfile;
+  CollectorProfile get collectorProfile => _collectorProfile;
 
   List<Activity> get recentActivities {
     final list = List<Activity>.from(
@@ -46,23 +56,21 @@ class AppState extends ChangeNotifier {
     );
 
     list.sort(
-          (a, b) =>
-          b.timestamp.compareTo(
-            a.timestamp,
-          ),
+          (a, b) => b.timestamp.compareTo(
+        a.timestamp,
+      ),
     );
 
     return list.take(10).toList();
   }
+
   String get selectedCollection => _selectedCollection;
 
   Map<String, List<Pop>> get collections => _collections;
 
-  List<String> get collectionNames =>
-      _collections.keys.toList();
+  List<String> get collectionNames => _collections.keys.toList();
 
-  List<Pop> get selectedCollectionPops =>
-      _collections[_selectedCollection] ?? [];
+  List<Pop> get selectedCollectionPops => _collections[_selectedCollection] ?? [];
 
   Future<void> loadData() async {
     final data = HiveService.loadData(
@@ -70,16 +78,12 @@ class AppState extends ChangeNotifier {
     );
 
     if (data != null) {
-      _selectedCollection =
-          data['selectedCollection'] ??
-              'Entire Family Collection';
+      _selectedCollection = data['selectedCollection'] ?? 'Entire Family Collection';
 
       _collections.clear();
       _activities.clear();
 
-      final activitiesData =
-      data['activities'];
-
+      final activitiesData = data['activities'];
       final profileData = data['collectorProfile'];
 
       if (profileData != null) {
@@ -92,33 +96,29 @@ class AppState extends ChangeNotifier {
         _activities.addAll(
           (activitiesData as List)
               .map(
-                (item) =>
-                Activity.fromJson(
-                  Map<String, dynamic>.from(
-                    item,
-                  ),
-                ),
+                (item) => Activity.fromJson(
+              Map<String, dynamic>.from(
+                item,
+              ),
+            ),
           )
               .toList(),
         );
       }
 
-      final collectionsData =
-      data['collections']
-      as Map<String, dynamic>;
+      final collectionsData = data['collections'] as Map<String, dynamic>;
 
       collectionsData.forEach(
             (key, value) {
-          _collections[key] =
-              (value as List)
-                  .map(
-                    (item) => Pop.fromJson(
-                  Map<String, dynamic>.from(
-                    item,
-                  ),
-                ),
-              )
-                  .toList();
+          _collections[key] = (value as List)
+              .map(
+                (item) => Pop.fromJson(
+              Map<String, dynamic>.from(
+                item,
+              ),
+            ),
+          )
+              .toList();
         },
       );
     }
@@ -127,36 +127,29 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> _saveData() async {
-    final collectionsJson =
-    <String, dynamic>{};
+    final collectionsJson = <String, dynamic>{};
 
     _collections.forEach(
           (key, value) {
-        collectionsJson[key] =
-            value
-                .map(
-                  (pop) => pop.toJson(),
-            )
-                .toList();
+        collectionsJson[key] = value
+            .map(
+              (pop) => pop.toJson(),
+        )
+            .toList();
       },
     );
 
     await HiveService.saveData(
       'vault_data',
       {
-        'selectedCollection':
-        _selectedCollection,
-        'collections':
-        collectionsJson,
-        'activities':
-        _activities
+        'selectedCollection': _selectedCollection,
+        'collections': collectionsJson,
+        'activities': _activities
             .map(
-              (activity) =>
-              activity.toJson(),
+              (activity) => activity.toJson(),
         )
             .toList(),
-        'collectorProfile':
-        _collectorProfile.toJson(),
+        'collectorProfile': _collectorProfile.toJson(),
       },
     );
   }
@@ -174,7 +167,9 @@ class AppState extends ChangeNotifier {
   Future<void> addCollection(
       String name,
       ) async {
-    if (name.trim().isEmpty) return;
+    if (name.trim().isEmpty) {
+      return;
+    }
 
     if (!_collections.containsKey(name)) {
       _collections[name] = [];
@@ -188,13 +183,14 @@ class AppState extends ChangeNotifier {
   Future<void> deleteCollection(
       String name,
       ) async {
-    if (_collections.length <= 1) return;
+    if (_collections.length <= 1) {
+      return;
+    }
 
     _collections.remove(name);
 
     if (_selectedCollection == name) {
-      _selectedCollection =
-          _collections.keys.first;
+      _selectedCollection = _collections.keys.first;
     }
 
     await _saveData();
@@ -203,58 +199,32 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> addPop(Pop pop) async {
-    final pops =
-    _collections[_selectedCollection];
+    final pops = _collections[_selectedCollection];
 
-    if (pops == null) return;
+    if (pops == null) {
+      return;
+    }
 
     final existingIndex = pops.indexWhere(
-          (p) =>
-      p.name.toLowerCase() ==
-          pop.name.toLowerCase() &&
-          p.number == pop.number &&
-          p.owner == pop.owner,
+          (existingPop) => existingPop.duplicateKey == pop.duplicateKey,
     );
 
     if (existingIndex != -1) {
-      final existingPop =
-      pops[existingIndex];
+      final existingPop = pops[existingIndex];
 
-      pops[existingIndex] = Pop(
-        id: existingPop.id,
-        name: existingPop.name,
-        number: existingPop.number,
-        category: existingPop.category,
-        series: existingPop.series,
-        edition: 'Common',
-        value: existingPop.value,
-        pricePaid:
-        existingPop.pricePaid,
-        quantity:
-        existingPop.quantity + 1,
-        itemCondition:
-        existingPop.itemCondition,
-        boxCondition:
-        existingPop.boxCondition,
-        imageUrl:
-        existingPop.imageUrl,
-        owner: existingPop.owner,
-        isWishlist:
-        existingPop.isWishlist,
+      pops[existingIndex] = existingPop.copyWith(
+        quantity: existingPop.quantity + pop.quantity,
       );
 
       await addActivity(
         Activity(
-          id: DateTime.now()
-              .millisecondsSinceEpoch
-              .toString(),
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
           action: 'quantity_increased',
           popName: pop.name,
           popNumber: pop.number,
           owner: pop.owner,
           actor: pop.owner,
-          details:
-          '${pop.name} quantity increased',
+          details: '${pop.name} quantity increased',
           timestamp: DateTime.now(),
         ),
       );
@@ -263,16 +233,13 @@ class AppState extends ChangeNotifier {
 
       await addActivity(
         Activity(
-          id: DateTime.now()
-              .millisecondsSinceEpoch
-              .toString(),
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
           action: 'pop_added',
           popName: pop.name,
           popNumber: pop.number,
           owner: pop.owner,
           actor: pop.owner,
-          details:
-          '${pop.name} added',
+          details: '${pop.name} added',
           timestamp: DateTime.now(),
         ),
       );
@@ -282,24 +249,80 @@ class AppState extends ChangeNotifier {
 
     notifyListeners();
   }
+
   Future<void> importPops(
       List<Pop> pops,
       ) async {
-    _collections[_selectedCollection] =
-    List<Pop>.from(pops);
+    await importPopsSafely(pops);
+  }
+
+  Future<PopImportResult> importPopsSafely(
+      List<Pop> importedPops,
+      ) async {
+    final currentPops = _collections[_selectedCollection];
+
+    if (currentPops == null) {
+      return PopImportResult(
+        attempted: importedPops.length,
+        added: 0,
+        skipped: importedPops.length,
+      );
+    }
+
+    final existingKeys = currentPops
+        .map(
+          (pop) => pop.csvImportKey,
+    )
+        .toSet();
+
+    var added = 0;
+    var skipped = 0;
+
+    for (final importedPop in importedPops) {
+      final key = importedPop.csvImportKey;
+
+      if (existingKeys.contains(key)) {
+        skipped++;
+        continue;
+      }
+
+      currentPops.add(importedPop);
+      existingKeys.add(key);
+      added++;
+    }
+
+    await addActivity(
+      Activity(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        action: 'csv_import',
+        popName: 'CSV Import',
+        popNumber: '',
+        owner: _selectedCollection,
+        actor: _collectorProfile.displayName,
+        details: 'CSV import complete: $added added, $skipped skipped',
+        timestamp: DateTime.now(),
+      ),
+    );
 
     await _saveData();
 
     notifyListeners();
+
+    return PopImportResult(
+      attempted: importedPops.length,
+      added: added,
+      skipped: skipped,
+    );
   }
 
   Future<void> deletePop(
       String popId,
       ) async {
-    final pops =
-    _collections[_selectedCollection];
+    final pops = _collections[_selectedCollection];
 
-    if (pops == null) return;
+    if (pops == null) {
+      return;
+    }
 
     final pop = pops.firstWhere(
           (p) => p.id == popId,
@@ -307,16 +330,13 @@ class AppState extends ChangeNotifier {
 
     await addActivity(
       Activity(
-        id: DateTime.now()
-            .millisecondsSinceEpoch
-            .toString(),
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
         action: 'pop_deleted',
         popName: pop.name,
         popNumber: pop.number,
         owner: pop.owner,
         actor: pop.owner,
-        details:
-        '${pop.name} deleted',
+        details: '${pop.name} deleted',
         timestamp: DateTime.now(),
       ),
     );
@@ -333,14 +353,14 @@ class AppState extends ChangeNotifier {
   Future<void> updatePop(
       Pop updatedPop,
       ) async {
-    final pops =
-    _collections[_selectedCollection];
+    final pops = _collections[_selectedCollection];
 
-    if (pops == null) return;
+    if (pops == null) {
+      return;
+    }
 
     final index = pops.indexWhere(
-          (pop) =>
-      pop.id == updatedPop.id,
+          (pop) => pop.id == updatedPop.id,
     );
 
     if (index != -1) {
@@ -351,50 +371,34 @@ class AppState extends ChangeNotifier {
       notifyListeners();
     }
   }
+
   Future<void> updateOwnerForPops(
       List<String> popIds,
       String owner,
       ) async {
-    final pops =
-    _collections[_selectedCollection];
+    final pops = _collections[_selectedCollection];
 
-    if (pops == null) return;
+    if (pops == null) {
+      return;
+    }
 
-    for (int i = 0; i < pops.length; i++) {
+    for (var i = 0; i < pops.length; i++) {
       if (popIds.contains(pops[i].id)) {
         final oldPop = pops[i];
 
-        pops[i] = Pop(
-          id: oldPop.id,
-          name: oldPop.name,
-          number: oldPop.number,
-          category: oldPop.category,
-          series: oldPop.series,
-          edition: 'Common',
-          value: oldPop.value,
-          pricePaid: oldPop.pricePaid,
-          quantity: oldPop.quantity,
-          itemCondition:
-          oldPop.itemCondition,
-          boxCondition:
-          oldPop.boxCondition,
-          imageUrl: oldPop.imageUrl,
+        pops[i] = oldPop.copyWith(
           owner: owner,
-          isWishlist: oldPop.isWishlist,
         );
 
         await addActivity(
           Activity(
-            id: DateTime.now()
-                .millisecondsSinceEpoch
-                .toString(),
+            id: DateTime.now().millisecondsSinceEpoch.toString(),
             action: 'owner_changed',
             popName: oldPop.name,
             popNumber: oldPop.number,
             owner: owner,
             actor: owner,
-            details:
-            '${oldPop.name} assigned to $owner',
+            details: '${oldPop.name} assigned to $owner',
             timestamp: DateTime.now(),
           ),
         );
@@ -405,56 +409,65 @@ class AppState extends ChangeNotifier {
 
     notifyListeners();
   }
+  Future<void> clearSelectedCollection() async {
+    final pops = _collections[_selectedCollection];
+
+    if (pops == null) {
+      return;
+    }
+
+    final removedCount = pops.length;
+
+    pops.clear();
+
+    await addActivity(
+      Activity(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        action: 'collection_cleared',
+        popName: 'Collection Cleared',
+        popNumber: '',
+        owner: _selectedCollection,
+        actor: _collectorProfile.displayName,
+        details: 'Cleared $removedCount Pops from $_selectedCollection',
+        timestamp: DateTime.now(),
+      ),
+    );
+
+    await _saveData();
+
+    notifyListeners();
+  }
+
   Future<void> mergeDuplicates() async {
-    final pops =
-    _collections[_selectedCollection];
+    final pops = _collections[_selectedCollection];
 
-    if (pops == null) return;
+    if (pops == null) {
+      return;
+    }
 
-    final Map<String, Pop> merged = {};
+    final merged = <String, Pop>{};
 
     for (final pop in pops) {
-      final key =
-          '${pop.name.toLowerCase()}|'
-          '${pop.number}|'
-          '${pop.owner}';
+      final key = pop.duplicateKey;
 
       if (merged.containsKey(key)) {
         final existing = merged[key]!;
 
-        merged[key] = Pop(
-          id: existing.id,
-          name: existing.name,
-          number: existing.number,
-          category: existing.category,
-          series: existing.series,
-          edition: 'Common',
-          value: existing.value,
-          pricePaid: existing.pricePaid,
-          quantity:
-          existing.quantity +
-              pop.quantity,
-          itemCondition:
-          existing.itemCondition,
-          boxCondition:
-          existing.boxCondition,
-          imageUrl: existing.imageUrl,
-          owner: existing.owner,
-          isWishlist:
-          existing.isWishlist,
+        merged[key] = existing.copyWith(
+          quantity: existing.quantity + pop.quantity,
         );
       } else {
         merged[key] = pop;
       }
     }
 
-    _collections[_selectedCollection] =
-        merged.values.toList();
+    _collections[_selectedCollection] = merged.values.toList();
 
     await _saveData();
 
     notifyListeners();
   }
+
   Future<void> addActivity(
       Activity activity,
       ) async {
@@ -472,15 +485,14 @@ class AppState extends ChangeNotifier {
   int get totalPops {
     return _collections.values.fold(
       0,
-          (total, pops) =>
-      total + pops.length,
+          (total, pops) => total + pops.length,
     );
   }
-  int get wishlistCount {
-    int total = 0;
 
-    for (final collection
-    in _collections.values) {
+  int get wishlistCount {
+    var total = 0;
+
+    for (final collection in _collections.values) {
       for (final pop in collection) {
         if (pop.isWishlist) {
           total++;
@@ -490,13 +502,12 @@ class AppState extends ChangeNotifier {
 
     return total;
   }
-  double get totalValue {
-    double total = 0;
 
-    for (final collection
-    in _collections.values) {
-      for (final pop
-      in collection) {
+  double get totalValue {
+    var total = 0.0;
+
+    for (final collection in _collections.values) {
+      for (final pop in collection) {
         total += pop.value;
       }
     }
@@ -507,25 +518,20 @@ class AppState extends ChangeNotifier {
   int collectionPopCount(
       String collectionName,
       ) {
-    return _collections[
-    collectionName]
-        ?.length ??
-        0;
+    return _collections[collectionName]?.length ?? 0;
   }
 
   double collectionValue(
       String collectionName,
       ) {
-    final pops =
-        _collections[collectionName] ??
-            [];
+    final pops = _collections[collectionName] ?? [];
 
     return pops.fold(
       0.0,
-          (total, pop) =>
-      total + pop.value,
+          (total, pop) => total + pop.value,
     );
   }
+
   Future<void> updateCollectorProfile(
       CollectorProfile profile,
       ) async {

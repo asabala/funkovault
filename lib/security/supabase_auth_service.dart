@@ -18,7 +18,12 @@ class SupabaseAuthService implements AuthService {
     required String email,
     required String password,
   }) async {
-    throw UnimplementedError();
+    final response = await Supabase.instance.client.auth.signInWithPassword(
+      email: email.trim(),
+      password: password,
+    );
+
+    return _mapUserToAuthState(response.user);
   }
 
   @override
@@ -28,10 +33,10 @@ class SupabaseAuthService implements AuthService {
     required String password,
   }) async {
     final response = await Supabase.instance.client.auth.signUp(
-      email: email,
+      email: email.trim(),
       password: password,
       data: {
-        'display_name': displayName,
+        'display_name': displayName.trim(),
       },
     );
 
@@ -39,15 +44,25 @@ class SupabaseAuthService implements AuthService {
   }
 
   @override
-  Future<void> signOut() async {}
+  Future<void> signOut() async {
+    await Supabase.instance.client.auth.signOut();
+  }
 
   @override
   Future<void> sendPasswordResetEmail(
       String email,
-      ) async {}
+      ) async {
+    await Supabase.instance.client.auth.resetPasswordForEmail(
+      email.trim(),
+    );
+  }
 
   @override
-  Future<void> resendVerificationEmail() async {}
+  Future<void> resendVerificationEmail() async {
+    // Supabase resend verification needs an email address.
+    // The current AuthService contract does not pass one in yet.
+    // We will wire this later when the verification screen is improved.
+  }
 
   @override
   Future<AuthState> refreshUser() async {

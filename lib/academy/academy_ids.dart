@@ -8,6 +8,10 @@ class AcademyTrackIds {
   static const comics = 'comics';
   static const coins = 'coins';
   static const autographs = 'autographs';
+
+  static const smartCollecting = 'smart-collecting';
+  static const exclusivesVariants = 'exclusives-variants';
+  static const premiumInsights = 'premium-insights';
 }
 
 class AcademyTrackTitles {
@@ -20,6 +24,10 @@ class AcademyTrackTitles {
   static const comics = 'Comics';
   static const coins = 'Coins';
   static const autographs = 'Autographs';
+
+  static const smartCollecting = 'Smart Collecting';
+  static const exclusivesVariants = 'Exclusives & Variants';
+  static const premiumInsights = 'Premium Insights';
 }
 
 class AcademyCategoryIds {

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../../academy/models/academy_topic.dart';
-import '../../theme/atlas_colors.dart';
-import '../../theme/atlas_spacing.dart';
-import '../../theme/atlas_typography.dart';
-import '../atlas/atlas_glass_card.dart';
-import '../atlas/atlas_glass_panel.dart';
+import '../../../academy/models/academy_topic.dart';
+import '../../../theme/atlas_colors.dart';
+import '../../../theme/atlas_spacing.dart';
+import '../../../theme/atlas_typography.dart';
+import '../../atlas/atlas_glass_card.dart';
+import '../../atlas/atlas_glass_panel.dart';
 
 class AcademyTopicRoadmapCard extends StatelessWidget {
   const AcademyTopicRoadmapCard({

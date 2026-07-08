@@ -25,6 +25,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool _isLoading = false;
   bool _rememberMe = true;
+  bool _isPasswordVisible = false;
 
   @override
   void dispose() {
@@ -76,6 +77,12 @@ class _LoginScreenState extends State<LoginScreen> {
         });
       }
     }
+  }
+
+  void _togglePasswordVisibility() {
+    setState(() {
+      _isPasswordVisible = !_isPasswordVisible;
+    });
   }
 
   String? _validateEmail(String? value) {
@@ -149,11 +156,23 @@ class _LoginScreenState extends State<LoginScreen> {
                       TextFormField(
                         controller: _passwordController,
                         enabled: !_isLoading,
-                        obscureText: true,
+                        obscureText: !_isPasswordVisible,
                         textInputAction: TextInputAction.done,
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: 'Password',
-                          prefixIcon: Icon(Icons.lock_outline),
+                          prefixIcon: const Icon(Icons.lock_outline),
+                          suffixIcon: IconButton(
+                            tooltip: _isPasswordVisible
+                                ? 'Hide password'
+                                : 'Show password',
+                            onPressed:
+                            _isLoading ? null : _togglePasswordVisibility,
+                            icon: Icon(
+                              _isPasswordVisible
+                                  ? Icons.visibility_off_outlined
+                                  : Icons.visibility_outlined,
+                            ),
+                          ),
                         ),
                         validator: _validatePassword,
                         onFieldSubmitted: (_) => _signIn(),
@@ -207,7 +226,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => const ForgotPasswordScreen(),
+                              builder: (_) =>
+                              const ForgotPasswordScreen(),
                             ),
                           );
                         },

@@ -13,7 +13,9 @@ class AtlasIntelligence {
     for (final pop in pops) {
       final category = pop.category.trim();
 
-      if (category.isEmpty) continue;
+      if (category.isEmpty) {
+        continue;
+      }
 
       counts[category] = (counts[category] ?? 0) + 1;
     }
@@ -33,27 +35,42 @@ class AtlasIntelligence {
       return 'Explorer';
     }
 
+    final ownedPops = pops.where((pop) => !pop.isWishlist).toList();
+    final collectionSize = ownedPops.length;
     final wishlistCount = pops.where((pop) => pop.isWishlist).length;
-    final highValueCount = pops.where((pop) => pop.value >= 50).length;
-    final categoryCount = pops.map((pop) => pop.category).toSet().length;
+    final highValueCount = ownedPops.where((pop) => pop.value >= 50).length;
 
-    if (wishlistCount >= 10) {
+    final categoryCount = ownedPops
+        .map((pop) => pop.category.trim())
+        .where((category) => category.isNotEmpty)
+        .toSet()
+        .length;
+
+    final highValueRatio = collectionSize == 0
+        ? 0
+        : highValueCount / collectionSize;
+
+    if (wishlistCount >= 10 && wishlistCount >= collectionSize * 0.20) {
       return 'Hunter';
     }
 
-    if (highValueCount >= 5) {
-      return 'Investor';
+    if (collectionSize >= 25 && categoryCount <= 2) {
+      return 'Completionist';
     }
 
-    if (categoryCount <= 2 && pops.length >= 10) {
-      return 'Completionist';
+    if (collectionSize >= 20 && categoryCount >= 5) {
+      return 'Curator';
+    }
+
+    if (collectionSize >= 10 && highValueRatio >= 0.35) {
+      return 'Investor';
     }
 
     if (categoryCount >= 5) {
       return 'Explorer';
     }
 
-    return 'Curator';
+    return 'Collector';
   }
 
   double getCollectorConfidence(List<Pop> pops) {
@@ -65,10 +82,12 @@ class AtlasIntelligence {
     final missingCategories =
         pops.where((pop) => pop.category.trim().isEmpty).length;
 
-    final issueCount = missingValues + missingCategories;
-    final score = 100 - ((issueCount / pops.length) * 100);
+    final valueScore = 100 - ((missingValues / pops.length) * 70);
+    final categoryScore = 100 - ((missingCategories / pops.length) * 30);
 
-    return score.clamp(0, 100);
+    final score = (valueScore * 0.65) + (categoryScore * 0.35);
+
+    return score.clamp(10, 100);
   }
 
   String getTodayMission(List<Pop> pops) {
@@ -77,6 +96,12 @@ class AtlasIntelligence {
     }
 
     final missingValues = pops.where((pop) => pop.value <= 0).length;
+    final missingCategories =
+        pops.where((pop) => pop.category.trim().isEmpty).length;
+
+    if (missingCategories > 0) {
+      return 'Add missing categories so Atlas can organize your Vault Rooms better.';
+    }
 
     if (missingValues > 0) {
       return 'Update missing values to improve your Vault accuracy.';
@@ -95,6 +120,10 @@ class AtlasIntelligence {
     final collectorType = getCollectorType(pops);
     final favoriteCategory = getFavoriteCategory(pops);
 
-    return 'Atlas sees you as a $collectorType collector with a strong focus on $favoriteCategory.';
+    if (favoriteCategory == 'Unknown') {
+      return 'Atlas is learning your collection. Add categories to unlock better recommendations.';
+    }
+
+    return 'Atlas sees you as a $collectorType with a strong focus on $favoriteCategory.';
   }
 }
