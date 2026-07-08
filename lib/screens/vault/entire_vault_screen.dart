@@ -23,6 +23,7 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
   final _searchController = TextEditingController();
 
   String _searchQuery = '';
+  _VaultSortMode _sortMode = _VaultSortMode.nameAz;
 
   @override
   void dispose() {
@@ -37,7 +38,7 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
     const repository = VaultRepository();
 
     final pops = repository.allPops(appState);
-    final filteredPops = _filterPops(pops);
+    final filteredPops = _sortPops(_filterPops(pops));
 
     final totalValue = pops.fold<double>(
       0,
@@ -113,6 +114,15 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
             },
           ),
           const SizedBox(height: AtlasSpacing.lg),
+          _VaultSortCard(
+            selectedSort: _sortMode,
+            onChanged: (sortMode) {
+              setState(() {
+                _sortMode = sortMode;
+              });
+            },
+          ),
+          const SizedBox(height: AtlasSpacing.lg),
           if (pops.isEmpty)
             const _EmptyVaultCard()
           else if (filteredPops.isEmpty)
@@ -120,6 +130,7 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
           else
             _VaultPopListCard(
               pops: filteredPops,
+              sortMode: _sortMode,
             ),
         ],
       ),
@@ -130,7 +141,7 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
     final query = _searchQuery.trim().toLowerCase();
 
     if (query.isEmpty) {
-      return pops;
+      return List<Pop>.from(pops);
     }
 
     return pops.where((pop) {
@@ -146,6 +157,98 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
           series.contains(query) ||
           owner.contains(query);
     }).toList();
+  }
+
+  List<Pop> _sortPops(List<Pop> pops) {
+    final sorted = List<Pop>.from(pops);
+
+    switch (_sortMode) {
+      case _VaultSortMode.nameAz:
+        sorted.sort(
+              (a, b) => a.name.toLowerCase().compareTo(
+            b.name.toLowerCase(),
+          ),
+        );
+        break;
+
+      case _VaultSortMode.highestValue:
+        sorted.sort(
+              (a, b) => b.value.compareTo(a.value),
+        );
+        break;
+
+      case _VaultSortMode.needsValue:
+        sorted.sort((a, b) {
+          final aNeedsValue = a.value <= 0;
+          final bNeedsValue = b.value <= 0;
+
+          if (aNeedsValue && !bNeedsValue) {
+            return -1;
+          }
+
+          if (!aNeedsValue && bNeedsValue) {
+            return 1;
+          }
+
+          return a.name.toLowerCase().compareTo(
+            b.name.toLowerCase(),
+          );
+        });
+        break;
+
+      case _VaultSortMode.newestAdded:
+        sorted.sort(
+              (a, b) => _dateScore(b.dateAdded).compareTo(
+            _dateScore(a.dateAdded),
+          ),
+        );
+        break;
+
+      case _VaultSortMode.recentlyUpdated:
+        sorted.sort(
+              (a, b) => _dateScore(b.lastUpdated).compareTo(
+            _dateScore(a.lastUpdated),
+          ),
+        );
+        break;
+    }
+
+    return sorted;
+  }
+
+  int _dateScore(String value) {
+    final parsed = DateTime.tryParse(value.trim());
+
+    if (parsed == null) {
+      return 0;
+    }
+
+    return parsed.millisecondsSinceEpoch;
+  }
+}
+
+enum _VaultSortMode {
+  nameAz,
+  highestValue,
+  needsValue,
+  newestAdded,
+  recentlyUpdated,
+}
+
+extension _VaultSortModeLabel on _VaultSortMode {
+  String get label {
+    switch (this) {
+      case _VaultSortMode.nameAz:
+        return 'Name A-Z';
+      case _VaultSortMode.highestValue:
+        return 'Highest Value';
+      case _VaultSortMode.needsValue:
+        return 'Needs Value';
+      case _VaultSortMode.newestAdded:
+        return 'Newest Added';
+      case _VaultSortMode.recentlyUpdated:
+        return 'Recently Updated';
+    }
   }
 }
 
@@ -201,6 +304,67 @@ class _VaultSearchCard extends StatelessWidget {
             style: AtlasTypography.bodySmall.copyWith(
               color: AtlasColors.textSecondary,
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _VaultSortCard extends StatelessWidget {
+  const _VaultSortCard({
+    required this.selectedSort,
+    required this.onChanged,
+  });
+
+  final _VaultSortMode selectedSort;
+  final ValueChanged<_VaultSortMode> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return AtlasGlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Sort Vault',
+            style: AtlasTypography.headingSmall,
+          ),
+          const SizedBox(height: AtlasSpacing.sm),
+          Text(
+            'Choose how you want to review your collection.',
+            style: AtlasTypography.bodyMedium.copyWith(
+              color: AtlasColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: AtlasSpacing.md),
+          Wrap(
+            spacing: AtlasSpacing.sm,
+            runSpacing: AtlasSpacing.sm,
+            children: _VaultSortMode.values
+                .map(
+                  (sortMode) => ChoiceChip(
+                label: Text(sortMode.label),
+                selected: selectedSort == sortMode,
+                onSelected: (_) => onChanged(sortMode),
+                selectedColor:
+                AtlasColors.vaultGold.withValues(alpha: 0.22),
+                labelStyle: AtlasTypography.bodySmall.copyWith(
+                  color: selectedSort == sortMode
+                      ? AtlasColors.vaultGold
+                      : AtlasColors.textSecondary,
+                  fontWeight: selectedSort == sortMode
+                      ? FontWeight.bold
+                      : FontWeight.normal,
+                ),
+                side: BorderSide(
+                  color: selectedSort == sortMode
+                      ? AtlasColors.vaultGold.withValues(alpha: 0.70)
+                      : AtlasColors.textSecondary.withValues(alpha: 0.22),
+                ),
+              ),
+            )
+                .toList(),
           ),
         ],
       ),
@@ -275,9 +439,11 @@ class _NoSearchResultsCard extends StatelessWidget {
 class _VaultPopListCard extends StatelessWidget {
   const _VaultPopListCard({
     required this.pops,
+    required this.sortMode,
   });
 
   final List<Pop> pops;
+  final _VaultSortMode sortMode;
 
   @override
   Widget build(BuildContext context) {
@@ -291,7 +457,7 @@ class _VaultPopListCard extends StatelessWidget {
           ),
           const SizedBox(height: AtlasSpacing.sm),
           Text(
-            'Tap any Pop to open details.',
+            '${pops.length} result${pops.length == 1 ? '' : 's'} • Sorted by ${sortMode.label}. Tap any Pop to open details.',
             style: AtlasTypography.bodySmall.copyWith(
               color: AtlasColors.textSecondary,
             ),
@@ -334,6 +500,8 @@ class _VaultPopTile extends StatelessWidget {
     pop.series.trim().isEmpty ? 'No series' : pop.series.trim();
     final valueLabel =
     pop.value <= 0 ? 'Value needed' : '\$${pop.value.toStringAsFixed(0)}';
+    final addedLabel = _formatDateLabel(pop.dateAdded);
+    final updatedLabel = _formatDateLabel(pop.lastUpdated);
 
     return InkWell(
       borderRadius: BorderRadius.circular(AtlasSpacing.md),
@@ -370,6 +538,13 @@ class _VaultPopTile extends StatelessWidget {
                       color: AtlasColors.textSecondary,
                     ),
                   ),
+                  const SizedBox(height: AtlasSpacing.xs),
+                  Text(
+                    'Added: $addedLabel • Updated: $updatedLabel',
+                    style: AtlasTypography.bodySmall.copyWith(
+                      color: AtlasColors.textSecondary,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -398,4 +573,24 @@ class _VaultPopTile extends StatelessWidget {
       ),
     );
   }
+}
+
+String _formatDateLabel(String value) {
+  final cleaned = value.trim();
+
+  if (cleaned.isEmpty) {
+    return 'Before tracking';
+  }
+
+  final parsed = DateTime.tryParse(cleaned);
+
+  if (parsed == null) {
+    return cleaned;
+  }
+
+  final month = parsed.month.toString().padLeft(2, '0');
+  final day = parsed.day.toString().padLeft(2, '0');
+  final year = parsed.year.toString().substring(2);
+
+  return '$month/$day/$year';
 }

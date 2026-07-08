@@ -47,6 +47,50 @@ class _PopDetailsScreenState extends State<PopDetailsScreen> {
     }
   }
 
+  Future<void> _confirmDeletePop() async {
+    final appState = context.read<AppState>();
+    final navigator = Navigator.of(context);
+
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Delete Pop?'),
+          content: Text(
+            'This will remove "${pop.name}" from the current collection. This cannot be undone.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext, false);
+              },
+              child: const Text('Cancel'),
+            ),
+            FilledButton.icon(
+              onPressed: () {
+                Navigator.pop(dialogContext, true);
+              },
+              icon: const Icon(Icons.delete_outline_rounded),
+              label: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldDelete != true) {
+      return;
+    }
+
+    await appState.deletePop(pop.id);
+
+    if (!mounted) {
+      return;
+    }
+
+    navigator.pop();
+  }
+
   Future<void> _toggleWishlist() async {
     final updatedPop = Pop(
       id: pop.id,
@@ -140,6 +184,10 @@ class _PopDetailsScreenState extends State<PopDetailsScreen> {
           IconButton(
             icon: const Icon(Icons.edit_rounded),
             onPressed: _editPop,
+          ),
+          IconButton(
+            icon: const Icon(Icons.delete_outline_rounded),
+            onPressed: _confirmDeletePop,
           ),
         ],
       ),
@@ -378,6 +426,15 @@ class _PopDetailsScreenState extends State<PopDetailsScreen> {
               onPressed: _editPop,
               icon: const Icon(Icons.edit_rounded),
               label: const Text('Edit Pop'),
+            ),
+          ),
+          const SizedBox(height: AtlasSpacing.md),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: _confirmDeletePop,
+              icon: const Icon(Icons.delete_outline_rounded),
+              label: const Text('Delete Pop'),
             ),
           ),
         ],
