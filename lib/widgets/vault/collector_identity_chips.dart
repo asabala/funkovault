@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../models/pop.dart';
+import '../../models/pop.dart';
 
 class CollectorIdentityChips extends StatelessWidget {
   const CollectorIdentityChips({

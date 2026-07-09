@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../atlas_priority_chip.dart';
+import '../vault/atlas_priority_chip.dart';
 
 class MissionCard extends StatelessWidget {
   const MissionCard({

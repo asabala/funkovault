@@ -10,7 +10,7 @@ import '../../theme/atlas_typography.dart';
 import '../../widgets/atlas/atlas_glass_card.dart';
 import '../../widgets/atlas/atlas_glass_panel.dart';
 import '../../widgets/atlas/atlas_stat_tile.dart';
-import '../../widgets/vault_scroll_view.dart';
+import '../../widgets/vault/vault_scroll_view.dart';
 import '../catalog/funko_catalog_screen.dart';
 
 class AtlasRoomScreen extends StatelessWidget {

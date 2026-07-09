@@ -10,10 +10,16 @@ import '../../theme/atlas_spacing.dart';
 import '../../theme/atlas_typography.dart';
 import '../../widgets/atlas/atlas_glass_card.dart';
 import '../../widgets/atlas/atlas_glass_panel.dart';
+import '../../widgets/vault/vault_breakdown_card.dart';
 import '../pop/pop_details_screen.dart';
 
 class EntireVaultScreen extends StatefulWidget {
-  const EntireVaultScreen({super.key});
+  const EntireVaultScreen({
+    super.key,
+    this.initialFilterKey,
+  });
+
+  final String? initialFilterKey;
 
   @override
   State<EntireVaultScreen> createState() => _EntireVaultScreenState();
@@ -30,6 +36,7 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
   int _visibleLimit = _pageSize;
   bool _showBackToTop = false;
   bool _showImages = false;
+  bool _isCleanupFocusActive = false;
   _VaultSortMode _sortMode = _VaultSortMode.nameAz;
   _VaultFilterMode _filterMode = _VaultFilterMode.all;
 
@@ -37,6 +44,7 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
   void initState() {
     super.initState();
     _loadVaultPreferences();
+    _applyInitialFilter();
     _scrollController.addListener(_handleScrollPosition);
   }
 
@@ -67,6 +75,20 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
     );
 
     _showImages = data['showImages'] == true;
+  }
+
+  void _applyInitialFilter() {
+    final initialFilter = _filterModeFromStorage(
+      widget.initialFilterKey,
+    );
+
+    if (initialFilter == _VaultFilterMode.all) {
+      return;
+    }
+
+    _filterMode = initialFilter;
+    _isCleanupFocusActive = true;
+    _resetVisibleLimit();
   }
 
   Future<void> _saveVaultPreferences() async {
@@ -159,6 +181,51 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
     await _saveVaultPreferences();
   }
 
+  void _clearCleanupFocus() {
+    setState(() {
+      _isCleanupFocusActive = false;
+      _filterMode = _VaultFilterMode.all;
+      _resetVisibleLimit();
+    });
+  }
+
+  String? get _cleanupFocusTitle {
+    if (!_isCleanupFocusActive || _filterMode == _VaultFilterMode.all) {
+      return null;
+    }
+
+    return 'Cleanup Focus Active';
+  }
+
+  String? get _cleanupFocusMessage {
+    if (!_isCleanupFocusActive) {
+      return null;
+    }
+
+    switch (_filterMode) {
+      case _VaultFilterMode.needsValue:
+        return 'Showing Pops that need value.';
+      case _VaultFilterMode.wishlist:
+        return 'Showing wishlist Pops.';
+      case _VaultFilterMode.variants:
+        return 'Showing Pops with variant details.';
+      case _VaultFilterMode.exclusives:
+        return 'Showing exclusive Pops.';
+      case _VaultFilterMode.signed:
+        return 'Showing signed Pops.';
+      case _VaultFilterMode.limited:
+        return 'Showing limited edition Pops.';
+      case _VaultFilterMode.stickers:
+        return 'Showing Pops with sticker details.';
+      case _VaultFilterMode.duplicates:
+        return 'Showing possible duplicate or variant review groups.';
+      case _VaultFilterMode.all:
+      case _VaultFilterMode.owned:
+      case _VaultFilterMode.hasValue:
+        return null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final appState = context.watch<AppState>();
@@ -197,6 +264,24 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
         _showImages;
 
     final missingValueCount = pops.where((pop) => pop.value <= 0).length;
+
+    final ownedCount = pops.where((pop) => !pop.isWishlist).length;
+    final wishlistCount = pops.where((pop) => pop.isWishlist).length;
+    final exclusiveCount = pops
+        .where((pop) => _hasMeaningfulValue(pop.retailExclusive))
+        .length;
+    final variantCount = pops
+        .where((pop) => _hasMeaningfulValue(pop.variant))
+        .length;
+    final stickerCount = pops
+        .where((pop) => _hasMeaningfulValue(pop.eventSticker))
+        .length;
+    final signedCount = pops
+        .where((pop) => _hasMeaningfulValue(pop.signature))
+        .length;
+    final limitedCount = pops
+        .where((pop) => _hasMeaningfulValue(pop.limitedEdition))
+        .length;
 
     return Scaffold(
       appBar: AppBar(
@@ -265,6 +350,36 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
                   ],
                 ),
               ),
+              const SizedBox(height: AtlasSpacing.lg),
+              VaultBreakdownCard(
+                ownedCount: ownedCount,
+                wishlistCount: wishlistCount,
+                exclusiveCount: exclusiveCount,
+                variantCount: variantCount,
+                stickerCount: stickerCount,
+                signedCount: signedCount,
+                limitedCount: limitedCount,
+                needsValueCount: missingValueCount,
+              ),
+              if (_cleanupFocusTitle != null &&
+                  _cleanupFocusMessage != null) ...[
+                const SizedBox(height: AtlasSpacing.md),
+                _CleanupFocusCard(
+                  title: _cleanupFocusTitle!,
+                  message: _cleanupFocusMessage!,
+                  onClearFocus: _clearCleanupFocus,
+                ),
+              ],
+
+              if (_filterMode == _VaultFilterMode.needsValue) ...[
+                const SizedBox(height: AtlasSpacing.md),
+                const _ValueCleanupBanner(),
+              ],
+
+              if (_filterMode == _VaultFilterMode.duplicates) ...[
+                const SizedBox(height: AtlasSpacing.md),
+                const _DuplicateReviewBanner(),
+              ],
               const SizedBox(height: AtlasSpacing.lg),
               _VaultSearchCard(
                 controller: _searchController,
@@ -338,7 +453,10 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
               if (pops.isEmpty)
                 const _EmptyVaultCard()
               else if (filteredPops.isEmpty)
-                const _NoSearchResultsCard()
+                _NoSearchResultsCard(
+                  filterMode: _filterMode,
+                  searchQuery: _searchQuery,
+                )
               else
                 _VaultPopListCard(
                   pops: visiblePops,
@@ -438,7 +556,57 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
               (pop) => _hasMeaningfulValue(pop.variant),
         )
             .toList();
+
+      case _VaultFilterMode.stickers:
+        return pops
+            .where(
+              (pop) => _hasMeaningfulValue(pop.eventSticker),
+        )
+            .toList();
+
+      case _VaultFilterMode.duplicates:
+        return _filterDuplicatePops(pops);
     }
+  }
+
+  List<Pop> _filterDuplicatePops(List<Pop> pops) {
+    final duplicateKeys = <String>{};
+    final countsByKey = <String, int>{};
+
+    for (final pop in pops) {
+      final key = _duplicateReviewKey(pop);
+
+      if (key.isEmpty) {
+        continue;
+      }
+
+      countsByKey[key] = (countsByKey[key] ?? 0) + 1;
+    }
+
+    for (final entry in countsByKey.entries) {
+      if (entry.value > 1) {
+        duplicateKeys.add(entry.key);
+      }
+    }
+
+    return pops
+        .where(
+          (pop) => duplicateKeys.contains(
+        _duplicateReviewKey(pop),
+      ),
+    )
+        .toList();
+  }
+
+  String _duplicateReviewKey(Pop pop) {
+    final name = pop.name.trim().toLowerCase();
+    final number = pop.number.trim().toLowerCase();
+
+    if (name.isEmpty || number.isEmpty) {
+      return '';
+    }
+
+    return '$name|$number';
   }
 
   bool _hasMeaningfulValue(String value) {
@@ -535,6 +703,8 @@ enum _VaultFilterMode {
   signed,
   limited,
   variants,
+  stickers,
+  duplicates,
 }
 
 extension _VaultFilterModeLabel on _VaultFilterMode {
@@ -558,6 +728,10 @@ extension _VaultFilterModeLabel on _VaultFilterMode {
         return 'Limited';
       case _VaultFilterMode.variants:
         return 'Variants';
+      case _VaultFilterMode.stickers:
+        return 'Stickers';
+      case _VaultFilterMode.duplicates:
+        return 'Duplicates';
     }
   }
 }
@@ -584,6 +758,69 @@ extension _VaultSortModeLabel on _VaultSortMode {
       case _VaultSortMode.recentlyUpdated:
         return 'Recently Updated';
     }
+  }
+}
+
+class _CleanupFocusCard extends StatelessWidget {
+  const _CleanupFocusCard({
+    required this.title,
+    required this.message,
+    required this.onClearFocus,
+  });
+
+  final String title;
+  final String message;
+  final VoidCallback onClearFocus;
+
+  @override
+  Widget build(BuildContext context) {
+    return AtlasGlassPanel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(
+                Icons.filter_alt_rounded,
+                color: AtlasColors.vaultGold,
+              ),
+              const SizedBox(width: AtlasSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: AtlasTypography.bodyMedium.copyWith(
+                        color: AtlasColors.vaultGold,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: AtlasSpacing.xs),
+                    Text(
+                      message,
+                      style: AtlasTypography.bodySmall.copyWith(
+                        color: AtlasColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AtlasSpacing.md),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: onClearFocus,
+              icon: const Icon(Icons.close_rounded),
+              label: const Text('Clear Focus'),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -646,6 +883,49 @@ class _VaultSearchCard extends StatelessWidget {
   }
 }
 
+class _ActiveFilterBadge extends StatelessWidget {
+  const _ActiveFilterBadge({
+    required this.label,
+  });
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AtlasSpacing.md,
+        vertical: AtlasSpacing.sm,
+      ),
+      decoration: BoxDecoration(
+        color: AtlasColors.vaultGold.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: AtlasColors.vaultGold.withValues(alpha: 0.34),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            Icons.filter_alt_rounded,
+            color: AtlasColors.vaultGold,
+            size: 16,
+          ),
+          const SizedBox(width: AtlasSpacing.xs),
+          Text(
+            'Active Filter: $label',
+            style: AtlasTypography.bodySmall.copyWith(
+              color: AtlasColors.vaultGold,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _VaultControlsCard extends StatelessWidget {
   const _VaultControlsCard({
     required this.selectedFilter,
@@ -680,6 +960,12 @@ class _VaultControlsCard extends StatelessWidget {
               color: AtlasColors.textSecondary,
             ),
           ),
+          if (selectedFilter != _VaultFilterMode.all) ...[
+            const SizedBox(height: AtlasSpacing.md),
+            _ActiveFilterBadge(
+              label: selectedFilter.label,
+            ),
+          ],
           const SizedBox(height: AtlasSpacing.md),
           Row(
             children: [
@@ -1005,18 +1291,82 @@ class _EmptyVaultCard extends StatelessWidget {
 }
 
 class _NoSearchResultsCard extends StatelessWidget {
-  const _NoSearchResultsCard();
+  const _NoSearchResultsCard({
+    required this.filterMode,
+    required this.searchQuery,
+  });
+
+  final _VaultFilterMode filterMode;
+  final String searchQuery;
 
   @override
   Widget build(BuildContext context) {
+    final message = _messageForCurrentView();
+
     return AtlasGlassCard(
-      child: Text(
-        'No Pops matched your search or filter. Try clearing search, choosing All, or using a different filter.',
-        style: AtlasTypography.bodyMedium.copyWith(
-          color: AtlasColors.textSecondary,
-        ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(
+            Icons.search_off_rounded,
+            color: AtlasColors.vaultGold,
+          ),
+          const SizedBox(width: AtlasSpacing.md),
+          Expanded(
+            child: Text(
+              message,
+              style: AtlasTypography.bodyMedium.copyWith(
+                color: AtlasColors.textSecondary,
+                height: 1.35,
+              ),
+            ),
+          ),
+        ],
       ),
     );
+  }
+
+  String _messageForCurrentView() {
+    final hasSearch = searchQuery.trim().isNotEmpty;
+
+    if (hasSearch) {
+      return 'No Pops matched your search. Try a different name, number, category, series, or owner.';
+    }
+
+    switch (filterMode) {
+      case _VaultFilterMode.needsValue:
+        return 'No Pops need values in this view. Your vault is looking more complete.';
+
+      case _VaultFilterMode.duplicates:
+        return 'No duplicate review groups found. Nice cleanup.';
+
+      case _VaultFilterMode.wishlist:
+        return 'No wishlist Pops found in this view.';
+
+      case _VaultFilterMode.exclusives:
+        return 'No exclusive Pops found in this view.';
+
+      case _VaultFilterMode.signed:
+        return 'No signed Pops found in this view.';
+
+      case _VaultFilterMode.limited:
+        return 'No limited edition Pops found in this view.';
+
+      case _VaultFilterMode.variants:
+        return 'No variant Pops found in this view.';
+
+      case _VaultFilterMode.stickers:
+        return 'No stickered Pops found in this view.';
+
+      case _VaultFilterMode.owned:
+        return 'No owned Pops found in this view.';
+
+      case _VaultFilterMode.hasValue:
+        return 'No Pops with values found in this view.';
+
+      case _VaultFilterMode.all:
+        return 'No Pops matched this view. Try clearing search, choosing All, or using a different filter.';
+    }
   }
 }
 
@@ -1375,6 +1725,90 @@ class _VaultPopThumbnail extends StatelessWidget {
             size: 28,
           );
         },
+      ),
+    );
+  }
+}
+
+class _ValueCleanupBanner extends StatelessWidget {
+  const _ValueCleanupBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    return AtlasGlassPanel(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(
+            Icons.attach_money_rounded,
+            color: AtlasColors.vaultGold,
+          ),
+          const SizedBox(width: AtlasSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Value Cleanup',
+                  style: AtlasTypography.bodyMedium.copyWith(
+                    color: AtlasColors.textPrimary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: AtlasSpacing.xs),
+                Text(
+                  'These Pops are missing values. Add trusted values when available so Atlas can calculate vault health and collection strength more accurately.',
+                  style: AtlasTypography.bodySmall.copyWith(
+                    color: AtlasColors.textSecondary,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DuplicateReviewBanner extends StatelessWidget {
+  const _DuplicateReviewBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    return AtlasGlassPanel(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(
+            Icons.info_outline_rounded,
+            color: AtlasColors.vaultGold,
+          ),
+          const SizedBox(width: AtlasSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Duplicate Review',
+                  style: AtlasTypography.bodyMedium.copyWith(
+                    color: AtlasColors.textPrimary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: AtlasSpacing.xs),
+                Text(
+                  'These are possible duplicate or variant review groups. Check Chase, stickers, exclusives, signed, limited edition, and variant details before making changes.',
+                  style: AtlasTypography.bodySmall.copyWith(
+                    color: AtlasColors.textSecondary,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

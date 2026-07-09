@@ -9,7 +9,7 @@ import '../../widgets/dashboard/mission_card.dart';
 import '../../widgets/dashboard/recommendation_card.dart';
 import '../../widgets/dashboard/reflection_card.dart';
 import '../../widgets/dashboard/today_memory_card.dart';
-import '../../widgets/vault_scroll_view.dart';
+import '../../widgets/vault/vault_scroll_view.dart';
 import '../core/atlas_core.dart';
 import '../repositories/vault_repository.dart';
 import 'atlas_confidence_screen.dart';

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../theme/atlas_spacing.dart';
+import '../../theme/atlas_spacing.dart';
 
 class VaultScrollView extends StatelessWidget {
   const VaultScrollView({

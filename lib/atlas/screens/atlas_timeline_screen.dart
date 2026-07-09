@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../widgets/atlas_greeting_card.dart';
-import '../../widgets/vault_scroll_view.dart';
+import '../../widgets/atlas/atlas_greeting_card.dart';
+import '../../widgets/vault/vault_scroll_view.dart';
 import '../models/atlas_activity.dart';
 import '../services/atlas_activity_service.dart';
 

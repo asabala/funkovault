@@ -8,7 +8,7 @@ import '../../theme/atlas_icons.dart';
 import '../../theme/atlas_spacing.dart';
 import '../../theme/atlas_typography.dart';
 import '../../widgets/atlas/atlas_glass_card.dart';
-import '../../widgets/vault_scroll_view.dart';
+import '../../widgets/vault/vault_scroll_view.dart';
 import '../../data/country_registry.dart';
 import '../../models/country_option.dart';
 import '../../widgets/profile/country/country_dropdown.dart';

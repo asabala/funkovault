@@ -17,8 +17,12 @@ import '../widgets/vault/atlas_recommendation_card.dart';
 import '../widgets/vault/collection_rooms_card.dart';
 import '../widgets/vault/collector_tools_card.dart';
 import '../widgets/vault/hero_collector_card.dart';
-import '../widgets/vault_scroll_view.dart';
+import '../widgets/vault/vault_breakdown_card.dart';
+import '../widgets/vault/vault_cleanup_card.dart';
+import '../widgets/vault/vault_health_summary_card.dart';
+import '../widgets/vault/vault_scroll_view.dart';
 import '../screens/vault/entire_vault_screen.dart';
+import '../screens/vault/vault_health_screen.dart';
 
 class CollectorVaultScreen extends StatelessWidget {
   const CollectorVaultScreen({super.key});
@@ -45,11 +49,37 @@ class CollectorVaultScreen extends StatelessWidget {
     final duplicateCount = repository.duplicatePopGroups(appState).length;
     final missingValueCount = allPops.where((pop) => pop.value <= 0).length;
 
+    final ownedCount = allPops.where((pop) => !pop.isWishlist).length;
+    final wishlistCount = allPops.where((pop) => pop.isWishlist).length;
+    final exclusiveCount = allPops
+        .where((pop) => _hasMeaningfulValue(pop.retailExclusive))
+        .length;
+    final variantCount = allPops
+        .where((pop) => _hasMeaningfulValue(pop.variant))
+        .length;
+    final stickerCount = allPops
+        .where((pop) => _hasMeaningfulValue(pop.eventSticker))
+        .length;
+    final signedCount = allPops
+        .where((pop) => _hasMeaningfulValue(pop.signature))
+        .length;
+    final limitedCount = allPops
+        .where((pop) => _hasMeaningfulValue(pop.limitedEdition))
+        .length;
+
     final health = _calculateVaultHealth(
       totalPops: allPops.length,
       duplicateCount: duplicateCount,
       missingValueCount: missingValueCount,
     );
+
+    final healthPriority = _priorityLabel(
+      needsValueCount: missingValueCount,
+      duplicateGroupCount: duplicateCount,
+      healthScore: health,
+    );
+
+    final duplicateGroupCount = repository.duplicatePopGroups(appState).length;
 
     return Scaffold(
       appBar: AppBar(
@@ -59,6 +89,11 @@ class CollectorVaultScreen extends StatelessWidget {
             tooltip: 'Search',
             onPressed: () => _openCatalog(context),
             icon: const Icon(Icons.search),
+          ),
+          IconButton(
+            tooltip: 'Vault Health',
+            onPressed: () => _openVaultHealth(context),
+            icon: const Icon(Icons.health_and_safety_outlined),
           ),
           IconButton(
             tooltip: 'Notifications',
@@ -122,6 +157,62 @@ class CollectorVaultScreen extends StatelessWidget {
             totalValue: totalValue,
             health: health,
             onEditProfile: () => _openEditProfile(context),
+          ),
+          const SizedBox(height: AtlasSpacing.lg),
+          VaultBreakdownCard(
+            ownedCount: ownedCount,
+            wishlistCount: wishlistCount,
+            exclusiveCount: exclusiveCount,
+            variantCount: variantCount,
+            stickerCount: stickerCount,
+            signedCount: signedCount,
+            limitedCount: limitedCount,
+            needsValueCount: missingValueCount,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const EntireVaultScreen(),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: AtlasSpacing.lg),
+          VaultCleanupCard(
+            needsValueCount: missingValueCount,
+            duplicateGroupCount: duplicateGroupCount,
+            wishlistCount: wishlistCount,
+            variantCount: variantCount,
+            exclusiveCount: exclusiveCount,
+            signedCount: signedCount,
+            limitedCount: limitedCount,
+            stickerCount: stickerCount,
+            onCleanupItemTap: (filterKey) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => EntireVaultScreen(
+                    initialFilterKey: filterKey,
+                  ),
+                ),
+              );
+            },
+            onReviewVault: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const EntireVaultScreen(),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: AtlasSpacing.lg),
+          VaultHealthSummaryCard(
+            healthScore: health,
+            priority: healthPriority,
+            needsValueCount: missingValueCount,
+            duplicateGroupCount: duplicateCount,
+            onTap: () => _openVaultHealth(context),
           ),
           const SizedBox(height: AtlasSpacing.lg),
           AtlasMissionCard(
@@ -271,6 +362,15 @@ class CollectorVaultScreen extends StatelessWidget {
     );
   }
 
+  static void _openVaultHealth(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const VaultHealthScreen(),
+      ),
+    );
+  }
+
   static void _openCatalogWithMessage(
       BuildContext context,
       String message,
@@ -308,6 +408,44 @@ class CollectorVaultScreen extends StatelessWidget {
         content: Text(message),
       ),
     );
+  }
+
+  bool _hasMeaningfulValue(String value) {
+    final cleaned = value.trim().toLowerCase();
+
+    if (cleaned.isEmpty) {
+      return false;
+    }
+
+    return cleaned != 'none' &&
+        cleaned != 'common' &&
+        cleaned != 'standard' &&
+        cleaned != 'unsigned' &&
+        cleaned != 'no' &&
+        cleaned != 'n/a' &&
+        cleaned != 'na';
+  }
+
+  String _priorityLabel({
+    required int needsValueCount,
+    required int duplicateGroupCount,
+    required double healthScore,
+  }) {
+    final issueCount = needsValueCount + duplicateGroupCount;
+
+    if (issueCount == 0 && healthScore >= 95) {
+      return 'Clean';
+    }
+
+    if (healthScore >= 85 && issueCount <= 10) {
+      return 'Low';
+    }
+
+    if (healthScore >= 65) {
+      return 'Medium';
+    }
+
+    return 'High';
   }
 
   double _calculateVaultHealth({

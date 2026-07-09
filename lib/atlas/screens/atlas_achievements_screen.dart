@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../services/app_state.dart';
-import '../../widgets/atlas_greeting_card.dart';
-import '../../widgets/vault_scroll_view.dart';
+import '../../widgets/atlas/atlas_greeting_card.dart';
+import '../../widgets/vault/vault_scroll_view.dart';
 import '../engines/atlas_achievement_engine.dart';
 import '../repositories/vault_repository.dart';
 

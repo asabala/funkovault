@@ -4,8 +4,8 @@ import '../../theme/atlas_colors.dart';
 import '../../theme/atlas_icons.dart';
 import '../../theme/atlas_spacing.dart';
 import '../../theme/atlas_typography.dart';
-import '../atlas_priority_chip.dart';
-import '../atlas_section_card.dart';
+import '../vault/atlas_priority_chip.dart';
+import '../atlas/atlas_section_card.dart';
 
 class RecommendationCard extends StatelessWidget {
   const RecommendationCard({

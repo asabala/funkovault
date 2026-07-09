@@ -4,7 +4,7 @@ import '../../theme/atlas_colors.dart';
 import '../../theme/atlas_icons.dart';
 import '../../theme/atlas_spacing.dart';
 import '../../theme/atlas_typography.dart';
-import '../atlas_section_card.dart';
+import '../atlas/atlas_section_card.dart';
 
 class CollectorDNACard extends StatelessWidget {
   const CollectorDNACard({

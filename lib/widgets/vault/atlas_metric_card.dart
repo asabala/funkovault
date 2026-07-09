@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-import '../theme/atlas_animation.dart';
-import '../theme/atlas_colors.dart';
-import '../theme/atlas_radius.dart';
-import '../theme/atlas_spacing.dart';
-import '../theme/atlas_typography.dart';
+import '../../theme/atlas_animation.dart';
+import '../../theme/atlas_colors.dart';
+import '../../theme/atlas_radius.dart';
+import '../../theme/atlas_spacing.dart';
+import '../../theme/atlas_typography.dart';
 
 class AtlasMetricCard extends StatelessWidget {
   const AtlasMetricCard({

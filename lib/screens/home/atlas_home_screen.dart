@@ -13,7 +13,7 @@ import '../../widgets/atlas/atlas_glass_panel.dart';
 import '../../widgets/atlas/atlas_stat_tile.dart';
 import '../../widgets/home/atlas_pulse_card.dart';
 import '../../widgets/home/continue_journey_card.dart';
-import '../../widgets/vault_scroll_view.dart';
+import '../../widgets/vault/vault_scroll_view.dart';
 import '../../vault/collector_vault_screen.dart';
 
 class AtlasHomeScreen extends StatelessWidget {

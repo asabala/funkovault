@@ -8,7 +8,7 @@ import '../../theme/atlas_spacing.dart';
 import '../../theme/atlas_typography.dart';
 import '../../widgets/atlas/atlas_glass_card.dart';
 import '../../widgets/atlas/atlas_glass_panel.dart';
-import '../../widgets/vault_scroll_view.dart';
+import '../../widgets/vault/vault_scroll_view.dart';
 import 'possible_duplicates_screen.dart';
 
 class VaultMaintenanceScreen extends StatelessWidget {
