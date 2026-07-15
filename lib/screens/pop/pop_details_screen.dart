@@ -8,6 +8,8 @@ import '../../theme/atlas_spacing.dart';
 import '../../theme/atlas_typography.dart';
 import '../../widgets/atlas/atlas_glass_card.dart';
 import '../../widgets/atlas/atlas_glass_panel.dart';
+import '../../widgets/atlas/components/atlas_chip.dart';
+import '../../widgets/atlas/components/atlas_section_header.dart';
 import '../../widgets/vault/vault_scroll_view.dart';
 import 'edit_pop_screen.dart';
 
@@ -92,27 +94,8 @@ class _PopDetailsScreenState extends State<PopDetailsScreen> {
   }
 
   Future<void> _toggleWishlist() async {
-    final updatedPop = Pop(
-      id: pop.id,
-      name: pop.name,
-      number: pop.number,
-      category: pop.category,
-      series: pop.series,
-      edition: pop.edition,
-      variant: pop.variant,
-      retailExclusive: pop.retailExclusive,
-      eventSticker: pop.eventSticker,
-      limitedEdition: pop.limitedEdition,
-      signature: pop.signature,
-      value: pop.value,
-      pricePaid: pop.pricePaid,
-      quantity: pop.quantity,
-      itemCondition: pop.itemCondition,
-      boxCondition: pop.boxCondition,
-      imageUrl: pop.imageUrl,
-      owner: pop.owner,
+    final updatedPop = pop.copyWith(
       isWishlist: !pop.isWishlist,
-      dateAdded: pop.dateAdded,
       lastUpdated: DateTime.now().toIso8601String(),
     );
 
@@ -128,27 +111,8 @@ class _PopDetailsScreenState extends State<PopDetailsScreen> {
       return;
     }
 
-    final updatedPop = Pop(
-      id: pop.id,
-      name: pop.name,
-      number: pop.number,
-      category: pop.category,
-      series: pop.series,
-      edition: pop.edition,
-      variant: pop.variant,
-      retailExclusive: pop.retailExclusive,
-      eventSticker: pop.eventSticker,
-      limitedEdition: pop.limitedEdition,
-      signature: pop.signature,
-      value: pop.value,
-      pricePaid: pop.pricePaid,
+    final updatedPop = pop.copyWith(
       quantity: newQuantity,
-      itemCondition: pop.itemCondition,
-      boxCondition: pop.boxCondition,
-      imageUrl: pop.imageUrl,
-      owner: pop.owner,
-      isWishlist: pop.isWishlist,
-      dateAdded: pop.dateAdded,
       lastUpdated: DateTime.now().toIso8601String(),
     );
 
@@ -213,10 +177,13 @@ class _PopDetailsScreenState extends State<PopDetailsScreen> {
                   spacing: AtlasSpacing.sm,
                   runSpacing: AtlasSpacing.sm,
                   children: [
-                    _DetailBadge(label: numberLabel),
-                    _DetailBadge(label: pop.owner),
-                    _DetailBadge(
+                    AtlasChip(label: numberLabel),
+                    AtlasChip(label: pop.owner),
+                    AtlasChip(
                       label: pop.isWishlist ? 'Wishlist' : 'Owned',
+                      icon: pop.isWishlist
+                          ? Icons.favorite_rounded
+                          : Icons.inventory_2_rounded,
                     ),
                   ],
                 ),
@@ -250,9 +217,9 @@ class _PopDetailsScreenState extends State<PopDetailsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _SectionHeader(
+                const AtlasSectionHeader(
                   title: 'Timeline',
-                  icon: Icons.history_rounded,
+                  icon: Icons.verified_rounded,
                 ),
                 const SizedBox(height: AtlasSpacing.md),
                 _DetailRow(
@@ -271,7 +238,7 @@ class _PopDetailsScreenState extends State<PopDetailsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _SectionHeader(
+                const AtlasSectionHeader(
                   title: 'Basic Information',
                   icon: Icons.info_outline_rounded,
                 ),
@@ -300,7 +267,7 @@ class _PopDetailsScreenState extends State<PopDetailsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _SectionHeader(
+                const AtlasSectionHeader(
                   title: 'Collector Identity',
                   icon: Icons.verified_rounded,
                 ),
@@ -335,7 +302,7 @@ class _PopDetailsScreenState extends State<PopDetailsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _SectionHeader(
+                const AtlasSectionHeader(
                   title: 'Ownership',
                   icon: Icons.inventory_2_rounded,
                 ),
@@ -382,7 +349,7 @@ class _PopDetailsScreenState extends State<PopDetailsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _SectionHeader(
+                const AtlasSectionHeader(
                   title: 'Value',
                   icon: Icons.attach_money_rounded,
                 ),
@@ -403,7 +370,7 @@ class _PopDetailsScreenState extends State<PopDetailsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _SectionHeader(
+                const AtlasSectionHeader(
                   title: 'Condition',
                   icon: Icons.shield_rounded,
                 ),
@@ -497,35 +464,6 @@ class _PopHeroImage extends StatelessWidget {
   }
 }
 
-class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({
-    required this.title,
-    required this.icon,
-  });
-
-  final String title;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(
-          icon,
-          color: AtlasColors.vaultGold,
-        ),
-        const SizedBox(width: AtlasSpacing.sm),
-        Expanded(
-          child: Text(
-            title,
-            style: AtlasTypography.headingSmall,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 class _QuickStatLine extends StatelessWidget {
   const _QuickStatLine({
     required this.label,
@@ -604,38 +542,6 @@ class _DetailRow extends StatelessWidget {
   }
 }
 
-class _DetailBadge extends StatelessWidget {
-  const _DetailBadge({
-    required this.label,
-  });
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AtlasSpacing.sm,
-        vertical: 5,
-      ),
-      decoration: BoxDecoration(
-        color: AtlasColors.vaultGold.withValues(alpha: 0.14),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(
-          color: AtlasColors.vaultGold.withValues(alpha: 0.36),
-        ),
-      ),
-      child: Text(
-        _displayValue(label),
-        style: AtlasTypography.bodySmall.copyWith(
-          color: AtlasColors.vaultGold,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
-}
-
 class _IdentityBadgeWrap extends StatelessWidget {
   const _IdentityBadgeWrap({
     required this.pop,
@@ -648,7 +554,7 @@ class _IdentityBadgeWrap extends StatelessWidget {
     final badges = _buildBadges();
 
     if (badges.isEmpty) {
-      return const _DetailBadge(
+      return const AtlasChip(
         label: 'Common / Standard',
       );
     }
@@ -658,7 +564,9 @@ class _IdentityBadgeWrap extends StatelessWidget {
       runSpacing: AtlasSpacing.sm,
       children: badges
           .map(
-            (badge) => _DetailBadge(label: badge),
+            (badge) => AtlasChip(
+          label: badge,
+        ),
       )
           .toList(),
     );

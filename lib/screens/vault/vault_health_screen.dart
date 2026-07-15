@@ -7,8 +7,11 @@ import '../../services/app_state.dart';
 import '../../theme/atlas_colors.dart';
 import '../../theme/atlas_spacing.dart';
 import '../../theme/atlas_typography.dart';
+import '../../vault/health/vault_health_engine.dart';
 import '../../widgets/atlas/atlas_glass_card.dart';
 import '../../widgets/atlas/atlas_glass_panel.dart';
+import '../../widgets/atlas/atlas_stat_tile.dart';
+import '../../widgets/atlas/components/atlas_section_header.dart';
 import '../../widgets/vault/advanced_vault_health_preview.dart';
 
 class VaultHealthScreen extends StatelessWidget {
@@ -18,24 +21,21 @@ class VaultHealthScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final appState = context.watch<AppState>();
     const repository = VaultRepository();
+    const vaultHealthEngine = VaultHealthEngine();
 
     final pops = repository.allPops(appState);
+    final vaultHealth = vaultHealthEngine.calculate(pops);
+
     final profile = appState.collectorProfile;
-    final totalValue = repository.totalValue(appState);
-    final duplicateGroupCount = repository.duplicatePopGroups(appState).length;
-    final needsValueCount = pops.where((pop) => pop.value <= 0).length;
-
-    final healthScore = _calculateVaultHealth(
-      totalPops: pops.length,
-      duplicateCount: duplicateGroupCount,
-      missingValueCount: needsValueCount,
-    );
-
-    final priority = _priorityLabel(
-      needsValueCount: needsValueCount,
-      duplicateGroupCount: duplicateGroupCount,
-      healthScore: healthScore,
-    );
+    final totalValue = vaultHealth.totalValue;
+    final duplicateGroupCount =
+        vaultHealth.duplicateGroupCount;
+    final needsValueCount =
+        vaultHealth.needsValueCount;
+    final healthScore =
+        vaultHealth.healthScore;
+    final priority =
+        vaultHealth.priority;
 
     return Scaffold(
       appBar: AppBar(
@@ -56,26 +56,23 @@ class VaultHealthScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Vault Health',
-                      style: AtlasTypography.headingLarge,
-                    ),
-                    const SizedBox(height: AtlasSpacing.sm),
-                    Text(
+                    const AtlasSectionHeader(
+                      title: 'Vault Health',
+                      subtitle:
                       'Review the health of your collection and see what needs attention first.',
-                      style: AtlasTypography.bodyMedium.copyWith(
-                        color: AtlasColors.textSecondary,
-                      ),
+                      icon: Icons.health_and_safety_rounded,
+                      titleStyle: AtlasTypography.headingLarge,
                     ),
                     const SizedBox(height: AtlasSpacing.lg),
                     AtlasGlassPanel(
                       child: Row(
                         children: [
                           Expanded(
-                            child: _VaultHealthMetricTile(
+                            child: AtlasStatTile(
                               label: 'Duplicates',
                               value: duplicateGroupCount.toString(),
                               icon: Icons.content_copy_rounded,
+                              layout: AtlasStatTileLayout.leading,
                               onTap: duplicateGroupCount > 0
                                   ? () {
                                 Navigator.push(
@@ -91,13 +88,13 @@ class VaultHealthScreen extends StatelessWidget {
                             ),
                           ),
                           Expanded(
-                            child: _VaultHealthSummaryItem(
+                            child: AtlasStatTile(
                               label: 'Value',
                               value: '\$${totalValue.toStringAsFixed(0)}',
                             ),
                           ),
                           Expanded(
-                            child: _VaultHealthSummaryItem(
+                            child: AtlasStatTile(
                               label: 'Health',
                               value: '${healthScore.round()}%',
                             ),
@@ -113,33 +110,32 @@ class VaultHealthScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Health Summary',
-                      style: AtlasTypography.headingSmall,
-                    ),
-                    const SizedBox(height: AtlasSpacing.sm),
-                    Text(
+                    const AtlasSectionHeader(
+                      title: 'Health Summary',
+                      subtitle:
                       'Atlas checks missing values and duplicate groups to estimate vault health.',
-                      style: AtlasTypography.bodyMedium.copyWith(
-                        color: AtlasColors.textSecondary,
-                      ),
+                      icon: Icons.monitor_heart_rounded,
                     ),
                     const SizedBox(height: AtlasSpacing.lg),
                     Row(
                       children: [
                         Expanded(
-                          child: _VaultHealthMetricTile(
+                          child: AtlasStatTile(
                             label: 'Health Score',
                             value: '${healthScore.round()}%',
                             icon: Icons.favorite_rounded,
+                            layout: AtlasStatTileLayout.leading,
+                            showPanel: true,
                           ),
                         ),
                         const SizedBox(width: AtlasSpacing.sm),
                         Expanded(
-                          child: _VaultHealthMetricTile(
+                          child: AtlasStatTile(
                             label: 'Priority',
                             value: priority,
                             icon: Icons.priority_high_rounded,
+                            layout: AtlasStatTileLayout.leading,
+                            showPanel: true,
                           ),
                         ),
                       ],
@@ -148,10 +144,12 @@ class VaultHealthScreen extends StatelessWidget {
                     Row(
                       children: [
                         Expanded(
-                          child: _VaultHealthMetricTile(
+                          child: AtlasStatTile(
                             label: 'Needs Value',
                             value: needsValueCount.toString(),
                             icon: Icons.attach_money_rounded,
+                            layout: AtlasStatTileLayout.leading,
+                            showPanel: true,
                             onTap: needsValueCount > 0
                                 ? () {
                               Navigator.push(
@@ -168,10 +166,12 @@ class VaultHealthScreen extends StatelessWidget {
                         ),
                         const SizedBox(width: AtlasSpacing.sm),
                         Expanded(
-                          child: _VaultHealthMetricTile(
+                          child: AtlasStatTile(
                             label: 'Duplicates',
                             value: duplicateGroupCount.toString(),
                             icon: Icons.content_copy_rounded,
+                            layout: AtlasStatTileLayout.leading,
+                            showPanel: true,
                           ),
                         ),
                       ],
@@ -236,76 +236,9 @@ class VaultHealthScreen extends StatelessWidget {
       ),
     );
   }
-
-  double _calculateVaultHealth({
-    required int totalPops,
-    required int duplicateCount,
-    required int missingValueCount,
-  }) {
-    if (totalPops == 0) {
-      return 100;
-    }
-
-    final issueCount = duplicateCount + missingValueCount;
-    final score = 100 - ((issueCount / totalPops) * 100);
-
-    return score.clamp(0, 100);
-  }
-
-  String _priorityLabel({
-    required int needsValueCount,
-    required int duplicateGroupCount,
-    required double healthScore,
-  }) {
-    final issueCount = needsValueCount + duplicateGroupCount;
-
-    if (issueCount == 0 && healthScore >= 95) {
-      return 'Clean';
-    }
-
-    if (healthScore >= 85 && issueCount <= 10) {
-      return 'Low';
-    }
-
-    if (healthScore >= 65) {
-      return 'Medium';
-    }
-
-    return 'High';
-  }
 }
 
-class _VaultHealthSummaryItem extends StatelessWidget {
-  const _VaultHealthSummaryItem({
-    required this.label,
-    required this.value,
-  });
 
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: AtlasTypography.headingSmall.copyWith(
-            color: AtlasColors.vaultGold,
-          ),
-        ),
-        const SizedBox(height: AtlasSpacing.xs),
-        Text(
-          label,
-          style: AtlasTypography.bodySmall.copyWith(
-            color: AtlasColors.textSecondary,
-          ),
-          textAlign: TextAlign.center,
-        ),
-      ],
-    );
-  }
-}
 
 class _AdvancedVaultHealthTeaserHeader extends StatelessWidget {
   const _AdvancedVaultHealthTeaserHeader();
@@ -595,77 +528,5 @@ class _VaultHealthActionStep extends StatelessWidget {
         ),
       ],
     );
-  }
-}
-
-class _VaultHealthMetricTile extends StatelessWidget {
-  const _VaultHealthMetricTile({
-    required this.label,
-    required this.value,
-    required this.icon,
-    this.onTap,
-  });
-
-  final String label;
-  final String value;
-  final IconData icon;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final isTappable = onTap != null;
-
-    final tile = AtlasGlassPanel(
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: onTap,
-        child: Padding(
-          padding: EdgeInsets.zero,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(
-                    icon,
-                    color: AtlasColors.vaultGold,
-                    size: 20,
-                  ),
-                  if (isTappable) ...[
-                    const Spacer(),
-                    const Icon(
-                      Icons.chevron_right_rounded,
-                      color: AtlasColors.vaultGold,
-                      size: 20,
-                    ),
-                  ],
-                ],
-              ),
-              const SizedBox(height: AtlasSpacing.sm),
-              Text(
-                value,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: AtlasTypography.headingSmall.copyWith(
-                  color: AtlasColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: AtlasTypography.bodySmall.copyWith(
-                  color: AtlasColors.textSecondary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-
-    return tile;
   }
 }

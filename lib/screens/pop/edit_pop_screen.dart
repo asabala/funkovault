@@ -19,9 +19,11 @@ class EditPopScreen extends StatefulWidget {
   const EditPopScreen({
     super.key,
     required this.pop,
+    this.focusValueField = false,
   });
 
   final Pop pop;
+  final bool focusValueField;
 
   @override
   State<EditPopScreen> createState() => _EditPopScreenState();
@@ -29,6 +31,9 @@ class EditPopScreen extends StatefulWidget {
 
 class _EditPopScreenState extends State<EditPopScreen> {
   final _formKey = GlobalKey<FormState>();
+  final ScrollController _scrollController = ScrollController();
+  final FocusNode _valueFocusNode = FocusNode();
+  final GlobalKey _valueSectionKey = GlobalKey();
 
   late TextEditingController _nameController;
   late TextEditingController _numberController;
@@ -211,6 +216,40 @@ class _EditPopScreenState extends State<EditPopScreen> {
       _signatureOptions,
       'Unsigned',
     );
+
+    if (widget.focusValueField) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _focusValueSection();
+      });
+    }
+  }
+
+  Future<void> _focusValueSection() async {
+    if (!mounted) {
+      return;
+    }
+
+    final valueSectionContext = _valueSectionKey.currentContext;
+
+    if (valueSectionContext != null) {
+      await Scrollable.ensureVisible(
+        valueSectionContext,
+        duration: const Duration(milliseconds: 450),
+        curve: Curves.easeOutCubic,
+        alignment: 0.15,
+      );
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    _valueFocusNode.requestFocus();
+
+    _valueController.selection = TextSelection(
+      baseOffset: 0,
+      extentOffset: _valueController.text.length,
+    );
   }
 
   @override
@@ -222,6 +261,8 @@ class _EditPopScreenState extends State<EditPopScreen> {
     _valueController.dispose();
     _pricePaidController.dispose();
     _quantityController.dispose();
+    _scrollController.dispose();
+    _valueFocusNode.dispose();
     super.dispose();
   }
 
@@ -300,6 +341,7 @@ class _EditPopScreenState extends State<EditPopScreen> {
       body: Form(
         key: _formKey,
         child: VaultScrollView(
+          controller: _scrollController,
           children: [
             AtlasGlassCard(
               child: Column(
@@ -518,6 +560,7 @@ class _EditPopScreenState extends State<EditPopScreen> {
             ),
             const SizedBox(height: AtlasSpacing.lg),
             AtlasGlassCard(
+              key: _valueSectionKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -528,9 +571,12 @@ class _EditPopScreenState extends State<EditPopScreen> {
                   const SizedBox(height: AtlasSpacing.md),
                   _AtlasTextField(
                     controller: _valueController,
+                    focusNode: _valueFocusNode,
                     label: 'Estimated Value (\$)',
                     icon: Icons.trending_up_rounded,
-                    keyboardType: TextInputType.number,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     onChanged: (_) {
                       setState(() {});
                     },
@@ -540,7 +586,9 @@ class _EditPopScreenState extends State<EditPopScreen> {
                     controller: _pricePaidController,
                     label: 'Price Paid (\$)',
                     icon: Icons.payments_outlined,
-                    keyboardType: TextInputType.number,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     onChanged: (_) {
                       setState(() {});
                     },
@@ -636,6 +684,7 @@ class _AtlasTextField extends StatelessWidget {
     required this.controller,
     required this.label,
     required this.icon,
+    this.focusNode,
     this.keyboardType,
     this.onChanged,
   });
@@ -643,6 +692,7 @@ class _AtlasTextField extends StatelessWidget {
   final TextEditingController controller;
   final String label;
   final IconData icon;
+  final FocusNode? focusNode;
   final TextInputType? keyboardType;
   final ValueChanged<String>? onChanged;
 
@@ -651,6 +701,7 @@ class _AtlasTextField extends StatelessWidget {
     return AtlasGlassPanel(
       child: TextFormField(
         controller: controller,
+        focusNode: focusNode,
         keyboardType: keyboardType,
         onChanged: onChanged,
         decoration: InputDecoration(

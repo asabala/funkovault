@@ -12,6 +12,7 @@ import '../screens/vault/wishlist_screen.dart';
 import '../services/app_state.dart';
 import '../theme/atlas_colors.dart';
 import '../theme/atlas_spacing.dart';
+import 'health/vault_health_engine.dart';
 import '../widgets/vault/atlas_mission_card.dart';
 import '../widgets/vault/atlas_recommendation_card.dart';
 import '../widgets/vault/collection_rooms_card.dart';
@@ -32,25 +33,47 @@ class CollectorVaultScreen extends StatelessWidget {
     final appState = context.watch<AppState>();
     const repository = VaultRepository();
     const intelligence = AtlasIntelligence();
+    const vaultHealthEngine = VaultHealthEngine();
+
 
     final allPops = repository.allPops(appState);
-    final recommendation = intelligence.getRecommendation(allPops);
-    final mission = intelligence.getTodayMission(allPops);
-    final confidence = intelligence.getCollectorConfidence(allPops);
-    final collectorType = intelligence.getCollectorType(allPops);
-    final favoriteCategory = intelligence.getFavoriteCategory(allPops);
-    final totalValue = repository.totalValue(appState);
+    final vaultHealth = vaultHealthEngine.calculate(allPops);
+
+    final recommendation =
+    intelligence.getRecommendation(allPops);
+    final mission =
+    intelligence.getTodayMission(allPops);
+    final confidence =
+    intelligence.getCollectorConfidence(allPops);
+    final collectorType =
+    intelligence.getCollectorType(allPops);
+    final favoriteCategory =
+    intelligence.getFavoriteCategory(allPops);
+
+    final totalValue = vaultHealth.totalValue;
+    final missingValueCount =
+        vaultHealth.needsValueCount;
+    final duplicateGroupCount =
+        vaultHealth.duplicateGroupCount;
+    final health =
+        vaultHealth.healthScore;
+    final healthPriority =
+        vaultHealth.priority;
+
     final profile = appState.collectorProfile;
 
-    final profileInitial = profile.displayName.trim().isEmpty
+    final profileInitial = profile.displayName
+        .trim()
+        .isEmpty
         ? 'A'
         : profile.displayName.trim()[0].toUpperCase();
 
-    final duplicateCount = repository.duplicatePopGroups(appState).length;
-    final missingValueCount = allPops.where((pop) => pop.value <= 0).length;
-
-    final ownedCount = allPops.where((pop) => !pop.isWishlist).length;
-    final wishlistCount = allPops.where((pop) => pop.isWishlist).length;
+    final ownedCount = allPops
+        .where((pop) => !pop.isWishlist)
+        .length;
+    final wishlistCount = allPops
+        .where((pop) => pop.isWishlist)
+        .length;
     final exclusiveCount = allPops
         .where((pop) => _hasMeaningfulValue(pop.retailExclusive))
         .length;
@@ -66,20 +89,6 @@ class CollectorVaultScreen extends StatelessWidget {
     final limitedCount = allPops
         .where((pop) => _hasMeaningfulValue(pop.limitedEdition))
         .length;
-
-    final health = _calculateVaultHealth(
-      totalPops: allPops.length,
-      duplicateCount: duplicateCount,
-      missingValueCount: missingValueCount,
-    );
-
-    final healthPriority = _priorityLabel(
-      needsValueCount: missingValueCount,
-      duplicateGroupCount: duplicateCount,
-      healthScore: health,
-    );
-
-    final duplicateGroupCount = repository.duplicatePopGroups(appState).length;
 
     return Scaffold(
       appBar: AppBar(
@@ -97,10 +106,11 @@ class CollectorVaultScreen extends StatelessWidget {
           ),
           IconButton(
             tooltip: 'Notifications',
-            onPressed: () => _showComingSoonMessage(
-              context,
-              'Notifications are coming soon.',
-            ),
+            onPressed: () =>
+                _showComingSoonMessage(
+                  context,
+                  'Notifications are coming soon.',
+                ),
             icon: const Icon(Icons.notifications_none),
           ),
           Padding(
@@ -191,9 +201,10 @@ class CollectorVaultScreen extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => EntireVaultScreen(
-                    initialFilterKey: filterKey,
-                  ),
+                  builder: (_) =>
+                      EntireVaultScreen(
+                        initialFilterKey: filterKey,
+                      ),
                 ),
               );
             },
@@ -211,7 +222,7 @@ class CollectorVaultScreen extends StatelessWidget {
             healthScore: health,
             priority: healthPriority,
             needsValueCount: missingValueCount,
-            duplicateGroupCount: duplicateCount,
+            duplicateGroupCount: duplicateGroupCount,
             onTap: () => _openVaultHealth(context),
           ),
           const SizedBox(height: AtlasSpacing.lg),
@@ -219,10 +230,11 @@ class CollectorVaultScreen extends StatelessWidget {
             mission: mission,
             collectorType: collectorType,
             confidence: confidence.round(),
-            onContinue: () => _openCatalogWithMessage(
-              context,
-              'Opening the catalog so you can keep building your vault.',
-            ),
+            onContinue: () =>
+                _openCatalogWithMessage(
+                  context,
+                  'Opening the catalog so you can keep building your vault.',
+                ),
           ),
           const SizedBox(height: AtlasSpacing.lg),
           CollectorToolsCard(
@@ -251,14 +263,16 @@ class CollectorVaultScreen extends StatelessWidget {
               );
             },
             onSearch: () => _openCatalog(context),
-            onValueLookup: () => _openCatalogWithMessage(
-              context,
-              'Value lookup will use the catalog for now.',
-            ),
-            onAtlasAi: () => _openCatalogWithMessage(
-              context,
-              'Atlas AI insights are coming soon. Opening catalog for now.',
-            ),
+            onValueLookup: () =>
+                _openCatalogWithMessage(
+                  context,
+                  'Value lookup will use the catalog for now.',
+                ),
+            onAtlasAi: () =>
+                _openCatalogWithMessage(
+                  context,
+                  'Atlas AI insights are coming soon. Opening catalog for now.',
+                ),
           ),
           const SizedBox(height: AtlasSpacing.lg),
           CollectionRoomsCard(
@@ -279,54 +293,60 @@ class CollectorVaultScreen extends StatelessWidget {
                 ),
               );
             },
-            onAnime: () => _openRoom(
-              context,
-              roomName: 'Anime Room',
-              categoryName: 'Anime',
-              description:
-              'Explore anime Pops in your vault, future wishlist targets, grails, and Atlas recommendations.',
-              icon: Icons.auto_awesome_rounded,
-            ),
-            onMarvel: () => _openRoom(
-              context,
-              roomName: 'Marvel Room',
-              categoryName: 'Marvel',
-              description:
-              'Track Marvel Pops, value trends, missing heroes, variants, and future vault opportunities.',
-              icon: Icons.bolt_rounded,
-            ),
-            onDc: () => _openRoom(
-              context,
-              roomName: 'DC Room',
-              categoryName: 'DC',
-              description:
-              'Review DC Pops, villains, heroes, exclusives, and collection opportunities.',
-              icon: Icons.shield_rounded,
-            ),
-            onStarWars: () => _openRoom(
-              context,
-              roomName: 'Star Wars Room',
-              categoryName: 'Star Wars',
-              description:
-              'Explore Star Wars Pops, sagas, exclusives, character groups, and collecting opportunities.',
-              icon: Icons.public_rounded,
-            ),
-            onMoviesTv: () => _openRoom(
-              context,
-              roomName: 'Movies & TV Room',
-              categoryName: 'Movies & TV',
-              description:
-              'Review movie and TV Pops across your vault, future targets, and recommendation paths.',
-              icon: Icons.movie_filter_rounded,
-            ),
-            onGaming: () => _openRoom(
-              context,
-              roomName: 'Gaming Room',
-              categoryName: 'Gaming',
-              description:
-              'Explore gaming Pops, franchises, vault gaps, wishlist targets, and collector insights.',
-              icon: Icons.sports_esports_rounded,
-            ),
+            onAnime: () =>
+                _openRoom(
+                  context,
+                  roomName: 'Anime Room',
+                  categoryName: 'Anime',
+                  description:
+                  'Explore anime Pops in your vault, future wishlist targets, grails, and Atlas recommendations.',
+                  icon: Icons.auto_awesome_rounded,
+                ),
+            onMarvel: () =>
+                _openRoom(
+                  context,
+                  roomName: 'Marvel Room',
+                  categoryName: 'Marvel',
+                  description:
+                  'Track Marvel Pops, value trends, missing heroes, variants, and future vault opportunities.',
+                  icon: Icons.bolt_rounded,
+                ),
+            onDc: () =>
+                _openRoom(
+                  context,
+                  roomName: 'DC Room',
+                  categoryName: 'DC',
+                  description:
+                  'Review DC Pops, villains, heroes, exclusives, and collection opportunities.',
+                  icon: Icons.shield_rounded,
+                ),
+            onStarWars: () =>
+                _openRoom(
+                  context,
+                  roomName: 'Star Wars Room',
+                  categoryName: 'Star Wars',
+                  description:
+                  'Explore Star Wars Pops, sagas, exclusives, character groups, and collecting opportunities.',
+                  icon: Icons.public_rounded,
+                ),
+            onMoviesTv: () =>
+                _openRoom(
+                  context,
+                  roomName: 'Movies & TV Room',
+                  categoryName: 'Movies & TV',
+                  description:
+                  'Review movie and TV Pops across your vault, future targets, and recommendation paths.',
+                  icon: Icons.movie_filter_rounded,
+                ),
+            onGaming: () =>
+                _openRoom(
+                  context,
+                  roomName: 'Gaming Room',
+                  categoryName: 'Gaming',
+                  description:
+                  'Explore gaming Pops, franchises, vault gaps, wishlist targets, and collector insights.',
+                  icon: Icons.sports_esports_rounded,
+                ),
           ),
           const SizedBox(height: AtlasSpacing.lg),
           AtlasRecommendationCard(
@@ -334,10 +354,11 @@ class CollectorVaultScreen extends StatelessWidget {
             confidence: confidence.round(),
             estimatedCost: favoriteCategory,
             difficulty: collectorType,
-            onViewDetails: () => _openCatalogWithMessage(
-              context,
-              'Opening catalog details for now.',
-            ),
+            onViewDetails: () =>
+                _openCatalogWithMessage(
+                  context,
+                  'Opening catalog details for now.',
+                ),
           ),
         ],
       ),
@@ -371,38 +392,34 @@ class CollectorVaultScreen extends StatelessWidget {
     );
   }
 
-  static void _openCatalogWithMessage(
-      BuildContext context,
-      String message,
-      ) {
+  static void _openCatalogWithMessage(BuildContext context,
+      String message,) {
     _showComingSoonMessage(context, message);
     _openCatalog(context);
   }
 
-  static void _openRoom(
-      BuildContext context, {
-        required String roomName,
-        required String description,
-        required IconData icon,
-        required String categoryName,
-      }) {
+  static void _openRoom(BuildContext context, {
+    required String roomName,
+    required String description,
+    required IconData icon,
+    required String categoryName,
+  }) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => AtlasRoomScreen(
-          roomName: roomName,
-          description: description,
-          icon: icon,
-          categoryName: categoryName,
-        ),
+        builder: (_) =>
+            AtlasRoomScreen(
+              roomName: roomName,
+              description: description,
+              icon: icon,
+              categoryName: categoryName,
+            ),
       ),
     );
   }
 
-  static void _showComingSoonMessage(
-      BuildContext context,
-      String message,
-      ) {
+  static void _showComingSoonMessage(BuildContext context,
+      String message,) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
@@ -424,42 +441,5 @@ class CollectorVaultScreen extends StatelessWidget {
         cleaned != 'no' &&
         cleaned != 'n/a' &&
         cleaned != 'na';
-  }
-
-  String _priorityLabel({
-    required int needsValueCount,
-    required int duplicateGroupCount,
-    required double healthScore,
-  }) {
-    final issueCount = needsValueCount + duplicateGroupCount;
-
-    if (issueCount == 0 && healthScore >= 95) {
-      return 'Clean';
-    }
-
-    if (healthScore >= 85 && issueCount <= 10) {
-      return 'Low';
-    }
-
-    if (healthScore >= 65) {
-      return 'Medium';
-    }
-
-    return 'High';
-  }
-
-  double _calculateVaultHealth({
-    required int totalPops,
-    required int duplicateCount,
-    required int missingValueCount,
-  }) {
-    if (totalPops == 0) {
-      return 100;
-    }
-
-    final issueCount = duplicateCount + missingValueCount;
-    final score = 100 - ((issueCount / totalPops) * 100);
-
-    return score.clamp(0, 100);
   }
 }

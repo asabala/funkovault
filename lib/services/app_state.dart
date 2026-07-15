@@ -373,33 +373,40 @@ class AppState extends ChangeNotifier {
   Future<void> updatePop(
       Pop updatedPop,
       ) async {
-    final pops = _collections[_selectedCollection];
+    List<Pop>? matchingCollection;
+    var matchingIndex = -1;
 
-    if (pops == null) {
+    for (final collection in _collections.values) {
+      final index = collection.indexWhere(
+            (pop) => pop.id == updatedPop.id,
+      );
+
+      if (index != -1) {
+        matchingCollection = collection;
+        matchingIndex = index;
+        break;
+      }
+    }
+
+    if (matchingCollection == null || matchingIndex == -1) {
       return;
     }
 
-    final index = pops.indexWhere(
-          (pop) => pop.id == updatedPop.id,
+    final existingPop = matchingCollection[matchingIndex];
+    final now = DateTime.now().toIso8601String();
+
+    matchingCollection[matchingIndex] = updatedPop.copyWith(
+      dateAdded: updatedPop.dateAdded.trim().isEmpty
+          ? existingPop.dateAdded
+          : updatedPop.dateAdded,
+      lastUpdated: updatedPop.lastUpdated.trim().isEmpty
+          ? now
+          : updatedPop.lastUpdated,
     );
 
-    if (index != -1) {
-      final existingPop = pops[index];
-      final now = DateTime.now().toIso8601String();
+    await _saveData();
 
-      pops[index] = updatedPop.copyWith(
-        dateAdded: updatedPop.dateAdded.trim().isEmpty
-            ? existingPop.dateAdded
-            : updatedPop.dateAdded,
-        lastUpdated: updatedPop.lastUpdated.trim().isEmpty
-            ? now
-            : updatedPop.lastUpdated,
-      );
-
-      await _saveData();
-
-      notifyListeners();
-    }
+    notifyListeners();
   }
 
   Future<void> updateOwnerForPops(
