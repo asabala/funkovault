@@ -1,0 +1,95 @@
+class CollectorIdentityOptions {
+  const CollectorIdentityOptions._();
+
+  static const List<String> variants = [
+    'Common',
+    'Chase',
+    'Glow',
+    'Flocked',
+    'Blacklight',
+    'Metallic',
+    'Diamond',
+    'Chrome',
+    'Glitter',
+    'Scented',
+    'Art Series',
+    'NFT Redemption',
+    'Prototype',
+    'Error Variant',
+    'Other',
+  ];
+
+  static const List<String> retailExclusives = [
+    'None',
+    'Funko Shop',
+    'Hot Topic',
+    'BoxLunch',
+    'Target',
+    'Walmart',
+    'Amazon',
+    'GameStop',
+    'Entertainment Earth',
+    'PX',
+    'Best Buy',
+    'Walgreens',
+    'Barnes & Noble',
+    'FYE',
+    'Books-A-Million',
+    'Specialty Series',
+    'Local Comic Shop',
+    'Other',
+  ];
+
+  static const List<String> eventStickers = [
+    'None',
+    'SDCC',
+    'NYCC',
+    'ECCC',
+    'WonderCon',
+    'C2E2',
+    'Fundays',
+    'Shared Exclusive',
+    'Other',
+  ];
+
+  static const List<String> limitedEditions = [
+    'None',
+    'LE 1',
+    'LE 24',
+    'LE 50',
+    'LE 100',
+    'LE 150',
+    'LE 200',
+    'LE 250',
+    'LE 300',
+    'LE 400',
+    'LE 499',
+    'LE 500',
+    'LE 750',
+    'LE 999',
+    'LE 1000',
+    'LE 1200',
+    'LE 1500',
+    'LE 2000',
+    'LE 2500',
+    'LE 3000',
+    'LE 3500',
+    'LE 4000',
+    'LE 5000',
+    'LE 6000',
+    'LE 7500',
+    'LE 8500',
+    'LE 9500',
+    'LE 10000',
+    'Other',
+  ];
+
+  static const List<String> signatures = [
+    'Unsigned',
+    'Signed',
+    'Beckett Authenticated',
+    'JSA Authenticated',
+    'PSA Authenticated',
+    'Other',
+  ];
+}

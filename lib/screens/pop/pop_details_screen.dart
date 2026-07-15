@@ -10,6 +10,7 @@ import '../../widgets/atlas/atlas_glass_card.dart';
 import '../../widgets/atlas/atlas_glass_panel.dart';
 import '../../widgets/atlas/components/atlas_chip.dart';
 import '../../widgets/atlas/components/atlas_section_header.dart';
+import '../../widgets/pop/pop_source_details_section.dart';
 import '../../widgets/vault/vault_scroll_view.dart';
 import 'edit_pop_screen.dart';
 
@@ -189,154 +190,239 @@ class _PopDetailsScreenState extends State<PopDetailsScreen> {
                 ),
                 const SizedBox(height: AtlasSpacing.lg),
                 AtlasGlassPanel(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: _QuickStatLine(
+                          label: 'Value',
+                          value: valueLabel,
+                        ),
+                      ),
+                      const SizedBox(width: AtlasSpacing.sm),
+                      Expanded(
+                        child: _QuickStatLine(
+                          label: 'Quantity',
+                          value: '${pop.quantity}',
+                          alignment: CrossAxisAlignment.center,
+                        ),
+                      ),
+                      const SizedBox(width: AtlasSpacing.sm),
+                      Expanded(
+                        child: _QuickStatLine(
+                          label: 'Release',
+                          value: pop.collectorLabel,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AtlasSpacing.lg),
+          AtlasGlassCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: AtlasSpacing.lg),
+                AtlasGlassCard(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _QuickStatLine(
-                        label: 'Current Value',
-                        value: valueLabel,
+                      const AtlasSectionHeader(
+                        title: 'Collection Information',
+                        subtitle: 'Collectible details, ownership, value, and condition',
+                        icon: Icons.inventory_2_outlined,
                       ),
-                      const SizedBox(height: AtlasSpacing.xs),
-                      _QuickStatLine(
-                        label: 'Quantity',
-                        value: '${pop.quantity}',
-                      ),
-                      const SizedBox(height: AtlasSpacing.xs),
-                      _QuickStatLine(
-                        label: 'Collector Label',
-                        value: pop.collectorLabel,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: AtlasSpacing.lg),
-          AtlasGlassCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const AtlasSectionHeader(
-                  title: 'Timeline',
-                  icon: Icons.verified_rounded,
-                ),
-                const SizedBox(height: AtlasSpacing.md),
-                _DetailRow(
-                  label: 'Added',
-                  value: dateAddedLabel,
-                ),
-                _DetailRow(
-                  label: 'Updated',
-                  value: lastUpdatedLabel,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: AtlasSpacing.lg),
-          AtlasGlassCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const AtlasSectionHeader(
-                  title: 'Basic Information',
-                  icon: Icons.info_outline_rounded,
-                ),
-                const SizedBox(height: AtlasSpacing.md),
-                _DetailRow(
-                  label: 'Number',
-                  value: pop.number,
-                ),
-                _DetailRow(
-                  label: 'Category',
-                  value: pop.category,
-                ),
-                _DetailRow(
-                  label: 'Series',
-                  value: pop.series,
-                ),
-                _DetailRow(
-                  label: 'Edition',
-                  value: pop.edition,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: AtlasSpacing.lg),
-          AtlasGlassCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const AtlasSectionHeader(
-                  title: 'Collector Identity',
-                  icon: Icons.verified_rounded,
-                ),
-                const SizedBox(height: AtlasSpacing.md),
-                _IdentityBadgeWrap(pop: pop),
-                const SizedBox(height: AtlasSpacing.md),
-                _DetailRow(
-                  label: 'Variant',
-                  value: pop.variant,
-                ),
-                _DetailRow(
-                  label: 'Retail Exclusive',
-                  value: pop.retailExclusive,
-                ),
-                _DetailRow(
-                  label: 'Event Sticker',
-                  value: pop.eventSticker,
-                ),
-                _DetailRow(
-                  label: 'Limited Edition',
-                  value: pop.limitedEdition,
-                ),
-                _DetailRow(
-                  label: 'Signature',
-                  value: pop.signature,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: AtlasSpacing.lg),
-          AtlasGlassCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const AtlasSectionHeader(
-                  title: 'Ownership',
-                  icon: Icons.inventory_2_rounded,
-                ),
-                const SizedBox(height: AtlasSpacing.md),
-                _DetailRow(
-                  label: 'Owner',
-                  value: pop.owner,
-                ),
-                const SizedBox(height: AtlasSpacing.sm),
-                AtlasGlassPanel(
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          'Quantity',
-                          style: AtlasTypography.bodyMedium.copyWith(
-                            color: AtlasColors.textSecondary,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.remove_circle_outline_rounded),
-                        onPressed: () => _updateQuantity(pop.quantity - 1),
-                      ),
+
+                      const SizedBox(height: AtlasSpacing.lg),
                       Text(
-                        '${pop.quantity}',
-                        style: AtlasTypography.headingSmall.copyWith(
-                          color: AtlasColors.vaultGold,
-                        ),
+                        'Timeline',
+                        style: AtlasTypography.headingSmall,
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.add_circle_outline_rounded),
-                        onPressed: () => _updateQuantity(pop.quantity + 1),
+                      const SizedBox(height: AtlasSpacing.sm),
+                      _DetailRow(
+                        label: 'Added',
+                        value: dateAddedLabel,
+                      ),
+                      _DetailRow(
+                        label: 'Updated',
+                        value: lastUpdatedLabel,
+                      ),
+
+                      const SizedBox(height: AtlasSpacing.lg),
+                      Text(
+                        'Basic Information',
+                        style: AtlasTypography.headingSmall,
+                      ),
+                      const SizedBox(height: AtlasSpacing.sm),
+                      _DetailRow(
+                        label: 'Number',
+                        value: pop.number,
+                      ),
+                      _DetailRow(
+                        label: 'Category',
+                        value: pop.category,
+                      ),
+                      _DetailRow(
+                        label: 'Series',
+                        value: pop.series,
+                      ),
+                      _DetailRow(
+                        label: 'Edition',
+                        value: pop.edition,
+                      ),
+                      _DetailRow(
+                        label: 'Owner',
+                        value: pop.owner,
+                      ),
+
+                      const SizedBox(height: AtlasSpacing.lg),
+                      Text(
+                        'Collector Identity',
+                        style: AtlasTypography.headingSmall,
+                      ),
+                      const SizedBox(height: AtlasSpacing.sm),
+                      _IdentityBadgeWrap(pop: pop),
+                      const SizedBox(height: AtlasSpacing.md),
+                      _DetailRow(
+                        label: 'Variant',
+                        value: pop.variant,
+                      ),
+                      _DetailRow(
+                        label: 'Retail Exclusive',
+                        value: pop.retailExclusive,
+                      ),
+                      _DetailRow(
+                        label: 'Event Sticker',
+                        value: pop.eventSticker,
+                      ),
+                      _DetailRow(
+                        label: 'Limited Edition',
+                        value: pop.limitedEdition,
+                      ),
+                      _DetailRow(
+                        label: 'Signature',
+                        value: pop.signature,
+                      ),
+
+                      const SizedBox(height: AtlasSpacing.lg),
+                      Text(
+                        'Value & Condition',
+                        style: AtlasTypography.headingSmall,
+                      ),
+                      const SizedBox(height: AtlasSpacing.sm),
+
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: AtlasGlassPanel(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    'Quantity',
+                                    style: AtlasTypography.bodySmall.copyWith(
+                                      color: AtlasColors.textSecondary,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: AtlasSpacing.sm),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      IconButton(
+                                        tooltip: 'Decrease quantity',
+                                        visualDensity: VisualDensity.compact,
+                                        constraints: const BoxConstraints(
+                                          minWidth: 36,
+                                          minHeight: 36,
+                                        ),
+                                        padding: EdgeInsets.zero,
+                                        iconSize: 22,
+                                        icon: const Icon(
+                                          Icons.remove_circle_outline_rounded,
+                                        ),
+                                        onPressed: pop.quantity <= 1
+                                            ? null
+                                            : () => _updateQuantity(
+                                          pop.quantity - 1,
+                                        ),
+                                      ),
+                                      SizedBox(
+                                        width: 24,
+                                        child: Text(
+                                          '${pop.quantity}',
+                                          textAlign: TextAlign.center,
+                                          style: AtlasTypography.headingSmall.copyWith(
+                                            color: AtlasColors.vaultGold,
+                                          ),
+                                        ),
+                                      ),
+                                      IconButton(
+                                        tooltip: 'Increase quantity',
+                                        visualDensity: VisualDensity.compact,
+                                        constraints: const BoxConstraints(
+                                          minWidth: 36,
+                                          minHeight: 36,
+                                        ),
+                                        padding: EdgeInsets.zero,
+                                        iconSize: 22,
+                                        icon: const Icon(
+                                          Icons.add_circle_outline_rounded,
+                                        ),
+                                        onPressed: () => _updateQuantity(
+                                          pop.quantity + 1,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: AtlasSpacing.sm),
+                          Expanded(
+                            child: AtlasGlassPanel(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    'Current Value',
+                                    style: AtlasTypography.bodySmall.copyWith(
+                                      color: AtlasColors.textSecondary,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: AtlasSpacing.md),
+                                  Text(
+                                    valueLabel,
+                                    textAlign: TextAlign.center,
+                                    style: AtlasTypography.headingSmall.copyWith(
+                                      color: AtlasColors.vaultGold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: AtlasSpacing.sm),
+                      _DetailRow(
+                        label: 'Price Paid',
+                        value: paidLabel,
+                      ),
+                      _DetailRow(
+                        label: 'Item Condition',
+                        value: pop.itemCondition,
+                      ),
+                      _DetailRow(
+                        label: 'Box Condition',
+                        value: pop.boxCondition,
                       ),
                     ],
                   ),
@@ -344,48 +430,18 @@ class _PopDetailsScreenState extends State<PopDetailsScreen> {
               ],
             ),
           ),
-          const SizedBox(height: AtlasSpacing.lg),
-          AtlasGlassCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const AtlasSectionHeader(
-                  title: 'Value',
-                  icon: Icons.attach_money_rounded,
-                ),
-                const SizedBox(height: AtlasSpacing.md),
-                _DetailRow(
-                  label: 'Value',
-                  value: valueLabel,
-                ),
-                _DetailRow(
-                  label: 'Paid',
-                  value: paidLabel,
-                ),
-              ],
+          if (pop.sourceCatalogId.trim().isNotEmpty ||
+              pop.sourceCollectibleId.trim().isNotEmpty ||
+              pop.sourceUpc.trim().isNotEmpty ||
+              pop.productionStatus.trim().isNotEmpty ||
+              pop.releaseDate.trim().isNotEmpty ||
+              pop.gradingCompany.trim().isNotEmpty ||
+              pop.authenticityNumber.trim().isNotEmpty) ...[
+            const SizedBox(height: AtlasSpacing.lg),
+            PopSourceDetailsSection(
+              pop: pop,
             ),
-          ),
-          const SizedBox(height: AtlasSpacing.lg),
-          AtlasGlassCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const AtlasSectionHeader(
-                  title: 'Condition',
-                  icon: Icons.shield_rounded,
-                ),
-                const SizedBox(height: AtlasSpacing.md),
-                _DetailRow(
-                  label: 'Item Condition',
-                  value: pop.itemCondition,
-                ),
-                _DetailRow(
-                  label: 'Box Condition',
-                  value: pop.boxCondition,
-                ),
-              ],
-            ),
-          ),
+          ],
           const SizedBox(height: AtlasSpacing.lg),
           SizedBox(
             width: double.infinity,
@@ -468,10 +524,12 @@ class _QuickStatLine extends StatelessWidget {
   const _QuickStatLine({
     required this.label,
     required this.value,
+    this.alignment = CrossAxisAlignment.start,
   });
 
   final String label;
   final String value;
+  final CrossAxisAlignment alignment;
 
   @override
   Widget build(BuildContext context) {
@@ -481,7 +539,7 @@ class _QuickStatLine extends StatelessWidget {
         vertical: AtlasSpacing.xs,
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: alignment,
         children: [
           Text(
             label,
@@ -497,6 +555,9 @@ class _QuickStatLine extends StatelessWidget {
               color: AtlasColors.vaultGold,
               fontWeight: FontWeight.bold,
             ),
+            textAlign: alignment == CrossAxisAlignment.center
+                ? TextAlign.center
+                : TextAlign.start,
             softWrap: true,
           ),
         ],

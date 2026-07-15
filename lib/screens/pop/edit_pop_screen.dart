@@ -5,6 +5,7 @@ import '../../atlas/engines/atlas_insight_engine.dart';
 import '../../atlas/engines/atlas_recommendation_engine.dart';
 import '../../atlas/services/atlas_activity_service.dart';
 import '../../atlas/widgets/atlas_insight_card.dart';
+import '../../constants/collector_identity_options.dart';
 import '../../models/pop.dart';
 import '../../services/app_state.dart';
 import '../../theme/atlas_colors.dart';
@@ -42,6 +43,11 @@ class _EditPopScreenState extends State<EditPopScreen> {
   late TextEditingController _valueController;
   late TextEditingController _pricePaidController;
   late TextEditingController _quantityController;
+  late TextEditingController _customVariantController;
+  late TextEditingController _customRetailExclusiveController;
+  late TextEditingController _customEventStickerController;
+  late TextEditingController _customLimitedEditionController;
+  late TextEditingController _customSignatureController;
 
   late String _owner;
   late String _variant;
@@ -59,72 +65,6 @@ class _EditPopScreenState extends State<EditPopScreen> {
     'Shared',
   ];
 
-  final List<String> _variantOptions = const [
-    'Common',
-    'Chase',
-    'Glow',
-    'Flocked',
-    'Blacklight',
-    'Metallic',
-    'Diamond',
-    'Chrome',
-    'Glitter',
-    'Scented',
-    'Art Series',
-    'NFT Redemption',
-    'Prototype',
-    'Error Variant',
-  ];
-
-  final List<String> _retailOptions = const [
-    'None',
-    'Funko Shop',
-    'Hot Topic',
-    'BoxLunch',
-    'Target',
-    'Walmart',
-    'Amazon',
-    'GameStop',
-    'Entertainment Earth',
-    'PX',
-    'Best Buy',
-    'Walgreens',
-    'Barnes & Noble',
-    'FYE',
-    'Books-A-Million',
-    'Specialty Series',
-    'Local Comic Shop',
-  ];
-
-  final List<String> _eventOptions = const [
-    'None',
-    'SDCC',
-    'NYCC',
-    'ECCC',
-    'WonderCon',
-    'C2E2',
-    'Fundays',
-    'Shared Exclusive',
-  ];
-
-  final List<String> _limitedOptions = const [
-    'None',
-    'LE 500',
-    'LE 1000',
-    'LE 1500',
-    'LE 3000',
-    'LE 5000',
-    'LE 10000',
-  ];
-
-  final List<String> _signatureOptions = const [
-    'Unsigned',
-    'Signed',
-    'Beckett Authenticated',
-    'JSA Authenticated',
-    'PSA Authenticated',
-  ];
-
   String _safeOption(
       String value,
       List<String> options,
@@ -132,7 +72,28 @@ class _EditPopScreenState extends State<EditPopScreen> {
       ) {
     return options.contains(value) ? value : fallback;
   }
+  bool _isCustomValue(
+      String value,
+      List<String> options,
+      ) {
+    final cleaned = value.trim();
 
+    return cleaned.isNotEmpty && !options.contains(cleaned);
+  }
+
+  String _resolvedIdentityValue({
+    required String selectedValue,
+    required TextEditingController customController,
+    required String fallback,
+  }) {
+    if (selectedValue != 'Other') {
+      return selectedValue;
+    }
+
+    final customValue = customController.text.trim();
+
+    return customValue.isEmpty ? fallback : customValue;
+  }
   String _formatCategory(String value) {
     if (value.isEmpty) {
       return '';
@@ -183,37 +144,107 @@ class _EditPopScreenState extends State<EditPopScreen> {
       'Shared',
     );
 
-    _variant = _safeOption(
-      widget.pop.variant,
-      _variantOptions,
-      widget.pop.edition.isNotEmpty ? widget.pop.edition : 'Common',
+    final savedVariant = widget.pop.variant.trim().isNotEmpty
+        ? widget.pop.variant.trim()
+        : widget.pop.edition.trim();
+
+    _customVariantController = TextEditingController(
+      text: _isCustomValue(
+        savedVariant,
+        CollectorIdentityOptions.variants,
+      )
+          ? savedVariant
+          : '',
     );
 
-    if (!_variantOptions.contains(_variant)) {
-      _variant = 'Common';
-    }
+    _variant = _isCustomValue(
+      savedVariant,
+      CollectorIdentityOptions.variants,
+    )
+        ? 'Other'
+        : _safeOption(
+      savedVariant,
+      CollectorIdentityOptions.variants,
+      'Common',
+    );
 
-    _retailExclusive = _safeOption(
+    _customRetailExclusiveController = TextEditingController(
+      text: _isCustomValue(
+        widget.pop.retailExclusive,
+        CollectorIdentityOptions.retailExclusives,
+      )
+          ? widget.pop.retailExclusive
+          : '',
+    );
+
+    _retailExclusive = _isCustomValue(
       widget.pop.retailExclusive,
-      _retailOptions,
+      CollectorIdentityOptions.retailExclusives,
+    )
+        ? 'Other'
+        : _safeOption(
+      widget.pop.retailExclusive,
+      CollectorIdentityOptions.retailExclusives,
       'None',
     );
 
-    _eventSticker = _safeOption(
+    _customEventStickerController = TextEditingController(
+      text: _isCustomValue(
+        widget.pop.eventSticker,
+        CollectorIdentityOptions.eventStickers,
+      )
+          ? widget.pop.eventSticker
+          : '',
+    );
+
+    _eventSticker = _isCustomValue(
       widget.pop.eventSticker,
-      _eventOptions,
+      CollectorIdentityOptions.eventStickers,
+    )
+        ? 'Other'
+        : _safeOption(
+      widget.pop.eventSticker,
+      CollectorIdentityOptions.eventStickers,
       'None',
     );
 
-    _limitedEdition = _safeOption(
+    _customLimitedEditionController = TextEditingController(
+      text: _isCustomValue(
+        widget.pop.limitedEdition,
+        CollectorIdentityOptions.limitedEditions,
+      )
+          ? widget.pop.limitedEdition
+          : '',
+    );
+
+    _limitedEdition = _isCustomValue(
       widget.pop.limitedEdition,
-      _limitedOptions,
+      CollectorIdentityOptions.limitedEditions,
+    )
+        ? 'Other'
+        : _safeOption(
+      widget.pop.limitedEdition,
+      CollectorIdentityOptions.limitedEditions,
       'None',
     );
 
-    _signature = _safeOption(
+    _customSignatureController = TextEditingController(
+      text: _isCustomValue(
+        widget.pop.signature,
+        CollectorIdentityOptions.signatures,
+      )
+          ? widget.pop.signature
+          : '',
+    );
+
+    _signature = _isCustomValue(
       widget.pop.signature,
-      _signatureOptions,
+      CollectorIdentityOptions.signatures,
+    )
+        ? 'Other'
+        : _safeOption(
+      widget.pop.signature,
+      CollectorIdentityOptions.signatures,
       'Unsigned',
     );
 
@@ -263,10 +294,45 @@ class _EditPopScreenState extends State<EditPopScreen> {
     _quantityController.dispose();
     _scrollController.dispose();
     _valueFocusNode.dispose();
+    _customVariantController.dispose();
+    _customRetailExclusiveController.dispose();
+    _customEventStickerController.dispose();
+    _customLimitedEditionController.dispose();
+    _customSignatureController.dispose();
     super.dispose();
   }
 
   Future<void> _saveChanges() async {
+    final resolvedVariant = _resolvedIdentityValue(
+      selectedValue: _variant,
+      customController: _customVariantController,
+      fallback: 'Common',
+    );
+
+    final resolvedRetailExclusive = _resolvedIdentityValue(
+      selectedValue: _retailExclusive,
+      customController: _customRetailExclusiveController,
+      fallback: 'None',
+    );
+
+    final resolvedEventSticker = _resolvedIdentityValue(
+      selectedValue: _eventSticker,
+      customController: _customEventStickerController,
+      fallback: 'None',
+    );
+
+    final resolvedLimitedEdition = _resolvedIdentityValue(
+      selectedValue: _limitedEdition,
+      customController: _customLimitedEditionController,
+      fallback: 'None',
+    );
+
+    final resolvedSignature = _resolvedIdentityValue(
+      selectedValue: _signature,
+      customController: _customSignatureController,
+      fallback: 'Unsigned',
+    );
+
     final updatedPop = Pop(
       id: widget.pop.id,
       name: _nameController.text.trim(),
@@ -275,12 +341,12 @@ class _EditPopScreenState extends State<EditPopScreen> {
         _categoryController.text.trim(),
       ),
       series: _seriesController.text.trim(),
-      edition: _variant,
-      variant: _variant,
-      retailExclusive: _retailExclusive,
-      eventSticker: _eventSticker,
-      limitedEdition: _limitedEdition,
-      signature: _signature,
+      edition: resolvedVariant,
+      variant: resolvedVariant,
+      retailExclusive: resolvedRetailExclusive,
+      eventSticker: resolvedEventSticker,
+      limitedEdition: resolvedLimitedEdition,
+      signature: resolvedSignature,
       value: double.tryParse(_valueController.text) ?? 0,
       pricePaid: double.tryParse(_pricePaidController.text) ?? 0,
       quantity: int.tryParse(_quantityController.text) ?? 1,
@@ -463,7 +529,7 @@ class _EditPopScreenState extends State<EditPopScreen> {
                     child: LabeledDropdown(
                       label: 'Variant',
                       value: _variant,
-                      options: _variantOptions,
+                      options: CollectorIdentityOptions.variants,
                       onChanged: (value) {
                         setState(() {
                           _variant = value;
@@ -471,12 +537,20 @@ class _EditPopScreenState extends State<EditPopScreen> {
                       },
                     ),
                   ),
+                  if (_variant == 'Other') ...[
+                    const SizedBox(height: AtlasSpacing.md),
+                    _AtlasTextField(
+                      controller: _customVariantController,
+                      label: 'Custom Variant',
+                      icon: Icons.edit_note_rounded,
+                    ),
+                  ],
                   const SizedBox(height: AtlasSpacing.md),
                   _AtlasDropdownPanel(
                     child: LabeledDropdown(
                       label: 'Retail Exclusive',
                       value: _retailExclusive,
-                      options: _retailOptions,
+                      options: CollectorIdentityOptions.retailExclusives,
                       onChanged: (value) {
                         setState(() {
                           _retailExclusive = value;
@@ -484,12 +558,20 @@ class _EditPopScreenState extends State<EditPopScreen> {
                       },
                     ),
                   ),
+                  if (_retailExclusive == 'Other') ...[
+                    const SizedBox(height: AtlasSpacing.md),
+                    _AtlasTextField(
+                      controller: _customRetailExclusiveController,
+                      label: 'Custom Retail Exclusive',
+                      icon: Icons.storefront_outlined,
+                    ),
+                  ],
                   const SizedBox(height: AtlasSpacing.md),
                   _AtlasDropdownPanel(
                     child: LabeledDropdown(
                       label: 'Event Sticker',
                       value: _eventSticker,
-                      options: _eventOptions,
+                      options: CollectorIdentityOptions.eventStickers,
                       onChanged: (value) {
                         setState(() {
                           _eventSticker = value;
@@ -497,12 +579,20 @@ class _EditPopScreenState extends State<EditPopScreen> {
                       },
                     ),
                   ),
+                  if (_eventSticker == 'Other') ...[
+                    const SizedBox(height: AtlasSpacing.md),
+                    _AtlasTextField(
+                      controller: _customEventStickerController,
+                      label: 'Custom Event Sticker',
+                      icon: Icons.local_activity_outlined,
+                    ),
+                  ],
                   const SizedBox(height: AtlasSpacing.md),
                   _AtlasDropdownPanel(
                     child: LabeledDropdown(
                       label: 'Limited Edition',
                       value: _limitedEdition,
-                      options: _limitedOptions,
+                      options: CollectorIdentityOptions.limitedEditions,
                       onChanged: (value) {
                         setState(() {
                           _limitedEdition = value;
@@ -510,12 +600,20 @@ class _EditPopScreenState extends State<EditPopScreen> {
                       },
                     ),
                   ),
+                  if (_limitedEdition == 'Other') ...[
+                    const SizedBox(height: AtlasSpacing.md),
+                    _AtlasTextField(
+                      controller: _customLimitedEditionController,
+                      label: 'Custom Limited Edition',
+                      icon: Icons.numbers_rounded,
+                    ),
+                  ],
                   const SizedBox(height: AtlasSpacing.md),
                   _AtlasDropdownPanel(
                     child: LabeledDropdown(
                       label: 'Signature',
                       value: _signature,
-                      options: _signatureOptions,
+                      options: CollectorIdentityOptions.signatures,
                       onChanged: (value) {
                         setState(() {
                           _signature = value;
@@ -523,6 +621,14 @@ class _EditPopScreenState extends State<EditPopScreen> {
                       },
                     ),
                   ),
+                  if (_signature == 'Other') ...[
+                    const SizedBox(height: AtlasSpacing.md),
+                    _AtlasTextField(
+                      controller: _customSignatureController,
+                      label: 'Custom Signature Details',
+                      icon: Icons.draw_outlined,
+                    ),
+                  ],
                 ],
               ),
             ),

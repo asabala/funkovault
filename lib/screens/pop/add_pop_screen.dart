@@ -5,6 +5,7 @@ import '../../atlas/engines/atlas_insight_engine.dart';
 import '../../atlas/engines/atlas_recommendation_engine.dart';
 import '../../atlas/services/atlas_activity_service.dart';
 import '../../atlas/widgets/atlas_insight_card.dart';
+import '../../constants/collector_identity_options.dart';
 import '../../models/funko_catalog_item.dart';
 import '../../models/pop.dart';
 import '../../services/app_state.dart';
@@ -38,78 +39,17 @@ class _AddPopScreenState extends State<AddPopScreen> {
   final _valueController = TextEditingController();
   final _pricePaidController = TextEditingController();
   final _quantityController = TextEditingController(text: '1');
+  final _customVariantController = TextEditingController();
+  final _customRetailExclusiveController = TextEditingController();
+  final _customEventStickerController = TextEditingController();
+  final _customLimitedEditionController = TextEditingController();
+  final _customSignatureController = TextEditingController();
 
   String _variant = 'Common';
   String _retailExclusive = 'None';
   String _eventSticker = 'None';
   String _limitedEdition = 'None';
   String _signature = 'Unsigned';
-
-  final List<String> _variantOptions = const [
-    'Common',
-    'Chase',
-    'Glow',
-    'Flocked',
-    'Blacklight',
-    'Metallic',
-    'Diamond',
-    'Chrome',
-    'Glitter',
-    'Scented',
-    'Art Series',
-    'NFT Redemption',
-    'Prototype',
-    'Error Variant',
-  ];
-
-  final List<String> _retailOptions = const [
-    'None',
-    'Funko Shop',
-    'Hot Topic',
-    'BoxLunch',
-    'Target',
-    'Walmart',
-    'Amazon',
-    'GameStop',
-    'Entertainment Earth',
-    'PX',
-    'Best Buy',
-    'Walgreens',
-    'Barnes & Noble',
-    'FYE',
-    'Books-A-Million',
-    'Specialty Series',
-    'Local Comic Shop',
-  ];
-
-  final List<String> _eventOptions = const [
-    'None',
-    'SDCC',
-    'NYCC',
-    'ECCC',
-    'WonderCon',
-    'C2E2',
-    'Fundays',
-    'Shared Exclusive',
-  ];
-
-  final List<String> _limitedOptions = const [
-    'None',
-    'LE 500',
-    'LE 1000',
-    'LE 1500',
-    'LE 3000',
-    'LE 5000',
-    'LE 10000',
-  ];
-
-  final List<String> _signatureOptions = const [
-    'Unsigned',
-    'Signed',
-    'Beckett Authenticated',
-    'JSA Authenticated',
-    'PSA Authenticated',
-  ];
 
   String _formatCategory(String value) {
     if (value.isEmpty) {
@@ -166,7 +106,26 @@ class _AddPopScreenState extends State<AddPopScreen> {
     _valueController.dispose();
     _pricePaidController.dispose();
     _quantityController.dispose();
+    _customVariantController.dispose();
+    _customRetailExclusiveController.dispose();
+    _customEventStickerController.dispose();
+    _customLimitedEditionController.dispose();
+    _customSignatureController.dispose();
     super.dispose();
+  }
+
+  String _resolvedIdentityValue({
+    required String selectedValue,
+    required TextEditingController customController,
+    required String fallback,
+  }) {
+    if (selectedValue != 'Other') {
+      return selectedValue;
+    }
+
+    final customValue = customController.text.trim();
+
+    return customValue.isEmpty ? fallback : customValue;
   }
 
   Future<void> _savePop() async {
@@ -176,18 +135,48 @@ class _AddPopScreenState extends State<AddPopScreen> {
 
     final now = DateTime.now().toIso8601String();
 
+    final resolvedVariant = _resolvedIdentityValue(
+      selectedValue: _variant,
+      customController: _customVariantController,
+      fallback: 'Common',
+    );
+
+    final resolvedRetailExclusive = _resolvedIdentityValue(
+      selectedValue: _retailExclusive,
+      customController: _customRetailExclusiveController,
+      fallback: 'None',
+    );
+
+    final resolvedEventSticker = _resolvedIdentityValue(
+      selectedValue: _eventSticker,
+      customController: _customEventStickerController,
+      fallback: 'None',
+    );
+
+    final resolvedLimitedEdition = _resolvedIdentityValue(
+      selectedValue: _limitedEdition,
+      customController: _customLimitedEditionController,
+      fallback: 'None',
+    );
+
+    final resolvedSignature = _resolvedIdentityValue(
+      selectedValue: _signature,
+      customController: _customSignatureController,
+      fallback: 'Unsigned',
+    );
+
     final pop = Pop(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       name: _nameController.text.trim(),
       number: _numberController.text.trim(),
       category: _formatCategory(_categoryController.text.trim()),
       series: _seriesController.text.trim(),
-      edition: _variant,
-      variant: _variant,
-      retailExclusive: _retailExclusive,
-      eventSticker: _eventSticker,
-      limitedEdition: _limitedEdition,
-      signature: _signature,
+      edition: resolvedVariant,
+      variant: resolvedVariant,
+      retailExclusive: resolvedRetailExclusive,
+      eventSticker: resolvedEventSticker,
+      limitedEdition: resolvedLimitedEdition,
+      signature: resolvedSignature,
       value: double.tryParse(_valueController.text) ?? 0,
       pricePaid: double.tryParse(_pricePaidController.text) ?? 0,
       quantity: int.tryParse(_quantityController.text) ?? 1,
@@ -362,7 +351,7 @@ class _AddPopScreenState extends State<AddPopScreen> {
                     child: LabeledDropdown(
                       label: 'Variant',
                       value: _variant,
-                      options: _variantOptions,
+                      options: CollectorIdentityOptions.variants,
                       onChanged: (value) {
                         setState(() {
                           _variant = value;
@@ -370,12 +359,22 @@ class _AddPopScreenState extends State<AddPopScreen> {
                       },
                     ),
                   ),
+                  if (_variant == 'Other') ...[
+                    const SizedBox(height: AtlasSpacing.md),
+                    _AtlasTextField(
+                      controller: _customVariantController,
+                      label: 'Custom Variant',
+                      hintText: 'Enter the variant type',
+                      icon: Icons.edit_note_rounded,
+                    ),
+                  ],
+
                   const SizedBox(height: AtlasSpacing.md),
                   _AtlasDropdownPanel(
                     child: LabeledDropdown(
                       label: 'Retail Exclusive',
                       value: _retailExclusive,
-                      options: _retailOptions,
+                      options: CollectorIdentityOptions.retailExclusives,
                       onChanged: (value) {
                         setState(() {
                           _retailExclusive = value;
@@ -383,12 +382,21 @@ class _AddPopScreenState extends State<AddPopScreen> {
                       },
                     ),
                   ),
+                  if (_retailExclusive == 'Other') ...[
+                    const SizedBox(height: AtlasSpacing.md),
+                    _AtlasTextField(
+                      controller: _customRetailExclusiveController,
+                      label: 'Custom Retail Exclusive',
+                      hintText: 'Enter the store or retailer',
+                      icon: Icons.storefront_outlined,
+                    ),
+                  ],
                   const SizedBox(height: AtlasSpacing.md),
                   _AtlasDropdownPanel(
                     child: LabeledDropdown(
                       label: 'Event Sticker',
                       value: _eventSticker,
-                      options: _eventOptions,
+                      options: CollectorIdentityOptions.eventStickers,
                       onChanged: (value) {
                         setState(() {
                           _eventSticker = value;
@@ -396,12 +404,22 @@ class _AddPopScreenState extends State<AddPopScreen> {
                       },
                     ),
                   ),
+                  if (_eventSticker == 'Other') ...[
+                    const SizedBox(height: AtlasSpacing.md),
+                    _AtlasTextField(
+                      controller: _customEventStickerController,
+                      label: 'Custom Event Sticker',
+                      hintText: 'Enter the event or sticker',
+                      icon: Icons.local_activity_outlined,
+                    ),
+                  ],
+
                   const SizedBox(height: AtlasSpacing.md),
                   _AtlasDropdownPanel(
                     child: LabeledDropdown(
                       label: 'Limited Edition',
                       value: _limitedEdition,
-                      options: _limitedOptions,
+                      options: CollectorIdentityOptions.limitedEditions,
                       onChanged: (value) {
                         setState(() {
                           _limitedEdition = value;
@@ -409,12 +427,22 @@ class _AddPopScreenState extends State<AddPopScreen> {
                       },
                     ),
                   ),
+                  if (_limitedEdition == 'Other') ...[
+                    const SizedBox(height: AtlasSpacing.md),
+                    _AtlasTextField(
+                      controller: _customLimitedEditionController,
+                      label: 'Custom Limited Edition',
+                      hintText: 'Example: LE 1250',
+                      icon: Icons.numbers_rounded,
+                    ),
+                  ],
+
                   const SizedBox(height: AtlasSpacing.md),
                   _AtlasDropdownPanel(
                     child: LabeledDropdown(
                       label: 'Signature',
                       value: _signature,
-                      options: _signatureOptions,
+                      options: CollectorIdentityOptions.signatures,
                       onChanged: (value) {
                         setState(() {
                           _signature = value;
@@ -422,6 +450,15 @@ class _AddPopScreenState extends State<AddPopScreen> {
                       },
                     ),
                   ),
+                  if (_signature == 'Other') ...[
+                    const SizedBox(height: AtlasSpacing.md),
+                    _AtlasTextField(
+                      controller: _customSignatureController,
+                      label: 'Custom Signature Details',
+                      hintText: 'Enter signer or authentication details',
+                      icon: Icons.draw_outlined,
+                    ),
+                  ],
                 ],
               ),
             ),
