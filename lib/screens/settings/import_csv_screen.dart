@@ -143,7 +143,8 @@ class _ImportCsvScreenState extends State<ImportCsvScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Import complete: ${importResult.added} added, ${importResult.skipped} skipped.',
+            'Import complete: ${importResult.added} unique records added, '
+                '${importResult.skipped} matching copies consolidated.',
           ),
         ),
       );
@@ -184,7 +185,8 @@ class _ImportCsvScreenState extends State<ImportCsvScreen> {
                 ),
                 const SizedBox(height: AtlasSpacing.sm),
                 Text(
-                  'Upload or paste your HobbyDB export. Atlas will preview it first, then import only new Pops and skip duplicates.',
+                  'Upload or paste your HobbyDB export. Atlas will preview it first, '
+                      'add unique collectible records, and consolidate matching copies into quantity.',
                   style: AtlasTypography.bodyMedium.copyWith(
                     color: AtlasColors.textSecondary,
                   ),
@@ -353,16 +355,16 @@ class _CsvImportResultCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _PreviewLine(
-                  label: 'Attempted',
-                  value: '${result.attempted}',
-                ),
-                _PreviewLine(
-                  label: 'Added',
+                  label: 'Unique Records Added',
                   value: '${result.added}',
                 ),
                 _PreviewLine(
-                  label: 'Duplicates Skipped',
+                  label: 'Matching Copies Consolidated',
                   value: '${result.skipped}',
+                ),
+                _PreviewLine(
+                  label: 'Total Copies Represented',
+                  value: '${result.added + result.skipped}',
                 ),
               ],
             ),

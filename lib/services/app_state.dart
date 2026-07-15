@@ -208,8 +208,13 @@ class AppState extends ChangeNotifier {
 
     final now = DateTime.now().toIso8601String();
 
-    final existingIndex = pops.indexWhere(
-          (existingPop) => existingPop.duplicateKey == pop.duplicateKey,
+    final newRecordKey = pop.collectionRecordKey;
+
+    final existingIndex = newRecordKey.isEmpty
+        ? -1
+        : pops.indexWhere(
+          (existingPop) =>
+      existingPop.collectionRecordKey == newRecordKey,
     );
 
     if (existingIndex != -1) {
@@ -278,22 +283,44 @@ class AppState extends ChangeNotifier {
       );
     }
 
-    final existingKeys = currentPops
-        .map(
-          (pop) => pop.csvImportKey,
-    )
-        .toSet();
+    final indexesByRecordKey = <String, int>{};
+
+    for (var index = 0; index < currentPops.length; index++) {
+      final key = currentPops[index].collectionRecordKey;
+
+      if (key.isNotEmpty) {
+        indexesByRecordKey[key] = index;
+      }
+    }
 
     final now = DateTime.now().toIso8601String();
 
     var added = 0;
-    var skipped = 0;
+    var consolidated = 0;
 
     for (final importedPop in importedPops) {
-      final key = importedPop.csvImportKey;
+      final key = importedPop.collectionRecordKey;
+      final existingIndex =
+      key.isEmpty ? null : indexesByRecordKey[key];
 
-      if (existingKeys.contains(key)) {
-        skipped++;
+      if (existingIndex != null) {
+        final existingPop = currentPops[existingIndex];
+
+        currentPops[existingIndex] = existingPop.copyWith(
+          quantity: existingPop.quantity + importedPop.quantity,
+          value: existingPop.value > 0
+              ? existingPop.value
+              : importedPop.value,
+          pricePaid: existingPop.pricePaid > 0
+              ? existingPop.pricePaid
+              : importedPop.pricePaid,
+          imageUrl: existingPop.imageUrl.trim().isNotEmpty
+              ? existingPop.imageUrl
+              : importedPop.imageUrl,
+          lastUpdated: now,
+        );
+
+        consolidated++;
         continue;
       }
 
@@ -307,7 +334,11 @@ class AppState extends ChangeNotifier {
       );
 
       currentPops.add(datedPop);
-      existingKeys.add(key);
+
+      if (key.isNotEmpty) {
+        indexesByRecordKey[key] = currentPops.length - 1;
+      }
+
       added++;
     }
 
@@ -319,7 +350,9 @@ class AppState extends ChangeNotifier {
         popNumber: '',
         owner: _selectedCollection,
         actor: _collectorProfile.displayName,
-        details: 'CSV import complete: $added added, $skipped skipped',
+        details:
+        'CSV import complete: $added records added, '
+            '$consolidated matching copies consolidated',
         timestamp: DateTime.now(),
       ),
     );
@@ -331,7 +364,7 @@ class AppState extends ChangeNotifier {
     return PopImportResult(
       attempted: importedPops.length,
       added: added,
-      skipped: skipped,
+      skipped: consolidated,
     );
   }
 
@@ -479,6 +512,165 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<bool> consolidateDuplicateGroup(
+      List<String> popIds,
+      ) async {
+    if (popIds.length < 2) {
+      return false;
+    }
+
+    List<Pop>? matchingCollection;
+    final matchingPops = <Pop>[];
+
+    for (final collection in _collections.values) {
+      final foundPops = collection
+          .where(
+            (pop) => popIds.contains(pop.id),
+      )
+          .toList();
+
+      if (foundPops.length == popIds.length) {
+        matchingCollection = collection;
+        matchingPops.addAll(foundPops);
+        break;
+      }
+    }
+
+    if (matchingCollection == null || matchingPops.length < 2) {
+      return false;
+    }
+
+    final identityKeys = matchingPops
+        .map(
+          (pop) => pop.collectionRecordKey,
+    )
+        .where(
+          (key) => key.isNotEmpty,
+    )
+        .toSet();
+
+    if (identityKeys.length != 1) {
+      return false;
+    }
+
+    final now = DateTime.now().toIso8601String();
+    final primaryPop = matchingPops.first;
+
+    final totalQuantity = matchingPops.fold<int>(
+      0,
+          (total, pop) => total + pop.quantity,
+    );
+
+    final bestValue = matchingPops.fold<double>(
+      0,
+          (highest, pop) => pop.value > highest
+          ? pop.value
+          : highest,
+    );
+
+    final bestPricePaid = matchingPops.fold<double>(
+      0,
+          (highest, pop) => pop.pricePaid > highest
+          ? pop.pricePaid
+          : highest,
+    );
+
+    final bestImageUrl = matchingPops
+        .map(
+          (pop) => pop.imageUrl.trim(),
+    )
+        .firstWhere(
+          (value) => value.isNotEmpty,
+      orElse: () => primaryPop.imageUrl,
+    );
+
+    final earliestDateAdded = _earliestSavedDate(
+      matchingPops.map(
+            (pop) => pop.dateAdded,
+      ),
+    );
+
+    final consolidatedPop = primaryPop.copyWith(
+      quantity: totalQuantity,
+      value: bestValue,
+      pricePaid: bestPricePaid,
+      imageUrl: bestImageUrl,
+      dateAdded: earliestDateAdded.isEmpty
+          ? primaryPop.dateAdded
+          : earliestDateAdded,
+      lastUpdated: now,
+    );
+
+    final primaryIndex = matchingCollection.indexWhere(
+          (pop) => pop.id == primaryPop.id,
+    );
+
+    if (primaryIndex == -1) {
+      return false;
+    }
+
+    matchingCollection[primaryIndex] = consolidatedPop;
+
+    final removedIds = matchingPops
+        .skip(1)
+        .map(
+          (pop) => pop.id,
+    )
+        .toSet();
+
+    matchingCollection.removeWhere(
+          (pop) => removedIds.contains(pop.id),
+    );
+
+    _activities.add(
+      Activity(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        action: 'duplicates_consolidated',
+        popName: consolidatedPop.name,
+        popNumber: consolidatedPop.number,
+        owner: consolidatedPop.owner,
+        actor: _collectorProfile.displayName,
+        details:
+        '${matchingPops.length} matching records consolidated into '
+            'quantity $totalQuantity',
+        timestamp: DateTime.now(),
+      ),
+    );
+
+    if (_activities.length > 500) {
+      _activities.removeAt(0);
+    }
+
+    await _saveData();
+
+    notifyListeners();
+
+    return true;
+  }
+
+  String _earliestSavedDate(
+      Iterable<String> values,
+      ) {
+    DateTime? earliestDate;
+    var earliestValue = '';
+
+    for (final value in values) {
+      final cleaned = value.trim();
+      final parsed = DateTime.tryParse(cleaned);
+
+      if (parsed == null) {
+        continue;
+      }
+
+      if (earliestDate == null || parsed.isBefore(earliestDate)) {
+        earliestDate = parsed;
+        earliestValue = cleaned;
+      }
+    }
+
+    return earliestValue;
+  }
+
   Future<void> mergeDuplicates() async {
     final pops = _collections[_selectedCollection];
 
@@ -490,7 +682,12 @@ class AppState extends ChangeNotifier {
     final merged = <String, Pop>{};
 
     for (final pop in pops) {
-      final key = pop.duplicateKey;
+      final key = pop.collectionRecordKey;
+
+      if (key.isEmpty) {
+        merged[pop.id] = pop;
+        continue;
+      }
 
       if (merged.containsKey(key)) {
         final existing = merged[key]!;

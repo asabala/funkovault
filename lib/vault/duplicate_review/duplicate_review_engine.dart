@@ -3,32 +3,12 @@ import '../../models/pop.dart';
 class DuplicateReviewEngine {
   const DuplicateReviewEngine();
 
-  /// Builds the collectible identity used for duplicate review.
+  /// Duplicate Review compares the collectible release itself.
   ///
-  /// Pops are only considered possible duplicates when all meaningful
-  /// release details match. Collection-specific details such as value,
-  /// condition, owner, quantity, and wishlist status are intentionally
-  /// excluded.
+  /// Owner, wishlist status, value, condition, quantity, and other
+  /// collection-specific details do not define the collectible.
   String reviewKey(Pop pop) {
-    final name = _normalizeText(pop.name);
-    final number = _normalizeText(pop.number);
-
-    if (name.isEmpty || number.isEmpty) {
-      return '';
-    }
-
-    return [
-      name,
-      number,
-      _normalizeText(pop.category),
-      _normalizeText(pop.series),
-      _normalizeVariantValue(pop.edition),
-      _normalizeVariantValue(pop.variant),
-      _normalizeOptionalIdentityValue(pop.retailExclusive),
-      _normalizeOptionalIdentityValue(pop.eventSticker),
-      _normalizeOptionalIdentityValue(pop.limitedEdition),
-      _normalizeSignatureValue(pop.signature),
-    ].join('|');
+    return pop.collectibleIdentityKey;
   }
 
   Set<String> reviewKeys(List<Pop> pops) {
@@ -126,71 +106,7 @@ class DuplicateReviewEngine {
   }
 
   bool hasMeaningfulValue(String value) {
-    final cleaned = _normalizeText(value);
-
-    if (cleaned.isEmpty) {
-      return false;
-    }
-
-    return cleaned != 'none' &&
-        cleaned != 'common' &&
-        cleaned != 'standard' &&
-        cleaned != 'unsigned' &&
-        cleaned != 'no' &&
-        cleaned != 'n/a' &&
-        cleaned != 'na';
-  }
-
-  static String _normalizeText(String value) {
-    return value.trim().toLowerCase();
-  }
-
-  /// Common, Standard, None, and blank all represent the baseline release.
-  static String _normalizeVariantValue(String value) {
-    final cleaned = _normalizeText(value);
-
-    if (cleaned.isEmpty ||
-        cleaned == 'none' ||
-        cleaned == 'no' ||
-        cleaned == 'n/a' ||
-        cleaned == 'na' ||
-        cleaned == 'common' ||
-        cleaned == 'standard') {
-      return 'common';
-    }
-
-    return cleaned;
-  }
-
-  /// Blank, None, No, and N/A all represent no saved identity detail.
-  static String _normalizeOptionalIdentityValue(String value) {
-    final cleaned = _normalizeText(value);
-
-    if (cleaned.isEmpty ||
-        cleaned == 'none' ||
-        cleaned == 'no' ||
-        cleaned == 'n/a' ||
-        cleaned == 'na') {
-      return 'none';
-    }
-
-    return cleaned;
-  }
-
-  /// Blank, None, No, N/A, and Unsigned all represent an unsigned Pop.
-  static String _normalizeSignatureValue(String value) {
-    final cleaned = _normalizeText(value);
-
-    if (cleaned.isEmpty ||
-        cleaned == 'none' ||
-        cleaned == 'no' ||
-        cleaned == 'n/a' ||
-        cleaned == 'na' ||
-        cleaned == 'unsigned') {
-      return 'unsigned';
-    }
-
-    return cleaned;
+    return Pop.hasMeaningfulIdentityLabel(value);
   }
 }
 
@@ -207,6 +123,13 @@ class DuplicateReviewGroup {
 
   int get itemCount => pops.length;
 
+  int get totalQuantity {
+    return pops.fold<int>(
+      0,
+          (total, pop) => total + pop.quantity,
+    );
+  }
+
   String get name {
     final value = firstPop.name.trim();
 
@@ -219,128 +142,8 @@ class DuplicateReviewGroup {
     return value.isEmpty ? 'No #' : '#$value';
   }
 
-  /// Groups now contain only Pops whose meaningful collectible identity
-  /// fields match. This remains available for UI compatibility and future
-  /// comparison fields.
-  List<String> get differenceLabels {
-    final differences = <String>[];
-
-    if (_hasDifferentValues(
-      pops.map((pop) => pop.category),
-      normalizer: _normalizeText,
-    )) {
-      differences.add('Category details differ');
-    }
-
-    if (_hasDifferentValues(
-      pops.map((pop) => pop.series),
-      normalizer: _normalizeText,
-    )) {
-      differences.add('Series details differ');
-    }
-
-    if (_hasDifferentValues(
-      pops.map((pop) => pop.edition),
-      normalizer: _normalizeVariantValue,
-    )) {
-      differences.add('Edition details differ');
-    }
-
-    if (_hasDifferentValues(
-      pops.map((pop) => pop.variant),
-      normalizer: _normalizeVariantValue,
-    )) {
-      differences.add('Variant details differ');
-    }
-
-    if (_hasDifferentValues(
-      pops.map((pop) => pop.retailExclusive),
-      normalizer: _normalizeOptionalIdentityValue,
-    )) {
-      differences.add('Exclusive details differ');
-    }
-
-    if (_hasDifferentValues(
-      pops.map((pop) => pop.eventSticker),
-      normalizer: _normalizeOptionalIdentityValue,
-    )) {
-      differences.add('Sticker details differ');
-    }
-
-    if (_hasDifferentValues(
-      pops.map((pop) => pop.limitedEdition),
-      normalizer: _normalizeOptionalIdentityValue,
-    )) {
-      differences.add('Limited edition details differ');
-    }
-
-    if (_hasDifferentValues(
-      pops.map((pop) => pop.signature),
-      normalizer: _normalizeSignatureValue,
-    )) {
-      differences.add('Signature details differ');
-    }
-
-    return differences;
-  }
-
-  bool _hasDifferentValues(
-      Iterable<String> values, {
-        required String Function(String value) normalizer,
-      }) {
-    final normalizedValues = values
-        .map(normalizer)
-        .toSet();
-
-    return normalizedValues.length > 1;
-  }
-
-  static String _normalizeText(String value) {
-    return value.trim().toLowerCase();
-  }
-
-  static String _normalizeVariantValue(String value) {
-    final cleaned = _normalizeText(value);
-
-    if (cleaned.isEmpty ||
-        cleaned == 'none' ||
-        cleaned == 'no' ||
-        cleaned == 'n/a' ||
-        cleaned == 'na' ||
-        cleaned == 'common' ||
-        cleaned == 'standard') {
-      return 'common';
-    }
-
-    return cleaned;
-  }
-
-  static String _normalizeOptionalIdentityValue(String value) {
-    final cleaned = _normalizeText(value);
-
-    if (cleaned.isEmpty ||
-        cleaned == 'none' ||
-        cleaned == 'no' ||
-        cleaned == 'n/a' ||
-        cleaned == 'na') {
-      return 'none';
-    }
-
-    return cleaned;
-  }
-
-  static String _normalizeSignatureValue(String value) {
-    final cleaned = _normalizeText(value);
-
-    if (cleaned.isEmpty ||
-        cleaned == 'none' ||
-        cleaned == 'no' ||
-        cleaned == 'n/a' ||
-        cleaned == 'na' ||
-        cleaned == 'unsigned') {
-      return 'unsigned';
-    }
-
-    return cleaned;
-  }
+  /// Every Pop in a group now shares the same centralized collectible
+  /// identity. Collection-specific values may still differ, but those
+  /// differences do not describe a different collectible release.
+  List<String> get differenceLabels => const [];
 }

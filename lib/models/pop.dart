@@ -14,6 +14,23 @@ class Pop {
   final String limitedEdition;
   final String signature;
 
+  /// External catalog identity.
+  ///
+  /// For HobbyDB imports:
+  /// sourceCatalogId = HDBID
+  /// sourceCollectibleId = HDBC Number
+  /// sourceUpc = UPC
+  final String sourceCatalogId;
+  final String sourceCollectibleId;
+  final String sourceUpc;
+
+  /// Additional source metadata that helps Atlas preserve and explain
+  /// imported collectible releases.
+  final String productionStatus;
+  final String releaseDate;
+  final String gradingCompany;
+  final String authenticityNumber;
+
   final double value;
   final double pricePaid;
 
@@ -43,6 +60,13 @@ class Pop {
     this.eventSticker = 'None',
     this.limitedEdition = 'None',
     this.signature = 'Unsigned',
+    this.sourceCatalogId = '',
+    this.sourceCollectibleId = '',
+    this.sourceUpc = '',
+    this.productionStatus = '',
+    this.releaseDate = '',
+    this.gradingCompany = '',
+    this.authenticityNumber = '',
     required this.value,
     required this.pricePaid,
     required this.quantity,
@@ -72,6 +96,13 @@ class Pop {
       eventSticker: json['eventSticker'] ?? 'None',
       limitedEdition: json['limitedEdition'] ?? 'None',
       signature: json['signature'] ?? 'Unsigned',
+      sourceCatalogId: json['sourceCatalogId'] ?? '',
+      sourceCollectibleId: json['sourceCollectibleId'] ?? '',
+      sourceUpc: json['sourceUpc'] ?? '',
+      productionStatus: json['productionStatus'] ?? '',
+      releaseDate: json['releaseDate'] ?? '',
+      gradingCompany: json['gradingCompany'] ?? '',
+      authenticityNumber: json['authenticityNumber'] ?? '',
       value: (json['value'] ?? 0).toDouble(),
       pricePaid: (json['pricePaid'] ?? 0).toDouble(),
       quantity: json['quantity'] ?? 1,
@@ -85,45 +116,65 @@ class Pop {
     );
   }
 
-  String get csvImportKey {
+  /// Identifies the collectible release itself.
+  ///
+  /// A source catalog ID takes priority because HobbyDB assigns different
+  /// HDBID values to separate releases, including Common versus Chase and
+  /// releases that differ only by sticker or catalog entry.
+  String get collectibleIdentityKey {
+    final catalogId = normalizeIdentityText(
+      sourceCatalogId,
+    );
+
+    if (catalogId.isNotEmpty) {
+      return 'catalog|$catalogId';
+    }
+
+    final normalizedName = normalizeIdentityText(name);
+    final normalizedNumber = normalizeIdentityText(number);
+
+    if (normalizedName.isEmpty || normalizedNumber.isEmpty) {
+      return '';
+    }
+
     return [
-      name,
-      number,
-      series,
-      retailExclusive,
-      eventSticker,
-      limitedEdition,
-      signature,
-      isWishlist ? 'wishlist' : 'owned',
-    ].map(_normalizeKeyPart).join('|');
+      'manual',
+      normalizedName,
+      normalizedNumber,
+      normalizeIdentityText(category),
+      normalizeIdentityText(series),
+      normalizeVariantIdentity(edition),
+      normalizeVariantIdentity(variant),
+      normalizeOptionalIdentity(retailExclusive),
+      normalizeOptionalIdentity(eventSticker),
+      normalizeOptionalIdentity(limitedEdition),
+      normalizeSignatureIdentity(signature),
+    ].join('|');
   }
 
-  String get duplicateKey {
+  /// Identifies one stored record in a collection.
+  ///
+  /// Owner and wishlist status remain separate so different collectors and
+  /// owned/wishlist records are never merged together.
+  String get collectionRecordKey {
+    final collectibleKey = collectibleIdentityKey;
+
+    if (collectibleKey.isEmpty) {
+      return '';
+    }
+
     return [
-      name,
-      number,
-      category,
-      owner,
-      variant,
-      retailExclusive,
-      eventSticker,
-      limitedEdition,
-      signature,
+      collectibleKey,
+      normalizeIdentityText(owner),
       isWishlist ? 'wishlist' : 'owned',
-    ].map(_normalizeKeyPart).join('|');
+    ].join('|');
   }
 
-  String get collectorIdentity {
-    return [
-      name,
-      number,
-      variant,
-      retailExclusive,
-      eventSticker,
-      limitedEdition,
-      signature,
-    ].map(_normalizeKeyPart).join('|');
-  }
+  String get csvImportKey => collectionRecordKey;
+
+  String get duplicateKey => collectionRecordKey;
+
+  String get collectorIdentity => collectibleIdentityKey;
 
   String get collectorLabel {
     final parts = <String>[
@@ -132,12 +183,7 @@ class Pop {
       eventSticker,
       limitedEdition,
       signature,
-    ].where(
-          (value) =>
-      value.trim().isNotEmpty &&
-          value != 'None' &&
-          value != 'Unsigned',
-    );
+    ].where(hasMeaningfulIdentityLabel);
 
     if (parts.isEmpty) {
       return 'Common';
@@ -158,6 +204,13 @@ class Pop {
     String? eventSticker,
     String? limitedEdition,
     String? signature,
+    String? sourceCatalogId,
+    String? sourceCollectibleId,
+    String? sourceUpc,
+    String? productionStatus,
+    String? releaseDate,
+    String? gradingCompany,
+    String? authenticityNumber,
     double? value,
     double? pricePaid,
     int? quantity,
@@ -181,6 +234,15 @@ class Pop {
       eventSticker: eventSticker ?? this.eventSticker,
       limitedEdition: limitedEdition ?? this.limitedEdition,
       signature: signature ?? this.signature,
+      sourceCatalogId: sourceCatalogId ?? this.sourceCatalogId,
+      sourceCollectibleId:
+      sourceCollectibleId ?? this.sourceCollectibleId,
+      sourceUpc: sourceUpc ?? this.sourceUpc,
+      productionStatus: productionStatus ?? this.productionStatus,
+      releaseDate: releaseDate ?? this.releaseDate,
+      gradingCompany: gradingCompany ?? this.gradingCompany,
+      authenticityNumber:
+      authenticityNumber ?? this.authenticityNumber,
       value: value ?? this.value,
       pricePaid: pricePaid ?? this.pricePaid,
       quantity: quantity ?? this.quantity,
@@ -207,6 +269,13 @@ class Pop {
       'eventSticker': eventSticker,
       'limitedEdition': limitedEdition,
       'signature': signature,
+      'sourceCatalogId': sourceCatalogId,
+      'sourceCollectibleId': sourceCollectibleId,
+      'sourceUpc': sourceUpc,
+      'productionStatus': productionStatus,
+      'releaseDate': releaseDate,
+      'gradingCompany': gradingCompany,
+      'authenticityNumber': authenticityNumber,
       'value': value,
       'pricePaid': pricePaid,
       'quantity': quantity,
@@ -220,7 +289,65 @@ class Pop {
     };
   }
 
-  static String _normalizeKeyPart(String value) {
+  static String normalizeIdentityText(String value) {
     return value.trim().toLowerCase();
+  }
+
+  static String normalizeVariantIdentity(String value) {
+    final cleaned = normalizeIdentityText(value);
+
+    if (cleaned.isEmpty ||
+        cleaned == 'none' ||
+        cleaned == 'no' ||
+        cleaned == 'n/a' ||
+        cleaned == 'na' ||
+        cleaned == 'common' ||
+        cleaned == 'standard') {
+      return 'common';
+    }
+
+    return cleaned;
+  }
+
+  static String normalizeOptionalIdentity(String value) {
+    final cleaned = normalizeIdentityText(value);
+
+    if (cleaned.isEmpty ||
+        cleaned == 'none' ||
+        cleaned == 'no' ||
+        cleaned == 'n/a' ||
+        cleaned == 'na') {
+      return 'none';
+    }
+
+    return cleaned;
+  }
+
+  static String normalizeSignatureIdentity(String value) {
+    final cleaned = normalizeIdentityText(value);
+
+    if (cleaned.isEmpty ||
+        cleaned == 'none' ||
+        cleaned == 'no' ||
+        cleaned == 'n/a' ||
+        cleaned == 'na' ||
+        cleaned == 'unsigned') {
+      return 'unsigned';
+    }
+
+    return cleaned;
+  }
+
+  static bool hasMeaningfulIdentityLabel(String value) {
+    final cleaned = normalizeIdentityText(value);
+
+    return cleaned.isNotEmpty &&
+        cleaned != 'none' &&
+        cleaned != 'no' &&
+        cleaned != 'n/a' &&
+        cleaned != 'na' &&
+        cleaned != 'unsigned' &&
+        cleaned != 'common' &&
+        cleaned != 'standard';
   }
 }

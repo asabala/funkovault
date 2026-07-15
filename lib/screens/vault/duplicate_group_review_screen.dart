@@ -33,6 +33,7 @@ class DuplicateGroupReviewScreen extends StatelessWidget {
 
     final allPops = repository.allPops(appState);
     final groups = duplicateReviewEngine.buildGroups(allPops);
+
     final group = _findGroup(
       groups,
       groupKey,
@@ -64,6 +65,12 @@ class DuplicateGroupReviewScreen extends StatelessWidget {
               _openValueEditor(
                 context,
                 pop,
+              );
+            },
+            onConsolidate: () {
+              _confirmConsolidation(
+                context,
+                group,
               );
             },
           ),
@@ -113,6 +120,83 @@ class DuplicateGroupReviewScreen extends StatelessWidget {
       ),
     );
   }
+
+  Future<void> _confirmConsolidation(
+      BuildContext context,
+      DuplicateReviewGroup group,
+      ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text(
+            'Consolidate Matching Copies?',
+          ),
+          content: Text(
+            'Atlas will combine ${group.itemCount} matching records into one '
+                'record with a total quantity of ${group.totalQuantity}. '
+                'The extra records will be removed. This only applies to this '
+                'review group.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(
+                  dialogContext,
+                  false,
+                );
+              },
+              child: const Text(
+                'Cancel',
+              ),
+            ),
+            FilledButton.icon(
+              onPressed: () {
+                Navigator.pop(
+                  dialogContext,
+                  true,
+                );
+              },
+              icon: const Icon(
+                Icons.merge_rounded,
+              ),
+              label: const Text(
+                'Consolidate',
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true || !context.mounted) {
+      return;
+    }
+
+    final appState = context.read<AppState>();
+
+    final succeeded = await appState.consolidateDuplicateGroup(
+      group.pops
+          .map(
+            (pop) => pop.id,
+      )
+          .toList(),
+    );
+
+    if (!context.mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          succeeded
+              ? 'Matching copies were consolidated successfully.'
+              : 'Atlas could not consolidate this group. Review the records and try again.',
+        ),
+      ),
+    );
+  }
 }
 
 class _ActiveDuplicateGroupView extends StatelessWidget {
@@ -120,11 +204,13 @@ class _ActiveDuplicateGroupView extends StatelessWidget {
     required this.group,
     required this.onEditPop,
     required this.onAddValue,
+    required this.onConsolidate,
   });
 
   final DuplicateReviewGroup group;
   final ValueChanged<Pop> onEditPop;
   final ValueChanged<Pop> onAddValue;
+  final VoidCallback onConsolidate;
 
   @override
   Widget build(BuildContext context) {
@@ -138,44 +224,19 @@ class _ActiveDuplicateGroupView extends StatelessWidget {
               AtlasSectionHeader(
                 title: '${group.name} ${group.number}',
                 subtitle:
-                '${group.itemCount} possible duplicate or variant '
+                '${group.itemCount} possible duplicate '
                     'item${group.itemCount == 1 ? '' : 's'} detected.',
                 icon: Icons.content_copy_rounded,
                 titleStyle: AtlasTypography.headingLarge,
               ),
-              if (group.differenceLabels.isNotEmpty) ...[
-                const SizedBox(height: AtlasSpacing.lg),
-                Text(
-                  'Saved differences detected',
-                  style: AtlasTypography.bodyMedium.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              const SizedBox(height: AtlasSpacing.lg),
+              Text(
+                'These records currently share the same collectible identity. '
+                    'Compare each saved copy before consolidating.',
+                style: AtlasTypography.bodySmall.copyWith(
+                  height: 1.4,
                 ),
-                const SizedBox(height: AtlasSpacing.sm),
-                Wrap(
-                  spacing: AtlasSpacing.xs,
-                  runSpacing: AtlasSpacing.xs,
-                  children: group.differenceLabels
-                      .map(
-                        (label) => AtlasChip(
-                      label: label,
-                      icon: Icons.compare_arrows_rounded,
-                      size: AtlasChipSize.compact,
-                    ),
-                  )
-                      .toList(),
-                ),
-              ] else ...[
-                const SizedBox(height: AtlasSpacing.lg),
-                Text(
-                  'Atlas did not detect differences in the saved variant '
-                      'metadata. Compare the images, stickers, box details, '
-                      'ownership information, and physical collectibles manually.',
-                  style: AtlasTypography.bodySmall.copyWith(
-                    height: 1.4,
-                  ),
-                ),
-              ],
+              ),
             ],
           ),
         ),
@@ -184,13 +245,57 @@ class _ActiveDuplicateGroupView extends StatelessWidget {
           icon: Icons.shield_outlined,
           title: 'Review Before Making Changes',
           message:
-          'The same name and box number do not always mean the same '
-              'collectible. Check Common versus Chase, stickers, exclusives, '
-              'signatures, limited editions, and other variants. Atlas will '
-              'not automatically merge or remove these Pops.',
+          'Only consolidate records when they represent identical copies. '
+              'Different variants, stickers, exclusives, signatures, or '
+              'limited-edition releases should remain separate Pops.',
+        ),
+        const SizedBox(height: AtlasSpacing.md),
+        AtlasGlassCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const AtlasSectionHeader(
+                title: 'Matching Copies',
+                subtitle:
+                'These records currently describe the same collectible, '
+                    'owner, and collection status.',
+                icon: Icons.layers_rounded,
+              ),
+              const SizedBox(height: AtlasSpacing.md),
+              Text(
+                '${group.itemCount} saved records • '
+                    '${group.totalQuantity} total '
+                    '${group.totalQuantity == 1 ? 'copy' : 'copies'}',
+                style: AtlasTypography.bodyMedium.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: AtlasSpacing.sm),
+              Text(
+                'Consolidation keeps one record and combines the quantities. '
+                    'Only use this when these are truly identical copies.',
+                style: AtlasTypography.bodySmall.copyWith(
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: AtlasSpacing.md),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: onConsolidate,
+                  icon: const Icon(
+                    Icons.merge_rounded,
+                  ),
+                  label: const Text(
+                    'Consolidate Copies',
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: AtlasSpacing.lg),
-        AtlasSectionHeader(
+        const AtlasSectionHeader(
           title: 'Compare Saved Pops',
           subtitle:
           'Open each Pop to correct missing or inaccurate information.',
@@ -319,7 +424,7 @@ class _ResolvedDuplicateGroupView extends StatelessWidget {
           title: 'Duplicate Group Resolved',
           message:
           'This group no longer qualifies as a possible duplicate review '
-              'group. One or more saved details may have been corrected.',
+              'group. The records may have been corrected or consolidated.',
         ),
         const SizedBox(height: AtlasSpacing.md),
         FilledButton.icon(

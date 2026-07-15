@@ -92,7 +92,7 @@ class DuplicateReviewService {
   }
 
   String _exactDuplicateKey(Pop pop) {
-    return pop.duplicateKey;
+    return pop.collectibleIdentityKey;
   }
 
   String _normalize(String value) {

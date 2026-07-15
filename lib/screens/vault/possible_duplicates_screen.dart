@@ -78,7 +78,7 @@ class _PossibleDuplicatesScreenState extends State<PossibleDuplicatesScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Possible Duplicates'),
+        title: const Text('Variant & Duplicate Review'),
       ),
       floatingActionButton: _showBackToTop
           ? FloatingActionButton.extended(
@@ -105,12 +105,12 @@ class _PossibleDuplicatesScreenState extends State<PossibleDuplicatesScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Duplicate Review',
+                      'Variant & Duplicate Review',
                       style: AtlasTypography.headingLarge,
                     ),
                     const SizedBox(height: AtlasSpacing.sm),
                     Text(
-                      'Atlas separates same identity groups from possible variants. Nothing is deleted or merged from this screen.',
+                      'Atlas separates exact matching records from collectible families that share a name and number. Variant families are not counted as duplicate cleanup issues.',
                       style: AtlasTypography.bodyMedium.copyWith(
                         color: AtlasColors.textSecondary,
                       ),
@@ -121,12 +121,12 @@ class _PossibleDuplicatesScreenState extends State<PossibleDuplicatesScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           _SummaryLine(
-                            label: 'Same Identity Groups',
+                            label: 'Exact Duplicate Records',
                             value: '${sameIdentityGroups.length}',
                           ),
                           const SizedBox(height: AtlasSpacing.xs),
                           _SummaryLine(
-                            label: 'Possible Variant Groups',
+                            label: 'Variant Families',
                             value: '${possibleVariantGroups.length}',
                           ),
                         ],
@@ -179,10 +179,10 @@ class _PossibleDuplicatesScreenState extends State<PossibleDuplicatesScreen> {
               if (showSameIdentity) ...[
                 const SizedBox(height: AtlasSpacing.lg),
                 _DuplicateSection(
-                  title: 'Same Identity Groups',
+                  title: 'Exact Duplicate Records',
                   subtitle:
-                  'These match on the stricter collectible identity key. Review these first because they may be the same Pop with different values or quantities.',
-                  emptyMessage: 'No same identity groups found.',
+                  'These records share the same collectible identity. Review them before consolidating quantities or correcting legacy data.',
+                  emptyMessage: 'No exact duplicate records found.',
                   groups: sameIdentityGroups,
                   badgeText: 'Identity',
                   badgeColor: AtlasColors.vaultGold,
@@ -192,10 +192,10 @@ class _PossibleDuplicatesScreenState extends State<PossibleDuplicatesScreen> {
               if (showPossibleVariants) ...[
                 const SizedBox(height: AtlasSpacing.lg),
                 _DuplicateSection(
-                  title: 'Possible Variant Groups',
+                  title: 'Variant Families',
                   subtitle:
-                  'These share the same name and number, but may be legitimate variants such as chase, metallic, exclusive, sticker, limited edition, or signed Pops.',
-                  emptyMessage: 'No possible variant groups found.',
+                  'These share the same name and number but represent different collectible releases, such as Common, Chase, Blacklight, Glow, exclusive, stickered, limited, or signed Pops.',
+                  emptyMessage: 'No variant families found.',
                   groups: possibleVariantGroups,
                   badgeText: 'Review',
                   badgeColor: AtlasColors.textSecondary,
@@ -253,13 +253,13 @@ class _DuplicateFilterCard extends StatelessWidget {
                 onSelected: () => onChanged(_DuplicateReviewFilter.all),
               ),
               _FilterChipButton(
-                label: 'Same Identity',
+                label: 'Exact Records',
                 selected: selectedFilter == _DuplicateReviewFilter.sameIdentity,
                 onSelected: () =>
                     onChanged(_DuplicateReviewFilter.sameIdentity),
               ),
               _FilterChipButton(
-                label: 'Possible Variants',
+                label: 'Variant Families',
                 selected:
                 selectedFilter == _DuplicateReviewFilter.possibleVariants,
                 onSelected: () =>

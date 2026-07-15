@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../pop/edit_pop_screen.dart';
 import 'duplicate_group_review_screen.dart';
+import 'multiple_copies_screen.dart';
+import '../pop/edit_pop_screen.dart';
 import '../../atlas/repositories/vault_repository.dart';
 import '../../models/pop.dart';
 import '../../services/app_state.dart';
@@ -345,6 +346,22 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Entire Vault'),
+        actions: [
+          IconButton(
+            tooltip: 'Review Multiple Copies',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const MultipleCopiesScreen(),
+                ),
+              );
+            },
+            icon: const Icon(
+              Icons.layers_rounded,
+            ),
+          ),
+        ],
       ),
       floatingActionButton: _showBackToTop
           ? FloatingActionButton.extended(
