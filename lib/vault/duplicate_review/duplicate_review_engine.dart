@@ -3,15 +3,32 @@ import '../../models/pop.dart';
 class DuplicateReviewEngine {
   const DuplicateReviewEngine();
 
+  /// Builds the collectible identity used for duplicate review.
+  ///
+  /// Pops are only considered possible duplicates when all meaningful
+  /// release details match. Collection-specific details such as value,
+  /// condition, owner, quantity, and wishlist status are intentionally
+  /// excluded.
   String reviewKey(Pop pop) {
-    final name = _normalize(pop.name);
-    final number = _normalize(pop.number);
+    final name = _normalizeText(pop.name);
+    final number = _normalizeText(pop.number);
 
     if (name.isEmpty || number.isEmpty) {
       return '';
     }
 
-    return '$name|$number';
+    return [
+      name,
+      number,
+      _normalizeText(pop.category),
+      _normalizeText(pop.series),
+      _normalizeVariantValue(pop.edition),
+      _normalizeVariantValue(pop.variant),
+      _normalizeOptionalIdentityValue(pop.retailExclusive),
+      _normalizeOptionalIdentityValue(pop.eventSticker),
+      _normalizeOptionalIdentityValue(pop.limitedEdition),
+      _normalizeSignatureValue(pop.signature),
+    ].join('|');
   }
 
   Set<String> reviewKeys(List<Pop> pops) {
@@ -28,8 +45,12 @@ class DuplicateReviewEngine {
     }
 
     return countsByKey.entries
-        .where((entry) => entry.value > 1)
-        .map((entry) => entry.key)
+        .where(
+          (entry) => entry.value > 1,
+    )
+        .map(
+          (entry) => entry.key,
+    )
         .toSet();
   }
 
@@ -74,7 +95,9 @@ class DuplicateReviewEngine {
         .map(
           (entry) => DuplicateReviewGroup(
         key: entry.key,
-        pops: List<Pop>.unmodifiable(entry.value),
+        pops: List<Pop>.unmodifiable(
+          entry.value,
+        ),
       ),
     )
         .toList();
@@ -103,7 +126,7 @@ class DuplicateReviewEngine {
   }
 
   bool hasMeaningfulValue(String value) {
-    final cleaned = _normalize(value);
+    final cleaned = _normalizeText(value);
 
     if (cleaned.isEmpty) {
       return false;
@@ -118,8 +141,56 @@ class DuplicateReviewEngine {
         cleaned != 'na';
   }
 
-  static String _normalize(String value) {
+  static String _normalizeText(String value) {
     return value.trim().toLowerCase();
+  }
+
+  /// Common, Standard, None, and blank all represent the baseline release.
+  static String _normalizeVariantValue(String value) {
+    final cleaned = _normalizeText(value);
+
+    if (cleaned.isEmpty ||
+        cleaned == 'none' ||
+        cleaned == 'no' ||
+        cleaned == 'n/a' ||
+        cleaned == 'na' ||
+        cleaned == 'common' ||
+        cleaned == 'standard') {
+      return 'common';
+    }
+
+    return cleaned;
+  }
+
+  /// Blank, None, No, and N/A all represent no saved identity detail.
+  static String _normalizeOptionalIdentityValue(String value) {
+    final cleaned = _normalizeText(value);
+
+    if (cleaned.isEmpty ||
+        cleaned == 'none' ||
+        cleaned == 'no' ||
+        cleaned == 'n/a' ||
+        cleaned == 'na') {
+      return 'none';
+    }
+
+    return cleaned;
+  }
+
+  /// Blank, None, No, N/A, and Unsigned all represent an unsigned Pop.
+  static String _normalizeSignatureValue(String value) {
+    final cleaned = _normalizeText(value);
+
+    if (cleaned.isEmpty ||
+        cleaned == 'none' ||
+        cleaned == 'no' ||
+        cleaned == 'n/a' ||
+        cleaned == 'na' ||
+        cleaned == 'unsigned') {
+      return 'unsigned';
+    }
+
+    return cleaned;
   }
 }
 
@@ -148,42 +219,66 @@ class DuplicateReviewGroup {
     return value.isEmpty ? 'No #' : '#$value';
   }
 
+  /// Groups now contain only Pops whose meaningful collectible identity
+  /// fields match. This remains available for UI compatibility and future
+  /// comparison fields.
   List<String> get differenceLabels {
     final differences = <String>[];
 
     if (_hasDifferentValues(
+      pops.map((pop) => pop.category),
+      normalizer: _normalizeText,
+    )) {
+      differences.add('Category details differ');
+    }
+
+    if (_hasDifferentValues(
+      pops.map((pop) => pop.series),
+      normalizer: _normalizeText,
+    )) {
+      differences.add('Series details differ');
+    }
+
+    if (_hasDifferentValues(
+      pops.map((pop) => pop.edition),
+      normalizer: _normalizeVariantValue,
+    )) {
+      differences.add('Edition details differ');
+    }
+
+    if (_hasDifferentValues(
       pops.map((pop) => pop.variant),
-      emptyValue: 'standard',
+      normalizer: _normalizeVariantValue,
     )) {
       differences.add('Variant details differ');
     }
 
     if (_hasDifferentValues(
       pops.map((pop) => pop.retailExclusive),
-      emptyValue: 'none',
+      normalizer: _normalizeOptionalIdentityValue,
     )) {
       differences.add('Exclusive details differ');
     }
 
     if (_hasDifferentValues(
       pops.map((pop) => pop.eventSticker),
-      emptyValue: 'none',
+      normalizer: _normalizeOptionalIdentityValue,
     )) {
       differences.add('Sticker details differ');
     }
 
     if (_hasDifferentValues(
-      pops.map((pop) => pop.signature),
-      emptyValue: 'unsigned',
+      pops.map((pop) => pop.limitedEdition),
+      normalizer: _normalizeOptionalIdentityValue,
     )) {
-      differences.add('Signature details differ');
+      differences.add('Limited edition details differ');
     }
 
     if (_hasDifferentValues(
-      pops.map((pop) => pop.limitedEdition),
-      emptyValue: 'none',
+      pops.map((pop) => pop.signature),
+      normalizer: _normalizeSignatureValue,
     )) {
-      differences.add('Limited edition details differ');
+      differences.add('Signature details differ');
     }
 
     return differences;
@@ -191,40 +286,58 @@ class DuplicateReviewGroup {
 
   bool _hasDifferentValues(
       Iterable<String> values, {
-        required String emptyValue,
+        required String Function(String value) normalizer,
       }) {
     final normalizedValues = values
-        .map(
-          (value) => _normalizeReviewValue(
-        value,
-        emptyValue: emptyValue,
-      ),
-    )
+        .map(normalizer)
         .toSet();
 
     return normalizedValues.length > 1;
   }
 
-  String _normalizeReviewValue(
-      String value, {
-        required String emptyValue,
-      }) {
-    final cleaned = value.trim().toLowerCase();
+  static String _normalizeText(String value) {
+    return value.trim().toLowerCase();
+  }
+
+  static String _normalizeVariantValue(String value) {
+    final cleaned = _normalizeText(value);
+
+    if (cleaned.isEmpty ||
+        cleaned == 'none' ||
+        cleaned == 'no' ||
+        cleaned == 'n/a' ||
+        cleaned == 'na' ||
+        cleaned == 'common' ||
+        cleaned == 'standard') {
+      return 'common';
+    }
+
+    return cleaned;
+  }
+
+  static String _normalizeOptionalIdentityValue(String value) {
+    final cleaned = _normalizeText(value);
 
     if (cleaned.isEmpty ||
         cleaned == 'none' ||
         cleaned == 'no' ||
         cleaned == 'n/a' ||
         cleaned == 'na') {
-      return emptyValue;
+      return 'none';
     }
 
-    if (emptyValue == 'standard' &&
-        (cleaned == 'common' || cleaned == 'standard')) {
-      return 'standard';
-    }
+    return cleaned;
+  }
 
-    if (emptyValue == 'unsigned' && cleaned == 'unsigned') {
+  static String _normalizeSignatureValue(String value) {
+    final cleaned = _normalizeText(value);
+
+    if (cleaned.isEmpty ||
+        cleaned == 'none' ||
+        cleaned == 'no' ||
+        cleaned == 'n/a' ||
+        cleaned == 'na' ||
+        cleaned == 'unsigned') {
       return 'unsigned';
     }
 

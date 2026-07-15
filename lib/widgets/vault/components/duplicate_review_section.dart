@@ -20,6 +20,7 @@ class DuplicateReviewSection extends StatelessWidget {
     required this.hasMoreResults,
     required this.sortLabel,
     required this.showImages,
+    required this.onReviewGroup,
     required this.onLoadMore,
   });
 
@@ -30,6 +31,7 @@ class DuplicateReviewSection extends StatelessWidget {
   final bool hasMoreResults;
   final String sortLabel;
   final bool showImages;
+  final ValueChanged<DuplicateReviewGroup> onReviewGroup;
   final VoidCallback onLoadMore;
 
   @override
@@ -58,6 +60,7 @@ class DuplicateReviewSection extends StatelessWidget {
               child: _DuplicateReviewGroupCard(
                 group: group,
                 showImages: showImages,
+                onReview: () => onReviewGroup(group),
               ),
             ),
           ),
@@ -67,8 +70,12 @@ class DuplicateReviewSection extends StatelessWidget {
               width: double.infinity,
               child: OutlinedButton.icon(
                 onPressed: onLoadMore,
-                icon: const Icon(Icons.expand_more_rounded),
-                label: const Text('Load More Groups'),
+                icon: const Icon(
+                  Icons.expand_more_rounded,
+                ),
+                label: const Text(
+                  'Load More Groups',
+                ),
               ),
             ),
           ],
@@ -82,10 +89,12 @@ class _DuplicateReviewGroupCard extends StatelessWidget {
   const _DuplicateReviewGroupCard({
     required this.group,
     required this.showImages,
+    required this.onReview,
   });
 
   final DuplicateReviewGroup group;
   final bool showImages;
+  final VoidCallback onReview;
 
   @override
   Widget build(BuildContext context) {
@@ -162,6 +171,19 @@ class _DuplicateReviewGroupCard extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: AtlasSpacing.md),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: onReview,
+              icon: const Icon(
+                Icons.compare_rounded,
+              ),
+              label: Text(
+                'Review ${group.itemCount} Items',
+              ),
+            ),
           ),
           const SizedBox(height: AtlasSpacing.md),
           Divider(

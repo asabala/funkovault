@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../pop/edit_pop_screen.dart';
+import 'duplicate_group_review_screen.dart';
 import '../../atlas/repositories/vault_repository.dart';
 import '../../models/pop.dart';
 import '../../services/app_state.dart';
@@ -148,6 +150,19 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
       });
     }
   }
+  Future<void> _openDuplicateReviewGroup(
+      DuplicateReviewGroup group,
+      ) async {
+    await Navigator.push<void>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => DuplicateGroupReviewScreen(
+          groupKey: group.key,
+        ),
+      ),
+    );
+  }
+
   Future<void> _openValueEditor(Pop pop) async {
     await Navigator.push<Pop>(
       context,
@@ -534,7 +549,12 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
                     hasMoreResults: hasMoreResults,
                     sortLabel: _sortMode.label,
                     showImages: _showImages,
-                    onLoadMore: () => _loadMoreResults(filteredPops.length),
+                    onReviewGroup: _openDuplicateReviewGroup,
+                    onLoadMore: () {
+                      _loadMoreResults(
+                        filteredPops.length,
+                      );
+                    },
                   )
                 else
                   VaultListSection(
