@@ -31,7 +31,6 @@ class AtlasHomeScreen extends StatelessWidget {
     const dashboardBuilder = AtlasDashboard();
 
     final AtlasDashboardModel dashboard = dashboardBuilder.build(appState);
-
     final now = DateTime.now();
 
     return Scaffold(
@@ -120,24 +119,28 @@ class AtlasHomeScreen extends StatelessWidget {
       context: context,
       dashboard: dashboard,
       explainerEngine: explainerEngine,
-      onOpenVaultFilter: (filterKey) {
-        _openFilteredVault(
+      onOpenVaultRequest: (request) {
+        _openRequestedVault(
           context,
-          filterKey,
+          request,
         );
       },
     );
   }
 
-  static void _openFilteredVault(
+  static void _openRequestedVault(
       BuildContext context,
-      String filterKey,
+      VaultNavigationRequest request,
       ) {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => EntireVaultScreen(
-          initialFilterKey: filterKey,
+          initialFilterKey: request.filterKey,
+          initialSearchQuery: request.searchQuery,
+          initialMinimumValue: request.minimumValue,
+          initialMaximumValue: request.maximumValue,
+          initialSortKey: request.sortKey,
         ),
       ),
     );

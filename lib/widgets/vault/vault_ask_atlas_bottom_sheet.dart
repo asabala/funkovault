@@ -7,6 +7,37 @@ import '../../theme/atlas_spacing.dart';
 import '../../theme/atlas_typography.dart';
 import '../atlas/atlas_glass_panel.dart';
 
+class VaultNavigationRequest {
+  const VaultNavigationRequest({
+    this.filterKey,
+    this.searchQuery,
+    this.minimumValue,
+    this.maximumValue,
+    this.sortKey,
+  });
+
+  final String? filterKey;
+  final String? searchQuery;
+  final double? minimumValue;
+  final double? maximumValue;
+  final String? sortKey;
+
+  bool get hasFilter =>
+      filterKey != null && filterKey!.trim().isNotEmpty;
+
+  bool get hasSearch =>
+      searchQuery != null && searchQuery!.trim().isNotEmpty;
+
+  bool get hasValueRange =>
+      minimumValue != null || maximumValue != null;
+
+  bool get hasSort =>
+      sortKey != null && sortKey!.trim().isNotEmpty;
+
+  bool get hasNavigationDetails =>
+      hasFilter || hasSearch || hasValueRange || hasSort;
+}
+
 class VaultAskAtlasBottomSheet {
   const VaultAskAtlasBottomSheet._();
 
@@ -16,6 +47,8 @@ class VaultAskAtlasBottomSheet {
     required VaultContextExplainerEngine explainerEngine,
     String initialQuestion = 'What should I clean up first?',
     ValueChanged<String>? onOpenVaultFilter,
+    ValueChanged<String>? onOpenVaultSearch,
+    ValueChanged<VaultNavigationRequest>? onOpenVaultRequest,
   }) {
     showModalBottomSheet(
       context: context,
@@ -28,6 +61,8 @@ class VaultAskAtlasBottomSheet {
           explainerEngine: explainerEngine,
           initialQuestion: initialQuestion,
           onOpenVaultFilter: onOpenVaultFilter,
+          onOpenVaultSearch: onOpenVaultSearch,
+          onOpenVaultRequest: onOpenVaultRequest,
         );
       },
     );
@@ -40,12 +75,16 @@ class _VaultAskAtlasSheet extends StatefulWidget {
     required this.explainerEngine,
     required this.initialQuestion,
     required this.onOpenVaultFilter,
+    required this.onOpenVaultSearch,
+    required this.onOpenVaultRequest,
   });
 
   final AtlasDashboardModel dashboard;
   final VaultContextExplainerEngine explainerEngine;
   final String initialQuestion;
   final ValueChanged<String>? onOpenVaultFilter;
+  final ValueChanged<String>? onOpenVaultSearch;
+  final ValueChanged<VaultNavigationRequest>? onOpenVaultRequest;
 
   @override
   State<_VaultAskAtlasSheet> createState() => _VaultAskAtlasSheetState();
@@ -102,21 +141,91 @@ class _VaultAskAtlasSheetState extends State<_VaultAskAtlasSheet> {
     });
   }
 
+  VaultNavigationRequest _buildNavigationRequest() {
+    return VaultNavigationRequest(
+      filterKey: _answer.vaultFilterKey,
+      searchQuery: _answer.vaultSearchQuery,
+      minimumValue: _answer.minimumValue,
+      maximumValue: _answer.maximumValue,
+      sortKey: _answer.vaultSortKey,
+    );
+  }
+
   void _openVaultAction() {
-    final filterKey = _answer.vaultFilterKey;
+    final request = _buildNavigationRequest();
 
-    if (filterKey == null || filterKey.trim().isEmpty) {
+    if (!request.hasNavigationDetails) {
       return;
     }
 
-    final onOpenVaultFilter = widget.onOpenVaultFilter;
+    final onOpenVaultRequest = widget.onOpenVaultRequest;
 
-    if (onOpenVaultFilter == null) {
+    if (onOpenVaultRequest != null) {
+      Navigator.of(context).pop();
+      onOpenVaultRequest(request);
       return;
     }
 
-    Navigator.of(context).pop();
-    onOpenVaultFilter(filterKey);
+    if (request.hasFilter) {
+      final onOpenVaultFilter = widget.onOpenVaultFilter;
+
+      if (onOpenVaultFilter == null) {
+        return;
+      }
+
+      Navigator.of(context).pop();
+      onOpenVaultFilter(request.filterKey!);
+      return;
+    }
+
+    if (request.hasSearch) {
+      final onOpenVaultSearch = widget.onOpenVaultSearch;
+
+      if (onOpenVaultSearch == null) {
+        return;
+      }
+
+      Navigator.of(context).pop();
+      onOpenVaultSearch(request.searchQuery!);
+    }
+  }
+
+  bool get _canOpenVaultAction {
+    final request = _buildNavigationRequest();
+
+    if (!request.hasNavigationDetails) {
+      return false;
+    }
+
+    if (widget.onOpenVaultRequest != null) {
+      return true;
+    }
+
+    if (request.hasFilter && widget.onOpenVaultFilter != null) {
+      return true;
+    }
+
+    if (request.hasSearch && widget.onOpenVaultSearch != null) {
+      return true;
+    }
+
+    return false;
+  }
+
+  IconData get _actionIcon {
+    if (_answer.hasVaultValueAction) {
+      return Icons.attach_money_rounded;
+    }
+
+    if (_answer.hasVaultSearchAction) {
+      return Icons.search_rounded;
+    }
+
+    if (_answer.hasVaultSortAction) {
+      return Icons.sort_rounded;
+    }
+
+    return Icons.open_in_new_rounded;
   }
 
   @override
@@ -221,18 +330,15 @@ class _VaultAskAtlasSheetState extends State<_VaultAskAtlasSheet> {
                         color: AtlasColors.textSecondary,
                       ),
                     ),
-                    if (_answer.hasVaultAction &&
-                        widget.onOpenVaultFilter != null) ...[
+                    if (_canOpenVaultAction) ...[
                       const SizedBox(height: AtlasSpacing.lg),
                       SizedBox(
                         width: double.infinity,
                         child: FilledButton.icon(
                           onPressed: _openVaultAction,
-                          icon: const Icon(
-                            Icons.open_in_new_rounded,
-                          ),
+                          icon: Icon(_actionIcon),
                           label: Text(
-                            _answer.actionLabel!,
+                            _answer.actionLabel ?? 'Open Entire Vault',
                           ),
                         ),
                       ),

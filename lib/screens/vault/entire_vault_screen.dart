@@ -29,9 +29,17 @@ class EntireVaultScreen extends StatefulWidget {
   const EntireVaultScreen({
     super.key,
     this.initialFilterKey,
+    this.initialSearchQuery,
+    this.initialMinimumValue,
+    this.initialMaximumValue,
+    this.initialSortKey,
   });
 
   final String? initialFilterKey;
+  final String? initialSearchQuery;
+  final double? initialMinimumValue;
+  final double? initialMaximumValue;
+  final String? initialSortKey;
 
   @override
   State<EntireVaultScreen> createState() => _EntireVaultScreenState();
@@ -45,6 +53,8 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
   final ScrollController _scrollController = ScrollController();
 
   String _searchQuery = '';
+  double? _minimumValue;
+  double? _maximumValue;
   int _visibleLimit = _pageSize;
   bool _showBackToTop = false;
   bool _showImages = false;
@@ -55,8 +65,13 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
   @override
   void initState() {
     super.initState();
+
     _loadVaultPreferences();
     _applyInitialFilter();
+    _applyInitialSearch();
+    _applyInitialValueRange();
+    _applyInitialSort();
+
     _scrollController.addListener(_handleScrollPosition);
   }
 
@@ -102,7 +117,41 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
     _isCleanupFocusActive = true;
     _resetVisibleLimit();
   }
+  void _applyInitialSearch() {
+    final initialSearch = widget.initialSearchQuery?.trim() ?? '';
 
+    if (initialSearch.isEmpty) {
+      return;
+    }
+
+    _searchController.text = initialSearch;
+    _searchController.selection = TextSelection.collapsed(
+      offset: initialSearch.length,
+    );
+
+    _searchQuery = initialSearch;
+    _resetVisibleLimit();
+  }
+  void _applyInitialValueRange() {
+    _minimumValue = widget.initialMinimumValue;
+    _maximumValue = widget.initialMaximumValue;
+
+    if (_minimumValue != null || _maximumValue != null) {
+      _isCleanupFocusActive = true;
+      _resetVisibleLimit();
+    }
+  }
+
+  void _applyInitialSort() {
+    final initialSort = widget.initialSortKey?.trim();
+
+    if (initialSort == null || initialSort.isEmpty) {
+      return;
+    }
+
+    _sortMode = _sortModeFromStorage(initialSort);
+    _resetVisibleLimit();
+  }
   Future<void> _saveVaultPreferences() async {
     await HiveService.saveData(
       _preferencesStorageKey,
@@ -207,9 +256,12 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
 
     setState(() {
       _searchQuery = '';
+      _minimumValue = null;
+      _maximumValue = null;
       _filterMode = _VaultFilterMode.all;
       _sortMode = _VaultSortMode.nameAz;
       _showImages = false;
+      _isCleanupFocusActive = false;
       _resetVisibleLimit();
     });
 
@@ -219,6 +271,8 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
   void _clearCleanupFocus() {
     setState(() {
       _isCleanupFocusActive = false;
+      _minimumValue = null;
+      _maximumValue = null;
       _filterMode = _VaultFilterMode.all;
       _resetVisibleLimit();
     });
@@ -235,6 +289,22 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
   String? get _cleanupFocusMessage {
     if (!_isCleanupFocusActive) {
       return null;
+    }
+
+    if (_minimumValue != null && _maximumValue != null) {
+      return 'Showing Pops valued between '
+          '\$${_minimumValue!.toStringAsFixed(2)} and '
+          '\$${_maximumValue!.toStringAsFixed(2)}.';
+    }
+
+    if (_minimumValue != null) {
+      return 'Showing Pops valued at '
+          '\$${_minimumValue!.toStringAsFixed(2)} or more.';
+    }
+
+    if (_maximumValue != null) {
+      return 'Showing Pops valued up to '
+          '\$${_maximumValue!.toStringAsFixed(2)}.';
     }
 
     switch (_filterMode) {
@@ -269,9 +339,11 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
 
     final pops = repository.allPops(appState);
     final searchedPops = _filterBySearch(pops);
+    final valueFilteredPops = _filterByValueRange(searchedPops);
+
     final filteredPops = _sortPops(
       _filterByMode(
-        searchedPops,
+        valueFilteredPops,
       ),
     );
 
@@ -319,6 +391,8 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
     );
 
     final hasActiveReviewControls = _searchQuery.trim().isNotEmpty ||
+        _minimumValue != null ||
+        _maximumValue != null ||
         _filterMode != _VaultFilterMode.all ||
         _sortMode != _VaultSortMode.nameAz ||
         _showImages;
@@ -617,6 +691,24 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
           category.contains(query) ||
           series.contains(query) ||
           owner.contains(query);
+    }).toList();
+  }
+
+  List<Pop> _filterByValueRange(List<Pop> pops) {
+    if (_minimumValue == null && _maximumValue == null) {
+      return List<Pop>.from(pops);
+    }
+
+    return pops.where((pop) {
+      if (_minimumValue != null && pop.value < _minimumValue!) {
+        return false;
+      }
+
+      if (_maximumValue != null && pop.value > _maximumValue!) {
+        return false;
+      }
+
+      return true;
     }).toList();
   }
 

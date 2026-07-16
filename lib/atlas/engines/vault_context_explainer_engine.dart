@@ -1,5 +1,6 @@
 import '../coordinator/atlas_dashboard_model.dart';
 import 'atlas_intelligence_engine.dart';
+import 'vault_search_intelligence_engine.dart';
 
 class VaultContextAnswer {
   const VaultContextAnswer({
@@ -9,6 +10,10 @@ class VaultContextAnswer {
     required this.suggestedQuestions,
     this.actionLabel,
     this.vaultFilterKey,
+    this.vaultSearchQuery,
+    this.minimumValue,
+    this.maximumValue,
+    this.vaultSortKey,
   });
 
   final String title;
@@ -16,25 +21,62 @@ class VaultContextAnswer {
   final String atlasTip;
   final List<String> suggestedQuestions;
 
-  /// Optional read-only navigation action.
+  /// Optional label for a read-only navigation action.
   final String? actionLabel;
 
   /// Existing Entire Vault filter key to open.
   final String? vaultFilterKey;
 
-  bool get hasVaultAction =>
+  /// Existing Entire Vault text search to apply.
+  final String? vaultSearchQuery;
+
+  /// Optional inclusive minimum value.
+  final double? minimumValue;
+
+  /// Optional inclusive maximum value.
+  final double? maximumValue;
+
+  /// Optional Entire Vault sort key.
+  final String? vaultSortKey;
+
+  bool get hasVaultFilterAction =>
       actionLabel != null &&
           actionLabel!.trim().isNotEmpty &&
           vaultFilterKey != null &&
           vaultFilterKey!.trim().isNotEmpty;
+
+  bool get hasVaultSearchAction =>
+      actionLabel != null &&
+          actionLabel!.trim().isNotEmpty &&
+          vaultSearchQuery != null &&
+          vaultSearchQuery!.trim().isNotEmpty;
+
+  bool get hasVaultValueAction =>
+      actionLabel != null &&
+          actionLabel!.trim().isNotEmpty &&
+          (minimumValue != null || maximumValue != null);
+
+  bool get hasVaultSortAction =>
+      actionLabel != null &&
+          actionLabel!.trim().isNotEmpty &&
+          vaultSortKey != null &&
+          vaultSortKey!.trim().isNotEmpty;
+
+  bool get hasVaultAction =>
+      hasVaultFilterAction ||
+          hasVaultSearchAction ||
+          hasVaultValueAction ||
+          hasVaultSortAction;
 }
 
 class VaultContextExplainerEngine {
   const VaultContextExplainerEngine({
     this.intelligenceEngine = const AtlasIntelligenceEngine(),
+    this.searchEngine = const VaultSearchIntelligenceEngine(),
   });
 
   final AtlasIntelligenceEngine intelligenceEngine;
+  final VaultSearchIntelligenceEngine searchEngine;
 
   VaultContextAnswer explain({
     required String question,
@@ -74,6 +116,12 @@ class VaultContextExplainerEngine {
       return _buildConfidenceAnswer(dashboard);
     }
 
+    final searchIntent = searchEngine.interpret(question);
+
+    if (searchIntent.hasNavigationAction) {
+      return _buildSearchIntentAnswer(searchIntent);
+    }
+
     return _buildOverviewAnswer(dashboard);
   }
 
@@ -95,7 +143,7 @@ class VaultContextExplainerEngine {
       suggestedQuestions: const [
         'What is my total collection value?',
         'What should I clean up first?',
-        'How healthy is my Vault?',
+        'Show me my signed Pops',
       ],
     );
   }
@@ -130,8 +178,8 @@ class VaultContextExplainerEngine {
           : 'All collectibles currently have estimated values recorded.',
       suggestedQuestions: const [
         'How many Pops need values?',
-        'How healthy is my Vault?',
-        'What should I clean up first?',
+        'Show Pops worth over \$100',
+        'Show my most valuable Pops',
       ],
     );
   }
@@ -164,7 +212,7 @@ class VaultContextExplainerEngine {
       suggestedQuestions: const [
         'Are there possible duplicate groups?',
         'How many Pops need values?',
-        'How healthy is my Vault?',
+        'Show me my variants',
       ],
       actionLabel: actionLabel,
       vaultFilterKey: vaultFilterKey,
@@ -196,7 +244,7 @@ class VaultContextExplainerEngine {
       suggestedQuestions: const [
         'What should I clean up first?',
         'What is my total collection value?',
-        'How healthy is my Vault?',
+        'Show me Pops with values',
       ],
       actionLabel: 'Review Missing Values',
       vaultFilterKey: 'needsValue',
@@ -227,8 +275,8 @@ class VaultContextExplainerEngine {
       'Do not merge records based only on name and number. Confirm variant, sticker, exclusive, signed, limited-edition, and other identity details first.',
       suggestedQuestions: const [
         'What should I clean up first?',
-        'How many Pops need values?',
-        'How healthy is my Vault?',
+        'Show me my variants',
+        'Show me stickered Pops',
       ],
       actionLabel: 'Review Possible Duplicates',
       vaultFilterKey: 'duplicates',
@@ -265,7 +313,7 @@ class VaultContextExplainerEngine {
       suggestedQuestions: const [
         'What should I clean up first?',
         'Are there possible duplicate groups?',
-        'How many Pops need values?',
+        'Show me my exclusives',
       ],
     );
   }
@@ -281,10 +329,14 @@ class VaultContextExplainerEngine {
       atlasTip:
       'Wishlist records stay in Atlas so you can preserve identity, value, and collecting-interest data without marking them as owned.',
       suggestedQuestions: const [
+        'Show me my wishlist',
         'How many Pops are in my Vault?',
         'What is my total collection value?',
-        'How healthy is my Vault?',
       ],
+      actionLabel:
+      dashboard.wishlistCount > 0 ? 'Open Wishlist' : null,
+      vaultFilterKey:
+      dashboard.wishlistCount > 0 ? 'wishlist' : null,
     );
   }
 
@@ -302,9 +354,70 @@ class VaultContextExplainerEngine {
       suggestedQuestions: const [
         'How healthy is my Vault?',
         'What should I clean up first?',
-        'How many Pops need values?',
+        'Show me my signed Pops',
       ],
     );
+  }
+
+  VaultContextAnswer _buildSearchIntentAnswer(
+      VaultSearchIntent intent,
+      ) {
+    String atlasTip;
+
+    if (intent.hasValueRange) {
+      atlasTip =
+      'Atlas will use the recorded value on each collectible and apply the requested inclusive value range.';
+    } else if (intent.hasFilter) {
+      atlasTip =
+      'Atlas will use an existing Entire Vault filter, so the same trusted collection rules remain in effect.';
+    } else if (intent.hasSearch) {
+      atlasTip =
+      'Atlas will use the existing Entire Vault search across name, number, category, series, and owner.';
+    } else if (intent.hasSort) {
+      atlasTip =
+      'Atlas will use the existing Entire Vault sorting system.';
+    } else {
+      atlasTip =
+      'Atlas will open Entire Vault using the supported request details.';
+    }
+
+    return VaultContextAnswer(
+      title: intent.title,
+      answer: intent.message,
+      atlasTip: atlasTip,
+      suggestedQuestions: const [
+        'Show me my signed Pops',
+        'Find my exclusives',
+        'Show Pops worth over \$100',
+        'Show items between \$25 and \$100',
+        'Show my most valuable Pops',
+        'Find Batman',
+      ],
+      actionLabel: _actionLabelForIntent(intent),
+      vaultFilterKey: intent.filterKey,
+      vaultSearchQuery: intent.searchQuery,
+      minimumValue: intent.minimumValue,
+      maximumValue: intent.maximumValue,
+      vaultSortKey: intent.sortKey,
+    );
+  }
+
+  String _actionLabelForIntent(
+      VaultSearchIntent intent,
+      ) {
+    if (intent.hasValueRange) {
+      return 'Open Value Results';
+    }
+
+    if (intent.hasSearch) {
+      return 'Search Entire Vault';
+    }
+
+    if (intent.hasSort && !intent.hasFilter) {
+      return 'Open Sorted Vault';
+    }
+
+    return 'Open Filtered Vault';
   }
 
   VaultContextAnswer _buildOverviewAnswer(
@@ -339,6 +452,20 @@ class VaultContextExplainerEngine {
   }
 
   bool _asksAboutValue(String question) {
+    final isValueRangeRequest =
+        question.contains('over') ||
+            question.contains('above') ||
+            question.contains('under') ||
+            question.contains('below') ||
+            question.contains('between') ||
+            question.contains('most valuable') ||
+            question.contains('highest value') ||
+            question.contains('most expensive');
+
+    if (isValueRangeRequest) {
+      return false;
+    }
+
     return question.contains('total value') ||
         question.contains('collection value') ||
         question.contains('vault value') ||
@@ -373,7 +500,8 @@ class VaultContextExplainerEngine {
   }
 
   bool _asksAboutWishlist(String question) {
-    return question.contains('wishlist');
+    return question.contains('how many') &&
+        question.contains('wishlist');
   }
 
   bool _asksAboutConfidence(String question) {
@@ -386,8 +514,8 @@ class VaultContextExplainerEngine {
     'How many Pops are in my Vault?',
     'What is my total collection value?',
     'What should I clean up first?',
-    'How many Pops need values?',
-    'Are there possible duplicate groups?',
-    'How healthy is my Vault?',
+    'Show me my signed Pops',
+    'Show Pops worth over \$100',
+    'Find Batman',
   ];
 }
