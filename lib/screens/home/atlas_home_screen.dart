@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 
 import '../../atlas/coordinator/atlas_dashboard.dart';
 import '../../atlas/coordinator/atlas_dashboard_model.dart';
+import '../../atlas/screens/atlas_timeline_screen.dart';
+import '../../vault/collector_vault_screen.dart';
 import '../../services/app_state.dart';
 import '../../theme/atlas_colors.dart';
 import '../../theme/atlas_icons.dart';
@@ -14,7 +16,6 @@ import '../../widgets/atlas/atlas_stat_tile.dart';
 import '../../widgets/home/atlas_pulse_card.dart';
 import '../../widgets/home/continue_journey_card.dart';
 import '../../widgets/vault/vault_scroll_view.dart';
-import '../../vault/collector_vault_screen.dart';
 
 class AtlasHomeScreen extends StatelessWidget {
   const AtlasHomeScreen({super.key});
@@ -83,12 +84,21 @@ class AtlasHomeScreen extends StatelessWidget {
             latestActivity: appState.recentActivities.isEmpty
                 ? null
                 : appState.recentActivities.first.details,
+            onOpenTimeline: () => _openTimeline(context),
           ),
         ],
       ),
     );
   }
 
+  static void _openTimeline(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const AtlasTimelineScreen(),
+      ),
+    );
+  }
   static void _openVault(BuildContext context) {
     Navigator.push(
       context,
@@ -339,10 +349,12 @@ class _RecentActivityCard extends StatelessWidget {
   const _RecentActivityCard({
     required this.hasActivity,
     required this.latestActivity,
+    required this.onOpenTimeline,
   });
 
   final bool hasActivity;
   final String? latestActivity;
+  final VoidCallback onOpenTimeline;
 
   @override
   Widget build(BuildContext context) {
@@ -350,19 +362,47 @@ class _RecentActivityCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Latest Activity',
-            style: AtlasTypography.headingSmall,
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Latest Activity',
+                  style: AtlasTypography.headingSmall,
+                ),
+              ),
+              TextButton.icon(
+                onPressed: onOpenTimeline,
+                icon: const Icon(
+                  Icons.timeline_rounded,
+                  size: 18,
+                ),
+                label: const Text('View Timeline'),
+              ),
+            ],
           ),
           const SizedBox(height: AtlasSpacing.md),
           AtlasGlassPanel(
-            child: Text(
-              hasActivity
-                  ? latestActivity ?? 'Activity detected.'
-                  : 'No recent activity yet. Add your first collectible to start building Atlas Memory.',
-              style: AtlasTypography.bodyMedium.copyWith(
-                color: AtlasColors.textSecondary,
-              ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  hasActivity
+                      ? Icons.history_rounded
+                      : Icons.history_toggle_off_rounded,
+                  color: AtlasColors.vaultGold,
+                ),
+                const SizedBox(width: AtlasSpacing.md),
+                Expanded(
+                  child: Text(
+                    hasActivity
+                        ? latestActivity ?? 'Activity detected.'
+                        : 'No recent activity yet. Add your first collectible to start building Atlas Memory.',
+                    style: AtlasTypography.bodyMedium.copyWith(
+                      color: AtlasColors.textSecondary,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],

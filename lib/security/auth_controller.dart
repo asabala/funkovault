@@ -4,9 +4,9 @@ import 'auth_service.dart';
 import 'auth_state.dart';
 
 class AuthController extends ChangeNotifier {
-  AuthController({
-    required AuthService authService,
-  }) : _authService = authService;
+  // ignore: prefer_initializing_formals
+  AuthController({required AuthService authService})
+    : _authService = authService;
 
   final AuthService _authService;
 
@@ -24,14 +24,8 @@ class AuthController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> signIn({
-    required String email,
-    required String password,
-  }) async {
-    _state = await _authService.signIn(
-      email: email,
-      password: password,
-    );
+  Future<void> signIn({required String email, required String password}) async {
+    _state = await _authService.signIn(email: email, password: password);
 
     notifyListeners();
   }

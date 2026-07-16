@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'edit_pop_screen.dart';
+import '../../models/activity.dart';
 import '../../models/pop.dart';
 import '../../services/app_state.dart';
 import '../../theme/atlas_colors.dart';
@@ -12,7 +14,7 @@ import '../../widgets/atlas/components/atlas_chip.dart';
 import '../../widgets/atlas/components/atlas_section_header.dart';
 import '../../widgets/pop/pop_source_details_section.dart';
 import '../../widgets/vault/vault_scroll_view.dart';
-import 'edit_pop_screen.dart';
+
 
 class PopDetailsScreen extends StatefulWidget {
   const PopDetailsScreen({super.key, required this.pop});
@@ -107,12 +109,34 @@ class _PopDetailsScreenState extends State<PopDetailsScreen> {
   }
 
   Future<void> _toggleWishlist() async {
+    final appState = context.read<AppState>();
+    final movedToWishlist = !pop.isWishlist;
+
     final updatedPop = pop.copyWith(
-      isWishlist: !pop.isWishlist,
+      isWishlist: movedToWishlist,
       lastUpdated: DateTime.now().toIso8601String(),
     );
 
-    await context.read<AppState>().updatePop(updatedPop);
+    await appState.updatePop(updatedPop);
+
+    await appState.addActivity(
+      Activity(
+        id: DateTime.now().microsecondsSinceEpoch.toString(),
+        action: movedToWishlist ? 'wishlist_added' : 'wishlist_removed',
+        popName: updatedPop.name,
+        popNumber: updatedPop.number,
+        owner: updatedPop.owner,
+        actor: updatedPop.owner,
+        details: movedToWishlist
+            ? '${updatedPop.name} moved to the wishlist'
+            : '${updatedPop.name} moved to the owned collection',
+        timestamp: DateTime.now(),
+      ),
+    );
+
+    if (!mounted) {
+      return;
+    }
 
     setState(() {
       pop = updatedPop;
@@ -120,16 +144,37 @@ class _PopDetailsScreenState extends State<PopDetailsScreen> {
   }
 
   Future<void> _updateQuantity(int newQuantity) async {
-    if (newQuantity < 1) {
+    if (newQuantity < 1 || newQuantity == pop.quantity) {
       return;
     }
+
+    final appState = context.read<AppState>();
+    final previousQuantity = pop.quantity;
 
     final updatedPop = pop.copyWith(
       quantity: newQuantity,
       lastUpdated: DateTime.now().toIso8601String(),
     );
 
-    await context.read<AppState>().updatePop(updatedPop);
+    await appState.updatePop(updatedPop);
+
+    await appState.addActivity(
+      Activity(
+        id: DateTime.now().microsecondsSinceEpoch.toString(),
+        action: 'quantity_updated',
+        popName: updatedPop.name,
+        popNumber: updatedPop.number,
+        owner: updatedPop.owner,
+        actor: updatedPop.owner,
+        details:
+        '${updatedPop.name} quantity changed from $previousQuantity to $newQuantity',
+        timestamp: DateTime.now(),
+      ),
+    );
+
+    if (!mounted) {
+      return;
+    }
 
     setState(() {
       pop = updatedPop;

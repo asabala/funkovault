@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../atlas/engines/atlas_insight_engine.dart';
 import '../../atlas/engines/atlas_recommendation_engine.dart';
-import '../../atlas/services/atlas_activity_service.dart';
+import '../../models/activity.dart';
 import '../../atlas/widgets/atlas_insight_card.dart';
 import '../../constants/collector_identity_options.dart';
 import '../../models/pop.dart';
@@ -359,12 +359,29 @@ class _EditPopScreenState extends State<EditPopScreen> {
       lastUpdated: DateTime.now().toIso8601String(),
     );
 
-    await context.read<AppState>().updatePop(updatedPop);
+    final appState = context.read<AppState>();
+    final valueChanged = updatedPop.value != widget.pop.value;
 
-    AtlasActivityService.record(
-      title: 'Pop Updated',
-      description: '${updatedPop.name} #${updatedPop.number} was updated.',
-      type: 'pop_updated',
+    await appState.updatePop(updatedPop);
+
+    await appState.addActivity(
+      Activity(
+        id: DateTime.now().microsecondsSinceEpoch.toString(),
+        action: valueChanged ? 'value_updated' : 'pop_updated',
+        popName: updatedPop.name,
+        popNumber: updatedPop.number,
+        owner: updatedPop.owner,
+        actor: updatedPop.owner,
+        details: valueChanged
+            ? _valueUpdateDetails(
+          pop: updatedPop,
+          previousValue: widget.pop.value,
+        )
+            : updatedPop.number.trim().isEmpty
+            ? '${updatedPop.name} was updated'
+            : '${updatedPop.name} #${updatedPop.number} was updated',
+        timestamp: DateTime.now(),
+      ),
     );
 
     if (!mounted) {
@@ -373,6 +390,21 @@ class _EditPopScreenState extends State<EditPopScreen> {
 
     Navigator.pop(context, updatedPop);
   }
+
+String _valueUpdateDetails({
+required Pop pop,
+required double previousValue,
+}) {
+final previousLabel = previousValue <= 0
+? 'not entered'
+: '\$${previousValue.toStringAsFixed(2)}';
+
+final updatedLabel = pop.value <= 0
+? 'not entered'
+: '\$${pop.value.toStringAsFixed(2)}';
+
+return '${pop.name} value changed from $previousLabel to $updatedLabel';
+}
 
   @override
   Widget build(BuildContext context) {
