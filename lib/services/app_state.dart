@@ -228,6 +228,7 @@ class AppState extends ChangeNotifier {
       await addActivity(
         Activity(
           id: DateTime.now().millisecondsSinceEpoch.toString(),
+          popId: existingPop.id,
           action: 'quantity_increased',
           popName: pop.name,
           popNumber: pop.number,
@@ -248,6 +249,7 @@ class AppState extends ChangeNotifier {
       await addActivity(
         Activity(
           id: DateTime.now().millisecondsSinceEpoch.toString(),
+          popId: datedPop.id,
           action: 'pop_added',
           popName: datedPop.name,
           popNumber: datedPop.number,
@@ -384,6 +386,7 @@ class AppState extends ChangeNotifier {
     await addActivity(
       Activity(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
+        popId: pop.id,
         action: 'pop_deleted',
         popName: pop.name,
         popNumber: pop.number,
@@ -466,6 +469,7 @@ class AppState extends ChangeNotifier {
         await addActivity(
           Activity(
             id: DateTime.now().millisecondsSinceEpoch.toString(),
+            popId: oldPop.id,
             action: 'owner_changed',
             popName: oldPop.name,
             popNumber: oldPop.number,
@@ -625,6 +629,7 @@ class AppState extends ChangeNotifier {
     _activities.add(
       Activity(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
+        popId: consolidatedPop.id,
         action: 'duplicates_consolidated',
         popName: consolidatedPop.name,
         popNumber: consolidatedPop.number,

@@ -367,6 +367,7 @@ class _EditPopScreenState extends State<EditPopScreen> {
     await appState.addActivity(
       Activity(
         id: DateTime.now().microsecondsSinceEpoch.toString(),
+        popId: updatedPop.id,
         action: valueChanged ? 'value_updated' : 'pop_updated',
         popName: updatedPop.name,
         popNumber: updatedPop.number,

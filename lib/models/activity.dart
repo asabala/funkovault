@@ -1,5 +1,6 @@
 class Activity {
   final String id;
+  final String popId;
   final String action;
   final String popName;
   final String popNumber;
@@ -10,6 +11,7 @@ class Activity {
 
   const Activity({
     required this.id,
+    this.popId = '',
     required this.action,
     required this.popName,
     required this.popNumber,
@@ -24,29 +26,31 @@ class Activity {
       ) {
     return Activity(
       id: json['id'] ?? '',
+      popId: json['popId'] ?? '',
       action: json['action'] ?? '',
       popName: json['popName'] ?? '',
       popNumber: json['popNumber'] ?? '',
       owner: json['owner'] ?? '',
       actor: json['actor'] ?? '',
       details: json['details'] ?? '',
-      timestamp: DateTime.parse(
-        json['timestamp'],
-      ),
+      timestamp: DateTime.tryParse(
+        json['timestamp'] ?? '',
+      ) ??
+          DateTime.now(),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
+      'popId': popId,
       'action': action,
       'popName': popName,
       'popNumber': popNumber,
       'owner': owner,
       'actor': actor,
       'details': details,
-      'timestamp':
-      timestamp.toIso8601String(),
+      'timestamp': timestamp.toIso8601String(),
     };
   }
 }

@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../atlas/engines/atlas_intelligence_engine.dart';
+import '../../atlas/engines/pop_activity_summary_engine.dart';
+import '../../atlas/engines/pop_context_explainer_engine.dart';
+import '../../atlas/screens/atlas_timeline_screen.dart';
+import '../../widgets/pop/pop_ask_atlas_bottom_sheet.dart';
 import 'edit_pop_screen.dart';
 import '../../models/activity.dart';
 import '../../models/pop.dart';
@@ -63,6 +68,24 @@ class _PopDetailsScreenState extends State<PopDetailsScreen> {
       pop = updatedPop;
     });
   }
+  void _openTimeline() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const AtlasTimelineScreen(),
+      ),
+    );
+  }
+  void _openAskAtlas() {
+    const explainerEngine = PopContextExplainerEngine();
+
+    PopAskAtlasBottomSheet.show(
+      context: context,
+      pop: pop,
+      activities: context.read<AppState>().activities,
+      explainerEngine: explainerEngine,
+    );
+  }
 
   Future<void> _confirmDeletePop() async {
     final appState = context.read<AppState>();
@@ -122,6 +145,7 @@ class _PopDetailsScreenState extends State<PopDetailsScreen> {
     await appState.addActivity(
       Activity(
         id: DateTime.now().microsecondsSinceEpoch.toString(),
+        popId: updatedPop.id,
         action: movedToWishlist ? 'wishlist_added' : 'wishlist_removed',
         popName: updatedPop.name,
         popNumber: updatedPop.number,
@@ -161,6 +185,7 @@ class _PopDetailsScreenState extends State<PopDetailsScreen> {
     await appState.addActivity(
       Activity(
         id: DateTime.now().microsecondsSinceEpoch.toString(),
+        popId: updatedPop.id,
         action: 'quantity_updated',
         popName: updatedPop.name,
         popNumber: updatedPop.number,
@@ -194,6 +219,19 @@ class _PopDetailsScreenState extends State<PopDetailsScreen> {
         : '\$${pop.pricePaid.toStringAsFixed(2)}';
     final dateAddedLabel = _formatDateLabel(pop.dateAdded);
     final lastUpdatedLabel = _formatDateLabel(pop.lastUpdated);
+    final appState = context.watch<AppState>();
+
+    final popActivities = appState.recentActivities
+        .where((activity) => _activityMatchesPop(activity, pop))
+        .take(3)
+        .toList();
+
+    const intelligenceEngine = AtlasIntelligenceEngine();
+
+    final activitySummary = intelligenceEngine.analyzePopActivity(
+      pop: pop,
+      activities: appState.activities,
+    );
 
     return Scaffold(
       appBar: AppBar(
@@ -461,6 +499,12 @@ class _PopDetailsScreenState extends State<PopDetailsScreen> {
             PopSourceDetailsSection(pop: pop),
           ],
           const SizedBox(height: AtlasSpacing.lg),
+          _PopRecentActivityCard(
+            activities: popActivities,
+            summary: activitySummary,
+            onOpenTimeline: _openTimeline,
+          ),
+          const SizedBox(height: AtlasSpacing.lg),
           AtlasGlassCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -474,6 +518,19 @@ class _PopDetailsScreenState extends State<PopDetailsScreen> {
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton.icon(
+                    onPressed: _openAskAtlas,
+                    icon: const Icon(
+                      Icons.auto_awesome_rounded,
+                    ),
+                    label: const Text(
+                      'Ask Atlas About This Pop',
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AtlasSpacing.sm),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
                     onPressed: _editValue,
                     icon: Icon(
                       pop.value <= 0
@@ -534,7 +591,160 @@ class _PopDetailsScreenState extends State<PopDetailsScreen> {
     );
   }
 }
+class _PopRecentActivityCard extends StatelessWidget {
+  const _PopRecentActivityCard({
+    required this.activities,
+    required this.summary,
+    required this.onOpenTimeline,
+  });
 
+  final List<Activity> activities;
+  final PopActivitySummary summary;
+  final VoidCallback onOpenTimeline;
+
+  @override
+  Widget build(BuildContext context) {
+    return AtlasGlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AtlasSectionHeader(
+            title: 'Recent Activity',
+            subtitle: activities.isEmpty
+                ? 'No recorded changes for this collectible yet'
+                : 'Latest recorded changes for this collectible',
+            icon: Icons.history_rounded,
+          ),
+          const SizedBox(height: AtlasSpacing.lg),
+          AtlasGlassPanel(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(
+                  Icons.auto_awesome_rounded,
+                  color: AtlasColors.vaultGold,
+                ),
+                const SizedBox(width: AtlasSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        summary.title,
+                        style: AtlasTypography.bodyMedium.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: AtlasSpacing.xs),
+                      Text(
+                        summary.summary,
+                        style: AtlasTypography.bodySmall.copyWith(
+                          color: AtlasColors.textSecondary,
+                        ),
+                      ),
+                      if (summary.hasActivity) ...[
+                        const SizedBox(height: AtlasSpacing.xs),
+                        Text(
+                          '${summary.activityCount} recorded '
+                              '${summary.activityCount == 1 ? 'event' : 'events'}',
+                          style: AtlasTypography.bodySmall.copyWith(
+                            color: AtlasColors.vaultGold,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AtlasSpacing.md),
+          if (activities.isEmpty)
+            AtlasGlassPanel(
+              child: Text(
+                'Value updates, quantity changes, edits, and ownership moves will appear here.',
+                style: AtlasTypography.bodyMedium.copyWith(
+                  color: AtlasColors.textSecondary,
+                ),
+              ),
+            )
+          else
+            ...activities.map(
+                  (activity) => Padding(
+                padding: const EdgeInsets.only(
+                  bottom: AtlasSpacing.sm,
+                ),
+                child: _PopActivityRow(
+                  activity: activity,
+                ),
+              ),
+            ),
+          const SizedBox(height: AtlasSpacing.sm),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: onOpenTimeline,
+              icon: const Icon(Icons.timeline_rounded),
+              label: const Text('View Full Timeline'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PopActivityRow extends StatelessWidget {
+  const _PopActivityRow({
+    required this.activity,
+  });
+
+  final Activity activity;
+
+  @override
+  Widget build(BuildContext context) {
+    return AtlasGlassPanel(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            _activityIcon(activity.action),
+            color: AtlasColors.vaultGold,
+          ),
+          const SizedBox(width: AtlasSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _activityTitle(activity.action),
+                  style: AtlasTypography.bodyMedium.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: AtlasSpacing.xs),
+                Text(
+                  activity.details,
+                  style: AtlasTypography.bodySmall.copyWith(
+                    color: AtlasColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: AtlasSpacing.xs),
+                Text(
+                  _formatActivityTime(activity.timestamp),
+                  style: AtlasTypography.bodySmall.copyWith(
+                    color: AtlasColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 class _PopHeroImage extends StatelessWidget {
   const _PopHeroImage({required this.imageUrl});
 
@@ -768,4 +978,93 @@ String _displayValue(String value) {
   }
 
   return cleaned;
+}
+bool _activityMatchesPop(
+    Activity activity,
+    Pop pop,
+    ) {
+  final activityPopId = activity.popId.trim();
+  final popId = pop.id.trim();
+
+  if (activityPopId.isNotEmpty && popId.isNotEmpty) {
+    return activityPopId == popId;
+  }
+
+  final activityName = activity.popName.trim().toLowerCase();
+  final popName = pop.name.trim().toLowerCase();
+
+  if (activityName != popName) {
+    return false;
+  }
+
+  final activityNumber = activity.popNumber.trim().toLowerCase();
+  final popNumber = pop.number.trim().toLowerCase();
+
+  if (activityNumber.isEmpty || popNumber.isEmpty) {
+    return true;
+  }
+
+  return activityNumber == popNumber;
+}
+
+String _activityTitle(String action) {
+  switch (action) {
+    case 'value_updated':
+      return 'Value Updated';
+    case 'quantity_updated':
+    case 'quantity_increased':
+      return 'Quantity Updated';
+    case 'wishlist_added':
+      return 'Moved to Wishlist';
+    case 'wishlist_removed':
+      return 'Moved to Owned';
+    case 'pop_updated':
+      return 'Pop Updated';
+    case 'pop_added':
+      return 'Pop Added';
+    case 'pop_deleted':
+      return 'Pop Deleted';
+    default:
+      return 'Vault Activity';
+  }
+}
+
+IconData _activityIcon(String action) {
+  switch (action) {
+    case 'value_updated':
+      return Icons.attach_money_rounded;
+    case 'quantity_updated':
+    case 'quantity_increased':
+      return Icons.format_list_numbered_rounded;
+    case 'wishlist_added':
+      return Icons.favorite_rounded;
+    case 'wishlist_removed':
+      return Icons.inventory_2_rounded;
+    case 'pop_updated':
+      return Icons.edit_rounded;
+    case 'pop_added':
+      return Icons.add_circle_outline_rounded;
+    case 'pop_deleted':
+      return Icons.delete_outline_rounded;
+    default:
+      return Icons.history_rounded;
+  }
+}
+
+String _formatActivityTime(DateTime timestamp) {
+  final difference = DateTime.now().difference(timestamp);
+
+  if (difference.inMinutes < 1) {
+    return 'Now';
+  }
+
+  if (difference.inMinutes < 60) {
+    return '${difference.inMinutes}m ago';
+  }
+
+  if (difference.inHours < 24) {
+    return '${difference.inHours}h ago';
+  }
+
+  return '${difference.inDays}d ago';
 }

@@ -1,5 +1,7 @@
+import '../../models/activity.dart';
 import '../../models/pop.dart';
 import 'atlas_confidence_engine.dart';
+import 'pop_activity_summary_engine.dart';
 
 class AtlasIntelligenceReport {
   const AtlasIntelligenceReport({
@@ -25,8 +27,7 @@ class AtlasIntelligenceEngine {
   }) {
     const confidenceEngine = AtlasConfidenceEngine();
 
-    final confidence =
-    confidenceEngine.calculate(pops);
+    final confidence = confidenceEngine.calculate(pops);
 
     if (duplicateCount > 0) {
       return AtlasIntelligenceReport(
@@ -54,6 +55,20 @@ class AtlasIntelligenceEngine {
       'Atlas found no critical issues that need attention right now.',
       confidenceScore: confidence.score,
       confidenceMessage: confidence.message,
+    );
+  }
+
+  PopActivitySummary analyzePopActivity({
+    required Pop pop,
+    required List<Activity> activities,
+  }) {
+    const activitySummaryEngine = PopActivitySummaryEngine();
+
+    return activitySummaryEngine.build(
+      popId: pop.id,
+      popName: pop.name,
+      popNumber: pop.number,
+      activities: activities,
     );
   }
 }

@@ -3,19 +3,22 @@ import 'package:provider/provider.dart';
 
 import '../../atlas/coordinator/atlas_dashboard.dart';
 import '../../atlas/coordinator/atlas_dashboard_model.dart';
+import '../../atlas/engines/vault_context_explainer_engine.dart';
 import '../../atlas/screens/atlas_timeline_screen.dart';
-import '../../vault/collector_vault_screen.dart';
 import '../../services/app_state.dart';
 import '../../theme/atlas_colors.dart';
 import '../../theme/atlas_icons.dart';
 import '../../theme/atlas_spacing.dart';
 import '../../theme/atlas_typography.dart';
+import '../../vault/collector_vault_screen.dart';
 import '../../widgets/atlas/atlas_glass_card.dart';
 import '../../widgets/atlas/atlas_glass_panel.dart';
 import '../../widgets/atlas/atlas_stat_tile.dart';
 import '../../widgets/home/atlas_pulse_card.dart';
 import '../../widgets/home/continue_journey_card.dart';
+import '../../widgets/vault/vault_ask_atlas_bottom_sheet.dart';
 import '../../widgets/vault/vault_scroll_view.dart';
+import '../vault/entire_vault_screen.dart';
 
 class AtlasHomeScreen extends StatelessWidget {
   const AtlasHomeScreen({super.key});
@@ -72,6 +75,13 @@ class AtlasHomeScreen extends StatelessWidget {
             confidence: dashboard.confidence.score,
           ),
           const SizedBox(height: AtlasSpacing.lg),
+          _HomeAskAtlasCard(
+            onAskAtlas: () => _openAskAtlas(
+              context,
+              dashboard,
+            ),
+          ),
+          const SizedBox(height: AtlasSpacing.lg),
           ContinueJourneyCard(
             title: 'Collector Vault',
             subtitle:
@@ -99,6 +109,40 @@ class AtlasHomeScreen extends StatelessWidget {
       ),
     );
   }
+
+  static void _openAskAtlas(
+      BuildContext context,
+      AtlasDashboardModel dashboard,
+      ) {
+    const explainerEngine = VaultContextExplainerEngine();
+
+    VaultAskAtlasBottomSheet.show(
+      context: context,
+      dashboard: dashboard,
+      explainerEngine: explainerEngine,
+      onOpenVaultFilter: (filterKey) {
+        _openFilteredVault(
+          context,
+          filterKey,
+        );
+      },
+    );
+  }
+
+  static void _openFilteredVault(
+      BuildContext context,
+      String filterKey,
+      ) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => EntireVaultScreen(
+          initialFilterKey: filterKey,
+        ),
+      ),
+    );
+  }
+
   static void _openVault(BuildContext context) {
     Navigator.push(
       context,
@@ -146,7 +190,8 @@ class AtlasHomeScreen extends StatelessWidget {
       'December',
     ];
 
-    return '${weekdays[now.weekday - 1]}, ${months[now.month - 1]} ${now.day}, ${now.year}';
+    return '${weekdays[now.weekday - 1]}, '
+        '${months[now.month - 1]} ${now.day}, ${now.year}';
   }
 
   static String _timeLabel(DateTime now) {
@@ -186,7 +231,9 @@ class AtlasHomeScreen extends StatelessWidget {
       return 'Your Vault is ready. Add your first collectible to begin your collector journey.';
     }
 
-    return 'Your Vault has $totalPops collectible${totalPops == 1 ? '' : 's'} with ${confidence.toStringAsFixed(0)}% Atlas Confidence.';
+    return 'Your Vault has $totalPops collectible'
+        '${totalPops == 1 ? '' : 's'} with '
+        '${confidence.toStringAsFixed(0)}% Atlas Confidence.';
   }
 }
 
@@ -281,7 +328,8 @@ class _HomeAccountStatusCard extends StatelessWidget {
                 ),
                 const SizedBox(height: AtlasSpacing.xs),
                 Text(
-                  '$totalPops Pops • ${confidence.toStringAsFixed(0)}% Atlas Confidence',
+                  '$totalPops Pops • '
+                      '${confidence.toStringAsFixed(0)}% Atlas Confidence',
                   style: AtlasTypography.bodySmall.copyWith(
                     color: AtlasColors.textSecondary,
                   ),
@@ -340,6 +388,60 @@ class _HomeStatsCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _HomeAskAtlasCard extends StatelessWidget {
+  const _HomeAskAtlasCard({
+    required this.onAskAtlas,
+  });
+
+  final VoidCallback onAskAtlas;
+
+  @override
+  Widget build(BuildContext context) {
+    return AtlasGlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.auto_awesome_rounded,
+                color: AtlasColors.vaultGold,
+              ),
+              const SizedBox(width: AtlasSpacing.sm),
+              Expanded(
+                child: Text(
+                  'Ask Atlas',
+                  style: AtlasTypography.headingSmall,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AtlasSpacing.sm),
+          Text(
+            'Ask trusted questions about your Vault, collection value, cleanup priorities, missing values, and health.',
+            style: AtlasTypography.bodyMedium.copyWith(
+              color: AtlasColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: AtlasSpacing.lg),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: onAskAtlas,
+              icon: const Icon(
+                Icons.psychology_alt_rounded,
+              ),
+              label: const Text(
+                'Ask Atlas About My Vault',
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
