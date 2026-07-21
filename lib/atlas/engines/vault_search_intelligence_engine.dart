@@ -7,6 +7,7 @@ class VaultSearchIntent {
     this.minimumValue,
     this.maximumValue,
     this.sortKey,
+    this.unsupportedParts = const [],
   });
 
   final String title;
@@ -27,6 +28,9 @@ class VaultSearchIntent {
   /// Optional existing Entire Vault sort key.
   final String? sortKey;
 
+  /// Clearly recognized request details Atlas cannot currently apply.
+  final List<String> unsupportedParts;
+
   bool get hasFilter =>
       filterKey != null && filterKey!.trim().isNotEmpty;
 
@@ -39,6 +43,8 @@ class VaultSearchIntent {
   bool get hasSort =>
       sortKey != null && sortKey!.trim().isNotEmpty;
 
+  bool get hasUnsupportedParts => unsupportedParts.isNotEmpty;
+
   bool get hasNavigationAction =>
       hasFilter || hasSearch || hasValueRange || hasSort;
 }
@@ -49,6 +55,9 @@ class VaultSearchIntelligenceEngine {
   VaultSearchIntent interpret(String question) {
     final cleanedQuestion = question.trim();
     final normalized = cleanedQuestion.toLowerCase();
+    final unsupportedParts = _detectUnsupportedParts(
+      normalized,
+    );
 
     if (normalized.isEmpty) {
       return const VaultSearchIntent(
@@ -63,34 +72,66 @@ class VaultSearchIntelligenceEngine {
       normalizedQuestion: normalized,
     );
 
-    if (valueIntent != null) {
-      return valueIntent;
-    }
-
     final filterIntent = _interpretFilterIntent(normalized);
-
-    if (filterIntent != null) {
-      return filterIntent;
-    }
 
     final extractedSearch = _extractSearchQuery(
       originalQuestion: cleanedQuestion,
       normalizedQuestion: normalized,
     );
 
-    if (extractedSearch != null) {
+    final filterKey =
+        filterIntent?.filterKey ??
+            valueIntent?.filterKey;
+
+    final minimumValue = valueIntent?.minimumValue;
+    final maximumValue = valueIntent?.maximumValue;
+    final sortKey = valueIntent?.sortKey;
+
+    final hasFilter =
+        filterKey != null &&
+            filterKey.trim().isNotEmpty;
+
+    final hasSearch =
+        extractedSearch != null &&
+            extractedSearch.trim().isNotEmpty;
+
+    final hasValueRange =
+        minimumValue != null ||
+            maximumValue != null;
+
+    final hasSort =
+        sortKey != null &&
+            sortKey.trim().isNotEmpty;
+
+    if (hasFilter ||
+        hasSearch ||
+        hasValueRange ||
+        hasSort) {
       return VaultSearchIntent(
-        title: 'Search Entire Vault',
+        title: _titleForCombinedIntent(
+          hasSearch: hasSearch,
+          hasValueRange: hasValueRange,
+          hasSort: hasSort,
+          filterIntent: filterIntent,
+          valueIntent: valueIntent,
+        ),
         message:
-        'Atlas can search your Vault for “$extractedSearch” using name, number, category, series, and owner.',
+        'Atlas identified supported Vault search criteria and can open Entire Vault with the requested view.',
+        filterKey: filterKey,
         searchQuery: extractedSearch,
+        minimumValue: minimumValue,
+        maximumValue: maximumValue,
+        sortKey: sortKey,
+        unsupportedParts: unsupportedParts,
       );
     }
 
-    return const VaultSearchIntent(
+    return VaultSearchIntent(
       title: 'Vault Search',
-      message:
-      'Atlas could not identify a supported Vault filter, value range, or search phrase. Try asking for signed Pops, exclusives, wishlist items, stickers, variants, a collectible name, or a value range.',
+      message: unsupportedParts.isNotEmpty
+          ? 'Atlas recognized part of the request, but the requested criteria are not currently supported.'
+          : 'Atlas could not identify a supported Vault filter, value range, or search phrase. Try asking for signed Pops, exclusives, wishlist items, stickers, variants, a collectible name, or a value range.',
+      unsupportedParts: unsupportedParts,
     );
   }
 
@@ -366,35 +407,355 @@ class VaultSearchIntelligenceEngine {
       'search ',
       'show me my ',
       'show me ',
+      'show ',
       'look for ',
       'look up ',
     ];
+
+    String extracted = originalQuestion.trim();
 
     for (final prefix in prefixes) {
       if (!normalizedQuestion.startsWith(prefix)) {
         continue;
       }
 
-      final extracted = originalQuestion
+      extracted = originalQuestion
           .substring(prefix.length)
-          .trim()
-          .replaceAll(
+          .trim();
+
+      break;
+    }
+
+    extracted = extracted
+        .replaceAll(
+      RegExp(
+        r'\b(?:and\s+)?sort(?:ed)?\s+(?:by\s+)?'
+        r'(?:highest|lowest)\s+value(?:\s+first)?\b',
+        caseSensitive: false,
+      ),
+      ' ',
+    )
+        .replaceAll(
+      RegExp(
+        r'\b(?:and\s+)?(?:highest|lowest)\s+value'
+        r'(?:\s+first)?\b',
+        caseSensitive: false,
+      ),
+      ' ',
+    )
+        .replaceAll(
+      RegExp(
+        r'\b(?:most valuable|highest valued|most expensive|top value)\b',
+        caseSensitive: false,
+      ),
+      ' ',
+    )
+        .replaceAll(
+      RegExp(
+        r'\b(?:worth|valued?)?\s*'
+        r'(?:between|from)\s+\$?\d+(?:\.\d{1,2})?'
+        r'\s+(?:and|to)\s+\$?\d+(?:\.\d{1,2})?\b',
+        caseSensitive: false,
+      ),
+      ' ',
+    )
+        .replaceAll(
+      RegExp(
+        r'\b(?:worth|valued?)?\s*'
+        r'(?:over|above|more than|greater than|at least|minimum|min)'
+        r'\s+\$?\d+(?:\.\d{1,2})?\b',
+        caseSensitive: false,
+      ),
+      ' ',
+    )
+        .replaceAll(
+      RegExp(
+        r'\b(?:worth|valued?)?\s*'
+        r'(?:under|below|less than|no more than|at most|maximum|max)'
+        r'\s+\$?\d+(?:\.\d{1,2})?\b',
+        caseSensitive: false,
+      ),
+      ' ',
+    )
+        .replaceAll(
+      RegExp(
+        r'\b(?:signed|signature|autograph|autographed)\b',
+        caseSensitive: false,
+      ),
+      ' ',
+    )
+        .replaceAll(
+      RegExp(
+        r'\b(?:retail\s+)?exclusives?\b',
+        caseSensitive: false,
+      ),
+      ' ',
+    )
+        .replaceAll(
+      RegExp(
+        r'\b(?:event\s+)?stickers?|stickered\b',
+        caseSensitive: false,
+      ),
+      ' ',
+    )
+        .replaceAll(
+      RegExp(
+        r'\b(?:variants?|chase|black\s*light|glow|metallic|flocked)\b',
+        caseSensitive: false,
+      ),
+      ' ',
+    )
+        .replaceAll(
+      RegExp(
+        r'\b(?:limited edition|limited|numbered pieces?)\b',
+        caseSensitive: false,
+      ),
+      ' ',
+    )
+        .replaceAll(
+      RegExp(
+        r'\b(?:wishlist|wish list|wanted)\b',
+        caseSensitive: false,
+      ),
+      ' ',
+    )
+        .replaceAll(
+      RegExp(
+        r'\b(?:owned|my collection|i own)\b',
+        caseSensitive: false,
+      ),
+      ' ',
+    )
+        .replaceAll(
+      RegExp(
+        r'\b(?:missing values?|needs? values?|without value)\b',
+        caseSensitive: false,
+      ),
+      ' ',
+    )
+        .replaceAll(
+      RegExp(
+        r'\b(?:has value|with values|valued pops|valued collectibles)\b',
+        caseSensitive: false,
+      ),
+      ' ',
+    )
+        .replaceAll(
+      RegExp(
+        r'\b(?:possible\s+)?duplicates?|variant review group\b',
+        caseSensitive: false,
+      ),
+      ' ',
+    )
+            .replaceAll(
+          RegExp(
+            r'\b(?:pops?|collectibles?|items?)\b',
+            caseSensitive: false,
+          ),
+          ' ',
+        )
+            .replaceAll(
+          RegExp(
+            r'\b(?:value\s+increased|value\s+decreased|gained\s+value|'
+            r'lost\s+value|value\s+history|price\s+history|'
+            r'value\s+trend)\b',
+            caseSensitive: false,
+          ),
+          ' ',
+        )
+            .replaceAll(
+          RegExp(
+            r'\b(?:released\s+in|release\s+year|'
+            r'from\s+the\s+year|from)\s+'
+            r'(?:\d{4}|\d{2}\s*[/\\-]\s*\d{2})\b',
+            caseSensitive: false,
+          ),
+          ' ',
+        )
+            .replaceAll(
+          RegExp(
+            r'\b(?:mint|near mint|damaged|poor|good|excellent)\s+'
+            r'(?:box\s+)?condition\b',
+            caseSensitive: false,
+          ),
+          ' ',
+        )
+            .replaceAll(
+          RegExp(
+            r'\b(?:with|in)\s+(?:a\s+)?damaged box\b',
+            caseSensitive: false,
+          ),
+          ' ',
+        )
+            .replaceAll(
+          RegExp(
+            r'\b(?:price paid|purchase price|what i paid|'
+            r'how much i paid)\b',
+            caseSensitive: false,
+          ),
+          ' ',
+        )
+            .replaceAll(
+          RegExp(
+            r'\b(?:worth|valued|value)\b',
+            caseSensitive: false,
+          ),
+          ' ',
+        )
+            .replaceAll(
+          RegExp(
+            r'^(?:by|with|using)\s+',
+            caseSensitive: false,
+          ),
+          ' ',
+        )
+        .trim();
+
+    extracted = extracted
+        .replaceAll(
+      RegExp(r'\s+'),
+      ' ',
+    )
+        .trim();
+
+    const connectorOnlyWords = {
+      'and',
+      'by',
+      'with',
+      'using',
+      'for',
+      'from',
+      'of',
+      'the',
+      'that are',
+      'which are',
+    };
+
+    while (extracted.isNotEmpty) {
+      final previousValue = extracted;
+
+      extracted = extracted
+          .replaceFirst(
         RegExp(
-          r'\b(pops?|collectibles?|items?)\b',
+          r'^(?:and|by|with|using|for|from|of|the|that are|which are)\b\s*',
+          caseSensitive: false,
+        ),
+        '',
+      )
+          .replaceFirst(
+        RegExp(
+          r'\s*\b(?:and|by|with|using|for|from|of|the|that are|which are)$',
           caseSensitive: false,
         ),
         '',
       )
           .trim();
 
-      if (extracted.isNotEmpty) {
-        return extracted;
+      if (extracted == previousValue) {
+        break;
       }
     }
 
-    return null;
+    if (extracted.isEmpty ||
+        connectorOnlyWords.contains(extracted.toLowerCase())) {
+      return null;
+    }
+
+    return extracted;
   }
 
+  String _titleForCombinedIntent({
+    required bool hasSearch,
+    required bool hasValueRange,
+    required bool hasSort,
+    required VaultSearchIntent? filterIntent,
+    required VaultSearchIntent? valueIntent,
+  }) {
+    if (hasSearch) {
+      return 'Search Entire Vault';
+    }
+
+    if (hasValueRange) {
+      return 'Collectibles by Value';
+    }
+
+    if (filterIntent != null) {
+      return filterIntent.title;
+    }
+
+    if (hasSort) {
+      return valueIntent?.title ?? 'Sorted Vault';
+    }
+
+    return 'Vault Search';
+  }
+  List<String> _detectUnsupportedParts(
+      String question,
+      ) {
+    final unsupported = <String>[];
+
+    final asksForReleaseYear = RegExp(
+      r'\b(?:released\s+in|release\s+year|from\s+the\s+year|from)\s+'
+      r'(?:\d{4}|\d{2}\s*[/\\-]\s*\d{2})\b',
+      caseSensitive: false,
+    ).hasMatch(question);
+
+    if (asksForReleaseYear) {
+      unsupported.add('release-year filtering');
+    }
+
+    final asksForCondition = _containsAny(
+      question,
+      const [
+        'box condition',
+        'item condition',
+        'mint condition',
+        'near mint',
+        'damaged box',
+        'poor condition',
+        'good condition',
+        'excellent condition',
+      ],
+    );
+
+    if (asksForCondition) {
+      unsupported.add('condition filtering');
+    }
+
+    final asksForPricePaid = _containsAny(
+      question,
+      const [
+        'price paid',
+        'purchase price',
+        'what i paid',
+        'how much i paid',
+        'paid for',
+      ],
+    );
+
+    if (asksForPricePaid) {
+      unsupported.add('price-paid filtering');
+    }
+
+    final asksForValueHistory = _containsAny(
+      question,
+      const [
+        'value increased',
+        'value decreased',
+        'gained value',
+        'lost value',
+        'value history',
+        'price history',
+        'value trend',
+      ],
+    );
+
+    if (asksForValueHistory) {
+      unsupported.add('value-history filtering');
+    }
+
+    return unsupported;
+  }
   bool _containsAny(
       String value,
       List<String> terms,

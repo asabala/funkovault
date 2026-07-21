@@ -1,5 +1,7 @@
 import '../coordinator/atlas_dashboard_model.dart';
+import '../models/atlas_vault_query_summary.dart';
 import 'atlas_intelligence_engine.dart';
+import 'vault_query_preview_engine.dart';
 import 'vault_search_intelligence_engine.dart';
 
 class VaultContextAnswer {
@@ -14,6 +16,8 @@ class VaultContextAnswer {
     this.minimumValue,
     this.maximumValue,
     this.vaultSortKey,
+    this.unsupportedParts = const [],
+    this.previewMatchCount,
   });
 
   final String title;
@@ -38,6 +42,16 @@ class VaultContextAnswer {
 
   /// Optional Entire Vault sort key.
   final String? vaultSortKey;
+
+  /// Recognized request details Atlas cannot currently apply.
+  final List<String> unsupportedParts;
+
+  /// Number of current Vault records matching the supported query.
+  final int? previewMatchCount;
+
+  bool get hasPreviewMatchCount => previewMatchCount != null;
+
+  bool get hasUnsupportedParts => unsupportedParts.isNotEmpty;
 
   bool get hasVaultFilterAction =>
       actionLabel != null &&
@@ -73,10 +87,12 @@ class VaultContextExplainerEngine {
   const VaultContextExplainerEngine({
     this.intelligenceEngine = const AtlasIntelligenceEngine(),
     this.searchEngine = const VaultSearchIntelligenceEngine(),
+    this.previewEngine = const VaultQueryPreviewEngine(),
   });
 
   final AtlasIntelligenceEngine intelligenceEngine;
   final VaultSearchIntelligenceEngine searchEngine;
+  final VaultQueryPreviewEngine previewEngine;
 
   VaultContextAnswer explain({
     required String question,
@@ -118,8 +134,12 @@ class VaultContextExplainerEngine {
 
     final searchIntent = searchEngine.interpret(question);
 
-    if (searchIntent.hasNavigationAction) {
-      return _buildSearchIntentAnswer(searchIntent);
+    if (searchIntent.hasNavigationAction ||
+        searchIntent.hasUnsupportedParts) {
+      return _buildSearchIntentAnswer(
+        intent: searchIntent,
+        dashboard: dashboard,
+      );
     }
 
     return _buildOverviewAnswer(dashboard);
@@ -359,12 +379,53 @@ class VaultContextExplainerEngine {
     );
   }
 
-  VaultContextAnswer _buildSearchIntentAnswer(
-      VaultSearchIntent intent,
-      ) {
+  VaultContextAnswer _buildSearchIntentAnswer({
+    required VaultSearchIntent intent,
+    required AtlasDashboardModel dashboard,
+  }) {
+    final querySummary = AtlasVaultQuerySummary(
+      filterKey: intent.filterKey,
+      searchQuery: intent.searchQuery,
+      minimumValue: intent.minimumValue,
+      maximumValue: intent.maximumValue,
+      sortKey: intent.sortKey,
+      unsupportedParts: intent.unsupportedParts,
+    );
+    final previewResult = intent.hasNavigationAction
+        ? previewEngine.preview(
+      pops: dashboard.pops,
+      filterKey: intent.filterKey,
+      searchQuery: intent.searchQuery,
+      minimumValue: intent.minimumValue,
+      maximumValue: intent.maximumValue,
+      sortKey: intent.sortKey,
+    )
+        : null;
+    final unsupportedText = querySummary.unsupportedText;
+
+    String answer;
+
+    if (intent.hasNavigationAction) {
+      answer = querySummary.confirmationText;
+
+      if (unsupportedText != null) {
+        answer = '$answer\n\n$unsupportedText';
+      }
+    } else {
+      answer = unsupportedText ??
+          'Atlas could not identify supported Vault search criteria.';
+    }
+
     String atlasTip;
 
-    if (intent.hasValueRange) {
+    if (intent.hasUnsupportedParts &&
+        intent.hasNavigationAction) {
+      atlasTip =
+      'Atlas will apply the supported criteria only. Unsupported criteria will not affect the Entire Vault results.';
+    } else if (intent.hasUnsupportedParts) {
+      atlasTip =
+      'Try searching by collectible name, number, category, series, owner, Vault status, recorded value, or supported sorting.';
+    } else if (intent.hasValueRange) {
       atlasTip =
       'Atlas will use the recorded value on each collectible and apply the requested inclusive value range.';
     } else if (intent.hasFilter) {
@@ -382,8 +443,12 @@ class VaultContextExplainerEngine {
     }
 
     return VaultContextAnswer(
-      title: intent.title,
-      answer: intent.message,
+      title: intent.hasUnsupportedParts
+          ? intent.hasNavigationAction
+          ? 'Partially Supported Request'
+          : 'Unsupported Vault Request'
+          : intent.title,
+      answer: answer,
       atlasTip: atlasTip,
       suggestedQuestions: const [
         'Show me my signed Pops',
@@ -393,12 +458,16 @@ class VaultContextExplainerEngine {
         'Show my most valuable Pops',
         'Find Batman',
       ],
-      actionLabel: _actionLabelForIntent(intent),
+      actionLabel: intent.hasNavigationAction
+          ? _actionLabelForIntent(intent)
+          : null,
       vaultFilterKey: intent.filterKey,
       vaultSearchQuery: intent.searchQuery,
       minimumValue: intent.minimumValue,
       maximumValue: intent.maximumValue,
       vaultSortKey: intent.sortKey,
+      unsupportedParts: intent.unsupportedParts,
+      previewMatchCount: previewResult?.matchCount,
     );
   }
 

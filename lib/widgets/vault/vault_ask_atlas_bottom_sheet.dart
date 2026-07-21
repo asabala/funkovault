@@ -129,7 +129,11 @@ class _VaultAskAtlasSheetState extends State<_VaultAskAtlasSheet> {
       _answer = _buildAnswer(question);
     });
   }
+  void _clearQuestion() {
+    _questionController.clear();
 
+    setState(() {});
+  }
   void _askSuggestedQuestion(String question) {
     _questionController.text = question;
     _questionController.selection = TextSelection.collapsed(
@@ -227,7 +231,119 @@ class _VaultAskAtlasSheetState extends State<_VaultAskAtlasSheet> {
 
     return Icons.open_in_new_rounded;
   }
+  bool get _hasUnsupportedDetails {
+    return _answer.hasUnsupportedParts;
+  }
 
+  String get _supportedAnswerText {
+    if (!_hasUnsupportedDetails) {
+      return _answer.answer;
+    }
+
+    if (!_answer.hasVaultAction) {
+      return '';
+    }
+
+    const unsupportedMarker = 'Atlas could not apply:';
+
+    final markerIndex = _answer.answer.indexOf(
+      unsupportedMarker,
+    );
+
+    if (markerIndex == -1) {
+      return _answer.answer;
+    }
+
+    return _answer.answer
+        .substring(0, markerIndex)
+        .trim();
+  }
+
+  String? get _previewMatchText {
+    final count = _answer.previewMatchCount;
+
+    if (count == null) {
+      return null;
+    }
+
+    if (count == 1) {
+      return '1 collectible matches this request.';
+    }
+
+    return '$count collectibles match this request.';
+  }
+
+  String? get _friendlyUnsupportedAnswerText {
+    if (_answer.unsupportedParts.isEmpty) {
+      return null;
+    }
+
+    return _answer.unsupportedParts.map((part) {
+      final formatted = part.isEmpty
+          ? part
+          : part[0].toUpperCase() + part.substring(1);
+
+      return '$formatted is not supported yet.';
+    }).join('\n');
+  }
+
+  List<String> get _unsupportedSuggestionQuestions {
+    final unsupportedParts = _answer.unsupportedParts
+        .map((part) => part.toLowerCase())
+        .toSet();
+
+    final suggestions = <String>[];
+
+    void addSuggestions(List<String> values) {
+      for (final value in values) {
+        if (!suggestions.contains(value)) {
+          suggestions.add(value);
+        }
+      }
+    }
+
+    if (unsupportedParts.contains('value-history filtering')) {
+      addSuggestions(
+        const [
+          'Show my most valuable Pops',
+          'Show Pops over \$50',
+          'Show Pops between \$25 and \$100',
+        ],
+      );
+    }
+
+    if (unsupportedParts.contains('release-year filtering')) {
+      addSuggestions(
+        const [
+          'Find my Stitch Pops',
+          'Show my exclusives',
+          'Show my variants',
+        ],
+      );
+    }
+
+    if (unsupportedParts.contains('condition filtering')) {
+      addSuggestions(
+        const [
+          'Show Pops that need values',
+          'Show my signed Pops',
+          'Show my limited Pops',
+        ],
+      );
+    }
+
+    if (unsupportedParts.contains('price-paid filtering')) {
+      addSuggestions(
+        const [
+          'Show Pops over \$50',
+          'Show my most valuable Pops',
+          'Show Pops that need values',
+        ],
+      );
+    }
+
+    return suggestions.take(3).toList();
+  }
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
@@ -271,6 +387,9 @@ class _VaultAskAtlasSheetState extends State<_VaultAskAtlasSheet> {
                 child: TextField(
                   controller: _questionController,
                   textInputAction: TextInputAction.send,
+                  onChanged: (_) {
+                    setState(() {});
+                  },
                   onSubmitted: (_) => _submitQuestion(),
                   decoration: InputDecoration(
                     labelText: 'Ask about your Vault',
@@ -278,12 +397,25 @@ class _VaultAskAtlasSheetState extends State<_VaultAskAtlasSheet> {
                     prefixIcon: const Icon(
                       Icons.chat_bubble_outline_rounded,
                     ),
-                    suffixIcon: IconButton(
-                      tooltip: 'Ask Atlas',
-                      onPressed: _submitQuestion,
-                      icon: const Icon(
-                        Icons.arrow_upward_rounded,
-                      ),
+                    suffixIcon: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (_questionController.text.isNotEmpty)
+                          IconButton(
+                            tooltip: 'Clear question',
+                            onPressed: _clearQuestion,
+                            icon: const Icon(
+                              Icons.clear_rounded,
+                            ),
+                          ),
+                        IconButton(
+                          tooltip: 'Ask Atlas',
+                          onPressed: _submitQuestion,
+                          icon: const Icon(
+                            Icons.arrow_upward_rounded,
+                          ),
+                        ),
+                      ],
                     ),
                     border: const OutlineInputBorder(),
                   ),
@@ -311,10 +443,31 @@ class _VaultAskAtlasSheetState extends State<_VaultAskAtlasSheet> {
                       ],
                     ),
                     const SizedBox(height: AtlasSpacing.md),
-                    Text(
-                      _answer.answer,
-                      style: AtlasTypography.bodyMedium,
-                    ),
+                    if (_supportedAnswerText.isNotEmpty)
+                      Text(
+                        _supportedAnswerText,
+                        style: AtlasTypography.bodyMedium.copyWith(
+                          color: AtlasColors.textPrimary,
+                        ),
+                      ),
+
+                    if (_previewMatchText != null) ...[
+                      const SizedBox(height: 12),
+                      _VaultQueryPreviewPanel(
+                        message: _previewMatchText!,
+                      ),
+                    ],
+                    if (_friendlyUnsupportedAnswerText != null) ...[
+                      if (_supportedAnswerText.isNotEmpty)
+                        const SizedBox(height: AtlasSpacing.md),
+                      _UnsupportedRequestPanel(
+                        message: _friendlyUnsupportedAnswerText!,
+                        isPartial: _answer.hasVaultAction,
+                        suggestionQuestions:
+                        _unsupportedSuggestionQuestions,
+                        onAskQuestion: _askSuggestedQuestion,
+                      ),
+                    ],
                     const SizedBox(height: AtlasSpacing.lg),
                     Text(
                       'Atlas Tip',
@@ -394,6 +547,146 @@ class _VaultAskAtlasSheetState extends State<_VaultAskAtlasSheet> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+class _UnsupportedRequestPanel extends StatelessWidget {
+  const _UnsupportedRequestPanel({
+    required this.message,
+    required this.isPartial,
+    required this.suggestionQuestions,
+    required this.onAskQuestion,
+  });
+
+  final String message;
+  final bool isPartial;
+  final List<String> suggestionQuestions;
+  final ValueChanged<String> onAskQuestion;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(
+        AtlasSpacing.md,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.amber.withValues(
+          alpha: 0.10,
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Colors.amber.withValues(
+            alpha: 0.45,
+          ),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(
+            Icons.warning_amber_rounded,
+            color: Colors.amber,
+          ),
+          const SizedBox(width: AtlasSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isPartial
+                      ? 'Some request details were not applied'
+                      : 'This request is not supported yet',
+                  style: AtlasTypography.bodyMedium.copyWith(
+                    color: Colors.amber,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: AtlasSpacing.xs),
+                Text(
+                  message,
+                  style: AtlasTypography.bodySmall.copyWith(
+                    color: AtlasColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: AtlasSpacing.md),
+                Text(
+                  'Try asking:',
+                  style: AtlasTypography.bodySmall.copyWith(
+                    color: Colors.amber,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: AtlasSpacing.sm),
+                Wrap(
+                  spacing: AtlasSpacing.sm,
+                  runSpacing: AtlasSpacing.sm,
+                  children: suggestionQuestions
+                      .map(
+                        (question) => ActionChip(
+                      avatar: const Icon(
+                        Icons.auto_awesome_rounded,
+                        size: 16,
+                      ),
+                      label: Text(question),
+                      onPressed: () {
+                        onAskQuestion(question);
+                      },
+                    ),
+                  )
+                      .toList(),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+class _VaultQueryPreviewPanel extends StatelessWidget {
+  const _VaultQueryPreviewPanel({
+    required this.message,
+  });
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        color: theme.colorScheme.primary.withValues(
+          alpha: 0.08,
+        ),
+        border: Border.all(
+          color: theme.colorScheme.primary.withValues(
+            alpha: 0.22,
+          ),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.manage_search_rounded,
+            color: theme.colorScheme.primary,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              message,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
