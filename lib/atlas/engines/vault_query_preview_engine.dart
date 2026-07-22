@@ -3,13 +3,32 @@ import '../../models/pop.dart';
 class VaultQueryPreviewResult {
   const VaultQueryPreviewResult({
     required this.matches,
+    required this.totalValue,
+    required this.highestValue,
+    required this.averageValue,
+    required this.ownedCount,
+    required this.wishlistCount,
+    required this.missingValueCount,
   });
 
   final List<Pop> matches;
 
+  final double totalValue;
+  final double highestValue;
+  final double averageValue;
+
+  final int ownedCount;
+  final int wishlistCount;
+  final int missingValueCount;
+
   int get matchCount => matches.length;
 
   bool get hasMatches => matches.isNotEmpty;
+
+  bool get hasRecordedValue => totalValue > 0;
+
+  int get recordedValueCount =>
+      matchCount - missingValueCount;
 }
 
 class VaultQueryPreviewEngine {
@@ -63,10 +82,48 @@ class VaultQueryPreviewEngine {
       sortKey,
     );
 
+    final totalValue = sortedResults.fold<double>(
+      0,
+          (sum, pop) => sum + pop.value,
+    );
+
+    final highestValue = sortedResults.isEmpty
+        ? 0.0
+        : sortedResults
+        .map((pop) => pop.value)
+        .reduce(
+          (current, next) =>
+      next > current ? next : current,
+    );
+
+    final missingValueCount = sortedResults
+        .where((pop) => pop.value <= 0)
+        .length;
+
+    final recordedValueCount =
+        sortedResults.length - missingValueCount;
+
+    final averageValue = recordedValueCount == 0
+        ? 0.0
+        : totalValue / recordedValueCount;
+
+    final wishlistCount = sortedResults
+        .where((pop) => pop.isWishlist)
+        .length;
+
+    final ownedCount =
+        sortedResults.length - wishlistCount;
+
     return VaultQueryPreviewResult(
       matches: List<Pop>.unmodifiable(
         sortedResults,
       ),
+      totalValue: totalValue,
+      highestValue: highestValue,
+      averageValue: averageValue,
+      ownedCount: ownedCount,
+      wishlistCount: wishlistCount,
+      missingValueCount: missingValueCount,
     );
   }
 
