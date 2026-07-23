@@ -18,6 +18,12 @@ class VaultContextAnswer {
     this.vaultSortKey,
     this.unsupportedParts = const [],
     this.previewMatchCount,
+    this.previewTotalValue,
+    this.previewHighestValue,
+    this.previewAverageValue,
+    this.previewOwnedCount,
+    this.previewWishlistCount,
+    this.previewMissingValueCount,
   });
 
   final String title;
@@ -48,8 +54,23 @@ class VaultContextAnswer {
 
   /// Number of current Vault records matching the supported query.
   final int? previewMatchCount;
+  final double? previewTotalValue;
+  final double? previewHighestValue;
+  final double? previewAverageValue;
+
+  final int? previewOwnedCount;
+  final int? previewWishlistCount;
+  final int? previewMissingValueCount;
 
   bool get hasPreviewMatchCount => previewMatchCount != null;
+  bool get hasPreviewSummary =>
+      previewMatchCount != null &&
+          previewTotalValue != null &&
+          previewHighestValue != null &&
+          previewAverageValue != null &&
+          previewOwnedCount != null &&
+          previewWishlistCount != null &&
+          previewMissingValueCount != null;
 
   bool get hasUnsupportedParts => unsupportedParts.isNotEmpty;
 
@@ -468,6 +489,12 @@ class VaultContextExplainerEngine {
       vaultSortKey: intent.sortKey,
       unsupportedParts: intent.unsupportedParts,
       previewMatchCount: previewResult?.matchCount,
+      previewTotalValue: previewResult?.totalValue,
+      previewHighestValue: previewResult?.highestValue,
+      previewAverageValue: previewResult?.averageValue,
+      previewOwnedCount: previewResult?.ownedCount,
+      previewWishlistCount: previewResult?.wishlistCount,
+      previewMissingValueCount: previewResult?.missingValueCount,
     );
   }
 

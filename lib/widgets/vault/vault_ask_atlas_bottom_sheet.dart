@@ -237,26 +237,14 @@ class _VaultAskAtlasSheetState extends State<_VaultAskAtlasSheet> {
 
   String get _supportedAnswerText {
     if (!_hasUnsupportedDetails) {
-      return _answer.answer;
+      return _answer.answer.trim();
     }
 
     if (!_answer.hasVaultAction) {
       return '';
     }
 
-    const unsupportedMarker = 'Atlas could not apply:';
-
-    final markerIndex = _answer.answer.indexOf(
-      unsupportedMarker,
-    );
-
-    if (markerIndex == -1) {
-      return _answer.answer;
-    }
-
-    return _answer.answer
-        .substring(0, markerIndex)
-        .trim();
+    return _answer.answer.trim();
   }
 
   String? get _previewMatchText {
@@ -455,6 +443,12 @@ class _VaultAskAtlasSheetState extends State<_VaultAskAtlasSheet> {
                       const SizedBox(height: 12),
                       _VaultQueryPreviewPanel(
                         message: _previewMatchText!,
+                        totalValue: _answer.previewTotalValue,
+                        highestValue: _answer.previewHighestValue,
+                        averageValue: _answer.previewAverageValue,
+                        ownedCount: _answer.previewOwnedCount,
+                        wishlistCount: _answer.previewWishlistCount,
+                        missingValueCount: _answer.previewMissingValueCount,
                       ),
                     ],
                     if (_friendlyUnsupportedAnswerText != null) ...[
@@ -648,13 +642,71 @@ class _UnsupportedRequestPanel extends StatelessWidget {
 class _VaultQueryPreviewPanel extends StatelessWidget {
   const _VaultQueryPreviewPanel({
     required this.message,
+    required this.totalValue,
+    required this.highestValue,
+    required this.averageValue,
+    required this.ownedCount,
+    required this.wishlistCount,
+    required this.missingValueCount,
   });
 
   final String message;
 
+  final double? totalValue;
+  final double? highestValue;
+  final double? averageValue;
+
+  final int? ownedCount;
+  final int? wishlistCount;
+  final int? missingValueCount;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
+    final summaryItems = <String>[];
+
+    if (ownedCount != null && ownedCount! > 0) {
+      summaryItems.add(
+        ownedCount == 1
+            ? '1 owned collectible'
+            : '$ownedCount owned collectibles',
+      );
+    }
+
+    if (wishlistCount != null && wishlistCount! > 0) {
+      summaryItems.add(
+        wishlistCount == 1
+            ? '1 wishlist collectible'
+            : '$wishlistCount wishlist collectibles',
+      );
+    }
+
+    if (totalValue != null && totalValue! > 0) {
+      summaryItems.add(
+        'Total value: \$${totalValue!.toStringAsFixed(2)}',
+      );
+    }
+
+    if (highestValue != null && highestValue! > 0) {
+      summaryItems.add(
+        'Highest value: \$${highestValue!.toStringAsFixed(2)}',
+      );
+    }
+
+    if (averageValue != null && averageValue! > 0) {
+      summaryItems.add(
+        'Average value: \$${averageValue!.toStringAsFixed(2)}',
+      );
+    }
+
+    if (missingValueCount != null && missingValueCount! > 0) {
+      summaryItems.add(
+        missingValueCount == 1
+            ? '1 collectible needs a value'
+            : '$missingValueCount collectibles need values',
+      );
+    }
 
     return Container(
       width: double.infinity,
@@ -679,11 +731,30 @@ class _VaultQueryPreviewPanel extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(
-              message,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  message,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                if (summaryItems.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  ...summaryItems.map(
+                        (item) => Padding(
+                      padding: const EdgeInsets.only(
+                        bottom: 4,
+                      ),
+                      child: Text(
+                        '• $item',
+                        style: theme.textTheme.bodySmall,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
         ],
