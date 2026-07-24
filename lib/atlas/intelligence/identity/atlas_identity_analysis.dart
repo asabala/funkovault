@@ -1,7 +1,9 @@
-import '../funko/retailer/funko_retailer_detection_result.dart';
-import '../funko/retailer/funko_retailer_evidence.dart';
-import '../funko/sticker/funko_sticker_detection_result.dart';
-import '../funko/sticker/funko_sticker_evidence.dart';
+import '../event/funko_event_detection_result.dart';
+import '../event/funko_event_evidence.dart';
+import '../retailer/funko_retailer_detection_result.dart';
+import '../retailer/funko_retailer_evidence.dart';
+import '../sticker/funko_sticker_detection_result.dart';
+import '../sticker/funko_sticker_evidence.dart';
 import '../variant/atlas_variant_detection_result.dart';
 import '../variant/atlas_variant_evidence.dart';
 
@@ -20,6 +22,10 @@ final class AtlasIdentityAnalysis {
     const FunkoStickerDetectionResult(
       evidence: <FunkoStickerEvidence>[],
     ),
+    this.eventResult =
+    const FunkoEventDetectionResult(
+      evidence: <FunkoEventEvidence>[],
+    ),
   });
 
   final AtlasVariantDetectionResult variantResult;
@@ -28,16 +34,20 @@ final class AtlasIdentityAnalysis {
 
   final FunkoStickerDetectionResult stickerResult;
 
+  final FunkoEventDetectionResult eventResult;
+
   bool get hasFindings {
     return variantResult.hasVariants ||
         retailerResult.hasRetailers ||
-        stickerResult.hasStickers;
+        stickerResult.hasStickers ||
+        eventResult.hasEvents;
   }
 
   AtlasIdentityAnalysis copyWith({
     AtlasVariantDetectionResult? variantResult,
     FunkoRetailerDetectionResult? retailerResult,
     FunkoStickerDetectionResult? stickerResult,
+    FunkoEventDetectionResult? eventResult,
   }) {
     return AtlasIdentityAnalysis(
       variantResult:
@@ -46,6 +56,8 @@ final class AtlasIdentityAnalysis {
       retailerResult ?? this.retailerResult,
       stickerResult:
       stickerResult ?? this.stickerResult,
+      eventResult:
+      eventResult ?? this.eventResult,
     );
   }
 }

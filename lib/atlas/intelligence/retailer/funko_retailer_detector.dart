@@ -1,6 +1,6 @@
-import '../../identity/atlas_identity_analysis.dart';
-import '../../identity/atlas_identity_detector.dart';
-import '../../identity/atlas_identity_phrase.dart';
+import '../identity/atlas_identity_analysis.dart';
+import '../identity/atlas_identity_detector.dart';
+import '../identity/atlas_identity_phrase.dart';
 import 'funko_retailer.dart';
 import 'funko_retailer_detection_result.dart';
 import 'funko_retailer_evidence.dart';

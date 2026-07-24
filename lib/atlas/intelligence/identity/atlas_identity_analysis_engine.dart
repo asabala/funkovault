@@ -1,10 +1,11 @@
-import '../funko/retailer/funko_retailer_detector.dart';
-import '../funko/sticker/funko_sticker_detector.dart';
+import '../retailer/funko_retailer_detector.dart';
+import '../sticker/funko_sticker_detector.dart';
 import '../variant/atlas_variant_detector.dart';
 import 'atlas_identity_analysis.dart';
 import 'atlas_identity_detector.dart';
 import 'atlas_identity_phrase_tokenizer.dart';
 import 'atlas_identity_tokenizer.dart';
+import '../event/funko_event_detector.dart';
 
 // Coordinates the Atlas identity analysis pipeline.
 //
@@ -30,6 +31,7 @@ final class AtlasIdentityAnalysisEngine {
             AtlasVariantDetector(),
             FunkoRetailerDetector(),
             FunkoStickerDetector(),
+            FunkoEventDetector(),
           ];
 
   final AtlasIdentityTokenizer tokenizer;

@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:funkovault2/atlas/intelligence/funko/retailer/funko_retailer.dart';
-import 'package:funkovault2/atlas/intelligence/funko/sticker/funko_sticker_type.dart';
+import 'package:funkovault2/atlas/intelligence/event/funko_event.dart';
+import 'package:funkovault2/atlas/intelligence/retailer/funko_retailer.dart';
+import 'package:funkovault2/atlas/intelligence/sticker/funko_sticker_type.dart';
 import 'package:funkovault2/atlas/intelligence/identity/atlas_identity_analysis_engine.dart';
 import 'package:funkovault2/atlas/intelligence/variant/atlas_variant_type.dart';
 
@@ -162,9 +163,9 @@ void main() {
       );
     });
 
-    test('detects Shared Exclusive sticker', () {
+    test('detects Shared Convention sticker', () {
       final result = engine.analyze(
-        'Batman #01 Shared Exclusive',
+        'Batman #01 Shared Convention',
       );
 
       expect(
@@ -177,7 +178,7 @@ void main() {
 
     test('detects Official Convention sticker', () {
       final result = engine.analyze(
-        'Batman #01 Official Convention Exclusive',
+        'Batman #01 Official Convention',
       );
 
       expect(
@@ -187,5 +188,86 @@ void main() {
         isTrue,
       );
     });
+
+    test('detects SDCC event', () {
+      final result = engine.analyze(
+        'Batman #01 SDCC',
+      );
+
+      expect(
+        result.eventResult.contains(
+          FunkoEvent.sdcc,
+        ),
+        isTrue,
+      );
+    });
+
+    test('detects NYCC event', () {
+      final result = engine.analyze(
+        'Batman #01 New York Comic Con',
+      );
+
+      expect(
+        result.eventResult.contains(
+          FunkoEvent.nycc,
+        ),
+        isTrue,
+      );
+    });
+
+    test('detects Funko Fundays event', () {
+      final result = engine.analyze(
+        'Batman #01 Funko Fundays',
+      );
+
+      expect(
+        result.eventResult.contains(
+          FunkoEvent.fundays,
+        ),
+        isTrue,
+      );
+    });
+
+    test(
+      'detects variant, retailer, sticker and event together',
+          () {
+        final result = engine.analyze(
+          'Batman #01 SDCC Hot Topic Glow Special Edition',
+        );
+
+        expect(
+          result.variantResult.contains(
+            AtlasVariantType.glow,
+          ),
+          isTrue,
+        );
+
+        expect(
+          result.retailerResult.contains(
+            FunkoRetailer.hotTopic,
+          ),
+          isTrue,
+        );
+
+        expect(
+          result.stickerResult.contains(
+            FunkoStickerType.specialEdition,
+          ),
+          isTrue,
+        );
+
+        expect(
+          result.eventResult.contains(
+            FunkoEvent.sdcc,
+          ),
+          isTrue,
+        );
+
+        expect(
+          result.hasFindings,
+          isTrue,
+        );
+      },
+    );
   });
 }

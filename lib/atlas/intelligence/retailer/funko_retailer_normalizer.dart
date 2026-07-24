@@ -7,7 +7,16 @@ import 'funko_retailer.dart';
 // of Atlas works with strongly typed retailer values.
 final class FunkoRetailerNormalizer {
   const FunkoRetailerNormalizer();
-
+  Map<FunkoRetailer, List<String>> get aliases {
+    return Map<FunkoRetailer, List<String>>.unmodifiable(
+      _aliases.map(
+            (key, value) => MapEntry(
+          key,
+          List<String>.unmodifiable(value),
+        ),
+      ),
+    );
+  }
   FunkoRetailer normalize(
       String? value,
       ) {

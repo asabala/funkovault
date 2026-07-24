@@ -1,10 +1,10 @@
-import '../../identity/atlas_identity_analysis.dart';
-import '../../identity/atlas_identity_detector.dart';
-import '../../identity/atlas_identity_phrase.dart';
+import '../identity/atlas_identity_analysis.dart';
+import '../identity/atlas_identity_detector.dart';
+import '../identity/atlas_identity_phrase.dart';
 import 'funko_sticker_detection_result.dart';
 import 'funko_sticker_evidence.dart';
-import 'funko_sticker_evidence_source.dart';
-import 'funko_sticker_normalizer.dart';
+import '../sticker/funko_sticker_evidence_source.dart';
+import '../sticker/funko_sticker_normalizer.dart';
 import 'funko_sticker_type.dart';
 
 // Detects sticker classifications and contributes them to the shared

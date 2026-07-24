@@ -7,7 +7,16 @@ import 'funko_sticker_type.dart';
 // which are detected by separate intelligence modules.
 final class FunkoStickerNormalizer {
   const FunkoStickerNormalizer();
-
+  Map<FunkoStickerType, List<String>> get aliases {
+    return Map<FunkoStickerType, List<String>>.unmodifiable(
+      _aliases.map(
+            (key, value) => MapEntry(
+          key,
+          List<String>.unmodifiable(value),
+        ),
+      ),
+    );
+  }
   FunkoStickerType normalize(
       String? value,
       ) {

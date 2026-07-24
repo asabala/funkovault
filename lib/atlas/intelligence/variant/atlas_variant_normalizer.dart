@@ -6,7 +6,16 @@ import 'atlas_variant_type.dart';
 // markers are intentionally handled by separate intelligence layers.
 final class AtlasVariantNormalizer {
   const AtlasVariantNormalizer();
-
+  Map<AtlasVariantType, List<String>> get aliases {
+    return Map<AtlasVariantType, List<String>>.unmodifiable(
+      _aliases.map(
+            (key, value) => MapEntry(
+          key,
+          List<String>.unmodifiable(value),
+        ),
+      ),
+    );
+  }
   AtlasVariantType normalize(
       String? value,
       ) {
