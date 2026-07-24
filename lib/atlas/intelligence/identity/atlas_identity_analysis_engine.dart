@@ -1,4 +1,5 @@
 import '../funko/retailer/funko_retailer_detector.dart';
+import '../funko/sticker/funko_sticker_detector.dart';
 import '../variant/atlas_variant_detector.dart';
 import 'atlas_identity_analysis.dart';
 import 'atlas_identity_detector.dart';
@@ -28,6 +29,7 @@ final class AtlasIdentityAnalysisEngine {
           const <AtlasIdentityDetector>[
             AtlasVariantDetector(),
             FunkoRetailerDetector(),
+            FunkoStickerDetector(),
           ];
 
   final AtlasIdentityTokenizer tokenizer;

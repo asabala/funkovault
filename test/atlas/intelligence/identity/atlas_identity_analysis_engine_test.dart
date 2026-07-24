@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:funkovault2/atlas/intelligence/funko/retailer/funko_retailer.dart';
+import 'package:funkovault2/atlas/intelligence/funko/sticker/funko_sticker_type.dart';
 import 'package:funkovault2/atlas/intelligence/identity/atlas_identity_analysis_engine.dart';
 import 'package:funkovault2/atlas/intelligence/variant/atlas_variant_type.dart';
 
@@ -147,5 +148,44 @@ void main() {
         );
       },
     );
+
+    test('detects Special Edition sticker', () {
+      final result = engine.analyze(
+        'Batman #01 Special Edition',
+      );
+
+      expect(
+        result.stickerResult.contains(
+          FunkoStickerType.specialEdition,
+        ),
+        isTrue,
+      );
+    });
+
+    test('detects Shared Exclusive sticker', () {
+      final result = engine.analyze(
+        'Batman #01 Shared Exclusive',
+      );
+
+      expect(
+        result.stickerResult.contains(
+          FunkoStickerType.sharedConvention,
+        ),
+        isTrue,
+      );
+    });
+
+    test('detects Official Convention sticker', () {
+      final result = engine.analyze(
+        'Batman #01 Official Convention Exclusive',
+      );
+
+      expect(
+        result.stickerResult.contains(
+          FunkoStickerType.officialConvention,
+        ),
+        isTrue,
+      );
+    });
   });
 }

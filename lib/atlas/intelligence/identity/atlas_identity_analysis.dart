@@ -1,5 +1,7 @@
 import '../funko/retailer/funko_retailer_detection_result.dart';
 import '../funko/retailer/funko_retailer_evidence.dart';
+import '../funko/sticker/funko_sticker_detection_result.dart';
+import '../funko/sticker/funko_sticker_evidence.dart';
 import '../variant/atlas_variant_detection_result.dart';
 import '../variant/atlas_variant_evidence.dart';
 
@@ -14,30 +16,36 @@ final class AtlasIdentityAnalysis {
     const FunkoRetailerDetectionResult(
       evidence: <FunkoRetailerEvidence>[],
     ),
+    this.stickerResult =
+    const FunkoStickerDetectionResult(
+      evidence: <FunkoStickerEvidence>[],
+    ),
   });
 
-  final AtlasVariantDetectionResult
-  variantResult;
+  final AtlasVariantDetectionResult variantResult;
 
-  final FunkoRetailerDetectionResult
-  retailerResult;
+  final FunkoRetailerDetectionResult retailerResult;
+
+  final FunkoStickerDetectionResult stickerResult;
 
   bool get hasFindings {
     return variantResult.hasVariants ||
-        retailerResult.hasRetailers;
+        retailerResult.hasRetailers ||
+        stickerResult.hasStickers;
   }
 
   AtlasIdentityAnalysis copyWith({
-    AtlasVariantDetectionResult?
-    variantResult,
-    FunkoRetailerDetectionResult?
-    retailerResult,
+    AtlasVariantDetectionResult? variantResult,
+    FunkoRetailerDetectionResult? retailerResult,
+    FunkoStickerDetectionResult? stickerResult,
   }) {
     return AtlasIdentityAnalysis(
       variantResult:
       variantResult ?? this.variantResult,
       retailerResult:
       retailerResult ?? this.retailerResult,
+      stickerResult:
+      stickerResult ?? this.stickerResult,
     );
   }
 }
