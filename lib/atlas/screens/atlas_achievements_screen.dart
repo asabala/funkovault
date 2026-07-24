@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import '../../services/app_state.dart';
 import '../../widgets/atlas/atlas_greeting_card.dart';
 import '../../widgets/vault/vault_scroll_view.dart';
-import '../engines/atlas_achievement_engine.dart';
+import '../engines/engagement/atlas_achievement_engine.dart';
 import '../repositories/vault_repository.dart';
 
 class AtlasAchievementsScreen extends StatelessWidget {

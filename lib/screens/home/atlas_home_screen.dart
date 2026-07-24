@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../atlas/coordinator/atlas_dashboard.dart';
 import '../../atlas/coordinator/atlas_dashboard_model.dart';
-import '../../atlas/engines/vault_context_explainer_engine.dart';
+import '../../atlas/engines/context/vault_context_explainer_engine.dart';
 import '../../atlas/screens/atlas_timeline_screen.dart';
 import '../../services/app_state.dart';
 import '../../theme/atlas_colors.dart';

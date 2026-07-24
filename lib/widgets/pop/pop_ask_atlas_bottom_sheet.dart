@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../atlas/engines/pop_context_explainer_engine.dart';
+import '../../atlas/engines/context/pop_context_explainer_engine.dart';
 import '../../models/activity.dart';
 import '../../models/pop.dart';
 import '../../theme/atlas_colors.dart';

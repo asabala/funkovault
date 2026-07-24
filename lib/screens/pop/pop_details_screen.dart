@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../atlas/engines/atlas_intelligence_engine.dart';
-import '../../atlas/engines/pop_activity_summary_engine.dart';
-import '../../atlas/engines/pop_context_explainer_engine.dart';
+import '../../atlas/engines/intelligence/atlas_intelligence_engine.dart';
+import '../../atlas/engines/collection/pop_activity_summary_engine.dart';
+import '../../atlas/engines/context/pop_context_explainer_engine.dart';
 import '../../atlas/screens/atlas_timeline_screen.dart';
 import '../../widgets/pop/pop_ask_atlas_bottom_sheet.dart';
 import 'edit_pop_screen.dart';

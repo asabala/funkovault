@@ -1,11 +1,11 @@
 import '../../models/pop.dart';
-import '../engines/atlas_collector_dna_engine.dart';
-import '../engines/atlas_confidence_engine.dart';
-import '../engines/atlas_decision_engine.dart';
-import '../engines/atlas_memory_engine.dart';
-import '../engines/atlas_mission_engine.dart';
-import '../engines/atlas_recommendation_engine_v2.dart';
-import '../engines/atlas_reflection_engine.dart';
+import '../engines/collection/atlas_collector_dna_engine.dart';
+import '../engines/intelligence/atlas_confidence_engine.dart';
+import '../engines/intelligence/atlas_decision_engine.dart';
+import '../engines/intelligence/atlas_memory_engine.dart';
+import '../engines/engagement/atlas_mission_engine.dart';
+import '../engines/intelligence/atlas_recommendation_engine_v2.dart';
+import '../engines/intelligence/atlas_reflection_engine.dart';
 
 class AtlasCoreReport {
   const AtlasCoreReport({

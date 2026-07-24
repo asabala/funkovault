@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../atlas/coordinator/atlas_dashboard_model.dart';
-import '../../atlas/engines/vault_context_explainer_engine.dart';
+import '../../atlas/engines/context/vault_context_explainer_engine.dart';
 import '../../theme/atlas_colors.dart';
 import '../../theme/atlas_spacing.dart';
 import '../../theme/atlas_typography.dart';

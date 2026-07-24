@@ -1,9 +1,9 @@
 import '../../services/app_state.dart';
-import '../engines/atlas_achievement_engine.dart';
-import '../engines/atlas_collector_dna_engine.dart';
-import '../engines/atlas_collector_score_engine.dart';
-import '../engines/atlas_confidence_engine.dart';
-import '../engines/atlas_memory_engine.dart';
+import '../engines/engagement/atlas_achievement_engine.dart';
+import '../engines/collection/atlas_collector_dna_engine.dart';
+import '../engines/collection/atlas_collector_score_engine.dart';
+import '../engines/intelligence/atlas_confidence_engine.dart';
+import '../engines/intelligence/atlas_memory_engine.dart';
 import 'atlas_dashboard_model.dart';
 
 class AtlasDashboard {

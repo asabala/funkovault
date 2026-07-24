@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../atlas/engines/atlas_insight_engine.dart';
-import '../../atlas/engines/atlas_recommendation_engine.dart';
+import '../../atlas/engines/intelligence/atlas_insight_engine.dart';
+import '../../atlas/engines/intelligence/atlas_recommendation_engine.dart';
 import '../../models/activity.dart';
 import '../../atlas/widgets/atlas_insight_card.dart';
 import '../../constants/collector_identity_options.dart';
