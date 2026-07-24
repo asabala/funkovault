@@ -1,14 +1,14 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:funkovault2/atlas/intelligence/event/funko_event.dart';
+import 'package:funkovault2/atlas/intelligence/identity/atlas_identity_analysis_engine.dart';
 import 'package:funkovault2/atlas/intelligence/retailer/funko_retailer.dart';
 import 'package:funkovault2/atlas/intelligence/sticker/funko_sticker_type.dart';
-import 'package:funkovault2/atlas/intelligence/identity/atlas_identity_analysis_engine.dart';
 import 'package:funkovault2/atlas/intelligence/variant/atlas_variant_type.dart';
 
 void main() {
   group('AtlasIdentityAnalysisEngine', () {
     final AtlasIdentityAnalysisEngine engine =
-    AtlasIdentityAnalysisEngine();
+    AtlasIdentityAnalysisEngine.create();
 
     test('detects glow variant', () {
       final result = engine.analyze(

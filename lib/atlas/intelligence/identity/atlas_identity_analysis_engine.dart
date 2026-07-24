@@ -1,11 +1,13 @@
+import '../event/funko_event_detector.dart';
+import '../registry/atlas_registry_bootstrap.dart';
 import '../retailer/funko_retailer_detector.dart';
 import '../sticker/funko_sticker_detector.dart';
 import '../variant/atlas_variant_detector.dart';
 import 'atlas_identity_analysis.dart';
 import 'atlas_identity_detector.dart';
+import 'atlas_identity_lookup.dart';
 import 'atlas_identity_phrase_tokenizer.dart';
 import 'atlas_identity_tokenizer.dart';
-import '../event/funko_event_detector.dart';
 
 // Coordinates the Atlas identity analysis pipeline.
 //
@@ -19,28 +21,49 @@ import '../event/funko_event_detector.dart';
 //   ↓
 // AtlasIdentityAnalysis
 final class AtlasIdentityAnalysisEngine {
-  const AtlasIdentityAnalysisEngine({
-    this.tokenizer =
-    const AtlasIdentityTokenizer(),
+  AtlasIdentityAnalysisEngine({
+    required AtlasIdentityLookup lookup,
+    this.tokenizer = const AtlasIdentityTokenizer(),
     this.phraseTokenizer =
     const AtlasIdentityPhraseTokenizer(),
     List<AtlasIdentityDetector>? detectors,
-  }) : detectors =
-      detectors ??
-          const <AtlasIdentityDetector>[
-            AtlasVariantDetector(),
-            FunkoRetailerDetector(),
-            FunkoStickerDetector(),
-            FunkoEventDetector(),
-          ];
+  })  : lookup = lookup,
+        detectors =
+            detectors ??
+                <AtlasIdentityDetector>[
+                  AtlasVariantDetector(
+                    lookup: lookup,
+                  ),
+                  FunkoRetailerDetector(
+                    lookup: lookup,
+                  ),
+                  FunkoStickerDetector(
+                    lookup: lookup,
+                  ),
+                  FunkoEventDetector(
+                    lookup: lookup,
+                  ),
+                ];
+
+  factory AtlasIdentityAnalysisEngine.create() {
+    final registry =
+    const AtlasRegistryBootstrap().build();
+
+    final lookup =
+    AtlasIdentityLookup(registry);
+
+    return AtlasIdentityAnalysisEngine(
+      lookup: lookup,
+    );
+  }
+
+  final AtlasIdentityLookup lookup;
 
   final AtlasIdentityTokenizer tokenizer;
 
-  final AtlasIdentityPhraseTokenizer
-  phraseTokenizer;
+  final AtlasIdentityPhraseTokenizer phraseTokenizer;
 
-  final List<AtlasIdentityDetector>
-  detectors;
+  final List<AtlasIdentityDetector> detectors;
 
   AtlasIdentityAnalysis analyze(
       String? text,

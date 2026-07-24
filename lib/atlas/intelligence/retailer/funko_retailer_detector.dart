@@ -1,22 +1,20 @@
 import '../identity/atlas_identity_analysis.dart';
 import '../identity/atlas_identity_detector.dart';
+import '../identity/atlas_identity_lookup.dart';
 import '../identity/atlas_identity_phrase.dart';
 import 'funko_retailer.dart';
 import 'funko_retailer_detection_result.dart';
 import 'funko_retailer_evidence.dart';
 import 'funko_retailer_evidence_source.dart';
-import 'funko_retailer_normalizer.dart';
 
 // Detects retailers and contributes them to the shared identity analysis.
 final class FunkoRetailerDetector
     implements AtlasIdentityDetector {
   const FunkoRetailerDetector({
-    FunkoRetailerNormalizer? normalizer,
-  }) : _normalizer =
-      normalizer ??
-          const FunkoRetailerNormalizer();
+    required this.lookup,
+  });
 
-  final FunkoRetailerNormalizer _normalizer;
+  final AtlasIdentityLookup lookup;
 
   @override
   AtlasIdentityAnalysis detect({
@@ -29,12 +27,12 @@ final class FunkoRetailerDetector
 
     for (final AtlasIdentityPhrase phrase
     in phrases) {
-      final FunkoRetailer retailer =
-      _normalizer.normalize(
+      final FunkoRetailer? retailer =
+      lookup.retailer(
         phrase.normalizedText,
       );
 
-      if (retailer == FunkoRetailer.unknown) {
+      if (retailer == null) {
         continue;
       }
 

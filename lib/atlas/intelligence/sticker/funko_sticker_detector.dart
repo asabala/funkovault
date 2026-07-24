@@ -1,10 +1,10 @@
 import '../identity/atlas_identity_analysis.dart';
 import '../identity/atlas_identity_detector.dart';
+import '../identity/atlas_identity_lookup.dart';
 import '../identity/atlas_identity_phrase.dart';
 import 'funko_sticker_detection_result.dart';
 import 'funko_sticker_evidence.dart';
-import '../sticker/funko_sticker_evidence_source.dart';
-import '../sticker/funko_sticker_normalizer.dart';
+import 'funko_sticker_evidence_source.dart';
 import 'funko_sticker_type.dart';
 
 // Detects sticker classifications and contributes them to the shared
@@ -12,12 +12,10 @@ import 'funko_sticker_type.dart';
 final class FunkoStickerDetector
     implements AtlasIdentityDetector {
   const FunkoStickerDetector({
-    FunkoStickerNormalizer? normalizer,
-  }) : _normalizer =
-      normalizer ??
-          const FunkoStickerNormalizer();
+    required this.lookup,
+  });
 
-  final FunkoStickerNormalizer _normalizer;
+  final AtlasIdentityLookup lookup;
 
   @override
   AtlasIdentityAnalysis detect({
@@ -28,14 +26,13 @@ final class FunkoStickerDetector
     evidence =
     <FunkoStickerType, FunkoStickerEvidence>{};
 
-    for (final AtlasIdentityPhrase phrase
-    in phrases) {
-      final FunkoStickerType sticker =
-      _normalizer.normalize(
+    for (final AtlasIdentityPhrase phrase in phrases) {
+      final FunkoStickerType? sticker =
+      lookup.sticker(
         phrase.normalizedText,
       );
 
-      if (sticker == FunkoStickerType.unknown) {
+      if (sticker == null) {
         continue;
       }
 
@@ -44,20 +41,16 @@ final class FunkoStickerDetector
             () => FunkoStickerEvidence(
           sticker: sticker,
           confidence: 1.0,
-          source:
-          FunkoStickerEvidenceSource.rule,
+          source: FunkoStickerEvidenceSource.rule,
           rawValue: phrase.text,
-          normalizedValue:
-          phrase.normalizedText,
+          normalizedValue: phrase.normalizedText,
         ),
       );
     }
 
     return analysis.copyWith(
-      stickerResult:
-      FunkoStickerDetectionResult(
-        evidence:
-        List<FunkoStickerEvidence>.unmodifiable(
+      stickerResult: FunkoStickerDetectionResult(
+        evidence: List<FunkoStickerEvidence>.unmodifiable(
           evidence.values,
         ),
       ),

@@ -1,21 +1,20 @@
 import '../identity/atlas_identity_analysis.dart';
 import '../identity/atlas_identity_detector.dart';
+import '../identity/atlas_identity_lookup.dart';
 import '../identity/atlas_identity_phrase.dart';
 import 'atlas_variant_detection_result.dart';
 import 'atlas_variant_evidence.dart';
 import 'atlas_variant_evidence_source.dart';
-import 'atlas_variant_normalizer.dart';
 import 'atlas_variant_type.dart';
 
 // Detects variants and contributes them to the shared identity analysis.
 final class AtlasVariantDetector
     implements AtlasIdentityDetector {
   const AtlasVariantDetector({
-    AtlasVariantNormalizer? normalizer,
-  }) : _normalizer =
-      normalizer ?? const AtlasVariantNormalizer();
+    required this.lookup,
+  });
 
-  final AtlasVariantNormalizer _normalizer;
+  final AtlasIdentityLookup lookup;
 
   @override
   AtlasIdentityAnalysis detect({
@@ -26,12 +25,11 @@ final class AtlasVariantDetector
     <AtlasVariantType, AtlasVariantEvidence>{};
 
     for (final AtlasIdentityPhrase phrase in phrases) {
-      final AtlasVariantType variant =
-      _normalizer.normalize(
+      final AtlasVariantType? variant = lookup.variant(
         phrase.normalizedText,
       );
 
-      if (!variant.isSpecial) {
+      if (variant == null || !variant.isSpecial) {
         continue;
       }
 
