@@ -6,8 +6,8 @@ import '../../atlas/engines/intelligence/atlas_recommendation_engine.dart';
 import '../../atlas/services/atlas_activity_service.dart';
 import '../../atlas/widgets/atlas_insight_card.dart';
 import '../../constants/collector_identity_options.dart';
-import '../../models/funko_catalog_item.dart';
-import '../../models/pop.dart';
+import '../../atlas/catalog/models/atlas_catalog_product.dart';
+import '../../atlas/catalog/services/atlas_pop_factory.dart';
 import '../../services/app_state.dart';
 import '../../theme/atlas_colors.dart';
 import '../../theme/atlas_spacing.dart';
@@ -20,10 +20,10 @@ import '../../widgets/vault/vault_scroll_view.dart';
 class AddPopScreen extends StatefulWidget {
   const AddPopScreen({
     super.key,
-    this.catalogItem,
+    this.atlasProduct,
   });
 
-  final FunkoCatalogItem? catalogItem;
+  final AtlasCatalogProduct? atlasProduct;
 
   @override
   State<AddPopScreen> createState() => _AddPopScreenState();
@@ -50,6 +50,17 @@ class _AddPopScreenState extends State<AddPopScreen> {
   String _eventSticker = 'None';
   String _limitedEdition = 'None';
   String _signature = 'Unsigned';
+
+  String get _catalogImageUrl {
+    final Object? value =
+    widget.atlasProduct?.attributes['imageUrl'];
+
+    return value?.toString().trim() ?? '';
+  }
+
+  bool get _hasCatalogProduct {
+    return widget.atlasProduct != null;
+  }
 
   String _formatCategory(String value) {
     if (value.isEmpty) {
@@ -81,18 +92,71 @@ class _AddPopScreenState extends State<AddPopScreen> {
         .join(' ');
   }
 
+  void _applyCatalogVariant(
+      String value,
+      ) {
+    final String normalized = value.trim();
+
+    if (normalized.isEmpty ||
+        normalized.toLowerCase() == 'common') {
+      _variant = 'Common';
+      return;
+    }
+
+    if (CollectorIdentityOptions.variants.contains(normalized)) {
+      _variant = normalized;
+      return;
+    }
+
+    _variant = 'Other';
+    _customVariantController.text = normalized;
+  }
+
   @override
   void initState() {
     super.initState();
 
-    final item = widget.catalogItem;
+    final AtlasCatalogProduct? product =
+        widget.atlasProduct;
 
-    if (item != null) {
-      _nameController.text = item.title;
+    if (product == null) {
+      return;
+    }
 
-      if (item.series.isNotEmpty) {
-        _seriesController.text = item.series.first;
-        _categoryController.text = item.series.first;
+    final catalogPop =
+    AtlasPopFactory.createFromCatalog(
+      product: product,
+    );
+
+    _nameController.text = catalogPop.name;
+    _numberController.text = catalogPop.number;
+    _categoryController.text = _formatCategory(
+      catalogPop.category,
+    );
+    _seriesController.text = catalogPop.series;
+
+    if (catalogPop.value > 0) {
+      _valueController.text =
+          catalogPop.value.toStringAsFixed(2);
+    }
+
+    _applyCatalogVariant(
+      catalogPop.variant,
+    );
+
+    final String catalogLimitedEdition =
+    catalogPop.limitedEdition.trim();
+
+    if (catalogLimitedEdition.isNotEmpty &&
+        catalogLimitedEdition.toLowerCase() != 'none') {
+      if (CollectorIdentityOptions.limitedEditions.contains(
+        catalogLimitedEdition,
+      )) {
+        _limitedEdition = catalogLimitedEdition;
+      } else {
+        _limitedEdition = 'Other';
+        _customLimitedEditionController.text =
+            catalogLimitedEdition;
       }
     }
   }
@@ -133,8 +197,6 @@ class _AddPopScreenState extends State<AddPopScreen> {
       return;
     }
 
-    final now = DateTime.now().toIso8601String();
-
     final resolvedVariant = _resolvedIdentityValue(
       selectedValue: _variant,
       customController: _customVariantController,
@@ -165,35 +227,69 @@ class _AddPopScreenState extends State<AddPopScreen> {
       fallback: 'Unsigned',
     );
 
-    final pop = Pop(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      name: _nameController.text.trim(),
-      number: _numberController.text.trim(),
-      category: _formatCategory(_categoryController.text.trim()),
-      series: _seriesController.text.trim(),
-      edition: resolvedVariant,
+    final double value = double.tryParse(
+      _valueController.text.trim(),
+    ) ??
+        0;
+
+    final double pricePaid = double.tryParse(
+      _pricePaidController.text.trim(),
+    ) ??
+        0;
+
+    final int quantity = int.tryParse(
+      _quantityController.text.trim(),
+    ) ??
+        1;
+
+    final AtlasCatalogProduct? product =
+        widget.atlasProduct;
+
+    final pop = product == null
+        ? AtlasPopFactory.createManual(
+      name: _nameController.text,
+      number: _numberController.text,
+      category: _formatCategory(
+        _categoryController.text.trim(),
+      ),
+      series: _seriesController.text,
       variant: resolvedVariant,
       retailExclusive: resolvedRetailExclusive,
       eventSticker: resolvedEventSticker,
       limitedEdition: resolvedLimitedEdition,
       signature: resolvedSignature,
-      value: double.tryParse(_valueController.text) ?? 0,
-      pricePaid: double.tryParse(_pricePaidController.text) ?? 0,
-      quantity: int.tryParse(_quantityController.text) ?? 1,
-      itemCondition: '',
-      boxCondition: '',
-      imageUrl: widget.catalogItem?.imageName ?? '',
+      value: value,
+      pricePaid: pricePaid,
+      quantity: quantity,
       owner: 'Shared',
       isWishlist: false,
-      dateAdded: now,
-      lastUpdated: now,
+    )
+        : AtlasPopFactory.createFromCatalog(
+      product: product,
+      name: _nameController.text,
+      number: _numberController.text,
+      category: _formatCategory(
+        _categoryController.text.trim(),
+      ),
+      series: _seriesController.text,
+      variant: resolvedVariant,
+      retailExclusive: resolvedRetailExclusive,
+      eventSticker: resolvedEventSticker,
+      limitedEdition: resolvedLimitedEdition,
+      signature: resolvedSignature,
+      value: value,
+      pricePaid: pricePaid,
+      quantity: quantity,
+      owner: 'Shared',
+      isWishlist: false,
     );
 
     await context.read<AppState>().addPop(pop);
 
     AtlasActivityService.record(
       title: 'Pop Added',
-      description: '${pop.name} #${pop.number} was added to the Vault.',
+      description:
+      '${pop.name} #${pop.number} was added to the Vault.',
       type: 'pop_added',
     );
 
@@ -253,13 +349,13 @@ class _AddPopScreenState extends State<AddPopScreen> {
                       color: AtlasColors.textSecondary,
                     ),
                   ),
-                  if (widget.catalogItem != null) ...[
+                  if (_hasCatalogProduct) ...[
                     const SizedBox(height: AtlasSpacing.lg),
                     AtlasGlassPanel(
                       child: Row(
                         children: [
                           _AddPopImage(
-                            imageUrl: widget.catalogItem?.imageName ?? '',
+                            imageUrl: _catalogImageUrl,
                           ),
                           const SizedBox(width: AtlasSpacing.md),
                           Expanded(
@@ -267,7 +363,7 @@ class _AddPopScreenState extends State<AddPopScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  widget.catalogItem!.title,
+                                  widget.atlasProduct!.displayName,
                                   style: AtlasTypography.headingSmall,
                                 ),
                                 const SizedBox(height: AtlasSpacing.xs),

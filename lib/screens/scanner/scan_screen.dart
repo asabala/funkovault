@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
+import 'package:funkovault2/atlas/catalog/services/atlas_barcode_catalog_resolver.dart';
 import 'package:funkovault2/atlas/scan/engine/barcode_intelligence_engine.dart';
 import 'package:funkovault2/atlas/scan/engine/engine_context.dart';
 import 'package:funkovault2/atlas/scan/models/scan_code.dart';
@@ -11,10 +12,11 @@ import 'package:funkovault2/atlas/scan/workflow/scan_intent.dart';
 import 'package:funkovault2/atlas/scan/workflow/scan_performance_mode.dart';
 import 'package:funkovault2/screens/catalog/funko_catalog_screen.dart';
 import 'package:funkovault2/screens/scanner/atlas_scan_result_screen.dart';
-import 'package:funkovault2/services/funko_catalog_service.dart';
 
 class ScanScreen extends StatefulWidget {
-  const ScanScreen({super.key});
+  const ScanScreen({
+    super.key,
+  });
 
   @override
   State<ScanScreen> createState() {
@@ -34,33 +36,16 @@ class _ScanScreenState extends State<ScanScreen> {
     ],
   );
 
+  final AtlasBarcodeCatalogResolver _catalogResolver =
+  AtlasBarcodeCatalogResolver();
+
   String? _scannedCode;
   bool _isProcessing = false;
-  int _catalogCount = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadCatalog();
-  }
 
   @override
   void dispose() {
     _scannerController.dispose();
     super.dispose();
-  }
-
-  Future<void> _loadCatalog() async {
-    final catalog =
-    await FunkoCatalogService.loadCatalog();
-
-    if (!mounted) {
-      return;
-    }
-
-    setState(() {
-      _catalogCount = catalog.length;
-    });
   }
 
   Future<void> _handleDetection(
@@ -70,8 +55,9 @@ class _ScanScreenState extends State<ScanScreen> {
       return;
     }
 
-    final Barcode? barcode =
-    _firstUsableBarcode(capture);
+    final Barcode? barcode = _firstUsableBarcode(
+      capture,
+    );
 
     if (barcode == null) {
       return;
@@ -84,25 +70,25 @@ class _ScanScreenState extends State<ScanScreen> {
       return;
     }
 
-    final ScanCodeFormat format =
-    _mapBarcodeFormat(barcode.format);
+    final ScanCodeFormat format = _mapBarcodeFormat(
+      barcode.format,
+    );
 
     final ScanCode scanCode = ScanCode(
       rawValue: rawValue,
-      normalizedValue:
-      _normalizeCodeValue(rawValue),
+      normalizedValue: _normalizeCodeValue(
+        rawValue,
+      ),
       format: format,
       source: ScanCodeSource.camera,
       capturedAt: DateTime.now().toUtc(),
-      isValid:
-      format != ScanCodeFormat.unknown,
+      isValid: format != ScanCodeFormat.unknown,
       confidence: 1.0,
     );
 
     setState(() {
       _isProcessing = true;
-      _scannedCode =
-          scanCode.normalizedValue;
+      _scannedCode = scanCode.normalizedValue;
     });
 
     await _scannerController.stop();
@@ -111,8 +97,7 @@ class _ScanScreenState extends State<ScanScreen> {
       final DateTime startedAt =
       DateTime.now().toUtc();
 
-      final String executionId =
-      _createExecutionId(
+      final String executionId = _createExecutionId(
         startedAt,
         scanCode.normalizedValue,
       );
@@ -120,37 +105,26 @@ class _ScanScreenState extends State<ScanScreen> {
       final EngineContext engineContext = EngineContext(
         requestId: executionId,
         createdAt: startedAt,
-        connectivity:
-        EngineConnectivity.unknown,
-        deviceType:
-        EngineDeviceType.mobile,
+        connectivity: EngineConnectivity.unknown,
+        deviceType: EngineDeviceType.mobile,
         deviceCapabilities: const <String>{
-          BarcodeIntelligenceEngine
-              .capabilityId,
+          BarcodeIntelligenceEngine.capabilityId,
         },
         attributes: <String, Object?>{
-          'scanSource':
-          ScanCodeSource.camera.name,
-          'scannerType':
-          ScannerType.mobileScanner.name,
-          'barcodeFormat':
-          scanCode.format.name,
+          'scanSource': ScanCodeSource.camera.name,
+          'scannerType': ScannerType.mobileScanner.name,
+          'barcodeFormat': scanCode.format.name,
         },
       );
 
-      final ScanSession initialSession =
-      ScanSession(
+      final ScanSession initialSession = ScanSession(
         sessionId: executionId,
         startedAt: startedAt,
-        status:
-        ScanSessionStatus.analyzing,
-        intent:
-        ScanIntent.identifyProduct,
+        status: ScanSessionStatus.analyzing,
+        intent: ScanIntent.identifyProduct,
         performanceMode:
-        ScanPerformanceMode
-            .fastBarcodeOnly,
-        scannerType:
-        ScannerType.mobileScanner,
+        ScanPerformanceMode.fastBarcodeOnly,
+        scannerType: ScannerType.mobileScanner,
         detectedCodes: <ScanCode>[
           scanCode,
         ],
@@ -169,6 +143,29 @@ class _ScanScreenState extends State<ScanScreen> {
       final ScanSession finalSession =
           result.finalSession;
 
+      final ScanCode? resolvedCode =
+          finalSession.bestCandidate ??
+              _firstDetectedCode(
+                finalSession,
+              );
+
+      final AtlasBarcodeResolution catalogResolution;
+
+      if (resolvedCode == null ||
+          !resolvedCode.isValid ||
+          !resolvedCode.isProductBarcode) {
+        catalogResolution =
+            AtlasBarcodeResolution.invalid(
+              barcode:
+              resolvedCode?.normalizedValue ?? '',
+            );
+      } else {
+        catalogResolution =
+        await _catalogResolver.resolve(
+          resolvedCode.normalizedValue,
+        );
+      }
+
       if (!mounted) {
         return;
       }
@@ -179,6 +176,7 @@ class _ScanScreenState extends State<ScanScreen> {
           builder: (_) {
             return AtlasScanResultScreen(
               session: finalSession,
+              catalogResolution: catalogResolution,
             );
           },
         ),
@@ -224,6 +222,16 @@ class _ScanScreenState extends State<ScanScreen> {
     return null;
   }
 
+  ScanCode? _firstDetectedCode(
+      ScanSession session,
+      ) {
+    if (session.detectedCodes.isEmpty) {
+      return null;
+    }
+
+    return session.detectedCodes.first;
+  }
+
   String _normalizeCodeValue(
       String rawValue,
       ) {
@@ -258,8 +266,7 @@ class _ScanScreenState extends State<ScanScreen> {
       DateTime createdAt,
       String code,
       ) {
-    final int codeHash =
-    code.hashCode.abs();
+    final int codeHash = code.hashCode.abs();
 
     return 'scan_'
         '${createdAt.microsecondsSinceEpoch}_'
@@ -307,10 +314,8 @@ class _ScanScreenState extends State<ScanScreen> {
               fit: StackFit.expand,
               children: [
                 MobileScanner(
-                  controller:
-                  _scannerController,
-                  onDetect:
-                  _handleDetection,
+                  controller: _scannerController,
+                  onDetect: _handleDetection,
                 ),
                 const _ScannerGuide(),
                 if (_isProcessing)
@@ -321,19 +326,15 @@ class _ScanScreenState extends State<ScanScreen> {
           SafeArea(
             top: false,
             child: Padding(
-              padding:
-              const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(12),
               child: Column(
-                mainAxisSize:
-                MainAxisSize.min,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    'Catalog Loaded: '
-                        '$_catalogCount Pops',
-                    style: const TextStyle(
+                  const Text(
+                    'Atlas Catalog Lookup Ready',
+                    style: TextStyle(
                       fontSize: 18,
-                      fontWeight:
-                      FontWeight.bold,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(
@@ -341,8 +342,7 @@ class _ScanScreenState extends State<ScanScreen> {
                   ),
                   SizedBox(
                     width: double.infinity,
-                    child:
-                    ElevatedButton.icon(
+                    child: ElevatedButton.icon(
                       onPressed: _isProcessing
                           ? null
                           : _openCatalog,
@@ -362,8 +362,7 @@ class _ScanScreenState extends State<ScanScreen> {
                         ? 'Atlas is analyzing the scan...'
                         : _scannedCode ??
                         'Waiting for scan...',
-                    textAlign:
-                    TextAlign.center,
+                    textAlign: TextAlign.center,
                   ),
                 ],
               ),
@@ -390,8 +389,9 @@ class _ScannerGuide extends StatelessWidget {
               color: Colors.white,
               width: 3,
             ),
-            borderRadius:
-            BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(
+              18,
+            ),
           ),
         ),
       ),
@@ -399,8 +399,7 @@ class _ScannerGuide extends StatelessWidget {
   }
 }
 
-class _ProcessingOverlay
-    extends StatelessWidget {
+class _ProcessingOverlay extends StatelessWidget {
   const _ProcessingOverlay();
 
   @override
@@ -410,11 +409,9 @@ class _ProcessingOverlay
       child: Center(
         child: Card(
           child: Padding(
-            padding:
-            const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(24),
             child: Column(
-              mainAxisSize:
-              MainAxisSize.min,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 const CircularProgressIndicator(),
                 const SizedBox(
@@ -426,15 +423,15 @@ class _ProcessingOverlay
                       .textTheme
                       .titleMedium
                       ?.copyWith(
-                    fontWeight:
-                    FontWeight.bold,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(
                   height: 6,
                 ),
                 const Text(
-                  'Validating scan evidence',
+                  'Validating scan and checking the Atlas catalog',
+                  textAlign: TextAlign.center,
                 ),
               ],
             ),

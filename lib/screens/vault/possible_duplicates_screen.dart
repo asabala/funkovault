@@ -78,7 +78,7 @@ class _PossibleDuplicatesScreenState extends State<PossibleDuplicatesScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Variant & Duplicate Review'),
+        title: const Text('Atlas Identity Intelligence'),
       ),
       floatingActionButton: _showBackToTop
           ? FloatingActionButton.extended(
@@ -105,12 +105,12 @@ class _PossibleDuplicatesScreenState extends State<PossibleDuplicatesScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Variant & Duplicate Review',
+                      'Atlas Identity Intelligence',
                       style: AtlasTypography.headingLarge,
                     ),
                     const SizedBox(height: AtlasSpacing.sm),
                     Text(
-                      'Atlas separates exact matching records from collectible families that share a name and number. Variant families are not counted as duplicate cleanup issues.',
+                      'Atlas separates exact duplicates from related collectible releases and explains meaningful differences such as variants, stickers, finishes, packaging, production runs, signatures, and authentication.',
                       style: AtlasTypography.bodyMedium.copyWith(
                         color: AtlasColors.textSecondary,
                       ),
@@ -121,13 +121,18 @@ class _PossibleDuplicatesScreenState extends State<PossibleDuplicatesScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           _SummaryLine(
-                            label: 'Exact Duplicate Records',
-                            value: '${sameIdentityGroups.length}',
+                            label: 'Exact Duplicate Groups',
+                            value: '${duplicateReport.exactDuplicateGroupCount}',
                           ),
                           const SizedBox(height: AtlasSpacing.xs),
                           _SummaryLine(
-                            label: 'Variant Families',
-                            value: '${possibleVariantGroups.length}',
+                            label: 'Identity Review Groups',
+                            value: '${duplicateReport.reviewGroupCount}',
+                          ),
+                          const SizedBox(height: AtlasSpacing.xs),
+                          _SummaryLine(
+                            label: 'Total Identity Groups',
+                            value: '${duplicateReport.totalGroups}',
                           ),
                         ],
                       ),
@@ -179,12 +184,12 @@ class _PossibleDuplicatesScreenState extends State<PossibleDuplicatesScreen> {
               if (showSameIdentity) ...[
                 const SizedBox(height: AtlasSpacing.lg),
                 _DuplicateSection(
-                  title: 'Exact Duplicate Records',
+                  title: 'Exact Duplicate Groups',
                   subtitle:
-                  'These records share the same collectible identity. Review them before consolidating quantities or correcting legacy data.',
-                  emptyMessage: 'No exact duplicate records found.',
+                  'These records share the same Atlas release fingerprint. Review them before consolidating quantities or correcting collection data.',
+                  emptyMessage: 'No exact duplicate groups found.',
                   groups: sameIdentityGroups,
-                  badgeText: 'Identity',
+                  badgeText: 'Exact',
                   badgeColor: AtlasColors.vaultGold,
                   showImages: _showImages,
                 ),
@@ -192,10 +197,10 @@ class _PossibleDuplicatesScreenState extends State<PossibleDuplicatesScreen> {
               if (showPossibleVariants) ...[
                 const SizedBox(height: AtlasSpacing.lg),
                 _DuplicateSection(
-                  title: 'Variant Families',
+                  title: 'Related Release Groups',
                   subtitle:
-                  'These share the same name and number but represent different collectible releases, such as Common, Chase, Blacklight, Glow, exclusive, stickered, limited, or signed Pops.',
-                  emptyMessage: 'No variant families found.',
+                  'These collectibles share a broad identity but contain meaningful differences. Atlas classifies the strongest known difference and explains why the group needs review.',
+                  emptyMessage: 'No related release groups found.',
                   groups: possibleVariantGroups,
                   badgeText: 'Review',
                   badgeColor: AtlasColors.textSecondary,
@@ -237,7 +242,7 @@ class _DuplicateFilterCard extends StatelessWidget {
           ),
           const SizedBox(height: AtlasSpacing.sm),
           Text(
-            'Choose which duplicate groups you want to review.',
+            'Choose which identity groups you want to review.',
             style: AtlasTypography.bodyMedium.copyWith(
               color: AtlasColors.textSecondary,
             ),
@@ -253,13 +258,13 @@ class _DuplicateFilterCard extends StatelessWidget {
                 onSelected: () => onChanged(_DuplicateReviewFilter.all),
               ),
               _FilterChipButton(
-                label: 'Exact Records',
+                label: 'Exact Duplicates',
                 selected: selectedFilter == _DuplicateReviewFilter.sameIdentity,
                 onSelected: () =>
                     onChanged(_DuplicateReviewFilter.sameIdentity),
               ),
               _FilterChipButton(
-                label: 'Variant Families',
+                label: 'Related Releases',
                 selected:
                 selectedFilter == _DuplicateReviewFilter.possibleVariants,
                 onSelected: () =>
@@ -427,7 +432,7 @@ class _DuplicateGroupCard extends StatelessWidget {
           Row(
             children: [
               _DuplicateBadge(
-                text: badgeText,
+                text: group.title.isEmpty ? badgeText : group.title,
                 color: badgeColor,
               ),
               const SizedBox(width: AtlasSpacing.sm),
@@ -447,8 +452,8 @@ class _DuplicateGroupCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: AtlasSpacing.md),
-          _GroupReviewRecommendation(
-            pops: group.pops,
+          _IdentityEvidenceCard(
+            group: group,
           ),
           const SizedBox(height: AtlasSpacing.md),
           _GroupDifferenceSummary(
@@ -470,16 +475,20 @@ class _DuplicateGroupCard extends StatelessWidget {
   }
 }
 
-class _GroupReviewRecommendation extends StatelessWidget {
-  const _GroupReviewRecommendation({
-    required this.pops,
+class _IdentityEvidenceCard extends StatelessWidget {
+  const _IdentityEvidenceCard({
+    required this.group,
   });
 
-  final List<Pop> pops;
+  final DuplicateReviewGroup group;
 
   @override
   Widget build(BuildContext context) {
-    final recommendation = _buildRecommendation();
+    final evidence = group.evidence.isEmpty
+        ? const <String>[
+      'Atlas found a related collectible identity that requires review.',
+    ]
+        : group.evidence;
 
     return Container(
       width: double.infinity,
@@ -487,120 +496,58 @@ class _GroupReviewRecommendation extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AtlasSpacing.md),
         border: Border.all(
-          color: recommendation.isHighRisk
-              ? AtlasColors.textSecondary.withValues(alpha: 0.28)
-              : AtlasColors.vaultGold.withValues(alpha: 0.32),
+          color: group.isExactDuplicate
+              ? AtlasColors.vaultGold.withValues(alpha: 0.32)
+              : AtlasColors.textSecondary.withValues(alpha: 0.28),
         ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Review Recommendation',
+            group.isExactDuplicate
+                ? 'Atlas Match Evidence'
+                : 'Atlas Review Evidence',
             style: AtlasTypography.bodyMedium.copyWith(
               fontWeight: FontWeight.bold,
-              color: recommendation.isHighRisk
-                  ? AtlasColors.textSecondary
-                  : AtlasColors.vaultGold,
+              color: group.isExactDuplicate
+                  ? AtlasColors.vaultGold
+                  : AtlasColors.textSecondary,
             ),
           ),
           const SizedBox(height: AtlasSpacing.sm),
           Text(
-            recommendation.message,
+            group.explanation,
             style: AtlasTypography.bodySmall.copyWith(
               color: AtlasColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: AtlasSpacing.sm),
+          Text(
+            'Confidence: ${group.confidence}%',
+            style: AtlasTypography.bodySmall.copyWith(
+              color: AtlasColors.vaultGold,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: AtlasSpacing.sm),
+          ...evidence.map(
+                (item) => Padding(
+              padding: const EdgeInsets.only(
+                bottom: AtlasSpacing.xs,
+              ),
+              child: Text(
+                '• $item',
+                style: AtlasTypography.bodySmall.copyWith(
+                  color: AtlasColors.textSecondary,
+                ),
+              ),
             ),
           ),
         ],
       ),
     );
   }
-
-  _ReviewRecommendation _buildRecommendation() {
-    final variantValues = _uniqueValues(
-      pops.map((pop) => pop.variant),
-    );
-    final exclusiveValues = _uniqueValues(
-      pops.map((pop) => pop.retailExclusive),
-    );
-    final stickerValues = _uniqueValues(
-      pops.map((pop) => pop.eventSticker),
-    );
-    final limitedValues = _uniqueValues(
-      pops.map((pop) => pop.limitedEdition),
-    );
-    final signatureValues = _uniqueValues(
-      pops.map((pop) => pop.signature),
-    );
-    final wishlistValues = _uniqueValues(
-      pops.map((pop) => pop.isWishlist ? 'Wishlist' : 'Owned'),
-    );
-
-    final identityDiffers = variantValues.length > 1 ||
-        exclusiveValues.length > 1 ||
-        stickerValues.length > 1 ||
-        limitedValues.length > 1 ||
-        signatureValues.length > 1 ||
-        wishlistValues.length > 1;
-
-    if (identityDiffers) {
-      return const _ReviewRecommendation(
-        isHighRisk: true,
-        message:
-        'Possible variant. Variant, exclusive, sticker, limited edition, signature, or wishlist status differs. Do not auto-merge this group.',
-      );
-    }
-
-    final seriesValues = _uniqueValues(
-      pops.map((pop) => pop.series),
-    );
-    final ownerValues = _uniqueValues(
-      pops.map((pop) => pop.owner),
-    );
-    final valueValues = _uniqueValues(
-      pops.map((pop) => pop.value.toStringAsFixed(0)),
-    );
-    final quantityValues = _uniqueValues(
-      pops.map((pop) => pop.quantity.toString()),
-    );
-
-    final onlyDataDiffers = seriesValues.length > 1 ||
-        ownerValues.length > 1 ||
-        valueValues.length > 1 ||
-        quantityValues.length > 1;
-
-    if (onlyDataDiffers) {
-      return const _ReviewRecommendation(
-        isHighRisk: false,
-        message:
-        'Likely same Pop identity. Differences appear to be value, quantity, owner, or series naming. Review before cleanup.',
-      );
-    }
-
-    return const _ReviewRecommendation(
-      isHighRisk: false,
-      message:
-      'Strong same-identity match. This group appears to have matching identity fields. Review before any cleanup action.',
-    );
-  }
-
-  Set<String> _uniqueValues(Iterable<String> values) {
-    return values
-        .map(
-          (value) => value.trim().isEmpty ? 'Blank' : value.trim().toLowerCase(),
-    )
-        .toSet();
-  }
-}
-
-class _ReviewRecommendation {
-  const _ReviewRecommendation({
-    required this.isHighRisk,
-    required this.message,
-  });
-
-  final bool isHighRisk;
-  final String message;
 }
 
 class _GroupDifferenceSummary extends StatelessWidget {

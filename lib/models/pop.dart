@@ -31,6 +31,19 @@ class Pop {
   final String gradingCompany;
   final String authenticityNumber;
 
+  /// Physical release identity metadata.
+  ///
+  /// These fields describe meaningful release or packaging differences.
+  /// They do not describe the collector's individual copy condition.
+  final String finish;
+  final String size;
+  final String packagingType;
+  final String boxVersion;
+  final String copyrightYear;
+  final String productionCode;
+  final String stickerType;
+  final String authenticationProvider;
+
   final double value;
   final double pricePaid;
 
@@ -67,6 +80,14 @@ class Pop {
     this.releaseDate = '',
     this.gradingCompany = '',
     this.authenticityNumber = '',
+    this.finish = 'Standard',
+    this.size = 'Standard 4 Inch',
+    this.packagingType = 'Single',
+    this.boxVersion = '',
+    this.copyrightYear = '',
+    this.productionCode = '',
+    this.stickerType = '',
+    this.authenticationProvider = '',
     required this.value,
     required this.pricePaid,
     required this.quantity,
@@ -103,6 +124,15 @@ class Pop {
       releaseDate: json['releaseDate'] ?? '',
       gradingCompany: json['gradingCompany'] ?? '',
       authenticityNumber: json['authenticityNumber'] ?? '',
+      finish: json['finish'] ?? 'Standard',
+      size: json['size'] ?? 'Standard 4 Inch',
+      packagingType: json['packagingType'] ?? 'Single',
+      boxVersion: json['boxVersion'] ?? '',
+      copyrightYear: json['copyrightYear'] ?? '',
+      productionCode: json['productionCode'] ?? '',
+      stickerType: json['stickerType'] ?? '',
+      authenticationProvider:
+        json['authenticationProvider'] ?? '',
       value: (json['value'] ?? 0).toDouble(),
       pricePaid: (json['pricePaid'] ?? 0).toDouble(),
       quantity: json['quantity'] ?? 1,
@@ -116,40 +146,198 @@ class Pop {
     );
   }
 
-  /// Identifies the collectible release itself.
+  /// Identifies the exact collectible release itself for CONFIRMED duplicates.
   ///
-  /// A source catalog ID takes priority because HobbyDB assigns different
-  /// HDBID values to separate releases, including Common versus Chase and
-  /// releases that differ only by sticker or catalog entry.
+  /// No single external identifier is trusted by itself.
+  ///
+  /// Catalog IDs and UPCs are strong identity evidence, but Funko releases may
+  /// reuse UPCs or third-party catalogs may group multiple physical variants
+  /// under one record. Release-defining attributes are therefore always included.
   String get collectibleIdentityKey {
-    final catalogId = normalizeIdentityText(
-      sourceCatalogId,
+    final catalogId = normalizeIdentityText(sourceCatalogId);
+    final collectibleId = normalizeIdentityText(sourceCollectibleId);
+    final upc = normalizeIdentityText(sourceUpc);
+
+    final normalizedName = normalizeIdentityText(name);
+    final normalizedNumber = normalizeIdentityText(number);
+    final normalizedCategory = normalizeIdentityText(category);
+    final normalizedSeries = normalizeIdentityText(series);
+
+    final identityAnchor = _buildIdentityAnchor(
+      catalogId: catalogId,
+      collectibleId: collectibleId,
+      upc: upc,
+      normalizedName: normalizedName,
+      normalizedNumber: normalizedNumber,
+      normalizedCategory: normalizedCategory,
+      normalizedSeries: normalizedSeries,
     );
+
+    if (identityAnchor.isEmpty) {
+      return '';
+    }
+
+    return <String>[
+      'release',
+      identityAnchor,
+      ..._releaseIdentityParts,
+    ].join('|');
+  }
+
+  /// Broad identity key used to group POSSIBLE duplicates for review.
+  ///
+  /// This intentionally ignores release-defining differences such as Chase,
+  /// stickers, finishes, signatures, box versions, and production codes.
+  ///
+  /// Examples:
+  ///
+  /// Same UPC but Common vs Chase:
+  ///   grouped for review, not confirmed as duplicates.
+  ///
+  /// Same number and series with slightly different names:
+  ///   grouped for review.
+  ///
+  /// Same number in different Funko lines:
+  ///   not grouped together.
+  String get similarityReviewKey {
+    final upc = normalizeIdentityText(sourceUpc);
+
+    if (upc.isNotEmpty) {
+      return 'upc_review|$upc';
+    }
+
+    final collectibleId = normalizeIdentityText(sourceCollectibleId);
+
+    if (collectibleId.isNotEmpty) {
+      return 'collectible_review|$collectibleId';
+    }
+
+    final catalogId = normalizeIdentityText(sourceCatalogId);
+
+    if (catalogId.isNotEmpty) {
+      return 'catalog_review|$catalogId';
+    }
+
+    final normalizedNumber = normalizeIdentityText(number);
+    final normalizedCategory = normalizeIdentityText(category);
+    final normalizedSeries = normalizeIdentityText(series);
+    final normalizedName = normalizeIdentityText(name);
+
+    if (normalizedNumber.isEmpty) {
+      return '';
+    }
+
+    // Preferred manual review identity:
+    // Number + Funko line/category + series.
+    //
+    // Name is intentionally omitted here so entries such as:
+    // "Spider-Man" and "Spider Man"
+    // can still be reviewed together.
+    if (normalizedCategory.isNotEmpty && normalizedSeries.isNotEmpty) {
+      return <String>[
+        'line_review',
+        normalizedNumber,
+        normalizedCategory,
+        normalizedSeries,
+      ].join('|');
+    }
+
+    // When series is missing, retain the name to avoid grouping every #01
+    // in a broad category together.
+    if (normalizedCategory.isNotEmpty && normalizedName.isNotEmpty) {
+      return <String>[
+        'category_review',
+        normalizedNumber,
+        normalizedCategory,
+        normalizedName,
+      ].join('|');
+    }
+
+    // Last-resort review key. This is deliberately conservative.
+    if (normalizedSeries.isNotEmpty && normalizedName.isNotEmpty) {
+      return <String>[
+        'series_review',
+        normalizedNumber,
+        normalizedSeries,
+        normalizedName,
+      ].join('|');
+    }
+
+    return '';
+  }
+
+  /// Builds the strongest available core identity anchor.
+  ///
+  /// The anchor identifies the probable catalog object. Physical release
+  /// attributes are appended separately through [_releaseIdentityParts].
+  String _buildIdentityAnchor({
+    required String catalogId,
+    required String collectibleId,
+    required String upc,
+    required String normalizedName,
+    required String normalizedNumber,
+    required String normalizedCategory,
+    required String normalizedSeries,
+  }) {
+    if (collectibleId.isNotEmpty) {
+      return 'collectible|$collectibleId';
+    }
 
     if (catalogId.isNotEmpty) {
       return 'catalog|$catalogId';
     }
 
-    final normalizedName = normalizeIdentityText(name);
-    final normalizedNumber = normalizeIdentityText(number);
+    if (upc.isNotEmpty) {
+      return 'upc|$upc';
+    }
 
-    if (normalizedName.isEmpty || normalizedNumber.isEmpty) {
+    if (normalizedNumber.isEmpty) {
       return '';
     }
 
-    return [
+    // Number alone is never enough because every Funko line can restart at #01.
+    if (normalizedCategory.isEmpty && normalizedSeries.isEmpty) {
+      return '';
+    }
+
+    return <String>[
       'manual',
       normalizedName,
       normalizedNumber,
-      normalizeIdentityText(category),
-      normalizeIdentityText(series),
+      normalizedCategory,
+      normalizedSeries,
+    ].join('|');
+  }
+
+  /// Release-defining attributes used by exact duplicate detection.
+  ///
+  /// Any meaningful difference here represents either:
+  ///
+  /// - another variant,
+  /// - another sticker release,
+  /// - another package format,
+  /// - another box version,
+  /// - another production run,
+  /// - or another authenticated collectible.
+  List<String> get _releaseIdentityParts {
+    return <String>[
       normalizeVariantIdentity(edition),
       normalizeVariantIdentity(variant),
+      normalizeVariantIdentity(finish),
       normalizeOptionalIdentity(retailExclusive),
       normalizeOptionalIdentity(eventSticker),
+      normalizeOptionalIdentity(stickerType),
       normalizeOptionalIdentity(limitedEdition),
       normalizeSignatureIdentity(signature),
-    ].join('|');
+      normalizeOptionalIdentity(authenticationProvider),
+      normalizeOptionalIdentity(gradingCompany),
+      normalizeOptionalIdentity(authenticityNumber),
+      normalizeOptionalIdentity(size),
+      normalizeOptionalIdentity(packagingType),
+      normalizeOptionalIdentity(boxVersion),
+      normalizeOptionalIdentity(copyrightYear),
+      normalizeOptionalIdentity(productionCode),
+    ];
   }
 
   /// Identifies one stored record in a collection.
@@ -211,6 +399,14 @@ class Pop {
     String? releaseDate,
     String? gradingCompany,
     String? authenticityNumber,
+    String? finish,
+    String? size,
+    String? packagingType,
+    String? boxVersion,
+    String? copyrightYear,
+    String? productionCode,
+    String? stickerType,
+    String? authenticationProvider,
     double? value,
     double? pricePaid,
     int? quantity,
@@ -243,6 +439,15 @@ class Pop {
       gradingCompany: gradingCompany ?? this.gradingCompany,
       authenticityNumber:
       authenticityNumber ?? this.authenticityNumber,
+      finish: finish ?? this.finish,
+      size: size ?? this.size,
+      packagingType: packagingType ?? this.packagingType,
+      boxVersion: boxVersion ?? this.boxVersion,
+      copyrightYear: copyrightYear ?? this.copyrightYear,
+      productionCode: productionCode ?? this.productionCode,
+      stickerType: stickerType ?? this.stickerType,
+      authenticationProvider:
+      authenticationProvider ?? this.authenticationProvider,
       value: value ?? this.value,
       pricePaid: pricePaid ?? this.pricePaid,
       quantity: quantity ?? this.quantity,
@@ -276,6 +481,14 @@ class Pop {
       'releaseDate': releaseDate,
       'gradingCompany': gradingCompany,
       'authenticityNumber': authenticityNumber,
+      'finish': finish,
+      'size': size,
+      'packagingType': packagingType,
+      'boxVersion': boxVersion,
+      'copyrightYear': copyrightYear,
+      'productionCode': productionCode,
+      'stickerType': stickerType,
+      'authenticationProvider': authenticationProvider,
       'value': value,
       'pricePaid': pricePaid,
       'quantity': quantity,
@@ -289,8 +502,13 @@ class Pop {
     };
   }
 
+  /// Cleans strings by lowercasing and stripping non-alphanumeric characters.
+  /// Converts "Spider-Man #01!" -> "spiderman01"
   static String normalizeIdentityText(String value) {
-    return value.trim().toLowerCase();
+    return value
+        .trim()
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9]'), '');
   }
 
   static String normalizeVariantIdentity(String value) {
@@ -299,7 +517,6 @@ class Pop {
     if (cleaned.isEmpty ||
         cleaned == 'none' ||
         cleaned == 'no' ||
-        cleaned == 'n/a' ||
         cleaned == 'na' ||
         cleaned == 'common' ||
         cleaned == 'standard') {
@@ -315,7 +532,6 @@ class Pop {
     if (cleaned.isEmpty ||
         cleaned == 'none' ||
         cleaned == 'no' ||
-        cleaned == 'n/a' ||
         cleaned == 'na') {
       return 'none';
     }
@@ -329,7 +545,6 @@ class Pop {
     if (cleaned.isEmpty ||
         cleaned == 'none' ||
         cleaned == 'no' ||
-        cleaned == 'n/a' ||
         cleaned == 'na' ||
         cleaned == 'unsigned') {
       return 'unsigned';
@@ -344,7 +559,6 @@ class Pop {
     return cleaned.isNotEmpty &&
         cleaned != 'none' &&
         cleaned != 'no' &&
-        cleaned != 'n/a' &&
         cleaned != 'na' &&
         cleaned != 'unsigned' &&
         cleaned != 'common' &&
