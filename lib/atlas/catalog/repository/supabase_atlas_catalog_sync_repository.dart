@@ -1,9 +1,11 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../models/product_upsert_result.dart';
 import '../models/atlas_catalog_attribute_keys.dart';
 import '../models/atlas_catalog_price.dart';
 import '../models/atlas_catalog_product.dart';
 import 'atlas_catalog_sync_repository.dart';
+
 
 final class SupabaseAtlasCatalogSyncRepository
     implements AtlasCatalogSyncRepository {
@@ -13,7 +15,6 @@ final class SupabaseAtlasCatalogSyncRepository
 
   final SupabaseClient _client;
 
-  static const String _productsTable = 'products';
   static const String _productPricesTable = 'product_prices';
   static const String _syncRunsTable = 'catalog_sync_runs';
 
@@ -50,37 +51,9 @@ final class SupabaseAtlasCatalogSyncRepository
     );
   }
 
-  @override
-  Future<bool> productExists({
-    required String sourceType,
-    required String sourceProductId,
-  }) async {
-    final String normalizedSourceType = sourceType.trim();
-    final String normalizedSourceProductId = sourceProductId.trim();
-
-    if (normalizedSourceType.isEmpty ||
-        normalizedSourceProductId.isEmpty) {
-      return false;
-    }
-
-    final List<Map<String, dynamic>> response = await _client
-        .from(_productsTable)
-        .select('id')
-        .eq(
-      'source_type',
-      normalizedSourceType,
-    )
-        .eq(
-      'source_product_id',
-      normalizedSourceProductId,
-    )
-        .limit(1);
-
-    return response.isNotEmpty;
-  }
 
   @override
-  Future<int> upsertProduct(
+  Future<ProductUpsertResult> upsertProduct(
       AtlasCatalogProduct product,
       ) async {
     final String sourceType = _sourceTypeFrom(product);
@@ -102,23 +75,53 @@ final class SupabaseAtlasCatalogSyncRepository
 
     final DateTime now = DateTime.now().toUtc();
 
-    final Map<String, dynamic> response = await _client
-        .from(_productsTable)
-        .upsert(
-      _productPayload(
-        product: product,
-        sourceType: sourceType,
-        sourceProductId: sourceProductId,
-        syncedAt: now,
-      ),
-      onConflict: 'source_type,source_product_id',
-    )
-        .select('id')
-        .single();
+    final List<dynamic> response = await _client.rpc(
+      'upsert_catalog_product',
+      params: <String, Object?>{
+        'p_product': _productPayload(
+          product: product,
+          sourceType: sourceType,
+          sourceProductId: sourceProductId,
+          syncedAt: now,
+        ),
+      },
+    );
 
-    return _readDatabaseId(
-      response,
+    if (response.isEmpty) {
+      throw StateError(
+        'Catalog product upsert returned no result for '
+            '$sourceType:$sourceProductId.',
+      );
+    }
+
+    final Object? firstRow = response.first;
+
+    if (firstRow is! Map<String, dynamic>) {
+      throw StateError(
+        'Catalog product upsert returned an invalid result for '
+            '$sourceType:$sourceProductId.',
+      );
+    }
+
+    final int databaseProductId = _readDatabaseId(
+      <String, dynamic>{
+        'id': firstRow['product_id'],
+      },
       context: 'catalog product',
+    );
+
+    final Object? insertedValue = firstRow['inserted'];
+
+    if (insertedValue is! bool) {
+      throw StateError(
+        'Catalog product upsert did not return a valid inserted flag for '
+            '$sourceType:$sourceProductId.',
+      );
+    }
+
+    return ProductUpsertResult(
+      productId: databaseProductId,
+      inserted: insertedValue,
     );
   }
 
@@ -142,19 +145,8 @@ final class SupabaseAtlasCatalogSyncRepository
     final DateTime? sourceModifiedAt =
     price.sourceModifiedAt?.toUtc();
 
-    if (sourceModifiedAt != null) {
-      final bool alreadyExists = await _priceSnapshotExists(
-        databaseProductId: databaseProductId,
-        sourceType: price.sourceType,
-        sourceModifiedAt: sourceModifiedAt,
-      );
-
-      if (alreadyExists) {
-        return;
-      }
-    }
-
     try {
+
       await _client.from(_productPricesTable).insert(
         <String, Object?>{
           'product_id': databaseProductId,
@@ -249,30 +241,6 @@ final class SupabaseAtlasCatalogSyncRepository
     );
   }
 
-  Future<bool> _priceSnapshotExists({
-    required int databaseProductId,
-    required String sourceType,
-    required DateTime sourceModifiedAt,
-  }) async {
-    final List<Map<String, dynamic>> response = await _client
-        .from(_productPricesTable)
-        .select('id')
-        .eq(
-      'product_id',
-      databaseProductId,
-    )
-        .eq(
-      'source_type',
-      sourceType.trim(),
-    )
-        .eq(
-      'source_modified_at',
-      sourceModifiedAt.toIso8601String(),
-    )
-        .limit(1);
-
-    return response.isNotEmpty;
-  }
 
   Map<String, Object?> _productPayload({
     required AtlasCatalogProduct product,

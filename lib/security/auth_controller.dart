@@ -4,9 +4,7 @@ import 'auth_service.dart';
 import 'auth_state.dart';
 
 class AuthController extends ChangeNotifier {
-  // ignore: prefer_initializing_formals
-  AuthController({required AuthService authService})
-    : _authService = authService;
+  AuthController({required this._authService});
 
   final AuthService _authService;
 

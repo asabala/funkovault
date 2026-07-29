@@ -1,3 +1,7 @@
+import 'dart:async';
+import 'dart:developer' as developer;
+
+import '../models/product_upsert_result.dart';
 import '../models/atlas_catalog_attribute_keys.dart';
 import '../models/atlas_catalog_price.dart';
 import '../models/atlas_catalog_product.dart';
@@ -59,7 +63,9 @@ class AtlasCatalogSyncService {
     int rowsSkipped = 0;
     int rowsFailed = 0;
 
-    String? errorMessage;
+    String? firstFailureMessage;
+    String? firstFailureProductId;
+    String? firstFailureProductName;
 
     for (final AtlasCatalogProduct product in catalogProducts) {
       try {
@@ -76,18 +82,16 @@ class AtlasCatalogSyncService {
           continue;
         }
 
-        final bool existed = await _repository.productExists(
-          sourceType: productSourceType,
-          sourceProductId: sourceProductId,
-        );
 
-        final int databaseProductId =
-        await _repository.upsertProduct(product);
+        final ProductUpsertResult upsertResult =
+        await _upsertProductWithRetry(product);
 
-        if (existed) {
-          rowsUpdated++;
-        } else {
+        final int databaseProductId = upsertResult.productId;
+
+        if (upsertResult.inserted) {
           rowsInserted++;
+        } else {
+          rowsUpdated++;
         }
 
         final AtlasCatalogPrice? price =
@@ -106,21 +110,48 @@ class AtlasCatalogSyncService {
         }
 
         rowsProcessed++;
-      } catch (_) {
+      } catch (error, stackTrace) {
         rowsFailed++;
         rowsProcessed++;
+
+        final String sourceProductId = _sourceProductIdFrom(product);
+        final String failureMessage = _normalizedFailureMessage(error);
+
+        firstFailureMessage ??= failureMessage;
+        firstFailureProductId ??= sourceProductId.isEmpty
+            ? product.productId.value
+            : sourceProductId;
+        firstFailureProductName ??= product.displayName;
+
+        if (rowsFailed == 1) {
+          developer.log(
+            'Atlas catalog product sync failed.\n'
+                'Product ID: $firstFailureProductId\n'
+                'Product Name: $firstFailureProductName\n'
+                'Error: $firstFailureMessage',
+            name: 'AtlasCatalogSyncService',
+            error: error,
+            stackTrace: stackTrace,
+          );
+        }
       }
     }
 
-    if (rowsFailed > 0) {
-      errorMessage =
-      '$rowsFailed catalog row'
-          '${rowsFailed == 1 ? '' : 's'} failed during sync.';
-    }
+    final String? errorMessage = rowsFailed > 0
+        ? _buildSyncErrorMessage(
+      rowsFailed: rowsFailed,
+      firstFailureMessage: firstFailureMessage,
+      firstFailureProductId: firstFailureProductId,
+      firstFailureProductName: firstFailureProductName,
+    )
+        : null;
 
     final Map<String, Object?> completionMetadata = <String, Object?>{
       ...metadata,
       'priceResolverUsed': priceResolver != null,
+      'firstFailureProductId': ?firstFailureProductId,
+      'firstFailureProductName': ?firstFailureProductName,
+      'firstFailureMessage': ?firstFailureMessage,
     };
 
     await _repository.completeSyncRun(
@@ -149,6 +180,68 @@ class AtlasCatalogSyncService {
       finishedAt: finishedAt,
       errorMessage: errorMessage,
     );
+  }
+
+  Future<ProductUpsertResult> _upsertProductWithRetry(
+      AtlasCatalogProduct product,
+      ) async {
+    const int maximumAttempts = 3;
+
+    for (int attempt = 1; attempt <= maximumAttempts; attempt++) {
+      try {
+        return await _repository.upsertProduct(product);
+      } catch (error, stackTrace) {
+        final bool shouldRetry = _isTransientConnectionError(error);
+        final bool hasAnotherAttempt = attempt < maximumAttempts;
+
+        if (!shouldRetry || !hasAnotherAttempt) {
+          Error.throwWithStackTrace(error, stackTrace);
+        }
+
+        final Duration retryDelay = Duration(
+          milliseconds: 500 * attempt,
+        );
+
+        developer.log(
+          'Transient catalog upsert failure. Retrying product.\n'
+              'Product ID: ${_sourceProductIdFrom(product)}\n'
+              'Product Name: ${product.displayName}\n'
+              'Failed attempt: $attempt of $maximumAttempts\n'
+              'Next attempt: ${attempt + 1} of $maximumAttempts\n'
+              'Retry delay: ${retryDelay.inMilliseconds} ms\n'
+              'Error: ${_normalizedFailureMessage(error)}',
+          name: 'AtlasCatalogSyncService',
+          error: error,
+          stackTrace: stackTrace,
+        );
+
+        await Future<void>.delayed(retryDelay);
+      }
+    }
+
+    throw StateError(
+      'Catalog product upsert stopped without returning a result.',
+    );
+  }
+
+  bool _isTransientConnectionError(Object error) {
+    final String message = error.toString().toLowerCase();
+
+    return message.contains('clientexception') ||
+        message.contains('software caused connection abort') ||
+        message.contains('connection abort') ||
+        message.contains('connection reset') ||
+        message.contains('connection closed') ||
+        message.contains('connection terminated') ||
+        message.contains('broken pipe') ||
+        message.contains('socketexception') ||
+        message.contains('failed host lookup') ||
+        message.contains('network is unreachable') ||
+        message.contains('timed out') ||
+        message.contains('timeout') ||
+        message.contains('statuscode: 502') ||
+        message.contains('statuscode: 503') ||
+        message.contains('statuscode: 504');
   }
 
   String _sourceTypeFrom(
@@ -288,5 +381,53 @@ class AtlasCatalogSyncService {
     }
 
     return parsed;
+  }
+
+  String _normalizedFailureMessage(Object error) {
+    final String message = error.toString().trim();
+
+    if (message.isEmpty) {
+      return 'Unknown catalog synchronization error.';
+    }
+
+    const int maximumLength = 1000;
+
+    if (message.length <= maximumLength) {
+      return message;
+    }
+
+    return '${message.substring(0, maximumLength)}...';
+  }
+
+  String _buildSyncErrorMessage({
+    required int rowsFailed,
+    required String? firstFailureMessage,
+    required String? firstFailureProductId,
+    required String? firstFailureProductName,
+  }) {
+    final StringBuffer message = StringBuffer(
+      '$rowsFailed catalog row${rowsFailed == 1 ? '' : 's'} '
+          'failed during sync.',
+    );
+
+    if (firstFailureProductId != null) {
+      message.write(
+        ' First failed product ID: $firstFailureProductId.',
+      );
+    }
+
+    if (firstFailureProductName != null) {
+      message.write(
+        ' Product: $firstFailureProductName.',
+      );
+    }
+
+    if (firstFailureMessage != null) {
+      message.write(
+        ' Error: $firstFailureMessage',
+      );
+    }
+
+    return message.toString();
   }
 }

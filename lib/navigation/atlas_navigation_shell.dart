@@ -11,7 +11,9 @@ import 'atlas_bottom_navigation.dart';
 import 'atlas_navigation_controller.dart';
 
 class AtlasNavigationShell extends StatelessWidget {
-  const AtlasNavigationShell({super.key});
+  const AtlasNavigationShell({
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -25,14 +27,31 @@ class AtlasNavigationShell extends StatelessWidget {
 class _AtlasNavigationShellView extends StatelessWidget {
   const _AtlasNavigationShellView();
 
+  static const int _scannerIndex = 2;
+
   @override
   Widget build(BuildContext context) {
-    final controller = context.watch<AtlasNavigationController>();
+    final AtlasNavigationController controller =
+    context.watch<AtlasNavigationController>();
 
-    final pages = [
+    final List<Widget> pages = <Widget>[
       const AtlasHomeScreen(),
       const CollectorVaultScreen(),
-      const ScanScreen(),
+
+      // Only create ScanScreen while the Scan tab is active.
+      //
+      // This prevents MobileScanner from initializing the camera when
+      // Atlas first launches and disposes the scanner when the user
+      // leaves the Scan tab.
+      if (controller.index == _scannerIndex)
+        const ScanScreen(
+          key: ValueKey<String>('atlas-active-scanner'),
+        )
+      else
+        const SizedBox.shrink(
+          key: ValueKey<String>('atlas-inactive-scanner'),
+        ),
+
       const AtlasInsightsScreen(),
       const AtlasAcademyScreen(),
       const SettingsScreen(),

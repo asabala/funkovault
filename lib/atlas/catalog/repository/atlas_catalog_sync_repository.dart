@@ -1,5 +1,6 @@
 import '../models/atlas_catalog_price.dart';
 import '../models/atlas_catalog_product.dart';
+import '../models/product_upsert_result.dart';
 
 abstract interface class AtlasCatalogSyncRepository {
   Future<int> startSyncRun({
@@ -10,12 +11,7 @@ abstract interface class AtlasCatalogSyncRepository {
     const <String, Object?>{},
   });
 
-  Future<bool> productExists({
-    required String sourceType,
-    required String sourceProductId,
-  });
-
-  Future<int> upsertProduct(
+  Future<ProductUpsertResult> upsertProduct(
       AtlasCatalogProduct product,
       );
 
