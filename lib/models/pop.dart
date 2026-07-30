@@ -1,3 +1,6 @@
+import '../atlas/market/models/value_history_entry.dart';
+import '../atlas/timeline/models/atlas_timeline_event.dart';
+
 class Pop {
   final String id;
 
@@ -14,27 +17,27 @@ class Pop {
   final String limitedEdition;
   final String signature;
 
-  /// External catalog identity.
-  ///
-  /// For HobbyDB imports:
-  /// sourceCatalogId = HDBID
-  /// sourceCollectibleId = HDBC Number
-  /// sourceUpc = UPC
+  // External catalog identity.
+  //
+  // For HobbyDB imports:
+  // sourceCatalogId = HDBID
+  // sourceCollectibleId = HDBC Number
+  // sourceUpc = UPC
   final String sourceCatalogId;
   final String sourceCollectibleId;
   final String sourceUpc;
 
-  /// Additional source metadata that helps Atlas preserve and explain
-  /// imported collectible releases.
+  // Additional source metadata that helps Atlas preserve and explain
+  // imported collectible releases.
   final String productionStatus;
   final String releaseDate;
   final String gradingCompany;
   final String authenticityNumber;
 
-  /// Physical release identity metadata.
-  ///
-  /// These fields describe meaningful release or packaging differences.
-  /// They do not describe the collector's individual copy condition.
+  // Physical release identity metadata.
+  //
+  // These fields describe meaningful release or packaging differences.
+  // They do not describe the collector's individual copy condition.
   final String finish;
   final String size;
   final String packagingType;
@@ -46,6 +49,15 @@ class Pop {
 
   final double value;
   final double pricePaid;
+
+  // Chronological estimated-value records for this collectible.
+  //
+  // Legacy Pops may begin with a single synthesized history entry based on
+  // their existing [value] and last known update date.
+  final List<ValueHistoryEntry> valueHistory;
+
+  // Chronological collector and market events for this collectible.
+  final List<AtlasTimelineEvent> timeline;
 
   final int quantity;
 
@@ -90,6 +102,8 @@ class Pop {
     this.authenticationProvider = '',
     required this.value,
     required this.pricePaid,
+    this.valueHistory = const [],
+    this.timeline = const [],
     required this.quantity,
     required this.itemCondition,
     required this.boxCondition,
@@ -103,10 +117,28 @@ class Pop {
   factory Pop.fromJson(
       Map<String, dynamic> json,
       ) {
+    final parsedId = json['id']?.toString() ?? '';
     final legacyEdition = json['edition'] ?? 'Common';
 
+    final parsedValue = _readDouble(json['value']);
+    final parsedDateAdded = json['dateAdded']?.toString() ?? '';
+    final parsedLastUpdated = json['lastUpdated']?.toString() ?? '';
+
+    final parsedValueHistory = _readValueHistory(
+      json['valueHistory'],
+      currentValue: parsedValue,
+      dateAdded: parsedDateAdded,
+      lastUpdated: parsedLastUpdated,
+    );
+
+    final parsedTimeline = _readTimeline(
+      json['timeline'],
+      popId: parsedId,
+      dateAdded: parsedDateAdded,
+    );
+
     return Pop(
-      id: json['id'] ?? '',
+      id: parsedId,
       name: json['name'] ?? '',
       number: json['number'] ?? '',
       category: json['category'] ?? '',
@@ -132,17 +164,19 @@ class Pop {
       productionCode: json['productionCode'] ?? '',
       stickerType: json['stickerType'] ?? '',
       authenticationProvider:
-        json['authenticationProvider'] ?? '',
-      value: (json['value'] ?? 0).toDouble(),
-      pricePaid: (json['pricePaid'] ?? 0).toDouble(),
-      quantity: json['quantity'] ?? 1,
+      json['authenticationProvider'] ?? '',
+      value: parsedValue,
+      pricePaid: _readDouble(json['pricePaid']),
+      valueHistory: parsedValueHistory,
+      timeline: parsedTimeline,
+      quantity: _readInt(json['quantity'], fallback: 1),
       itemCondition: json['itemCondition'] ?? '',
       boxCondition: json['boxCondition'] ?? '',
       imageUrl: json['imageUrl'] ?? '',
       owner: json['owner'] ?? 'Shared',
       isWishlist: json['isWishlist'] ?? false,
-      dateAdded: json['dateAdded'] ?? '',
-      lastUpdated: json['lastUpdated'] ?? '',
+      dateAdded: parsedDateAdded,
+      lastUpdated: parsedLastUpdated,
     );
   }
 
@@ -409,6 +443,8 @@ class Pop {
     String? authenticationProvider,
     double? value,
     double? pricePaid,
+    List<ValueHistoryEntry>? valueHistory,
+    List<AtlasTimelineEvent>? timeline,
     int? quantity,
     String? itemCondition,
     String? boxCondition,
@@ -450,6 +486,8 @@ class Pop {
       authenticationProvider ?? this.authenticationProvider,
       value: value ?? this.value,
       pricePaid: pricePaid ?? this.pricePaid,
+      valueHistory: valueHistory ?? this.valueHistory,
+      timeline: timeline ?? this.timeline,
       quantity: quantity ?? this.quantity,
       itemCondition: itemCondition ?? this.itemCondition,
       boxCondition: boxCondition ?? this.boxCondition,
@@ -491,6 +529,12 @@ class Pop {
       'authenticationProvider': authenticationProvider,
       'value': value,
       'pricePaid': pricePaid,
+      'valueHistory': valueHistory
+          .map((entry) => entry.toJson())
+          .toList(growable: false),
+      'timeline': timeline
+          .map((event) => event.toJson())
+          .toList(growable: false),
       'quantity': quantity,
       'itemCondition': itemCondition,
       'boxCondition': boxCondition,
@@ -502,8 +546,141 @@ class Pop {
     };
   }
 
-  /// Cleans strings by lowercasing and stripping non-alphanumeric characters.
-  /// Converts "Spider-Man #01!" -> "spiderman01"
+  static double _readDouble(dynamic rawValue) {
+    if (rawValue is num) {
+      return rawValue.toDouble();
+    }
+
+    return double.tryParse(
+      rawValue?.toString().trim() ?? '',
+    ) ??
+        0;
+  }
+
+  static int _readInt(
+      dynamic rawValue, {
+        required int fallback,
+      }) {
+    if (rawValue is int) {
+      return rawValue;
+    }
+
+    if (rawValue is num) {
+      return rawValue.toInt();
+    }
+
+    return int.tryParse(
+      rawValue?.toString().trim() ?? '',
+    ) ??
+        fallback;
+  }
+
+  static List<ValueHistoryEntry> _readValueHistory(
+      dynamic rawHistory, {
+        required double currentValue,
+        required String dateAdded,
+        required String lastUpdated,
+      }) {
+    final entries = <ValueHistoryEntry>[];
+
+    if (rawHistory is List) {
+      for (final rawEntry in rawHistory) {
+        if (rawEntry is! Map) {
+          continue;
+        }
+
+        final entry = ValueHistoryEntry.fromJson(
+          Map<String, dynamic>.from(rawEntry),
+        );
+
+        if (entry.value <= 0) {
+          continue;
+        }
+
+        entries.add(entry);
+      }
+    }
+
+    if (entries.isNotEmpty) {
+      entries.sort(
+            (a, b) => a.recordedAt.compareTo(b.recordedAt),
+      );
+
+      return List<ValueHistoryEntry>.unmodifiable(entries);
+    }
+
+    if (currentValue <= 0) {
+      return const [];
+    }
+
+    final recordedAt =
+        DateTime.tryParse(lastUpdated) ??
+            DateTime.tryParse(dateAdded) ??
+            DateTime.fromMillisecondsSinceEpoch(0);
+
+    return List<ValueHistoryEntry>.unmodifiable(
+      <ValueHistoryEntry>[
+        ValueHistoryEntry(
+          value: currentValue,
+          recordedAt: recordedAt,
+          source: ValueHistoryEntry.legacyValueSource,
+        ),
+      ],
+    );
+  }
+
+  static List<AtlasTimelineEvent> _readTimeline(
+      dynamic rawTimeline, {
+        required String popId,
+        required String dateAdded,
+      }) {
+    final events = <AtlasTimelineEvent>[];
+
+    if (rawTimeline is List) {
+      for (final rawEvent in rawTimeline) {
+        if (rawEvent is! Map) {
+          continue;
+        }
+
+        final event = AtlasTimelineEvent.fromJson(
+          Map<String, dynamic>.from(rawEvent),
+        );
+
+        events.add(event);
+      }
+    }
+
+    if (events.isNotEmpty) {
+      events.sort(
+            (a, b) => a.occurredAt.compareTo(b.occurredAt),
+      );
+
+      return List<AtlasTimelineEvent>.unmodifiable(events);
+    }
+
+    final addedAt = DateTime.tryParse(dateAdded);
+
+    if (popId.isEmpty || addedAt == null) {
+      return const [];
+    }
+
+    return List<AtlasTimelineEvent>.unmodifiable(
+      <AtlasTimelineEvent>[
+        AtlasTimelineEvent(
+          id: 'legacy-added-$popId',
+          popId: popId,
+          type: AtlasTimelineEventType.addedToVault,
+          occurredAt: addedAt,
+          title: 'Added to Vault',
+          createdBy: AtlasTimelineEvent.systemCreatedBy,
+          createdAt: addedAt,
+        ),
+      ],
+    );
+  }
+
+  // Cleans strings by lowercasing and stripping non-alphanumeric characters.
+  // Converts "Spider-Man #01!" -> "spiderman01"
   static String normalizeIdentityText(String value) {
     return value
         .trim()

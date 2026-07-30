@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../atlas/engines/intelligence/atlas_intelligence_engine.dart';
 import '../../atlas/engines/collection/pop_activity_summary_engine.dart';
 import '../../atlas/engines/context/pop_context_explainer_engine.dart';
 import '../../atlas/screens/atlas_timeline_screen.dart';
+import '../../atlas/identity/pop/pop_identity_rule.dart';
 import '../../widgets/pop/pop_ask_atlas_bottom_sheet.dart';
 import 'edit_pop_screen.dart';
 import '../../models/activity.dart';
@@ -18,7 +18,12 @@ import '../../widgets/atlas/atlas_glass_panel.dart';
 import '../../widgets/atlas/components/atlas_chip.dart';
 import '../../widgets/atlas/components/atlas_section_header.dart';
 import '../../widgets/pop/pop_source_details_section.dart';
+import '../../widgets/pop/pop_identity_badges.dart';
+import '../../widgets/timeline/atlas_timeline_card.dart';
 import '../../widgets/vault/vault_scroll_view.dart';
+import '../../widgets/timeline/atlas_timeline_intelligence_card.dart';
+import '../../widgets/pop/atlas_hero_card.dart';
+import '../../atlas/collection/atlas_collection.dart';
 
 
 class PopDetailsScreen extends StatefulWidget {
@@ -226,12 +231,15 @@ class _PopDetailsScreenState extends State<PopDetailsScreen> {
         .take(3)
         .toList();
 
-    const intelligenceEngine = AtlasIntelligenceEngine();
+    const collectionEngine = AtlasCollectionEngine();
 
-    final activitySummary = intelligenceEngine.analyzePopActivity(
+    final intelligence = collectionEngine.analyze(
       pop: pop,
       activities: appState.activities,
     );
+
+    final activitySummary = intelligence.activitySummary;
+    final timelineReport = intelligence.timelineReport;
 
     return Scaffold(
       appBar: AppBar(
@@ -281,29 +289,64 @@ class _PopDetailsScreenState extends State<PopDetailsScreen> {
                 ),
                 const SizedBox(height: AtlasSpacing.lg),
                 AtlasGlassPanel(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Expanded(
-                        child: _QuickStatLine(
-                          label: 'Value',
-                          value: valueLabel,
-                        ),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: _QuickStatLine(
+                              label: 'Value',
+                              value: valueLabel,
+                              centerValueOnly: true,
+                            ),
+                          ),
+                          const SizedBox(width: AtlasSpacing.sm),
+                          Expanded(
+                            child: _QuickStatLine(
+                              label: 'Quantity',
+                              value: '${pop.quantity}',
+                              centerValueOnly: true,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: AtlasSpacing.sm),
-                      Expanded(
-                        child: _QuickStatLine(
-                          label: 'Quantity',
-                          value: '${pop.quantity}',
-                          alignment: CrossAxisAlignment.center,
-                        ),
+                      const SizedBox(height: AtlasSpacing.md),
+                      Divider(
+                        height: 1,
+                        color: AtlasColors.textSecondary.withValues(alpha: 0.18),
                       ),
-                      const SizedBox(width: AtlasSpacing.sm),
-                      Expanded(
-                        child: _QuickStatLine(
-                          label: 'Release',
-                          value: pop.collectorLabel,
-                        ),
+                      const SizedBox(height: AtlasSpacing.md),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Release',
+                            style: AtlasTypography.bodySmall.copyWith(
+                              color: AtlasColors.textSecondary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+
+                          const SizedBox(height: AtlasSpacing.sm),
+
+                          PopIdentityBadges(
+                            pop: pop,
+                            showStandardBadge: false,
+                          ),
+
+                          if (pop.collectorLabel.trim().isNotEmpty) ...[
+                            const SizedBox(height: AtlasSpacing.md),
+
+                            Text(
+                              pop.collectorLabel,
+                              style: AtlasTypography.bodySmall.copyWith(
+                                color: AtlasColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                     ],
                   ),
@@ -311,7 +354,15 @@ class _PopDetailsScreenState extends State<PopDetailsScreen> {
               ],
             ),
           ),
+
           const SizedBox(height: AtlasSpacing.lg),
+
+          AtlasHeroCard(
+            summary: intelligence.heroSummary,
+          ),
+
+          const SizedBox(height: AtlasSpacing.lg),
+
           AtlasGlassCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -352,7 +403,9 @@ class _PopDetailsScreenState extends State<PopDetailsScreen> {
                         style: AtlasTypography.headingSmall,
                       ),
                       const SizedBox(height: AtlasSpacing.sm),
-                      _IdentityBadgeWrap(pop: pop),
+                      _IdentityBadgeWrap(
+                        badges: intelligence.identityBadges,
+                      ),
                       const SizedBox(height: AtlasSpacing.md),
                       _DetailRow(label: 'Variant', value: pop.variant),
                       _DetailRow(
@@ -498,7 +551,21 @@ class _PopDetailsScreenState extends State<PopDetailsScreen> {
             const SizedBox(height: AtlasSpacing.lg),
             PopSourceDetailsSection(pop: pop),
           ],
+
           const SizedBox(height: AtlasSpacing.lg),
+
+          AtlasTimelineCard(
+            events: pop.timeline,
+          ),
+
+          const SizedBox(height: AtlasSpacing.lg),
+
+          AtlasTimelineIntelligenceCard(
+            report: timelineReport,
+          ),
+
+          const SizedBox(height: AtlasSpacing.lg),
+
           _PopRecentActivityCard(
             activities: popActivities,
             summary: activitySummary,
@@ -795,20 +862,22 @@ class _QuickStatLine extends StatelessWidget {
   const _QuickStatLine({
     required this.label,
     required this.value,
-    this.alignment = CrossAxisAlignment.start,
+    this.centerValueOnly = false,
   });
 
   final String label;
   final String value;
-  final CrossAxisAlignment alignment;
+  final bool centerValueOnly;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: AtlasSpacing.xs),
+      padding: const EdgeInsets.symmetric(
+        vertical: AtlasSpacing.xs,
+      ),
       child: Column(
-        crossAxisAlignment: alignment,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             label,
@@ -818,16 +887,19 @@ class _QuickStatLine extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
-          Text(
-            _displayValue(value),
-            style: AtlasTypography.bodyMedium.copyWith(
-              color: AtlasColors.vaultGold,
-              fontWeight: FontWeight.bold,
+          SizedBox(
+            width: double.infinity,
+            child: Text(
+              _displayValue(value),
+              style: AtlasTypography.bodyMedium.copyWith(
+                color: AtlasColors.vaultGold,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: centerValueOnly
+                  ? TextAlign.center
+                  : TextAlign.start,
+              softWrap: true,
             ),
-            textAlign: alignment == CrossAxisAlignment.center
-                ? TextAlign.center
-                : TextAlign.start,
-            softWrap: true,
           ),
         ],
       ),
@@ -870,14 +942,14 @@ class _DetailRow extends StatelessWidget {
 }
 
 class _IdentityBadgeWrap extends StatelessWidget {
-  const _IdentityBadgeWrap({required this.pop});
+  const _IdentityBadgeWrap({
+    required this.badges,
+  });
 
-  final Pop pop;
+  final List<PopIdentityBadgeData> badges;
 
   @override
   Widget build(BuildContext context) {
-    final badges = _buildBadges();
-
     if (badges.isEmpty) {
       return const AtlasChip(label: 'Common / Standard');
     }
@@ -885,64 +957,14 @@ class _IdentityBadgeWrap extends StatelessWidget {
     return Wrap(
       spacing: AtlasSpacing.sm,
       runSpacing: AtlasSpacing.sm,
-      children: badges.map((badge) => AtlasChip(label: badge)).toList(),
+      children: badges
+          .map(
+            (badge) => AtlasChip(
+          label: badge.displayLabel,
+        ),
+      )
+          .toList(),
     );
-  }
-
-  List<String> _buildBadges() {
-    final badges = <String>[];
-
-    if (_hasMeaningfulValue(pop.variant)) {
-      badges.add(_cleanBadgeLabel(pop.variant));
-    }
-
-    if (_hasMeaningfulValue(pop.retailExclusive)) {
-      badges.add('Exclusive');
-    }
-
-    if (_hasMeaningfulValue(pop.eventSticker)) {
-      badges.add('Sticker');
-    }
-
-    if (_hasMeaningfulValue(pop.limitedEdition)) {
-      badges.add('Limited');
-    }
-
-    if (_hasMeaningfulValue(pop.signature)) {
-      badges.add('Signed');
-    }
-
-    if (pop.isWishlist) {
-      badges.add('Wishlist');
-    }
-
-    return badges;
-  }
-
-  bool _hasMeaningfulValue(String value) {
-    final cleaned = value.trim().toLowerCase();
-
-    if (cleaned.isEmpty) {
-      return false;
-    }
-
-    return cleaned != 'none' &&
-        cleaned != 'common' &&
-        cleaned != 'standard' &&
-        cleaned != 'unsigned' &&
-        cleaned != 'no' &&
-        cleaned != 'n/a' &&
-        cleaned != 'na';
-  }
-
-  String _cleanBadgeLabel(String value) {
-    final cleaned = value.trim();
-
-    if (cleaned.length <= 18) {
-      return cleaned;
-    }
-
-    return '${cleaned.substring(0, 18)}...';
   }
 }
 

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../atlas/timeline/engine/atlas_timeline_engine.dart';
+import '../atlas/timeline/models/atlas_timeline_event.dart';
 import '../models/activity.dart';
 import '../models/collector_profile.dart';
 import '../models/pop.dart';
@@ -239,9 +241,38 @@ class AppState extends ChangeNotifier {
         ),
       );
     } else {
+      final addedAt = DateTime.tryParse(
+        pop.dateAdded.trim().isEmpty ? now : pop.dateAdded,
+      ) ??
+          DateTime.now();
+
+      final existingTimeline = List<AtlasTimelineEvent>.from(pop.timeline);
+      final hasAddedEvent = existingTimeline.any(
+            (event) => event.type == AtlasTimelineEventType.addedToVault,
+      );
+
+      if (!hasAddedEvent) {
+        existingTimeline.add(
+          AtlasTimelineEvent(
+            id: 'added-${pop.id}-${addedAt.microsecondsSinceEpoch}',
+            popId: pop.id,
+            type: AtlasTimelineEventType.addedToVault,
+            occurredAt: addedAt,
+            title: 'Added to Vault',
+            createdBy: AtlasTimelineEvent.systemCreatedBy,
+            createdAt: addedAt,
+          ),
+        );
+      }
+
+      existingTimeline.sort(
+            (a, b) => a.occurredAt.compareTo(b.occurredAt),
+      );
+
       final datedPop = pop.copyWith(
-        dateAdded: pop.dateAdded.trim().isEmpty ? now : pop.dateAdded,
+        dateAdded: addedAt.toIso8601String(),
         lastUpdated: pop.lastUpdated.trim().isEmpty ? now : pop.lastUpdated,
+        timeline: List<AtlasTimelineEvent>.unmodifiable(existingTimeline),
       );
 
       pops.add(datedPop);
@@ -406,45 +437,6 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> updatePop(
-      Pop updatedPop,
-      ) async {
-    List<Pop>? matchingCollection;
-    var matchingIndex = -1;
-
-    for (final collection in _collections.values) {
-      final index = collection.indexWhere(
-            (pop) => pop.id == updatedPop.id,
-      );
-
-      if (index != -1) {
-        matchingCollection = collection;
-        matchingIndex = index;
-        break;
-      }
-    }
-
-    if (matchingCollection == null || matchingIndex == -1) {
-      return;
-    }
-
-    final existingPop = matchingCollection[matchingIndex];
-    final now = DateTime.now().toIso8601String();
-
-    matchingCollection[matchingIndex] = updatedPop.copyWith(
-      dateAdded: updatedPop.dateAdded.trim().isEmpty
-          ? existingPop.dateAdded
-          : updatedPop.dateAdded,
-      lastUpdated: updatedPop.lastUpdated.trim().isEmpty
-          ? now
-          : updatedPop.lastUpdated,
-    );
-
-    await _saveData();
-
-    notifyListeners();
-  }
-
   Future<void> updateOwnerForPops(
       List<String> popIds,
       String owner,
@@ -481,6 +473,65 @@ class AppState extends ChangeNotifier {
         );
       }
     }
+
+    await _saveData();
+
+    notifyListeners();
+  }
+
+  Future<void> updatePop(
+      Pop updatedPop,
+      ) async {
+    List<Pop>? matchingCollection;
+    var matchingIndex = -1;
+
+    for (final collection in _collections.values) {
+      final index = collection.indexWhere(
+            (pop) => pop.id == updatedPop.id,
+      );
+
+      if (index != -1) {
+        matchingCollection = collection;
+        matchingIndex = index;
+        break;
+      }
+    }
+
+    if (matchingCollection == null || matchingIndex == -1) {
+      return;
+    }
+
+    final existingPop = matchingCollection[matchingIndex];
+    final now = DateTime.now();
+    final nowIso = now.toIso8601String();
+
+    const timelineEngine = AtlasTimelineEngine();
+
+    final detectedEvents = timelineEngine.comparePopChanges(
+      previousPop: existingPop,
+      updatedPop: updatedPop,
+      occurredAt: now,
+      source: 'Manual',
+    );
+
+    final timeline = <AtlasTimelineEvent>[
+      ...existingPop.timeline,
+      ...detectedEvents,
+    ];
+
+    final sortedTimeline = timelineEngine.chronological(
+      timeline,
+    );
+
+    matchingCollection[matchingIndex] = updatedPop.copyWith(
+      dateAdded: updatedPop.dateAdded.trim().isEmpty
+          ? existingPop.dateAdded
+          : updatedPop.dateAdded,
+      lastUpdated: updatedPop.lastUpdated.trim().isEmpty
+          ? nowIso
+          : updatedPop.lastUpdated,
+      timeline: sortedTimeline,
+    );
 
     await _saveData();
 

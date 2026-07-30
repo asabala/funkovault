@@ -1,7 +1,7 @@
 import '../../../models/activity.dart';
 import '../../../models/pop.dart';
-import 'atlas_confidence_engine.dart';
 import '../collection/pop_activity_summary_engine.dart';
+import 'atlas_confidence_engine.dart';
 
 class AtlasIntelligenceReport {
   const AtlasIntelligenceReport({
@@ -25,15 +25,18 @@ class AtlasIntelligenceEngine {
     required int duplicateCount,
     required int missingValueCount,
   }) {
-    const confidenceEngine = AtlasConfidenceEngine();
+    const confidenceEngine =
+    AtlasConfidenceEngine();
 
-    final confidence = confidenceEngine.calculate(pops);
+    final confidence =
+    confidenceEngine.calculate(pops);
 
     if (duplicateCount > 0) {
       return AtlasIntelligenceReport(
         primaryFocusTitle: 'Review Duplicates',
         primaryFocusMessage:
-        'Atlas found $duplicateCount possible duplicate group${duplicateCount == 1 ? '' : 's'}.',
+        'Atlas found $duplicateCount possible duplicate '
+            'group${duplicateCount == 1 ? '' : 's'}.',
         confidenceScore: confidence.score,
         confidenceMessage: confidence.message,
       );
@@ -41,9 +44,12 @@ class AtlasIntelligenceEngine {
 
     if (missingValueCount > 0) {
       return AtlasIntelligenceReport(
-        primaryFocusTitle: 'Complete Missing Values',
+        primaryFocusTitle:
+        'Complete Missing Values',
         primaryFocusMessage:
-        '$missingValueCount Pop${missingValueCount == 1 ? '' : 's'} need estimated values.',
+        '$missingValueCount '
+            'Pop${missingValueCount == 1 ? '' : 's'} '
+            'need estimated values.',
         confidenceScore: confidence.score,
         confidenceMessage: confidence.message,
       );
@@ -62,13 +68,15 @@ class AtlasIntelligenceEngine {
     required Pop pop,
     required List<Activity> activities,
   }) {
-    const activitySummaryEngine = PopActivitySummaryEngine();
+    const activitySummaryEngine =
+    PopActivitySummaryEngine();
 
     return activitySummaryEngine.build(
       popId: pop.id,
       popName: pop.name,
       popNumber: pop.number,
       activities: activities,
+      timeline: pop.timeline,
     );
   }
 }
