@@ -1,15 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'package:funkovault2/atlas/catalog/services/atlas_pop_factory.dart';
 import 'package:funkovault2/atlas/catalog/models/atlas_catalog_product.dart';
 import 'package:funkovault2/atlas/catalog/services/atlas_barcode_catalog_resolver.dart';
+import 'package:funkovault2/atlas/catalog/services/atlas_pop_factory.dart';
+import 'package:funkovault2/atlas/intelligence/engines/atlas_scan_intelligence_engine.dart';
+import 'package:funkovault2/atlas/intelligence/models/atlas_collector_summary.dart';
+import 'package:funkovault2/atlas/intelligence/models/atlas_scan_intelligence.dart';
+import 'package:funkovault2/atlas/scan/briefing/atlas_scan_briefing.dart';
+import 'package:funkovault2/atlas/scan/briefing/atlas_scan_briefing_engine.dart';
 import 'package:funkovault2/atlas/scan/models/scan_code.dart';
 import 'package:funkovault2/atlas/scan/models/scan_session.dart';
+import 'package:funkovault2/atlas/scan/workflow/identity_resolution_status.dart';
 import 'package:funkovault2/models/pop.dart';
 import 'package:funkovault2/screens/catalog/funko_catalog_screen.dart';
 import 'package:funkovault2/screens/pop/add_pop_screen.dart';
 import 'package:funkovault2/services/app_state.dart';
+import 'package:funkovault2/widgets/scanner/atlas_collector_summary_card.dart';
+import 'package:funkovault2/widgets/scanner/atlas_scan_briefing_card.dart';
+import 'package:funkovault2/widgets/scanner/atlas_scan_intelligence_card.dart';
 
 Future<void> _openCatalogProduct(
     BuildContext context,
@@ -169,18 +178,40 @@ class _BarcodeResultView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AtlasScanBriefing briefing =
+    AtlasScanBriefingEngine.build(session);
+
+    final AtlasScanIntelligence intelligence =
+    const AtlasScanIntelligenceEngine().processChecked(
+      session,
+    );
+
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _ResultHeader(
+            session: session,
             code: code,
             resolution: catalogResolution,
+          ),
+          const SizedBox(
+            height: 16,
+          ),
+          AtlasScanBriefingCard(
+            briefing: briefing,
+          ),
+          const SizedBox(
+            height: 16,
+          ),
+          AtlasScanIntelligenceCard(
+            intelligence: intelligence,
           ),
           const SizedBox(
             height: 24,
           ),
           _CatalogResolutionCard(
+            session: session,
             resolution: catalogResolution,
           ),
           const SizedBox(
@@ -190,14 +221,6 @@ class _BarcodeResultView extends StatelessWidget {
             session: session,
             code: code,
           ),
-          if (session.warnings.isNotEmpty) ...[
-            const SizedBox(
-              height: 16,
-            ),
-            _ScanWarningsCard(
-              warnings: session.warnings,
-            ),
-          ],
           const SizedBox(
             height: 24,
           ),
@@ -220,57 +243,30 @@ class _BarcodeResultView extends StatelessWidget {
 
 class _ResultHeader extends StatelessWidget {
   const _ResultHeader({
+    required this.session,
     required this.code,
     required this.resolution,
   });
 
+  final ScanSession session;
   final ScanCode code;
   final AtlasBarcodeResolution resolution;
 
   @override
   Widget build(BuildContext context) {
-    final String title;
-    final String message;
-    final IconData icon;
-
-    switch (resolution.status) {
-      case AtlasBarcodeResolutionStatus.invalidBarcode:
-        title = 'Barcode Detected';
-        message = code.isProductBarcode
-            ? 'Atlas detected the code, but it could not be used for a catalog lookup.'
-            : 'Atlas detected a code, but it is not a supported product barcode.';
-        icon = Icons.warning_amber_rounded;
-
-      case AtlasBarcodeResolutionStatus.noMatch:
-        title = 'No Catalog Match';
-        message =
-        'The barcode was valid, but Atlas did not find a matching catalog product.';
-        icon = Icons.search_off_rounded;
-
-      case AtlasBarcodeResolutionStatus.singleMatch:
-        title = 'Product Found';
-        message =
-        'Atlas found one catalog product matching this barcode.';
-        icon = Icons.check_circle_outline_rounded;
-
-      case AtlasBarcodeResolutionStatus.multipleMatches:
-        title = 'Possible Matches Found';
-        message =
-        'Atlas found more than one catalog product. Review the choices before continuing.';
-        icon = Icons.content_copy_rounded;
-    }
+    final _ResultHeaderState headerState = _buildHeaderState();
 
     return Column(
       children: [
         Icon(
-          icon,
+          headerState.icon,
           size: 72,
         ),
         const SizedBox(
           height: 16,
         ),
         Text(
-          title,
+          headerState.title,
           style: Theme.of(context)
               .textTheme
               .headlineSmall
@@ -283,19 +279,133 @@ class _ResultHeader extends StatelessWidget {
           height: 8,
         ),
         Text(
-          message,
+          headerState.message,
           textAlign: TextAlign.center,
         ),
       ],
     );
   }
+
+  _ResultHeaderState _buildHeaderState() {
+    switch (session.resolutionStatus) {
+      case IdentityResolutionStatus.failed:
+        return const _ResultHeaderState(
+          title: 'Resolution Failed',
+          message:
+          'Atlas could not confidently identify this collectible. Review the scan evidence or try scanning again.',
+          icon: Icons.error_outline_rounded,
+        );
+
+      case IdentityResolutionStatus.ambiguous:
+        return const _ResultHeaderState(
+          title: 'Review Required',
+          message:
+          'Atlas found multiple possible identities. Review the available matches before continuing.',
+          icon: Icons.warning_amber_rounded,
+        );
+
+      case IdentityResolutionStatus.unresolved:
+        return const _ResultHeaderState(
+          title: 'Identity Not Resolved',
+          message:
+          'Atlas could not determine a confirmed product identity from the available evidence.',
+          icon: Icons.help_outline_rounded,
+        );
+
+      case IdentityResolutionStatus.pendingSync:
+        return const _ResultHeaderState(
+          title: 'Sync Pending',
+          message:
+          'Atlas resolved this product locally. Additional cloud intelligence will be synchronized when available.',
+          icon: Icons.cloud_sync_outlined,
+        );
+
+      case IdentityResolutionStatus.resolvedLocal:
+        return const _ResultHeaderState(
+          title: 'Product Resolved',
+          message:
+          'Atlas successfully identified this collectible using local intelligence.',
+          icon: Icons.check_circle_outline_rounded,
+        );
+
+      case IdentityResolutionStatus.resolvedRemote:
+        return const _ResultHeaderState(
+          title: 'Product Resolved',
+          message:
+          'Atlas successfully identified this collectible using connected catalog intelligence.',
+          icon: Icons.check_circle_outline_rounded,
+        );
+
+      case IdentityResolutionStatus.resolving:
+        return const _ResultHeaderState(
+          title: 'Resolving Product',
+          message:
+          'Atlas is processing the available evidence and attempting to identify this collectible.',
+          icon: Icons.manage_search_rounded,
+        );
+
+      case IdentityResolutionStatus.notStarted:
+        return _catalogFallbackState();
+    }
+  }
+
+  _ResultHeaderState _catalogFallbackState() {
+    switch (resolution.status) {
+      case AtlasBarcodeResolutionStatus.invalidBarcode:
+        return _ResultHeaderState(
+          title: 'Barcode Detected',
+          message: code.isProductBarcode
+              ? 'Atlas detected the code, but it could not be used for a catalog lookup.'
+              : 'Atlas detected a code, but it is not a supported product barcode.',
+          icon: Icons.warning_amber_rounded,
+        );
+
+      case AtlasBarcodeResolutionStatus.noMatch:
+        return const _ResultHeaderState(
+          title: 'No Catalog Match',
+          message:
+          'The barcode was valid, but Atlas did not find a matching catalog product.',
+          icon: Icons.search_off_rounded,
+        );
+
+      case AtlasBarcodeResolutionStatus.singleMatch:
+        return const _ResultHeaderState(
+          title: 'Product Found',
+          message:
+          'Atlas found one catalog product matching this barcode.',
+          icon: Icons.check_circle_outline_rounded,
+        );
+
+      case AtlasBarcodeResolutionStatus.multipleMatches:
+        return const _ResultHeaderState(
+          title: 'Possible Matches Found',
+          message:
+          'Atlas found more than one catalog product. Review the choices before continuing.',
+          icon: Icons.content_copy_rounded,
+        );
+    }
+  }
+}
+
+class _ResultHeaderState {
+  const _ResultHeaderState({
+    required this.title,
+    required this.message,
+    required this.icon,
+  });
+
+  final String title;
+  final String message;
+  final IconData icon;
 }
 
 class _CatalogResolutionCard extends StatelessWidget {
   const _CatalogResolutionCard({
+    required this.session,
     required this.resolution,
   });
 
+  final ScanSession session;
   final AtlasBarcodeResolution resolution;
 
   @override
@@ -333,7 +443,6 @@ class _CatalogResolutionCard extends StatelessWidget {
 
         if (vaultMatches.isNotEmpty) {
           return _VaultBarcodeMatchCard(
-            barcode: resolution.barcode,
             vaultMatches: vaultMatches,
             collectionName: appState.selectedCollection,
           );
@@ -375,7 +484,9 @@ class _CatalogResolutionCard extends StatelessWidget {
 
       case AtlasBarcodeResolutionStatus.singleMatch:
         return _CatalogProductCard(
-          product: resolution.singleMatch!,
+          product:
+          session.catalogProduct ??
+              resolution.singleMatch!,
           scannedBarcode: resolution.barcode,
         );
 
@@ -478,9 +589,11 @@ class _MultipleCatalogMatchesCard extends StatelessWidget {
             const SizedBox(
               height: 16,
             ),
-            for (int index = 0;
+            for (
+            int index = 0;
             index < products.length;
-            index++) ...[
+            index++
+            ) ...[
               _CatalogProductSummary(
                 product: products[index],
               ),
@@ -515,12 +628,10 @@ class _MultipleCatalogMatchesCard extends StatelessWidget {
 
 class _VaultBarcodeMatchCard extends StatelessWidget {
   const _VaultBarcodeMatchCard({
-    required this.barcode,
     required this.vaultMatches,
     required this.collectionName,
   });
 
-  final String barcode;
   final List<Pop> vaultMatches;
   final String collectionName;
 
@@ -536,33 +647,20 @@ class _VaultBarcodeMatchCard extends StatelessWidget {
       relatedMatches: const <Pop>[],
     );
 
+    final AtlasCollectorSummary collectorSummary =
+    AtlasCollectorSummary.build(
+      product: primaryPop,
+      exactMatches: collectionSummary.exactMatches,
+      relatedMatches: collectionSummary.relatedMatches,
+      collectionName: collectionName,
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _VaultProductHeroCard(
-          pop: primaryPop,
-        ),
-        const SizedBox(
-          height: 16,
-        ),
-        _VaultBarcodeConfidenceCard(
-          barcode: barcode,
-        ),
-        const SizedBox(
-          height: 16,
-        ),
-        _CollectionStatusCard(
-          collectionName: collectionName,
-          summary: collectionSummary,
-        ),
-        const SizedBox(
-          height: 16,
-        ),
-        _AtlasInsightCard(
-          summary: collectionSummary,
-          productName: primaryPop.name.trim().isEmpty
-              ? 'This collectible'
-              : primaryPop.name.trim(),
+        AtlasCollectorSummaryCard(
+          summary: collectorSummary,
+          imageUrl: primaryPop.imageUrl,
         ),
         const SizedBox(
           height: 20,
@@ -579,186 +677,6 @@ class _VaultBarcodeMatchCard extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _VaultProductHeroCard extends StatelessWidget {
-  const _VaultProductHeroCard({
-    required this.pop,
-  });
-
-  final Pop pop;
-
-  @override
-  Widget build(BuildContext context) {
-    final String imageUrl = pop.imageUrl.trim();
-
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Container(
-            constraints: const BoxConstraints(
-              minHeight: 260,
-              maxHeight: 360,
-            ),
-            alignment: Alignment.center,
-            child: imageUrl.isEmpty
-                ? const _ProductImagePlaceholder()
-                : Image.network(
-              imageUrl,
-              width: double.infinity,
-              height: 320,
-              fit: BoxFit.contain,
-              errorBuilder: (
-                  BuildContext context,
-                  Object error,
-                  StackTrace? stackTrace,
-                  ) {
-                return const _ProductImagePlaceholder();
-              },
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              20,
-              16,
-              20,
-              20,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Text(
-                  pop.name.trim().isEmpty
-                      ? 'Vault Collectible'
-                      : pop.name.trim(),
-                  style: Theme.of(context)
-                      .textTheme
-                      .headlineSmall
-                      ?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                if (pop.number.trim().isNotEmpty) ...[
-                  const SizedBox(
-                    height: 6,
-                  ),
-                  Text(
-                    '#${pop.number.trim()}',
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium
-                        ?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-                if (pop.series.trim().isNotEmpty) ...[
-                  const SizedBox(
-                    height: 8,
-                  ),
-                  Text(
-                    pop.series.trim(),
-                    style: Theme.of(context).textTheme.bodyLarge,
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-                if (pop.variant.trim().isNotEmpty) ...[
-                  const SizedBox(
-                    height: 12,
-                  ),
-                  Chip(
-                    avatar: const Icon(
-                      Icons.auto_awesome_rounded,
-                      size: 18,
-                    ),
-                    label: Text(
-                      pop.variant.trim(),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _VaultBarcodeConfidenceCard extends StatelessWidget {
-  const _VaultBarcodeConfidenceCard({
-    required this.barcode,
-  });
-
-  final String barcode;
-
-  @override
-  Widget build(BuildContext context) {
-    const int confidence = 99;
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          children: [
-            const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.check_circle_rounded,
-                ),
-                SizedBox(
-                  width: 8,
-                ),
-                Text(
-                  '🟢 PRODUCT IDENTIFIED',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(
-              height: 14,
-            ),
-            Text(
-              '★★★★★',
-              style: Theme.of(context)
-                  .textTheme
-                  .headlineSmall
-                  ?.copyWith(
-                fontWeight: FontWeight.bold,
-                letterSpacing: 3,
-              ),
-            ),
-            const SizedBox(
-              height: 6,
-            ),
-            Text(
-              'Atlas Confidence: $confidence%',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleMedium
-                  ?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(
-              height: 6,
-            ),
-            Text(
-              'Barcode $barcode matched an imported Vault record.',
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
@@ -787,32 +705,20 @@ class _CatalogProductCard extends StatelessWidget {
       vaultPops: appState.selectedCollectionPops,
     );
 
+    final AtlasCollectorSummary collectorSummary =
+    AtlasCollectorSummary.build(
+      product: scannedPop,
+      exactMatches: collectionSummary.exactMatches,
+      relatedMatches: collectionSummary.relatedMatches,
+      collectionName: appState.selectedCollection,
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _ProductHeroCard(
-          product: product,
-          scannedPop: scannedPop,
-        ),
-        const SizedBox(
-          height: 16,
-        ),
-        _AtlasConfidenceCard(
-          collectionSummary: collectionSummary,
-        ),
-        const SizedBox(
-          height: 16,
-        ),
-        _CollectionStatusCard(
-          collectionName: appState.selectedCollection,
-          summary: collectionSummary,
-        ),
-        const SizedBox(
-          height: 16,
-        ),
-        _AtlasInsightCard(
-          summary: collectionSummary,
-          productName: product.displayName,
+        AtlasCollectorSummaryCard(
+          summary: collectorSummary,
+          imageUrl: scannedPop.imageUrl,
         ),
         const SizedBox(
           height: 20,
@@ -840,452 +746,6 @@ class _CatalogProductCard extends StatelessWidget {
   }
 }
 
-class _ProductHeroCard extends StatelessWidget {
-  const _ProductHeroCard({
-    required this.product,
-    required this.scannedPop,
-  });
-
-  final AtlasCatalogProduct product;
-  final Pop scannedPop;
-
-  @override
-  Widget build(BuildContext context) {
-    final String imageUrl = scannedPop.imageUrl.trim();
-
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Container(
-            constraints: const BoxConstraints(
-              minHeight: 260,
-              maxHeight: 360,
-            ),
-            alignment: Alignment.center,
-            child: imageUrl.isEmpty
-                ? const _ProductImagePlaceholder()
-                : Image.network(
-              imageUrl,
-              width: double.infinity,
-              height: 320,
-              fit: BoxFit.contain,
-              errorBuilder: (
-                  BuildContext context,
-                  Object error,
-                  StackTrace? stackTrace,
-                  ) {
-                return const _ProductImagePlaceholder();
-              },
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              20,
-              16,
-              20,
-              20,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Text(
-                  product.displayName,
-                  style: Theme.of(context)
-                      .textTheme
-                      .headlineSmall
-                      ?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                if (scannedPop.number.trim().isNotEmpty) ...[
-                  const SizedBox(
-                    height: 6,
-                  ),
-                  Text(
-                    '#${scannedPop.number.trim()}',
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium
-                        ?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-                if (scannedPop.series.trim().isNotEmpty) ...[
-                  const SizedBox(
-                    height: 8,
-                  ),
-                  Text(
-                    scannedPop.series.trim(),
-                    style: Theme.of(context).textTheme.bodyLarge,
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-                if (scannedPop.variant.trim().isNotEmpty) ...[
-                  const SizedBox(
-                    height: 12,
-                  ),
-                  Chip(
-                    avatar: const Icon(
-                      Icons.auto_awesome_rounded,
-                      size: 18,
-                    ),
-                    label: Text(
-                      scannedPop.variant.trim(),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ProductImagePlaceholder extends StatelessWidget {
-  const _ProductImagePlaceholder();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 280,
-      alignment: Alignment.center,
-      child: const Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.inventory_2_outlined,
-            size: 72,
-          ),
-          SizedBox(
-            height: 12,
-          ),
-          Text(
-            'Product image unavailable',
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _AtlasConfidenceCard extends StatelessWidget {
-  const _AtlasConfidenceCard({
-    required this.collectionSummary,
-  });
-
-  final _CollectionMatchSummary collectionSummary;
-
-  @override
-  Widget build(BuildContext context) {
-    const int confidence = 99;
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          children: [
-            const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.check_circle_rounded,
-                ),
-                SizedBox(
-                  width: 8,
-                ),
-                Text(
-                  '🟢 PRODUCT IDENTIFIED',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(
-              height: 14,
-            ),
-            Text(
-              '★★★★★',
-              style: Theme.of(context)
-                  .textTheme
-                  .headlineSmall
-                  ?.copyWith(
-                fontWeight: FontWeight.bold,
-                letterSpacing: 3,
-              ),
-            ),
-            const SizedBox(
-              height: 6,
-            ),
-            Text(
-              'Atlas Confidence: $confidence%',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleMedium
-                  ?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(
-              height: 6,
-            ),
-            Text(
-              collectionSummary.hasExactMatch
-                  ? 'Catalog identity and Vault identity matched.'
-                  : 'Catalog identity was resolved successfully.',
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _CollectionStatusCard extends StatelessWidget {
-  const _CollectionStatusCard({
-    required this.collectionName,
-    required this.summary,
-  });
-
-  final String collectionName;
-  final _CollectionMatchSummary summary;
-
-  @override
-  Widget build(BuildContext context) {
-    final IconData statusIcon;
-    final String statusTitle;
-    final String statusMessage;
-
-    if (summary.hasExactMatch) {
-      statusIcon = Icons.verified_rounded;
-      statusTitle = 'You Own This Release';
-      statusMessage = summary.exactQuantity == 1
-          ? 'One copy is currently saved in your Vault.'
-          : '${summary.exactQuantity} copies are currently saved in your Vault.';
-    } else if (summary.hasRelatedMatches) {
-      statusIcon = Icons.compare_arrows_rounded;
-      statusTitle = 'Related Release Owned';
-      statusMessage = summary.relatedMatches.length == 1
-          ? 'Atlas found one related variant in your Vault.'
-          : 'Atlas found ${summary.relatedMatches.length} related variants in your Vault.';
-    } else {
-      statusIcon = Icons.add_box_outlined;
-      statusTitle = 'Not Currently in Your Vault';
-      statusMessage =
-      'Atlas did not find this release or a closely related variant.';
-    }
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              '📦 Collection Status',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleLarge
-                  ?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(
-              height: 16,
-            ),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(
-                  statusIcon,
-                  size: 34,
-                ),
-                const SizedBox(
-                  width: 12,
-                ),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        statusTitle,
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleMedium
-                            ?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(
-                        height: 5,
-                      ),
-                      Text(
-                        statusMessage,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(
-              height: 14,
-            ),
-            Text(
-              collectionName,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            if (summary.hasRelatedMatches) ...[
-              const Divider(
-                height: 28,
-              ),
-              Text(
-                'Related Vault Releases',
-                style: Theme.of(context)
-                    .textTheme
-                    .titleSmall
-                    ?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(
-                height: 10,
-              ),
-              for (final Pop relatedPop in summary.relatedMatches.take(3))
-                Padding(
-                  padding: const EdgeInsets.only(
-                    bottom: 8,
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.auto_awesome_rounded,
-                        size: 18,
-                      ),
-                      const SizedBox(
-                        width: 8,
-                      ),
-                      Expanded(
-                        child: Text(
-                          _relatedPopLabel(
-                            relatedPop,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  String _relatedPopLabel(
-      Pop pop,
-      ) {
-    final List<String> details = <String>[];
-
-    if (pop.variant.trim().isNotEmpty) {
-      details.add(
-        pop.variant.trim(),
-      );
-    }
-
-    if (pop.retailExclusive.trim().isNotEmpty &&
-        pop.retailExclusive.trim().toLowerCase() != 'none') {
-      details.add(
-        pop.retailExclusive.trim(),
-      );
-    }
-
-    if (pop.eventSticker.trim().isNotEmpty &&
-        pop.eventSticker.trim().toLowerCase() != 'none') {
-      details.add(
-        pop.eventSticker.trim(),
-      );
-    }
-
-    if (details.isEmpty) {
-      return pop.name;
-    }
-
-    return '${pop.name} • ${details.join(' • ')}';
-  }
-}
-
-class _AtlasInsightCard extends StatelessWidget {
-  const _AtlasInsightCard({
-    required this.summary,
-    required this.productName,
-  });
-
-  final _CollectionMatchSummary summary;
-  final String productName;
-
-  @override
-  Widget build(BuildContext context) {
-    final String insight;
-
-    if (summary.hasExactMatch) {
-      insight = summary.exactQuantity > 1
-          ? 'You already own ${summary.exactQuantity} copies of this exact release. '
-          'Adding it again will increase the saved quantity.'
-          : 'You already own this exact release. You can still add another copy '
-          'if this purchase improves its condition or is intended for trade.';
-    } else if (summary.hasRelatedMatches) {
-      insight =
-      'This exact release is not currently saved, but Atlas found related '
-          'versions in your Vault. Review the sticker, finish, exclusive, and '
-          'packaging details before adding it.';
-    } else {
-      insight =
-      '$productName appears to be a new discovery for this Vault. '
-          'Adding it will create a new collection record.';
-    }
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '🤖 Atlas Insight',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleLarge
-                  ?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(
-              height: 12,
-            ),
-            Text(
-              insight,
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _CollectionMatchSummary {
   const _CollectionMatchSummary({
     required this.exactMatches,
@@ -1295,14 +755,20 @@ class _CollectionMatchSummary {
   final List<Pop> exactMatches;
   final List<Pop> relatedMatches;
 
-  bool get hasExactMatch => exactMatches.isNotEmpty;
+  bool get hasExactMatch {
+    return exactMatches.isNotEmpty;
+  }
 
-  bool get hasRelatedMatches => relatedMatches.isNotEmpty;
+  bool get hasRelatedMatches {
+    return relatedMatches.isNotEmpty;
+  }
 
   int get exactQuantity {
     return exactMatches.fold<int>(
       0,
-          (int total, Pop pop) => total + pop.quantity,
+          (int total, Pop pop) {
+        return total + pop.quantity;
+      },
     );
   }
 
@@ -1405,10 +871,12 @@ class _CollectionMatchSummary {
     }
 
     return _CollectionMatchSummary(
-      exactMatches:
-      List<Pop>.unmodifiable(exactMatches),
-      relatedMatches:
-      List<Pop>.unmodifiable(relatedMatches),
+      exactMatches: List<Pop>.unmodifiable(
+        exactMatches,
+      ),
+      relatedMatches: List<Pop>.unmodifiable(
+        relatedMatches,
+      ),
     );
   }
 
@@ -1426,8 +894,6 @@ class _CollectionMatchSummary {
       normalizedBarcode,
     };
 
-    // UPC-A and EAN-13 may represent the same barcode,
-    // with EAN-13 containing a leading zero.
     if (normalizedBarcode.length == 13 &&
         normalizedBarcode.startsWith('0')) {
       candidates.add(
@@ -1511,9 +977,11 @@ class _CatalogProductSummary extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        for (int index = 0;
+        for (
+        int index = 0;
         index < rows.length;
-        index++) ...[
+        index++
+        ) ...[
           rows[index],
           if (index < rows.length - 1)
             const Divider(),
@@ -1606,6 +1074,35 @@ class _ScanEvidenceCard extends StatelessWidget {
             ),
             const Divider(),
             _ResultRow(
+              label: 'Identity',
+              value: _resolutionStatusLabel(
+                session.resolutionStatus,
+              ),
+            ),
+            if (session.atlasProductId != null) ...[
+              const Divider(),
+              _ResultRow(
+                label: 'Atlas Product ID',
+                value: session.atlasProductId!.value,
+                selectable: true,
+              ),
+            ],
+            const Divider(),
+            _ResultRow(
+              label: 'User Action',
+              value: session.requiresUserAction
+                  ? 'Review required'
+                  : 'No action required',
+            ),
+            if (session.requiresVariantConfirmation) ...[
+              const Divider(),
+              const _ResultRow(
+                label: 'Variant',
+                value: 'Confirmation required',
+              ),
+            ],
+            const Divider(),
+            _ResultRow(
               label: 'Session Status',
               value: _statusLabel(
                 session.status,
@@ -1659,6 +1156,36 @@ class _ScanEvidenceCard extends StatelessWidget {
     }
   }
 
+  String _resolutionStatusLabel(
+      IdentityResolutionStatus status,
+      ) {
+    switch (status) {
+      case IdentityResolutionStatus.notStarted:
+        return 'Not started';
+
+      case IdentityResolutionStatus.resolving:
+        return 'Resolving identity';
+
+      case IdentityResolutionStatus.resolvedLocal:
+        return 'Resolved locally';
+
+      case IdentityResolutionStatus.resolvedRemote:
+        return 'Resolved remotely';
+
+      case IdentityResolutionStatus.pendingSync:
+        return 'Resolved — sync pending';
+
+      case IdentityResolutionStatus.ambiguous:
+        return 'Multiple possible identities';
+
+      case IdentityResolutionStatus.unresolved:
+        return 'Identity not resolved';
+
+      case IdentityResolutionStatus.failed:
+        return 'Resolution failed';
+    }
+  }
+
   String _statusLabel(
       ScanSessionStatus status,
       ) {
@@ -1687,56 +1214,6 @@ class _ScanEvidenceCard extends StatelessWidget {
       case ScanSessionStatus.failed:
         return 'Failed';
     }
-  }
-}
-
-class _ScanWarningsCard extends StatelessWidget {
-  const _ScanWarningsCard({
-    required this.warnings,
-  });
-
-  final List<String> warnings;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Row(
-              children: [
-                Icon(
-                  Icons.warning_amber_rounded,
-                ),
-                SizedBox(
-                  width: 8,
-                ),
-                Text(
-                  'Scan Warnings',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(
-              height: 12,
-            ),
-            for (final String warning in warnings)
-              Padding(
-                padding: const EdgeInsets.only(
-                  bottom: 8,
-                ),
-                child: Text(
-                  warning,
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
   }
 }
 

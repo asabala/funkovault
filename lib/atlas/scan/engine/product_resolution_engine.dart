@@ -8,6 +8,7 @@ import '../identity/identity_evidence_builder.dart';
 import '../identity/identity_hypothesis.dart';
 import '../models/scan_session.dart';
 import '../resolution/product_resolution.dart';
+import '../resolution/resolved_product_snapshot.dart';
 import 'abstract_scan_engine.dart';
 import 'engine_context.dart';
 import 'engine_result.dart';
@@ -18,10 +19,11 @@ import 'engine_support.dart';
 // Catalog searching, candidate ranking, and match decisions are delegated
 // to CatalogResolutionService. This engine only coordinates the scan
 // intelligence pipeline.
-final class ProductResolutionEngine extends AbstractScanEngine {
-  const ProductResolutionEngine({
-    required this._resolutionService,
-  });
+final class ProductResolutionEngine
+    extends AbstractScanEngine {
+  const ProductResolutionEngine(
+      this._resolutionService,
+      );
 
   static const String id =
       'atlas.scan.product-resolution';
@@ -119,20 +121,23 @@ final class ProductResolutionEngine extends AbstractScanEngine {
             catalogResult.requiresReview ||
             selectedMatch.requiresReview;
 
+    final ResolvedProductSnapshot resolvedProduct =
+    ResolvedProductSnapshot.fromCatalogProduct(
+      selectedMatch.product,
+    );
+
     final ProductResolution resolution =
     ProductResolution(
-      productId: selectedMatch.productId,
-      displayName:
-      selectedMatch.product.displayName,
-      matchConfidence:
-      selectedMatch.confidence,
+      productId: resolvedProduct.productId,
+      displayName: resolvedProduct.displayName,
+      resolvedProduct: resolvedProduct,
+      matchConfidence: selectedMatch.confidence,
       requiresReview: requiresReview,
       attributes: <String, Object?>{
         'hypothesisId': hypothesis.hypothesisId,
         'resolutionReason':
         catalogResult.resolutionReason,
-        'matchReason':
-        selectedMatch.matchReason,
+        'matchReason': selectedMatch.matchReason,
         'candidateCount':
         catalogResult.candidateMatches.length,
       },

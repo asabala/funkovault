@@ -1,15 +1,17 @@
 import '../../identity/product/atlas_product_id.dart';
+import 'resolved_product_snapshot.dart';
 
-// Represents the canonical product selected by Atlas after identity
-// resolution.
-//
-// ProductResolution is intentionally lightweight. It describes the outcome
-// of product resolution rather than exposing database or catalog details.
+/// Represents the canonical product selected by Atlas after identity
+/// resolution.
+///
+/// ProductResolution describes both the resolution decision and the immutable
+/// product snapshot produced by that decision.
 final class ProductResolution {
   ProductResolution({
     required this.productId,
     required this.displayName,
     required this.matchConfidence,
+    required this.resolvedProduct,
     this.requiresReview = false,
     Map<String, Object?> attributes =
     const <String, Object?>{},
@@ -17,19 +19,22 @@ final class ProductResolution {
     attributes,
   );
 
-  // Canonical Atlas product identifier.
+  /// Canonical Atlas product identifier.
   final AtlasProductId productId;
 
-  // Human-readable product name.
+  /// Human-readable product name.
   final String displayName;
 
-  // Confidence assigned by the product-resolution engine.
+  /// Complete immutable product snapshot selected by the resolution engine.
+  final ResolvedProductSnapshot resolvedProduct;
+
+  /// Confidence assigned by the product-resolution engine.
   final double matchConfidence;
 
-  // Indicates that a human should verify this match.
+  /// Indicates that a human should verify this match.
   final bool requiresReview;
 
-  // Extensible metadata.
+  /// Extensible resolution metadata.
   final Map<String, Object?> attributes;
 
   bool get isHighConfidence {

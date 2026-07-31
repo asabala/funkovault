@@ -1,7 +1,10 @@
+import '../../catalog/models/atlas_catalog_product.dart';
 import '../contributions/contribution_collection.dart';
 import '../contributions/contribution_conflict_policy.dart';
 import '../contributions/intelligence_contribution.dart';
 import '../../identity/product/atlas_product_id.dart';
+import '../projection/scan_session_projector.dart';
+import '../resolution/resolved_product_snapshot.dart';
 import '../results/collector_item_status.dart';
 import '../results/market_value_snapshot.dart';
 import '../results/scan_variant_status.dart';
@@ -45,6 +48,7 @@ class ScanSession {
     this.resolutionStatus =
         IdentityResolutionStatus.notStarted,
     this.atlasProductId,
+    this.resolvedProduct,
     this.marketSnapshot,
     this.collectorStatus,
     this.variantResolution,
@@ -86,6 +90,8 @@ class ScanSession {
   final IdentityResolutionStatus resolutionStatus;
 
   final AtlasProductId? atlasProductId;
+
+  final ResolvedProductSnapshot? resolvedProduct;
 
   final MarketValueSnapshot? marketSnapshot;
 
@@ -184,6 +190,10 @@ class ScanSession {
     return status == ScanSessionStatus.completed;
   }
 
+  AtlasCatalogProduct? get catalogProduct {
+    return resolvedProduct?.toCatalogProduct();
+  }
+
   bool get requiresUserAction {
     return status ==
         ScanSessionStatus.awaitingConfirmation ||
@@ -236,6 +246,7 @@ class ScanSession {
     VisualIdentity? visualIdentity,
     IdentityResolutionStatus? resolutionStatus,
     AtlasProductId? atlasProductId,
+    ResolvedProductSnapshot? resolvedProduct,
     MarketValueSnapshot? marketSnapshot,
     CollectorItemStatus? collectorStatus,
     ScanVariantResolution? variantResolution,
@@ -266,6 +277,8 @@ class ScanSession {
       resolutionStatus ?? this.resolutionStatus,
       atlasProductId:
       atlasProductId ?? this.atlasProductId,
+      resolvedProduct:
+      resolvedProduct ?? this.resolvedProduct,
       marketSnapshot:
       marketSnapshot ?? this.marketSnapshot,
       collectorStatus:
@@ -315,11 +328,14 @@ class ScanSession {
         ContributionConflictPolicy conflictPolicy =
             ContributionConflictPolicy.reject,
       }) {
-    return copyWith(
-      contributions: contributions.add(
-        contribution,
-        conflictPolicy: conflictPolicy,
-      ),
+    final ContributionCollection updatedContributions =
+    contributions.add(
+      contribution,
+      conflictPolicy: conflictPolicy,
+    );
+
+    return _withProjectedContributions(
+      updatedContributions,
     );
   }
 
@@ -328,14 +344,40 @@ class ScanSession {
         ContributionConflictPolicy conflictPolicy =
             ContributionConflictPolicy.reject,
       }) {
-    return copyWith(
-      contributions: contributions.addAll(
-        values,
-        conflictPolicy: conflictPolicy,
-      ),
+    final ContributionCollection updatedContributions =
+    contributions.addAll(
+      values,
+      conflictPolicy: conflictPolicy,
+    );
+
+    return _withProjectedContributions(
+      updatedContributions,
     );
   }
+  ScanSession _withProjectedContributions(
+      ContributionCollection updatedContributions,
+      ) {
 
+    final ScanSessionProjection projection =
+    ScanSessionProjector.project(
+      contributions: updatedContributions,
+      currentStatus: status,
+      currentResolutionStatus: resolutionStatus,
+      currentAtlasProductId: atlasProductId,
+      currentResolvedProduct: resolvedProduct,
+      currentConfidence: confidence,
+      isOffline: isOffline,
+    );
+
+    return copyWith(
+      contributions: updatedContributions,
+      status: projection.status,
+      resolutionStatus: projection.resolutionStatus,
+      atlasProductId: projection.atlasProductId,
+      resolvedProduct: projection.resolvedProduct,
+      confidence: projection.confidence,
+    );
+  }
   ScanSession removeContributionById(
       String contributionId,
       ) {

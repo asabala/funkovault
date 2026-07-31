@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
+import 'package:funkovault2/atlas/catalog/models/atlas_catalog_product.dart';
 import 'package:funkovault2/atlas/catalog/services/atlas_barcode_catalog_resolver.dart';
 import 'package:funkovault2/atlas/scan/engine/barcode_intelligence_engine.dart';
 import 'package:funkovault2/atlas/scan/engine/engine_context.dart';
@@ -158,6 +159,14 @@ class _ScanScreenState extends State<ScanScreen> {
             AtlasBarcodeResolution.invalid(
               barcode:
               resolvedCode?.normalizedValue ?? '',
+            );
+      } else if (finalSession.catalogProduct != null) {
+        catalogResolution =
+            AtlasBarcodeResolution.matches(
+              barcode: resolvedCode.normalizedValue,
+              matches: <AtlasCatalogProduct>[
+                finalSession.catalogProduct!,
+              ],
             );
       } else {
         catalogResolution =

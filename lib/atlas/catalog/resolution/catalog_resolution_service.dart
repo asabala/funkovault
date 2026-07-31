@@ -11,13 +11,12 @@ import 'catalog_resolution_result.dart';
 // repository implementation and matching strategy from callers so that both
 // can evolve independently.
 final class CatalogResolutionService {
-  CatalogResolutionService({
-    required this._repository,
-    this._matcher = const CatalogMatcher(),
-  });
+  CatalogResolutionService(
+      this._repository, [
+        this._matcher = const CatalogMatcher(),
+      ]);
 
   final AtlasCatalogRepository _repository;
-
   final CatalogMatcher _matcher;
 
   Future<CatalogResolutionResult> resolve(

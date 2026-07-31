@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../models/pop.dart';
 import '../../theme/atlas_spacing.dart';
 import '../../theme/atlas_typography.dart';
-import '../atlas/atlas_glass_card.dart';
+import '../atlas/atlas_expandable_section.dart';
 import '../atlas/atlas_glass_panel.dart';
 
 class PopSourceDetailsSection extends StatelessWidget {
@@ -24,78 +24,79 @@ class PopSourceDetailsSection extends StatelessWidget {
         pop.authenticityNumber.trim().isNotEmpty;
   }
 
+  int get _detailCount {
+    var count = 1; // Source
+
+    if (pop.sourceCatalogId.trim().isNotEmpty) count++;
+    if (pop.sourceCollectibleId.trim().isNotEmpty) count++;
+    if (pop.sourceUpc.trim().isNotEmpty) count++;
+    if (pop.productionStatus.trim().isNotEmpty) count++;
+    if (pop.releaseDate.trim().isNotEmpty) count++;
+    if (pop.gradingCompany.trim().isNotEmpty) count++;
+    if (pop.authenticityNumber.trim().isNotEmpty) count++;
+
+    return count;
+  }
+
   @override
   Widget build(BuildContext context) {
     if (!_hasSourceDetails) {
       return const SizedBox.shrink();
     }
 
-    return AtlasGlassCard(
-      child: Theme(
-        data: Theme.of(context).copyWith(
-          dividerColor: Colors.transparent,
-        ),
-        child: ExpansionTile(
-          tilePadding: EdgeInsets.zero,
-          childrenPadding: const EdgeInsets.only(
-            top: AtlasSpacing.md,
+    return AtlasExpandableSection(
+      title: 'Source Catalog',
+      subtitle: 'HobbyDB release and catalog information',
+      icon: Icons.storage_outlined,
+      initiallyExpanded: false,
+      badge: AtlasExpandableBadge(
+        label: '$_detailCount Fields',
+        icon: Icons.dataset_outlined,
+      ),
+      child: Column(
+        children: [
+          const _SourceDetailRow(
+            label: 'Source',
+            value: 'HobbyDB',
           ),
-          leading: const Icon(
-            Icons.storage_outlined,
-          ),
-          title: Text(
-            'Source Catalog Details',
-            style: AtlasTypography.headingSmall,
-          ),
-          subtitle: Text(
-            'HobbyDB release and catalog information',
-            style: AtlasTypography.bodySmall,
-          ),
-          initiallyExpanded: false,
-          children: [
-            const _SourceDetailRow(
-              label: 'Source',
-              value: 'HobbyDB',
+          if (pop.sourceCatalogId.trim().isNotEmpty)
+            _SourceDetailRow(
+              label: 'HDBID',
+              value: pop.sourceCatalogId,
             ),
-            if (pop.sourceCatalogId.trim().isNotEmpty)
-              _SourceDetailRow(
-                label: 'HDBID',
-                value: pop.sourceCatalogId,
+          if (pop.sourceCollectibleId.trim().isNotEmpty)
+            _SourceDetailRow(
+              label: 'HDBC Number',
+              value: pop.sourceCollectibleId,
+            ),
+          if (pop.sourceUpc.trim().isNotEmpty)
+            _SourceDetailRow(
+              label: 'UPC',
+              value: pop.sourceUpc,
+            ),
+          if (pop.productionStatus.trim().isNotEmpty)
+            _SourceDetailRow(
+              label: 'Production Status',
+              value: pop.productionStatus,
+            ),
+          if (pop.releaseDate.trim().isNotEmpty)
+            _SourceDetailRow(
+              label: 'Release Date',
+              value: _formatSourceDate(
+                pop.releaseDate,
               ),
-            if (pop.sourceCollectibleId.trim().isNotEmpty)
-              _SourceDetailRow(
-                label: 'HDBC Number',
-                value: pop.sourceCollectibleId,
-              ),
-            if (pop.sourceUpc.trim().isNotEmpty)
-              _SourceDetailRow(
-                label: 'UPC',
-                value: pop.sourceUpc,
-              ),
-            if (pop.productionStatus.trim().isNotEmpty)
-              _SourceDetailRow(
-                label: 'Production Status',
-                value: pop.productionStatus,
-              ),
-            if (pop.releaseDate.trim().isNotEmpty)
-              _SourceDetailRow(
-                label: 'Release Date',
-                value: _formatSourceDate(
-                  pop.releaseDate,
-                ),
-              ),
-            if (pop.gradingCompany.trim().isNotEmpty)
-              _SourceDetailRow(
-                label: 'Grading Company',
-                value: pop.gradingCompany,
-              ),
-            if (pop.authenticityNumber.trim().isNotEmpty)
-              _SourceDetailRow(
-                label: 'Authenticity Number',
-                value: pop.authenticityNumber,
-              ),
-          ],
-        ),
+            ),
+          if (pop.gradingCompany.trim().isNotEmpty)
+            _SourceDetailRow(
+              label: 'Grading Company',
+              value: pop.gradingCompany,
+            ),
+          if (pop.authenticityNumber.trim().isNotEmpty)
+            _SourceDetailRow(
+              label: 'Authenticity Number',
+              value: pop.authenticityNumber,
+            ),
+        ],
       ),
     );
   }

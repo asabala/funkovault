@@ -13,16 +13,18 @@ import '../../services/app_state.dart';
 import '../../theme/atlas_colors.dart';
 import '../../theme/atlas_spacing.dart';
 import '../../theme/atlas_typography.dart';
+import '../../widgets/atlas/atlas_expandable_section.dart';
 import '../../widgets/atlas/atlas_glass_card.dart';
 import '../../widgets/atlas/atlas_glass_panel.dart';
 import '../../widgets/atlas/components/atlas_chip.dart';
 import '../../widgets/atlas/components/atlas_section_header.dart';
 import '../../widgets/pop/pop_source_details_section.dart';
-import '../../widgets/pop/pop_identity_badges.dart';
 import '../../widgets/timeline/atlas_timeline_card.dart';
 import '../../widgets/vault/vault_scroll_view.dart';
 import '../../widgets/timeline/atlas_timeline_intelligence_card.dart';
-import '../../widgets/pop/atlas_hero_card.dart';
+import '../../widgets/pop/atlas_product_hero_card.dart';
+import '../../widgets/collectibility/atlas_collectibility_card.dart';
+import '../../widgets/recommendations/atlas_recommendations_card.dart';
 import '../../atlas/collection/atlas_collection.dart';
 
 
@@ -213,9 +215,7 @@ class _PopDetailsScreenState extends State<PopDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final numberLabel = pop.number.trim().isEmpty
-        ? 'No #'
-        : '#${pop.number.trim()}';
+
     final valueLabel = pop.value <= 0
         ? 'Value needed'
         : '\$${pop.value.toStringAsFixed(2)}';
@@ -261,104 +261,29 @@ class _PopDetailsScreenState extends State<PopDetailsScreen> {
       ),
       body: VaultScrollView(
         children: [
-          AtlasGlassCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(child: _PopHeroImage(imageUrl: pop.imageUrl)),
-                const SizedBox(height: AtlasSpacing.lg),
-                Text(
-                  pop.name,
-                  style: AtlasTypography.headingLarge,
-                  textAlign: TextAlign.start,
-                ),
-                const SizedBox(height: AtlasSpacing.sm),
-                Wrap(
-                  spacing: AtlasSpacing.sm,
-                  runSpacing: AtlasSpacing.sm,
-                  children: [
-                    AtlasChip(label: numberLabel),
-                    AtlasChip(label: pop.owner),
-                    AtlasChip(
-                      label: pop.isWishlist ? 'Wishlist' : 'Owned',
-                      icon: pop.isWishlist
-                          ? Icons.favorite_rounded
-                          : Icons.inventory_2_rounded,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AtlasSpacing.lg),
-                AtlasGlassPanel(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: _QuickStatLine(
-                              label: 'Value',
-                              value: valueLabel,
-                              centerValueOnly: true,
-                            ),
-                          ),
-                          const SizedBox(width: AtlasSpacing.sm),
-                          Expanded(
-                            child: _QuickStatLine(
-                              label: 'Quantity',
-                              value: '${pop.quantity}',
-                              centerValueOnly: true,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: AtlasSpacing.md),
-                      Divider(
-                        height: 1,
-                        color: AtlasColors.textSecondary.withValues(alpha: 0.18),
-                      ),
-                      const SizedBox(height: AtlasSpacing.md),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Release',
-                            style: AtlasTypography.bodySmall.copyWith(
-                              color: AtlasColors.textSecondary,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+          AtlasProductHeroCard(
+            pop: pop,
+            heroSummary: intelligence.heroSummary,
 
-                          const SizedBox(height: AtlasSpacing.sm),
+            // Leave this null until Market Intelligence has
+            // real historical pricing data.
+            trendPercent: null,
+            trendTimeframe: '30d',
 
-                          PopIdentityBadges(
-                            pop: pop,
-                            showStandardBadge: false,
-                          ),
-
-                          if (pop.collectorLabel.trim().isNotEmpty) ...[
-                            const SizedBox(height: AtlasSpacing.md),
-
-                            Text(
-                              pop.collectorLabel,
-                              style: AtlasTypography.bodySmall.copyWith(
-                                color: AtlasColors.textSecondary,
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+            // Opens the standard edit screen for now.
+            onCompleteListing: _editPop,
           ),
 
           const SizedBox(height: AtlasSpacing.lg),
 
-          AtlasHeroCard(
-            summary: intelligence.heroSummary,
+          AtlasCollectibilityCard(
+            summary: intelligence.collectibilitySummary,
+          ),
+
+          const SizedBox(height: AtlasSpacing.lg),
+
+          AtlasRecommendationsCard(
+            summary: intelligence.recommendationSummary,
           ),
 
           const SizedBox(height: AtlasSpacing.lg),
@@ -541,6 +466,234 @@ class _PopDetailsScreenState extends State<PopDetailsScreen> {
               ],
             ),
           ),
+
+          AtlasExpandableSection(
+            title: 'Collection Information',
+            subtitle: _buildCollectionInformationSubtitle(pop),
+            icon: Icons.inventory_2_outlined,
+            initiallyExpanded: false,
+            badge: AtlasExpandableBadge(
+              label: _buildCollectionCompletionLabel(pop),
+              icon: _isCollectionInformationComplete(pop)
+                  ? Icons.task_alt_rounded
+                  : Icons.pending_actions_rounded,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Timeline',
+                  style: AtlasTypography.headingSmall,
+                ),
+                const SizedBox(height: AtlasSpacing.sm),
+                _DetailRow(
+                  label: 'Added',
+                  value: dateAddedLabel,
+                ),
+                _DetailRow(
+                  label: 'Updated',
+                  value: lastUpdatedLabel,
+                ),
+
+                const SizedBox(height: AtlasSpacing.lg),
+
+                Text(
+                  'Basic Information',
+                  style: AtlasTypography.headingSmall,
+                ),
+                const SizedBox(height: AtlasSpacing.sm),
+                _DetailRow(
+                  label: 'Number',
+                  value: pop.number,
+                ),
+                _DetailRow(
+                  label: 'Category',
+                  value: pop.category,
+                ),
+                _DetailRow(
+                  label: 'Series',
+                  value: pop.series,
+                ),
+                _DetailRow(
+                  label: 'Edition',
+                  value: pop.edition,
+                ),
+                _DetailRow(
+                  label: 'Owner',
+                  value: pop.owner,
+                ),
+
+                const SizedBox(height: AtlasSpacing.lg),
+
+                Text(
+                  'Collector Identity',
+                  style: AtlasTypography.headingSmall,
+                ),
+                const SizedBox(height: AtlasSpacing.sm),
+                _IdentityBadgeWrap(
+                  badges: intelligence.identityBadges,
+                ),
+                const SizedBox(height: AtlasSpacing.md),
+                _DetailRow(
+                  label: 'Variant',
+                  value: pop.variant,
+                ),
+                _DetailRow(
+                  label: 'Retail Exclusive',
+                  value: pop.retailExclusive,
+                ),
+                _DetailRow(
+                  label: 'Event Sticker',
+                  value: pop.eventSticker,
+                ),
+                _DetailRow(
+                  label: 'Limited Edition',
+                  value: pop.limitedEdition,
+                ),
+                _DetailRow(
+                  label: 'Signature',
+                  value: pop.signature,
+                ),
+
+                const SizedBox(height: AtlasSpacing.lg),
+
+                Text(
+                  'Value & Condition',
+                  style: AtlasTypography.headingSmall,
+                ),
+                const SizedBox(height: AtlasSpacing.sm),
+
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final useColumn = constraints.maxWidth < 360;
+
+                    final quantityPanel = AtlasGlassPanel(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Quantity',
+                            style: AtlasTypography.bodySmall.copyWith(
+                              color: AtlasColors.textSecondary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: AtlasSpacing.sm),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              IconButton(
+                                tooltip: 'Decrease quantity',
+                                visualDensity: VisualDensity.compact,
+                                constraints: const BoxConstraints(
+                                  minWidth: 36,
+                                  minHeight: 36,
+                                ),
+                                padding: EdgeInsets.zero,
+                                iconSize: 22,
+                                icon: const Icon(
+                                  Icons.remove_circle_outline_rounded,
+                                ),
+                                onPressed: pop.quantity <= 1
+                                    ? null
+                                    : () => _updateQuantity(
+                                  pop.quantity - 1,
+                                ),
+                              ),
+                              SizedBox(
+                                width: 32,
+                                child: Text(
+                                  '${pop.quantity}',
+                                  textAlign: TextAlign.center,
+                                  style: AtlasTypography.headingSmall.copyWith(
+                                    color: AtlasColors.vaultGold,
+                                  ),
+                                ),
+                              ),
+                              IconButton(
+                                tooltip: 'Increase quantity',
+                                visualDensity: VisualDensity.compact,
+                                constraints: const BoxConstraints(
+                                  minWidth: 36,
+                                  minHeight: 36,
+                                ),
+                                padding: EdgeInsets.zero,
+                                iconSize: 22,
+                                icon: const Icon(
+                                  Icons.add_circle_outline_rounded,
+                                ),
+                                onPressed: () => _updateQuantity(
+                                  pop.quantity + 1,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    );
+
+                    final valuePanel = AtlasGlassPanel(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Current Value',
+                            style: AtlasTypography.bodySmall.copyWith(
+                              color: AtlasColors.textSecondary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: AtlasSpacing.md),
+                          Text(
+                            valueLabel,
+                            textAlign: TextAlign.center,
+                            style: AtlasTypography.headingSmall.copyWith(
+                              color: AtlasColors.vaultGold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+
+                    if (useColumn) {
+                      return Column(
+                        children: [
+                          quantityPanel,
+                          const SizedBox(height: AtlasSpacing.sm),
+                          valuePanel,
+                        ],
+                      );
+                    }
+
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(child: quantityPanel),
+                        const SizedBox(width: AtlasSpacing.sm),
+                        Expanded(child: valuePanel),
+                      ],
+                    );
+                  },
+                ),
+
+                const SizedBox(height: AtlasSpacing.sm),
+
+                _DetailRow(
+                  label: 'Price Paid',
+                  value: paidLabel,
+                ),
+                _DetailRow(
+                  label: 'Item Condition',
+                  value: pop.itemCondition,
+                ),
+                _DetailRow(
+                  label: 'Box Condition',
+                  value: pop.boxCondition,
+                ),
+              ],
+            ),
+          ),
+
           if (pop.sourceCatalogId.trim().isNotEmpty ||
               pop.sourceCollectibleId.trim().isNotEmpty ||
               pop.sourceUpc.trim().isNotEmpty ||
@@ -658,6 +811,87 @@ class _PopDetailsScreenState extends State<PopDetailsScreen> {
     );
   }
 }
+
+String _buildCollectionInformationSubtitle(Pop pop) {
+  final completedFields = _collectionCompletedFieldCount(pop);
+  const totalFields = 9;
+
+  if (completedFields == totalFields) {
+    return 'Ownership, identity, value, and condition are complete';
+  }
+
+  if (completedFields >= 6) {
+    return 'Most collectible details have been recorded';
+  }
+
+  if (completedFields >= 3) {
+    return 'Some collectible details still need attention';
+  }
+
+  return 'Add ownership, value, condition, and identity details';
+}
+
+String _buildCollectionCompletionLabel(Pop pop) {
+  final completedFields = _collectionCompletedFieldCount(pop);
+  const totalFields = 9;
+
+  if (completedFields == totalFields) {
+    return 'Complete';
+  }
+
+  return '$completedFields / $totalFields';
+}
+
+bool _isCollectionInformationComplete(Pop pop) {
+  return _collectionCompletedFieldCount(pop) == 9;
+}
+
+int _collectionCompletedFieldCount(Pop pop) {
+  final fields = <String>[
+    pop.number,
+    pop.category,
+    pop.series,
+    pop.edition,
+    pop.owner,
+    pop.itemCondition,
+    pop.boxCondition,
+  ];
+
+  var completed = fields.where(_hasMeaningfulDetailValue).length;
+
+  if (pop.value > 0) {
+    completed++;
+  }
+
+  if (_hasCollectorIdentity(pop)) {
+    completed++;
+  }
+
+  return completed;
+}
+
+bool _hasCollectorIdentity(Pop pop) {
+  return <String>[
+    pop.variant,
+    pop.retailExclusive,
+    pop.eventSticker,
+    pop.limitedEdition,
+    pop.signature,
+  ].any(_hasMeaningfulDetailValue);
+}
+
+bool _hasMeaningfulDetailValue(String value) {
+  final cleaned = value.trim().toLowerCase();
+
+  return cleaned.isNotEmpty &&
+      cleaned != 'none' &&
+      cleaned != 'no' &&
+      cleaned != 'n/a' &&
+      cleaned != 'na' &&
+      cleaned != 'unknown' &&
+      cleaned != 'not entered';
+}
+
 class _PopRecentActivityCard extends StatelessWidget {
   const _PopRecentActivityCard({
     required this.activities,
@@ -805,100 +1039,6 @@ class _PopActivityRow extends StatelessWidget {
                   ),
                 ),
               ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-class _PopHeroImage extends StatelessWidget {
-  const _PopHeroImage({required this.imageUrl});
-
-  final String imageUrl;
-
-  @override
-  Widget build(BuildContext context) {
-    final cleanImageUrl = imageUrl.trim();
-
-    return Container(
-      width: 170,
-      height: 210,
-      decoration: BoxDecoration(
-        color: AtlasColors.textSecondary.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(AtlasSpacing.lg),
-        border: Border.all(
-          color: AtlasColors.vaultGold.withValues(alpha: 0.28),
-        ),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: cleanImageUrl.isEmpty
-          ? const Icon(Icons.inventory_2_rounded, size: 72)
-          : Image.network(
-              cleanImageUrl,
-              fit: BoxFit.contain,
-              loadingBuilder: (context, child, loadingProgress) {
-                if (loadingProgress == null) {
-                  return child;
-                }
-
-                return const Center(
-                  child: SizedBox(
-                    width: 32,
-                    height: 32,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                );
-              },
-              errorBuilder: (context, error, stackTrace) {
-                return const Icon(Icons.broken_image_rounded, size: 72);
-              },
-            ),
-    );
-  }
-}
-
-class _QuickStatLine extends StatelessWidget {
-  const _QuickStatLine({
-    required this.label,
-    required this.value,
-    this.centerValueOnly = false,
-  });
-
-  final String label;
-  final String value;
-  final bool centerValueOnly;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(
-        vertical: AtlasSpacing.xs,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: AtlasTypography.bodySmall.copyWith(
-              color: AtlasColors.textSecondary,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 4),
-          SizedBox(
-            width: double.infinity,
-            child: Text(
-              _displayValue(value),
-              style: AtlasTypography.bodyMedium.copyWith(
-                color: AtlasColors.vaultGold,
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: centerValueOnly
-                  ? TextAlign.center
-                  : TextAlign.start,
-              softWrap: true,
             ),
           ),
         ],
