@@ -5,6 +5,8 @@ import '../../atlas/coordinator/atlas_dashboard.dart';
 import '../../atlas/coordinator/atlas_dashboard_model.dart';
 import '../../atlas/engines/context/vault_context_explainer_engine.dart';
 import '../../atlas/screens/atlas_timeline_screen.dart';
+import '../../navigation/atlas_navigation_controller.dart';
+import '../search/atlas_collector_search_screen.dart';
 import '../../services/app_state.dart';
 import '../../theme/atlas_colors.dart';
 import '../../theme/atlas_icons.dart';
@@ -15,6 +17,7 @@ import '../../widgets/atlas/atlas_glass_card.dart';
 import '../../widgets/atlas/atlas_glass_panel.dart';
 import '../../widgets/atlas/atlas_stat_tile.dart';
 import '../../widgets/home/atlas_pulse_card.dart';
+import '../../widgets/home/atlas_unified_search_launcher.dart';
 import '../../widgets/home/continue_journey_card.dart';
 import '../../widgets/vault/vault_ask_atlas_bottom_sheet.dart';
 import '../../widgets/vault/vault_scroll_view.dart';
@@ -50,16 +53,42 @@ class AtlasHomeScreen extends StatelessWidget {
       body: VaultScrollView(
         children: [
           AtlasPulseCard(
-            greeting: _greeting(profile.displayName, now),
-            dateLabel: _dateLabel(now),
-            timeLabel: _timeLabel(now),
-            status: _statusLabel(dashboard.confidence.score),
+            greeting: _greeting(
+              profile.displayName,
+              now,
+            ),
+            dateLabel: _dateLabel(
+              now,
+            ),
+            timeLabel: _timeLabel(
+              now,
+            ),
+            status: _statusLabel(
+              dashboard.confidence.score,
+            ),
             summary: _summaryLabel(
               totalPops: dashboard.totalPops,
               confidence: dashboard.confidence.score,
             ),
           ),
-          const SizedBox(height: AtlasSpacing.lg),
+          const SizedBox(
+            height: AtlasSpacing.lg,
+          ),
+          AtlasUnifiedSearchLauncher(
+            onSearchPressed: () {
+              _openCollectorSearch(
+                context,
+              );
+            },
+            onBarcodePressed: () {
+              _openScanner(
+                context,
+              );
+            },
+          ),
+          const SizedBox(
+            height: AtlasSpacing.lg,
+          ),
           _HomeAccountStatusCard(
             displayName: profile.displayName,
             collectorTitle: profile.collectorTitle,
@@ -99,7 +128,28 @@ class AtlasHomeScreen extends StatelessWidget {
       ),
     );
   }
+  static void _openCollectorSearch(
+      BuildContext context,
+      ) {
+    Navigator.push<void>(
+      context,
+      MaterialPageRoute<void>(
+        builder: (_) {
+          return const AtlasCollectorSearchScreen();
+        },
+      ),
+    );
+  }
 
+  static void _openScanner(
+      BuildContext context,
+      ) {
+    context
+        .read<AtlasNavigationController>()
+        .goTo(
+      2,
+    );
+  }
   static void _openTimeline(BuildContext context) {
     Navigator.push(
       context,

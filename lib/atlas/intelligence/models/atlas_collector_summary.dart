@@ -1,3 +1,8 @@
+import 'package:funkovault2/atlas/collection/models/atlas_collector_state.dart';
+import 'package:funkovault2/atlas/identity/pop/pop_identity_engine.dart';
+import 'package:funkovault2/atlas/identity/pop/pop_identity_rule.dart';
+import 'package:funkovault2/atlas/intelligence/engines/atlas_collector_recommendation_engine.dart';
+import 'package:funkovault2/atlas/intelligence/models/atlas_collector_recommendation.dart';
 import 'package:funkovault2/models/pop.dart';
 
 final class AtlasCollectorSummary {
@@ -5,17 +10,20 @@ final class AtlasCollectorSummary {
     required this.productName,
     required this.productNumber,
     required this.variantLabel,
+    required this.identityBadges,
     required this.marketValue,
     required this.trendPercent,
     required this.ownedQuantity,
     required this.collectionName,
     required this.recommendation,
-    required this.recommendationMessage,
+    required this.recommendations,
   });
 
   final String productName;
   final String productNumber;
   final String variantLabel;
+
+  final List<PopIdentityBadgeData> identityBadges;
 
   final double? marketValue;
   final double? trendPercent;
@@ -23,15 +31,40 @@ final class AtlasCollectorSummary {
   final int ownedQuantity;
   final String collectionName;
 
-  final String recommendation;
-  final String recommendationMessage;
+  final AtlasCollectorRecommendation recommendation;
+  final List<AtlasCollectorRecommendation> recommendations;
+
+  bool get hasRecommendations {
+    return recommendations.isNotEmpty;
+  }
+
+  int get recommendationCount {
+    return recommendations.length;
+  }
+
+  AtlasCollectorRecommendationType get recommendationType {
+    return recommendation.type;
+  }
+
+  String get recommendationTitle {
+    return recommendation.title;
+  }
+
+  String get recommendationMessage {
+    return recommendation.message;
+  }
+
+  bool get hasIdentityBadges {
+    return identityBadges.isNotEmpty;
+  }
 
   bool get hasMarketValue {
     return marketValue != null && marketValue! > 0;
   }
 
   bool get hasTrend {
-    return trendPercent != null && trendPercent!.isFinite;
+    return trendPercent != null &&
+        trendPercent!.isFinite;
   }
 
   bool get isOwned {
@@ -50,7 +83,7 @@ final class AtlasCollectorSummary {
     final double? trend = trendPercent;
 
     if (trend == null || !trend.isFinite) {
-      return 'Not enough history';
+      return 'No trend data yet';
     }
 
     final String direction;
@@ -66,6 +99,24 @@ final class AtlasCollectorSummary {
     final String sign = trend > 0 ? '+' : '';
 
     return '$direction $sign${trend.toStringAsFixed(1)}%';
+  }
+
+  String get trendDescription {
+    final double? trend = trendPercent;
+
+    if (trend == null || !trend.isFinite) {
+      return 'Market history will appear when more values are recorded.';
+    }
+
+    if (trend > 0) {
+      return 'Value is trending upward.';
+    }
+
+    if (trend < 0) {
+      return 'Value is trending downward.';
+    }
+
+    return 'Value is currently stable.';
   }
 
   String get formattedOwnership {
@@ -85,30 +136,60 @@ final class AtlasCollectorSummary {
     required List<Pop> exactMatches,
     required List<Pop> relatedMatches,
     required String collectionName,
+    bool isWishlisted = false,
   }) {
-    final int ownedQuantity = exactMatches.fold<int>(
-      0,
-          (int total, Pop pop) {
-        return total + pop.quantity;
-      },
+    final AtlasCollectorState collectorState =
+    AtlasCollectorState(
+      ownedMatches: exactMatches,
+      wishlistMatches: const <Pop>[],
+      relatedMatches: relatedMatches,
+      isOwnedWishlisted: isWishlisted,
+    );
+
+    return AtlasCollectorSummary.buildFromState(
+      product: product,
+      collectorState: collectorState,
+      collectionName: collectionName,
+    );
+  }
+
+  factory AtlasCollectorSummary.buildFromState({
+    required Pop product,
+    required AtlasCollectorState collectorState,
+    required String collectionName,
+  }) {
+    const PopIdentityEngine identityEngine =
+    PopIdentityEngine();
+
+    const AtlasCollectorRecommendationEngine
+    recommendationEngine =
+    AtlasCollectorRecommendationEngine();
+
+    final List<PopIdentityBadgeData> identityBadges =
+    identityEngine.buildBadges(
+      product,
     );
 
     final double? marketValue = _resolveMarketValue(
       product: product,
-      exactMatches: exactMatches,
+      exactMatches: collectorState.ownedMatches,
     );
 
     final double? trendPercent = _resolveTrendPercent(
       product: product,
-      exactMatches: exactMatches,
+      exactMatches: collectorState.ownedMatches,
     );
 
-    final _CollectorRecommendation recommendation =
-    _buildRecommendation(
-      ownedQuantity: ownedQuantity,
-      hasRelatedMatches: relatedMatches.isNotEmpty,
-      hasMarketValue: marketValue != null && marketValue > 0,
+    final List<AtlasCollectorRecommendation> recommendations =
+    recommendationEngine.buildAll(
+      product: product,
+      collectorState: collectorState,
+      marketValue: marketValue,
+      trendPercent: trendPercent,
     );
+
+    final AtlasCollectorRecommendation recommendation =
+        recommendations.first;
 
     return AtlasCollectorSummary(
       productName: product.name.trim().isEmpty
@@ -116,14 +197,19 @@ final class AtlasCollectorSummary {
           : product.name.trim(),
       productNumber: product.number.trim(),
       variantLabel: product.collectorLabel,
+      identityBadges:
+      List<PopIdentityBadgeData>.unmodifiable(
+        identityBadges,
+      ),
       marketValue: marketValue,
       trendPercent: trendPercent,
-      ownedQuantity: ownedQuantity,
-      collectionName: collectionName.trim().isEmpty
+      ownedQuantity: collectorState.ownedQuantity,
+      collectionName:
+      collectionName.trim().isEmpty
           ? 'Selected Collection'
           : collectionName.trim(),
-      recommendation: recommendation.title,
-      recommendationMessage: recommendation.message,
+      recommendation: recommendation,
+      recommendations: recommendations,
     );
   }
 
@@ -141,7 +227,8 @@ final class AtlasCollectorSummary {
       }
     }
 
-    final List<double> historyValues = product.valueHistory
+    final List<double> historyValues =
+    product.valueHistory
         .map(
           (entry) => entry.value,
     )
@@ -194,7 +281,9 @@ final class AtlasCollectorSummary {
       return null;
     }
 
-    return ((currentValue - previousValue) / previousValue) * 100;
+    return ((currentValue - previousValue) /
+        previousValue) *
+        100;
   }
 
   static Pop _bestTrendSource({
@@ -212,50 +301,4 @@ final class AtlasCollectorSummary {
 
     return bestSource;
   }
-
-  static _CollectorRecommendation _buildRecommendation({
-    required int ownedQuantity,
-    required bool hasRelatedMatches,
-    required bool hasMarketValue,
-  }) {
-    if (ownedQuantity > 0) {
-      return const _CollectorRecommendation(
-        title: 'Already Owned',
-        message:
-        'This exact release is already saved in your selected Vault.',
-      );
-    }
-
-    if (hasRelatedMatches) {
-      return const _CollectorRecommendation(
-        title: 'Review Variant',
-        message:
-        'Atlas found a related release. Confirm the sticker, finish, exclusive, and packaging details before adding it.',
-      );
-    }
-
-    if (!hasMarketValue) {
-      return const _CollectorRecommendation(
-        title: 'Market Value Unavailable',
-        message:
-        'Atlas identified the product, but it does not yet have enough pricing evidence to evaluate the purchase.',
-      );
-    }
-
-    return const _CollectorRecommendation(
-      title: 'New to Vault',
-      message:
-      'This exact release was not found in your selected Vault. Review the market value and condition before buying.',
-    );
-  }
-}
-
-final class _CollectorRecommendation {
-  const _CollectorRecommendation({
-    required this.title,
-    required this.message,
-  });
-
-  final String title;
-  final String message;
 }

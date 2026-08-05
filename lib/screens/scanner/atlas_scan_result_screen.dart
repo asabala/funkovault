@@ -4,8 +4,11 @@ import 'package:provider/provider.dart';
 import 'package:funkovault2/atlas/catalog/models/atlas_catalog_product.dart';
 import 'package:funkovault2/atlas/catalog/services/atlas_barcode_catalog_resolver.dart';
 import 'package:funkovault2/atlas/catalog/services/atlas_pop_factory.dart';
+import 'package:funkovault2/atlas/collection/actions/atlas_collector_action.dart';
+import 'package:funkovault2/atlas/collection/engine/atlas_collector_state_engine.dart';
+import 'package:funkovault2/atlas/intelligence/engines/atlas_collector_insight_engine.dart';
 import 'package:funkovault2/atlas/intelligence/engines/atlas_scan_intelligence_engine.dart';
-import 'package:funkovault2/atlas/intelligence/models/atlas_collector_summary.dart';
+import 'package:funkovault2/atlas/intelligence/models/atlas_collector_insight.dart';
 import 'package:funkovault2/atlas/intelligence/models/atlas_scan_intelligence.dart';
 import 'package:funkovault2/atlas/scan/briefing/atlas_scan_briefing.dart';
 import 'package:funkovault2/atlas/scan/briefing/atlas_scan_briefing_engine.dart';
@@ -15,7 +18,9 @@ import 'package:funkovault2/atlas/scan/workflow/identity_resolution_status.dart'
 import 'package:funkovault2/models/pop.dart';
 import 'package:funkovault2/screens/catalog/funko_catalog_screen.dart';
 import 'package:funkovault2/screens/pop/add_pop_screen.dart';
+import 'package:funkovault2/screens/pop/pop_details_screen.dart';
 import 'package:funkovault2/services/app_state.dart';
+import 'package:funkovault2/widgets/scanner/atlas_collector_action_bar.dart';
 import 'package:funkovault2/widgets/scanner/atlas_collector_summary_card.dart';
 import 'package:funkovault2/widgets/scanner/atlas_scan_briefing_card.dart';
 import 'package:funkovault2/widgets/scanner/atlas_scan_intelligence_card.dart';
@@ -179,21 +184,60 @@ class _BarcodeResultView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AtlasScanBriefing briefing =
-    AtlasScanBriefingEngine.build(session);
+    AtlasScanBriefingEngine.build(
+      session,
+    );
 
     final AtlasScanIntelligence intelligence =
     const AtlasScanIntelligenceEngine().processChecked(
       session,
     );
 
+    final AppState appState = context.watch<AppState>();
+
+    final List<Pop> vaultBarcodeMatches =
+    const AtlasCollectorStateEngine().findByBarcode(
+      barcode: catalogResolution.barcode,
+      collectionPops: appState.selectedCollectionPops,
+    );
+
+    final bool hasVaultBarcodeMatch =
+        catalogResolution.status ==
+            AtlasBarcodeResolutionStatus.noMatch &&
+            vaultBarcodeMatches.isNotEmpty;
+
+    final bool hasSuccessfulCollectorResult =
+        catalogResolution.status ==
+            AtlasBarcodeResolutionStatus.singleMatch ||
+            hasVaultBarcodeMatch;
+
+    final bool shouldShowHeader =
+    _shouldShowResultHeader(
+      session: session,
+      resolution: catalogResolution,
+      hasVaultBarcodeMatch: hasVaultBarcodeMatch,
+    );
+
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _ResultHeader(
+          if (shouldShowHeader) ...[
+            _ResultHeader(
+              session: session,
+              code: code,
+              resolution: catalogResolution,
+              hasVaultBarcodeMatch:
+              hasVaultBarcodeMatch,
+            ),
+            const SizedBox(
+              height: 20,
+            ),
+          ],
+          _CatalogResolutionCard(
             session: session,
-            code: code,
             resolution: catalogResolution,
+            intelligence: intelligence,
           ),
           const SizedBox(
             height: 16,
@@ -208,36 +252,67 @@ class _BarcodeResultView extends StatelessWidget {
             intelligence: intelligence,
           ),
           const SizedBox(
-            height: 24,
-          ),
-          _CatalogResolutionCard(
-            session: session,
-            resolution: catalogResolution,
-          ),
-          const SizedBox(
             height: 16,
           ),
-          _ScanEvidenceCard(
+          _ScanDiagnosticsCard(
             session: session,
             code: code,
           ),
-          const SizedBox(
-            height: 24,
-          ),
-          ElevatedButton.icon(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            icon: const Icon(
-              Icons.qr_code_scanner,
+          if (!hasSuccessfulCollectorResult) ...[
+            const SizedBox(
+              height: 24,
             ),
-            label: const Text(
-              'Scan Again',
+            OutlinedButton.icon(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              icon: const Icon(
+                Icons.qr_code_scanner_rounded,
+              ),
+              label: const Text(
+                '📷 Scan Again',
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );
+  }
+
+  bool _shouldShowResultHeader({
+    required ScanSession session,
+    required AtlasBarcodeResolution resolution,
+    required bool hasVaultBarcodeMatch,
+  }) {
+    switch (session.resolutionStatus) {
+      case IdentityResolutionStatus.failed:
+      case IdentityResolutionStatus.ambiguous:
+      case IdentityResolutionStatus.unresolved:
+      case IdentityResolutionStatus.pendingSync:
+      case IdentityResolutionStatus.resolving:
+        return true;
+
+      case IdentityResolutionStatus.resolvedLocal:
+      case IdentityResolutionStatus.resolvedRemote:
+        return false;
+
+      case IdentityResolutionStatus.notStarted:
+        break;
+    }
+
+    if (hasVaultBarcodeMatch) {
+      return false;
+    }
+
+    switch (resolution.status) {
+      case AtlasBarcodeResolutionStatus.singleMatch:
+        return false;
+
+      case AtlasBarcodeResolutionStatus.invalidBarcode:
+      case AtlasBarcodeResolutionStatus.noMatch:
+      case AtlasBarcodeResolutionStatus.multipleMatches:
+        return true;
+    }
   }
 }
 
@@ -246,11 +321,13 @@ class _ResultHeader extends StatelessWidget {
     required this.session,
     required this.code,
     required this.resolution,
+    required this.hasVaultBarcodeMatch,
   });
 
   final ScanSession session;
   final ScanCode code;
   final AtlasBarcodeResolution resolution;
+  final bool hasVaultBarcodeMatch;
 
   @override
   Widget build(BuildContext context) {
@@ -350,6 +427,14 @@ class _ResultHeader extends StatelessWidget {
   }
 
   _ResultHeaderState _catalogFallbackState() {
+    if (hasVaultBarcodeMatch) {
+      return const _ResultHeaderState(
+        title: '📦 Found in Your Vault',
+        message:
+        'Atlas found this barcode in your selected collection.',
+        icon: Icons.inventory_2_rounded,
+      );
+    }
     switch (resolution.status) {
       case AtlasBarcodeResolutionStatus.invalidBarcode:
         return _ResultHeaderState(
@@ -403,9 +488,11 @@ class _CatalogResolutionCard extends StatelessWidget {
   const _CatalogResolutionCard({
     required this.session,
     required this.resolution,
+    required this.intelligence,
   });
 
   final ScanSession session;
+  final AtlasScanIntelligence intelligence;
   final AtlasBarcodeResolution resolution;
 
   @override
@@ -436,23 +523,27 @@ class _CatalogResolutionCard extends StatelessWidget {
         final AppState appState = context.watch<AppState>();
 
         final List<Pop> vaultMatches =
-        _CollectionMatchSummary.findVaultMatchesByBarcode(
+        const AtlasCollectorStateEngine().findByBarcode(
           barcode: resolution.barcode,
-          vaultPops: appState.selectedCollectionPops,
+          collectionPops: appState.selectedCollectionPops,
         );
 
         if (vaultMatches.isNotEmpty) {
           return _VaultBarcodeMatchCard(
+            session: session,
+            intelligence: intelligence,
+            scannedBarcode: resolution.barcode,
             vaultMatches: vaultMatches,
+            collectionPops: appState.selectedCollectionPops,
             collectionName: appState.selectedCollection,
           );
         }
 
         return _CatalogMessageCard(
-          icon: Icons.inventory_2_outlined,
-          title: 'Product Not Yet Identified',
+          icon: Icons.search_off_rounded,
+          title: '🔎 Item Not Found in Atlas',
           message:
-          'Barcode ${resolution.barcode} is not currently connected to an Atlas catalog product and was not found in your selected Vault.',
+          'Atlas does not recognize barcode ${resolution.barcode} yet. Search the catalog or create the collectible manually.',
           actions: [
             FilledButton.icon(
               onPressed: () {
@@ -462,7 +553,7 @@ class _CatalogResolutionCard extends StatelessWidget {
                 Icons.search_rounded,
               ),
               label: const Text(
-                'Search Broader Catalog',
+                  '🔎 Search Catalog'
               ),
             ),
             const SizedBox(
@@ -476,7 +567,7 @@ class _CatalogResolutionCard extends StatelessWidget {
                 Icons.edit_note_rounded,
               ),
               label: const Text(
-                'Enter Product Manually',
+                  '➕ Add Manually'
               ),
             ),
           ],
@@ -484,6 +575,8 @@ class _CatalogResolutionCard extends StatelessWidget {
 
       case AtlasBarcodeResolutionStatus.singleMatch:
         return _CatalogProductCard(
+          session: session,
+          intelligence: intelligence,
           product:
           session.catalogProduct ??
               resolution.singleMatch!,
@@ -628,65 +721,171 @@ class _MultipleCatalogMatchesCard extends StatelessWidget {
 
 class _VaultBarcodeMatchCard extends StatelessWidget {
   const _VaultBarcodeMatchCard({
+    required this.session,
+    required this.intelligence,
+    required this.scannedBarcode,
     required this.vaultMatches,
+    required this.collectionPops,
     required this.collectionName,
   });
 
+  final ScanSession session;
+  final AtlasScanIntelligence intelligence;
+  final String scannedBarcode;
   final List<Pop> vaultMatches;
+  final List<Pop> collectionPops;
   final String collectionName;
 
   @override
   Widget build(BuildContext context) {
-    final Pop primaryPop = vaultMatches.first;
-
-    final _CollectionMatchSummary collectionSummary =
-    _CollectionMatchSummary(
-      exactMatches: List<Pop>.unmodifiable(
-        vaultMatches,
-      ),
-      relatedMatches: const <Pop>[],
+    final Pop primaryPop = _primaryDisplayPop(
+      vaultMatches,
     );
 
-    final AtlasCollectorSummary collectorSummary =
-    AtlasCollectorSummary.build(
+    final AppState appState =
+    context.watch<AppState>();
+
+    final AtlasCollectorInsight collectorInsight =
+    const AtlasCollectorInsightEngine().evaluateScan(
+      session: session,
       product: primaryPop,
-      exactMatches: collectionSummary.exactMatches,
-      relatedMatches: collectionSummary.relatedMatches,
+      scannedBarcode: scannedBarcode,
+      collectionPops: collectionPops,
       collectionName: collectionName,
+      ownedWishlistIdentityKeys:
+      appState.selectedOwnedWishlistIdentityKeys,
+      precomputedIntelligence: intelligence,
     );
+
+    final List<AtlasCollectorAction> safeActions =
+    collectorInsight.actions.where(
+          (AtlasCollectorAction action) {
+        switch (action.type) {
+          case AtlasCollectorActionType.viewExistingItem:
+          case AtlasCollectorActionType.addToWishlist:
+          case AtlasCollectorActionType.removeFromWishlist:
+          case AtlasCollectorActionType.scanAnother:
+            return true;
+
+          case AtlasCollectorActionType.addToVault:
+          case AtlasCollectorActionType.addAnotherCopy:
+            return false;
+        }
+      },
+    ).toList(
+      growable: false,
+    );
+
+    final Pop displayPop =
+        collectorInsight.state.primaryOwnedMatch ??
+            collectorInsight.state.primaryWishlistMatch ??
+            primaryPop;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         AtlasCollectorSummaryCard(
-          summary: collectorSummary,
-          imageUrl: primaryPop.imageUrl,
+          summary: collectorInsight.summary,
+          imageUrl: displayPop.imageUrl,
         ),
         const SizedBox(
-          height: 20,
+          height: 16,
         ),
-        FilledButton.icon(
-          onPressed: () {
-            Navigator.pop(context);
+        AtlasCollectorActionBar(
+          actions: safeActions,
+          onActionPressed: (
+              AtlasCollectorActionType actionType,
+              ) async {
+            switch (actionType) {
+              case AtlasCollectorActionType.viewExistingItem:
+                final Pop? existingPop =
+                    collectorInsight.state.primaryOwnedMatch;
+
+                if (existingPop == null) {
+                  return;
+                }
+
+                await Navigator.push<void>(
+                  context,
+                  MaterialPageRoute<void>(
+                    builder: (_) {
+                      return PopDetailsScreen(
+                        pop: existingPop,
+                      );
+                    },
+                  ),
+                );
+
+              case AtlasCollectorActionType.addToVault:
+                await _openManualAdd(
+                  context,
+                );
+
+              case AtlasCollectorActionType.scanAnother:
+                Navigator.pop(
+                  context,
+                );
+
+              case AtlasCollectorActionType.addToWishlist:
+                final Pop? ownedPop =
+                    collectorInsight.state.primaryOwnedMatch;
+
+                if (ownedPop == null) {
+                  return;
+                }
+
+                await context
+                    .read<AppState>()
+                    .addOwnedPopToWishlist(
+                  ownedPop,
+                );
+
+              case AtlasCollectorActionType.removeFromWishlist:
+                final Pop? ownedPop =
+                    collectorInsight.state.primaryOwnedMatch;
+
+                if (ownedPop == null) {
+                  return;
+                }
+
+                await context
+                    .read<AppState>()
+                    .removeOwnedPopFromWishlist(
+                  ownedPop,
+                );
+
+              case AtlasCollectorActionType.addAnotherCopy:
+                return;
+            }
           },
-          icon: const Icon(
-            Icons.qr_code_scanner_rounded,
-          ),
-          label: const Text(
-            'Scan Another Product',
-          ),
         ),
       ],
     );
+  }
+
+  Pop _primaryDisplayPop(
+      List<Pop> matches,
+      ) {
+    for (final Pop pop in matches) {
+      if (!pop.isWishlist) {
+        return pop;
+      }
+    }
+
+    return matches.first;
   }
 }
 
 class _CatalogProductCard extends StatelessWidget {
   const _CatalogProductCard({
+    required this.session,
+    required this.intelligence,
     required this.product,
     required this.scannedBarcode,
   });
 
+  final ScanSession session;
+  final AtlasScanIntelligence intelligence;
   final AtlasCatalogProduct product;
   final String scannedBarcode;
 
@@ -694,228 +893,157 @@ class _CatalogProductCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final AppState appState = context.watch<AppState>();
 
-    final Pop scannedPop = AtlasPopFactory.createFromCatalog(
+    final Pop scannedPop =
+    AtlasPopFactory.createFromCatalog(
       product: product,
     );
 
-    final _CollectionMatchSummary collectionSummary =
-    _CollectionMatchSummary.evaluate(
-      scannedPop: scannedPop,
-      scannedBarcode: scannedBarcode,
-      vaultPops: appState.selectedCollectionPops,
-    );
-
-    final AtlasCollectorSummary collectorSummary =
-    AtlasCollectorSummary.build(
+    final AtlasCollectorInsight collectorInsight =
+    const AtlasCollectorInsightEngine().evaluateScan(
+      session: session,
       product: scannedPop,
-      exactMatches: collectionSummary.exactMatches,
-      relatedMatches: collectionSummary.relatedMatches,
+      scannedBarcode: scannedBarcode,
+      collectionPops: appState.selectedCollectionPops,
       collectionName: appState.selectedCollection,
+      ownedWishlistIdentityKeys:
+      appState.selectedOwnedWishlistIdentityKeys,
+      precomputedIntelligence: intelligence,
     );
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+      crossAxisAlignment:
+      CrossAxisAlignment.stretch,
       children: [
         AtlasCollectorSummaryCard(
-          summary: collectorSummary,
+          summary: collectorInsight.summary,
           imageUrl: scannedPop.imageUrl,
         ),
         const SizedBox(
-          height: 20,
+          height: 16,
         ),
-        FilledButton.icon(
-          onPressed: () {
-            _openCatalogProduct(
-              context,
-              product,
-            );
+        AtlasCollectorActionBar(
+          actions: collectorInsight.actions,
+          onActionPressed: (
+              AtlasCollectorActionType actionType,
+              ) async {
+            switch (actionType) {
+              case AtlasCollectorActionType
+                  .viewExistingItem:
+                final Pop? existingPop =
+                    collectorInsight
+                        .state
+                        .primaryOwnedMatch;
+
+                if (existingPop == null) {
+                  return;
+                }
+
+                await Navigator.push<void>(
+                  context,
+                  MaterialPageRoute<void>(
+                    builder: (_) {
+                      return PopDetailsScreen(
+                        pop: existingPop,
+                      );
+                    },
+                  ),
+                );
+
+              case AtlasCollectorActionType
+                  .addToVault:
+              case AtlasCollectorActionType
+                  .addAnotherCopy:
+                await _openCatalogProduct(
+                  context,
+                  product,
+                );
+
+              case AtlasCollectorActionType.addToWishlist:
+                final AppState appState =
+                context.read<AppState>();
+
+                final Pop? ownedPop =
+                    collectorInsight.state.primaryOwnedMatch;
+
+                if (ownedPop != null) {
+                  await appState.addOwnedPopToWishlist(
+                    ownedPop,
+                  );
+                } else {
+                  final Pop wishlistPop =
+                  AtlasPopFactory.createWishlistFromCatalog(
+                    product: product,
+                  );
+
+                  await appState.addPop(
+                    wishlistPop,
+                  );
+                }
+
+                if (!context.mounted) {
+                  return;
+                }
+
+                ScaffoldMessenger.of(context)
+                  ..hideCurrentSnackBar()
+                  ..showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        '❤️ ${product.displayName} added to your wishlist.',
+                      ),
+                    ),
+                  );
+
+              case AtlasCollectorActionType.removeFromWishlist:
+                final AppState appState =
+                context.read<AppState>();
+
+                final Pop? ownedPop =
+                    collectorInsight.state.primaryOwnedMatch;
+
+                if (collectorInsight.state.isOwnedWishlisted &&
+                    ownedPop != null) {
+                  await appState.removeOwnedPopFromWishlist(
+                    ownedPop,
+                  );
+                } else {
+                  final Pop? wishlistPop =
+                      collectorInsight
+                          .state
+                          .primaryWishlistMatch;
+
+                  if (wishlistPop == null) {
+                    return;
+                  }
+
+                  await appState.deletePop(
+                    wishlistPop.id,
+                  );
+                }
+
+                if (!context.mounted) {
+                  return;
+                }
+
+                ScaffoldMessenger.of(context)
+                  ..hideCurrentSnackBar()
+                  ..showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        '💔 ${product.displayName} removed from your wishlist.',
+                      ),
+                    ),
+                  );
+
+              case AtlasCollectorActionType
+                  .scanAnother:
+                Navigator.pop(
+                  context,
+                );
+            }
           },
-          icon: Icon(
-            collectionSummary.hasExactMatch
-                ? Icons.add_circle_outline_rounded
-                : Icons.add_circle_rounded,
-          ),
-          label: Text(
-            collectionSummary.hasExactMatch
-                ? 'Add Another Copy'
-                : 'Add to Vault',
-          ),
         ),
       ],
-    );
-  }
-}
-
-class _CollectionMatchSummary {
-  const _CollectionMatchSummary({
-    required this.exactMatches,
-    required this.relatedMatches,
-  });
-
-  final List<Pop> exactMatches;
-  final List<Pop> relatedMatches;
-
-  bool get hasExactMatch {
-    return exactMatches.isNotEmpty;
-  }
-
-  bool get hasRelatedMatches {
-    return relatedMatches.isNotEmpty;
-  }
-
-  int get exactQuantity {
-    return exactMatches.fold<int>(
-      0,
-          (int total, Pop pop) {
-        return total + pop.quantity;
-      },
-    );
-  }
-
-  static List<Pop> findVaultMatchesByBarcode({
-    required String barcode,
-    required List<Pop> vaultPops,
-  }) {
-    final Set<String> scannedBarcodeCandidates =
-    _barcodeCandidates(
-      barcode,
-    );
-
-    if (scannedBarcodeCandidates.isEmpty) {
-      return const <Pop>[];
-    }
-
-    final List<Pop> matches = <Pop>[];
-
-    for (final Pop vaultPop in vaultPops) {
-      final Set<String> vaultBarcodeCandidates =
-      _barcodeCandidates(
-        vaultPop.sourceUpc,
-      );
-
-      final bool isBarcodeMatch =
-          vaultBarcodeCandidates.isNotEmpty &&
-              scannedBarcodeCandidates.any(
-                vaultBarcodeCandidates.contains,
-              );
-
-      if (isBarcodeMatch) {
-        matches.add(vaultPop);
-      }
-    }
-
-    return List<Pop>.unmodifiable(
-      matches,
-    );
-  }
-
-  static _CollectionMatchSummary evaluate({
-    required Pop scannedPop,
-    required String scannedBarcode,
-    required List<Pop> vaultPops,
-  }) {
-    final Set<String> scannedBarcodeCandidates =
-    _barcodeCandidates(
-      scannedBarcode,
-    );
-
-    final String scannedRecordKey =
-    scannedPop.collectionRecordKey.trim();
-
-    final String scannedSimilarityKey =
-    scannedPop.similarityReviewKey.trim();
-
-    final List<Pop> exactMatches = <Pop>[];
-    final List<Pop> relatedMatches = <Pop>[];
-
-    for (final Pop vaultPop in vaultPops) {
-      final Set<String> vaultBarcodeCandidates =
-      _barcodeCandidates(
-        vaultPop.sourceUpc,
-      );
-
-      final bool isBarcodeMatch =
-          scannedBarcodeCandidates.isNotEmpty &&
-              vaultBarcodeCandidates.isNotEmpty &&
-              scannedBarcodeCandidates.any(
-                vaultBarcodeCandidates.contains,
-              );
-
-      if (isBarcodeMatch) {
-        exactMatches.add(vaultPop);
-        continue;
-      }
-
-      final String vaultRecordKey =
-      vaultPop.collectionRecordKey.trim();
-
-      final bool isRecordMatch =
-          scannedRecordKey.isNotEmpty &&
-              vaultRecordKey == scannedRecordKey;
-
-      if (isRecordMatch) {
-        exactMatches.add(vaultPop);
-        continue;
-      }
-
-      final String vaultSimilarityKey =
-      vaultPop.similarityReviewKey.trim();
-
-      final bool isRelatedMatch =
-          scannedSimilarityKey.isNotEmpty &&
-              vaultSimilarityKey == scannedSimilarityKey;
-
-      if (isRelatedMatch) {
-        relatedMatches.add(vaultPop);
-      }
-    }
-
-    return _CollectionMatchSummary(
-      exactMatches: List<Pop>.unmodifiable(
-        exactMatches,
-      ),
-      relatedMatches: List<Pop>.unmodifiable(
-        relatedMatches,
-      ),
-    );
-  }
-
-  static Set<String> _barcodeCandidates(
-      String value,
-      ) {
-    final String normalizedBarcode =
-    _normalizeBarcode(value);
-
-    if (normalizedBarcode.isEmpty) {
-      return const <String>{};
-    }
-
-    final Set<String> candidates = <String>{
-      normalizedBarcode,
-    };
-
-    if (normalizedBarcode.length == 13 &&
-        normalizedBarcode.startsWith('0')) {
-      candidates.add(
-        normalizedBarcode.substring(1),
-      );
-    }
-
-    if (normalizedBarcode.length == 12) {
-      candidates.add(
-        '0$normalizedBarcode',
-      );
-    }
-
-    return candidates;
-  }
-
-  static String _normalizeBarcode(
-      String value,
-      ) {
-    return value.replaceAll(
-      RegExp(r'[^0-9A-Za-z]'),
-      '',
     );
   }
 }
@@ -1011,8 +1139,8 @@ class _CatalogProductSummary extends StatelessWidget {
   }
 }
 
-class _ScanEvidenceCard extends StatelessWidget {
-  const _ScanEvidenceCard({
+class _ScanDiagnosticsCard extends StatelessWidget {
+  const _ScanDiagnosticsCard({
     required this.session,
     required this.code,
   });
@@ -1023,93 +1151,101 @@ class _ScanEvidenceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Scan Evidence',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleMedium
-                  ?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+      clipBehavior: Clip.antiAlias,
+      child: ExpansionTile(
+        initiallyExpanded: false,
+        leading: const Icon(
+          Icons.troubleshoot_rounded,
+        ),
+        title: Text(
+          '🔍 Scan Diagnostics',
+          style: Theme.of(context)
+              .textTheme
+              .titleMedium
+              ?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        subtitle: const Text(
+          'Barcode evidence, identity status, and technical details',
+        ),
+        childrenPadding: const EdgeInsets.fromLTRB(
+          16,
+          0,
+          16,
+          16,
+        ),
+        children: [
+          const Divider(),
+          _ResultRow(
+            label: 'Barcode',
+            value: code.normalizedValue,
+            selectable: true,
+          ),
+          const Divider(),
+          _ResultRow(
+            label: 'Format',
+            value: _formatLabel(
+              code.format,
             ),
-            const SizedBox(
-              height: 12,
+          ),
+          const Divider(),
+          _ResultRow(
+            label: 'Source',
+            value: _sourceLabel(
+              code.source,
             ),
+          ),
+          const Divider(),
+          _ResultRow(
+            label: 'Validation',
+            value: code.isValid
+                ? 'Passed'
+                : 'Failed',
+          ),
+          const Divider(),
+          _ResultRow(
+            label: 'Evidence',
+            value:
+            '${session.contributionCount} contribution${session.contributionCount == 1 ? '' : 's'}',
+          ),
+          const Divider(),
+          _ResultRow(
+            label: 'Identity',
+            value: _resolutionStatusLabel(
+              session.resolutionStatus,
+            ),
+          ),
+          if (session.atlasProductId != null) ...[
+            const Divider(),
             _ResultRow(
-              label: 'Barcode',
-              value: code.normalizedValue,
+              label: 'Atlas Product ID',
+              value: session.atlasProductId!.value,
               selectable: true,
             ),
+          ],
+          const Divider(),
+          _ResultRow(
+            label: 'User Action',
+            value: session.requiresUserAction
+                ? 'Review required'
+                : 'No action required',
+          ),
+          if (session.requiresVariantConfirmation) ...[
             const Divider(),
-            _ResultRow(
-              label: 'Format',
-              value: _formatLabel(
-                code.format,
-              ),
-            ),
-            const Divider(),
-            _ResultRow(
-              label: 'Source',
-              value: _sourceLabel(
-                code.source,
-              ),
-            ),
-            const Divider(),
-            _ResultRow(
-              label: 'Validation',
-              value: code.isValid
-                  ? 'Passed'
-                  : 'Failed',
-            ),
-            const Divider(),
-            _ResultRow(
-              label: 'Evidence',
-              value:
-              '${session.contributionCount} contribution${session.contributionCount == 1 ? '' : 's'}',
-            ),
-            const Divider(),
-            _ResultRow(
-              label: 'Identity',
-              value: _resolutionStatusLabel(
-                session.resolutionStatus,
-              ),
-            ),
-            if (session.atlasProductId != null) ...[
-              const Divider(),
-              _ResultRow(
-                label: 'Atlas Product ID',
-                value: session.atlasProductId!.value,
-                selectable: true,
-              ),
-            ],
-            const Divider(),
-            _ResultRow(
-              label: 'User Action',
-              value: session.requiresUserAction
-                  ? 'Review required'
-                  : 'No action required',
-            ),
-            if (session.requiresVariantConfirmation) ...[
-              const Divider(),
-              const _ResultRow(
-                label: 'Variant',
-                value: 'Confirmation required',
-              ),
-            ],
-            const Divider(),
-            _ResultRow(
-              label: 'Session Status',
-              value: _statusLabel(
-                session.status,
-              ),
+            const _ResultRow(
+              label: 'Variant',
+              value: 'Confirmation required',
             ),
           ],
-        ),
+          const Divider(),
+          _ResultRow(
+            label: 'Session Status',
+            value: _statusLabel(
+              session.status,
+            ),
+          ),
+        ],
       ),
     );
   }

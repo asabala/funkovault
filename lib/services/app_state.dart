@@ -23,6 +23,10 @@ class AppState extends ChangeNotifier {
   String _selectedCollection = 'Entire Family Collection';
   final List<Activity> _activities = [];
 
+  final Map<String, Set<String>>
+  _ownedWishlistIdentityKeysByCollection =
+  <String, Set<String>>{};
+
   CollectorProfile _collectorProfile = const CollectorProfile(
     id: 'default',
     displayName: 'Arthur',
@@ -73,7 +77,117 @@ class AppState extends ChangeNotifier {
   List<String> get collectionNames => _collections.keys.toList();
 
   List<Pop> get selectedCollectionPops => _collections[_selectedCollection] ?? [];
+  List<Pop> get selectedCollectionWishlistPops {
+    final List<Pop> collectionPops =
+        _collections[_selectedCollection] ??
+            const <Pop>[];
 
+    final Set<String> overlayIdentityKeys =
+        _ownedWishlistIdentityKeysByCollection[
+        _selectedCollection] ??
+            const <String>{};
+
+    return _buildWishlistPops(
+      collectionPops: collectionPops,
+      overlayIdentityKeys: overlayIdentityKeys,
+    );
+  }
+
+  List<Pop> get wishlistPops {
+    final List<Pop> results = <Pop>[];
+
+    _collections.forEach(
+          (
+          String collectionName,
+          List<Pop> collectionPops,
+          ) {
+        final Set<String> overlayIdentityKeys =
+            _ownedWishlistIdentityKeysByCollection[
+            collectionName] ??
+                const <String>{};
+
+        results.addAll(
+          _buildWishlistPops(
+            collectionPops: collectionPops,
+            overlayIdentityKeys:
+            overlayIdentityKeys,
+          ),
+        );
+      },
+    );
+
+    return List<Pop>.unmodifiable(
+      results,
+    );
+  }
+
+  List<Pop> _buildWishlistPops({
+    required List<Pop> collectionPops,
+    required Set<String> overlayIdentityKeys,
+  }) {
+    final List<Pop> results = <Pop>[];
+    final Set<String> addedRecordIds = <String>{};
+    final Set<String> wishlistRecordIdentityKeys =
+    <String>{};
+
+    for (final Pop pop in collectionPops) {
+      if (!pop.isWishlist) {
+        continue;
+      }
+
+      results.add(
+        pop,
+      );
+
+      addedRecordIds.add(
+        pop.id,
+      );
+
+      final String identityKey =
+      pop.collectibleIdentityKey.trim();
+
+      if (identityKey.isNotEmpty) {
+        wishlistRecordIdentityKeys.add(
+          identityKey,
+        );
+      }
+    }
+
+    for (final Pop pop in collectionPops) {
+      if (pop.isWishlist ||
+          addedRecordIds.contains(pop.id)) {
+        continue;
+      }
+
+      final String identityKey =
+      pop.collectibleIdentityKey.trim();
+
+      if (identityKey.isEmpty ||
+          !overlayIdentityKeys.contains(identityKey)) {
+        continue;
+      }
+
+      // Prevent an owned overlay and an old Wishlist-only
+      // record from showing the same release twice.
+      if (wishlistRecordIdentityKeys.contains(
+        identityKey,
+      )) {
+        continue;
+      }
+
+      results.add(
+        pop,
+      );
+
+      addedRecordIds.add(
+        pop.id,
+      );
+    }
+
+    return List<Pop>.unmodifiable(
+      results,
+    );
+  }
   Future<void> loadData() async {
     final data = HiveService.loadData(
       'vault_data',
@@ -88,6 +202,8 @@ class AppState extends ChangeNotifier {
 
       final activitiesData = data['activities'];
       final profileData = data['collectorProfile'];
+      final ownedWishlistData =
+        data['ownedWishlistIdentityKeys'];
 
       if (profileData != null) {
         _collectorProfile = CollectorProfile.fromJson(
@@ -124,6 +240,42 @@ class AppState extends ChangeNotifier {
               .toList();
         },
       );
+      _ownedWishlistIdentityKeysByCollection.clear();
+
+      if (ownedWishlistData is Map) {
+        ownedWishlistData.forEach(
+              (
+              dynamic collectionName,
+              dynamic rawKeys,
+              ) {
+            if (collectionName is! String ||
+                rawKeys is! List) {
+              return;
+            }
+
+            _ownedWishlistIdentityKeysByCollection[
+            collectionName] = rawKeys
+                .map(
+                  (dynamic value) =>
+                  value.toString().trim(),
+            )
+                .where(
+                  (String value) =>
+              value.isNotEmpty,
+            )
+                .toSet();
+          },
+        );
+      }
+
+      for (final String collectionName
+      in _collections.keys) {
+        _ownedWishlistIdentityKeysByCollection
+            .putIfAbsent(
+          collectionName,
+              () => <String>{},
+        );
+      }
     }
 
     notifyListeners();
@@ -141,7 +293,21 @@ class AppState extends ChangeNotifier {
             .toList();
       },
     );
+    final Map<String, dynamic>
+    ownedWishlistIdentityJson =
+    <String, dynamic>{};
 
+    _ownedWishlistIdentityKeysByCollection.forEach(
+          (
+          String collectionName,
+          Set<String> identityKeys,
+          ) {
+        ownedWishlistIdentityJson[collectionName] =
+            identityKeys.toList(
+              growable: false,
+            );
+      },
+    );
     await HiveService.saveData(
       'vault_data',
       {
@@ -150,9 +316,12 @@ class AppState extends ChangeNotifier {
         'activities': _activities
             .map(
               (activity) => activity.toJson(),
+
         )
             .toList(),
         'collectorProfile': _collectorProfile.toJson(),
+        'ownedWishlistIdentityKeys':
+        ownedWishlistIdentityJson,
       },
     );
   }
@@ -177,6 +346,9 @@ class AppState extends ChangeNotifier {
     if (!_collections.containsKey(name)) {
       _collections[name] = [];
 
+      _ownedWishlistIdentityKeysByCollection[name] =
+      <String>{};
+
       await _saveData();
 
       notifyListeners();
@@ -192,6 +364,10 @@ class AppState extends ChangeNotifier {
 
     _collections.remove(name);
 
+    _ownedWishlistIdentityKeysByCollection.remove(
+      name,
+    );
+
     if (_selectedCollection == name) {
       _selectedCollection = _collections.keys.first;
     }
@@ -200,7 +376,168 @@ class AppState extends ChangeNotifier {
 
     notifyListeners();
   }
+  Set<String> get selectedOwnedWishlistIdentityKeys {
+    return Set<String>.unmodifiable(
+      _ownedWishlistIdentityKeysByCollection[
+      _selectedCollection] ??
+          const <String>{},
+    );
+  }
 
+  Set<String> get allOwnedWishlistIdentityKeys {
+    final Set<String> identityKeys =
+    <String>{};
+
+    for (final Set<String> collectionKeys
+    in _ownedWishlistIdentityKeysByCollection.values) {
+      identityKeys.addAll(
+        collectionKeys,
+      );
+    }
+
+    return Set<String>.unmodifiable(
+      identityKeys,
+    );
+  }
+
+  bool isOwnedPopWishlisted(
+      Pop pop,
+      ) {
+    final String identityKey =
+    pop.collectibleIdentityKey.trim();
+
+    if (identityKey.isEmpty) {
+      return false;
+    }
+
+    final Set<String> identityKeys =
+        _ownedWishlistIdentityKeysByCollection[
+        _selectedCollection] ??
+            const <String>{};
+
+    return identityKeys.contains(
+      identityKey,
+    );
+  }
+
+  bool isCollectibleWishlisted(
+      Pop pop,
+      ) {
+    final String identityKey =
+    pop.collectibleIdentityKey.trim();
+
+    if (identityKey.isEmpty) {
+      return false;
+    }
+
+    if (isOwnedPopWishlisted(pop)) {
+      return true;
+    }
+
+    final List<Pop> pops =
+        _collections[_selectedCollection] ??
+            const <Pop>[];
+
+    return pops.any(
+          (Pop existingPop) {
+        return existingPop.isWishlist &&
+            existingPop.collectibleIdentityKey ==
+                identityKey;
+      },
+    );
+  }
+
+  Future<void> addOwnedPopToWishlist(
+      Pop pop,
+      ) async {
+    final String identityKey =
+    pop.collectibleIdentityKey.trim();
+
+    if (identityKey.isEmpty) {
+      return;
+    }
+
+    final Set<String> identityKeys =
+    _ownedWishlistIdentityKeysByCollection
+        .putIfAbsent(
+      _selectedCollection,
+          () => <String>{},
+    );
+
+    if (!identityKeys.add(identityKey)) {
+      return;
+    }
+
+    _activities.add(
+      Activity(
+        id: DateTime.now()
+            .microsecondsSinceEpoch
+            .toString(),
+        popId: pop.id,
+        action: 'wishlist_added',
+        popName: pop.name,
+        popNumber: pop.number,
+        owner: pop.owner,
+        actor: _collectorProfile.displayName,
+        details:
+        '${pop.name} added to Wishlist',
+        timestamp: DateTime.now(),
+      ),
+    );
+
+    if (_activities.length > 500) {
+      _activities.removeAt(0);
+    }
+
+    await _saveData();
+
+    notifyListeners();
+  }
+
+  Future<void> removeOwnedPopFromWishlist(
+      Pop pop,
+      ) async {
+    final String identityKey =
+    pop.collectibleIdentityKey.trim();
+
+    if (identityKey.isEmpty) {
+      return;
+    }
+
+    final Set<String>? identityKeys =
+    _ownedWishlistIdentityKeysByCollection[
+    _selectedCollection];
+
+    if (identityKeys == null ||
+        !identityKeys.remove(identityKey)) {
+      return;
+    }
+
+    _activities.add(
+      Activity(
+        id: DateTime.now()
+            .microsecondsSinceEpoch
+            .toString(),
+        popId: pop.id,
+        action: 'wishlist_removed',
+        popName: pop.name,
+        popNumber: pop.number,
+        owner: pop.owner,
+        actor: _collectorProfile.displayName,
+        details:
+        '${pop.name} removed from Wishlist',
+        timestamp: DateTime.now(),
+      ),
+    );
+
+    if (_activities.length > 500) {
+      _activities.removeAt(0);
+    }
+
+    await _saveData();
+
+    notifyListeners();
+  }
   Future<void> addPop(Pop pop) async {
     final pops = _collections[_selectedCollection];
 
@@ -786,17 +1123,7 @@ class AppState extends ChangeNotifier {
   }
 
   int get wishlistCount {
-    var total = 0;
-
-    for (final collection in _collections.values) {
-      for (final pop in collection) {
-        if (pop.isWishlist) {
-          total++;
-        }
-      }
-    }
-
-    return total;
+    return wishlistPops.length;
   }
 
   double get totalValue {

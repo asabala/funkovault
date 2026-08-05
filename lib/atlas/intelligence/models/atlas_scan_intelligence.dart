@@ -18,6 +18,16 @@ enum AtlasScanInsightPriority {
   critical,
 }
 
+/// Identifies the system that produced an Atlas insight.
+enum AtlasScanInsightSource {
+  scan,
+  identity,
+  collection,
+  market,
+  recommendation,
+  system,
+}
+
 /// One immutable intelligence insight produced from a scan session.
 @immutable
 class AtlasScanInsight {
@@ -26,7 +36,11 @@ class AtlasScanInsight {
     required this.type,
     required this.title,
     required this.message,
+    this.emoji = '🧠',
     this.priority = AtlasScanInsightPriority.normal,
+    this.priorityWeight,
+    this.source = AtlasScanInsightSource.scan,
+    this.requiresOnline = false,
     this.details = const <String>[],
     this.recommendation,
   });
@@ -38,6 +52,20 @@ class AtlasScanInsight {
   final String title;
 
   final String message;
+
+  /// Collector-facing visual identifier.
+  final String emoji;
+
+  /// Optional explicit sorting weight.
+  ///
+  /// Lower values represent more important insights.
+  final int? priorityWeight;
+
+  /// System that produced this insight.
+  final AtlasScanInsightSource source;
+
+  /// Whether connected services are required to refresh this insight.
+  final bool requiresOnline;
 
   final AtlasScanInsightPriority priority;
 
@@ -53,6 +81,47 @@ class AtlasScanInsight {
     return recommendation?.trim().isNotEmpty ?? false;
   }
 
+  int get effectivePriorityWeight {
+    final int? explicitWeight = priorityWeight;
+
+    if (explicitWeight != null) {
+      return explicitWeight.clamp(1, 100);
+    }
+
+    switch (priority) {
+      case AtlasScanInsightPriority.critical:
+        return 5;
+
+      case AtlasScanInsightPriority.high:
+        return 20;
+
+      case AtlasScanInsightPriority.normal:
+        return 50;
+
+      case AtlasScanInsightPriority.low:
+        return 80;
+    }
+  }
+
+  String get displayTitle {
+    final String normalizedEmoji = emoji.trim();
+    final String normalizedTitle = title.trim();
+
+    if (normalizedEmoji.isEmpty) {
+      return normalizedTitle;
+    }
+
+    return '$normalizedEmoji $normalizedTitle';
+  }
+
+  bool get isOfflineSafe {
+    return !requiresOnline;
+  }
+
+  bool get isCompactDisplayCandidate {
+    return effectivePriorityWeight <= 50;
+  }
+
   AtlasScanInsight copyWith({
     String? id,
     AtlasScanInsightType? type,
@@ -61,6 +130,10 @@ class AtlasScanInsight {
     AtlasScanInsightPriority? priority,
     List<String>? details,
     String? recommendation,
+    String? emoji,
+    int? priorityWeight,
+    AtlasScanInsightSource? source,
+    bool? requiresOnline,
   }) {
     return AtlasScanInsight(
       id: id ?? this.id,
@@ -70,6 +143,10 @@ class AtlasScanInsight {
       priority: priority ?? this.priority,
       details: details ?? this.details,
       recommendation: recommendation ?? this.recommendation,
+      emoji: emoji ?? this.emoji,
+      priorityWeight: priorityWeight ?? this.priorityWeight,
+      source: source ?? this.source,
+      requiresOnline: requiresOnline ?? this.requiresOnline,
     );
   }
 
@@ -82,8 +159,15 @@ class AtlasScanInsight {
             type == other.type &&
             title == other.title &&
             message == other.message &&
+            emoji == other.emoji &&
             priority == other.priority &&
-            listEquals(details, other.details) &&
+            priorityWeight == other.priorityWeight &&
+            source == other.source &&
+            requiresOnline == other.requiresOnline &&
+            listEquals(
+              details,
+              other.details,
+            ) &&
             recommendation == other.recommendation;
   }
 
@@ -94,7 +178,11 @@ class AtlasScanInsight {
       type,
       title,
       message,
+      emoji,
       priority,
+      priorityWeight,
+      source,
+      requiresOnline,
       Object.hashAll(details),
       recommendation,
     );
@@ -106,6 +194,9 @@ class AtlasScanInsight {
         'id: $id, '
         'type: ${type.name}, '
         'priority: ${priority.name}, '
+        'priorityWeight: $effectivePriorityWeight, '
+        'source: ${source.name}, '
+        'requiresOnline: $requiresOnline, '
         'title: $title'
         ')';
   }
@@ -188,6 +279,68 @@ class AtlasScanIntelligence {
       sessionId: sessionId ?? this.sessionId,
       generatedAt: generatedAt ?? this.generatedAt,
       insights: insights ?? this.insights,
+    );
+  }
+
+  List<AtlasScanInsight> get prioritizedInsights {
+    final List<AtlasScanInsight> sorted =
+    List<AtlasScanInsight>.from(
+      insights,
+    );
+
+    sorted.sort(
+          (
+          AtlasScanInsight first,
+          AtlasScanInsight second,
+          ) {
+        return first.effectivePriorityWeight.compareTo(
+          second.effectivePriorityWeight,
+        );
+      },
+    );
+
+    return List<AtlasScanInsight>.unmodifiable(
+      sorted,
+    );
+  }
+
+  List<AtlasScanInsight> topInsights({
+    int limit = 3,
+  }) {
+    if (limit <= 0) {
+      return const <AtlasScanInsight>[];
+    }
+
+    return List<AtlasScanInsight>.unmodifiable(
+      prioritizedInsights.take(limit),
+    );
+  }
+
+  List<AtlasScanInsight> compactInsights({
+    int limit = 3,
+  }) {
+    if (limit <= 0) {
+      return const <AtlasScanInsight>[];
+    }
+
+    return List<AtlasScanInsight>.unmodifiable(
+      prioritizedInsights
+          .where(
+            (AtlasScanInsight insight) {
+          return insight.isCompactDisplayCandidate;
+        },
+      )
+          .take(limit),
+    );
+  }
+
+  List<AtlasScanInsight> get offlineInsights {
+    return List<AtlasScanInsight>.unmodifiable(
+      prioritizedInsights.where(
+            (AtlasScanInsight insight) {
+          return insight.isOfflineSafe;
+        },
+      ),
     );
   }
 

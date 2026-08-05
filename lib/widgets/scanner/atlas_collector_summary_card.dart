@@ -1,6 +1,14 @@
 import 'package:flutter/material.dart';
 
+import 'package:funkovault2/widgets/atlas/atlas_intelligence_feed.dart';
 import 'package:funkovault2/atlas/intelligence/models/atlas_collector_summary.dart';
+import 'package:funkovault2/theme/atlas_colors.dart';
+import 'package:funkovault2/theme/atlas_spacing.dart';
+import 'package:funkovault2/theme/atlas_typography.dart';
+import 'package:funkovault2/widgets/atlas/atlas_glass_card.dart';
+import 'package:funkovault2/widgets/atlas/atlas_glass_panel.dart';
+import 'package:funkovault2/widgets/atlas/atlas_product_image.dart';
+import 'package:funkovault2/widgets/identity/atlas_identity_badge.dart';
 
 class AtlasCollectorSummaryCard extends StatelessWidget {
   const AtlasCollectorSummaryCard({
@@ -14,211 +22,49 @@ class AtlasCollectorSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          18,
-          18,
-          18,
-          20,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _ProductImage(
-              imageUrl: imageUrl,
-            ),
-            const SizedBox(
-              height: 12,
-            ),
-            Text(
-              summary.productName,
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            if (summary.productNumber.isNotEmpty) ...[
-              const SizedBox(
-                height: 4,
-              ),
-              Text(
-                '#${summary.productNumber}',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-            const SizedBox(
-              height: 10,
-            ),
-            Align(
-              alignment: Alignment.center,
-              child: Chip(
-                avatar: const Icon(
-                  Icons.auto_awesome_rounded,
-                  size: 18,
-                ),
-                label: Text(
-                  summary.variantLabel,
-                ),
-              ),
-            ),
-            const Divider(
-              height: 32,
-            ),
-            Row(
-              children: [
-                Expanded(
-                  child: _SummaryMetric(
-                    icon: Icons.attach_money_rounded,
-                    label: 'Estimated Market Value',
-                    value: summary.formattedMarketValue,
-                  ),
-                ),
-                const SizedBox(
-                  width: 12,
-                ),
-                Expanded(
-                  child: _SummaryMetric(
-                    icon: _trendIcon,
-                    label: 'Trend',
-                    value: summary.formattedTrend,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(
-              height: 12,
-            ),
-            Row(
-              children: [
-                Expanded(
-                  child: _SummaryMetric(
-                    icon: Icons.inventory_2_outlined,
-                    label: 'Owned',
-                    value: summary.formattedOwnership,
-                  ),
-                ),
-                const SizedBox(
-                  width: 12,
-                ),
-                Expanded(
-                  child: _SummaryMetric(
-                    icon: Icons.collections_bookmark_outlined,
-                    label: 'Collection',
-                    value: summary.collectionName,
-                  ),
-                ),
-              ],
-            ),
-            const Divider(
-              height: 32,
-            ),
-            _RecommendationSection(
-              title: summary.recommendation,
-              message: summary.recommendationMessage,
-              icon: _recommendationIcon,
-            ),
-          ],
-        ),
+    return AtlasGlassCard(
+      accentColor: AtlasColors.vaultGold,
+      padding: const EdgeInsets.all(
+        AtlasSpacing.lg,
       ),
-    );
-  }
-
-  IconData get _trendIcon {
-    final double? trend = summary.trendPercent;
-
-    if (trend == null || !trend.isFinite) {
-      return Icons.horizontal_rule_rounded;
-    }
-
-    if (trend > 0) {
-      return Icons.trending_up_rounded;
-    }
-
-    if (trend < 0) {
-      return Icons.trending_down_rounded;
-    }
-
-    return Icons.trending_flat_rounded;
-  }
-
-  IconData get _recommendationIcon {
-    switch (summary.recommendation) {
-      case 'Already Owned':
-        return Icons.verified_rounded;
-
-      case 'Review Variant':
-        return Icons.compare_arrows_rounded;
-
-      case 'Market Value Unavailable':
-        return Icons.price_check_outlined;
-
-      case 'New to Vault':
-        return Icons.add_box_outlined;
-
-      default:
-        return Icons.auto_awesome_rounded;
-    }
-  }
-}
-
-class _ProductImage extends StatelessWidget {
-  const _ProductImage({
-    required this.imageUrl,
-  });
-
-  final String imageUrl;
-
-  @override
-  Widget build(BuildContext context) {
-    final String normalizedImageUrl = imageUrl.trim();
-
-    return SizedBox(
-      height: 285,
-      child: normalizedImageUrl.isEmpty
-          ? const _ImagePlaceholder()
-          : Image.network(
-        normalizedImageUrl,
-        width: double.infinity,
-        height: 285,
-        fit: BoxFit.contain,
-        filterQuality: FilterQuality.high,
-        errorBuilder: (
-            BuildContext context,
-            Object error,
-            StackTrace? stackTrace,
-            ) {
-          return const _ImagePlaceholder();
-        },
-      ),
-    );
-  }
-}
-
-class _ImagePlaceholder extends StatelessWidget {
-  const _ImagePlaceholder();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Icon(
-            Icons.inventory_2_outlined,
-            size: 72,
+          _SummaryTopRow(
+            summary: summary,
           ),
-          SizedBox(
-            height: 12,
+          const SizedBox(
+            height: AtlasSpacing.sm,
           ),
-          Text(
-            'Product image unavailable',
+          AtlasProductImage(
+            imageUrl: imageUrl,
+            height: 195,
+          ),
+          const SizedBox(
+            height: AtlasSpacing.sm,
+          ),
+          _ProductIdentitySection(
+            summary: summary,
+          ),
+          const SizedBox(
+            height: AtlasSpacing.lg,
+          ),
+          _MarketValuePanel(
+            summary: summary,
+          ),
+          const SizedBox(
+            height: AtlasSpacing.md,
+          ),
+          _CollectionScopePanel(
+            summary: summary,
+          ),
+          const SizedBox(
+            height: AtlasSpacing.lg,
+          ),
+
+          AtlasIntelligenceFeed(
+            recommendations: summary.recommendations,
+            maxVisibleRecommendations: 3,
           ),
         ],
       ),
@@ -226,119 +72,319 @@ class _ImagePlaceholder extends StatelessWidget {
   }
 }
 
-class _SummaryMetric extends StatelessWidget {
-  const _SummaryMetric({
+class _SummaryTopRow extends StatelessWidget {
+  const _SummaryTopRow({
+    required this.summary,
+  });
+
+  final AtlasCollectorSummary summary;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            '🧠 Collector Summary',
+            style: AtlasTypography.headingSmall,
+          ),
+        ),
+        _StatusBadge(
+          icon: summary.isOwned
+              ? Icons.verified_rounded
+              : Icons.add_box_outlined,
+          label: summary.formattedOwnership,
+          accentColor: summary.isOwned
+              ? AtlasColors.success
+              : AtlasColors.intelligenceBlue,
+        ),
+      ],
+    );
+  }
+}
+
+class _ProductIdentitySection extends StatelessWidget {
+  const _ProductIdentitySection({
+    required this.summary,
+  });
+
+  final AtlasCollectorSummary summary;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(
+          summary.productName,
+          style: AtlasTypography.headingLarge,
+          textAlign: TextAlign.center,
+        ),
+        if (summary.productNumber.isNotEmpty) ...[
+          const SizedBox(
+            height: AtlasSpacing.xs,
+          ),
+          Text(
+            '#${summary.productNumber}',
+            style: AtlasTypography.headingSmall.copyWith(
+              color: AtlasColors.textSecondary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+        const SizedBox(
+          height: AtlasSpacing.md,
+        ),
+        if (summary.hasIdentityBadges)
+          Wrap(
+            spacing: AtlasSpacing.sm,
+            runSpacing: AtlasSpacing.sm,
+            alignment: WrapAlignment.center,
+            children: [
+              for (final badge in summary.identityBadges)
+                AtlasIdentityBadge(
+                  badge: badge,
+                ),
+            ],
+          )
+        else
+          _StatusBadge(
+            icon: Icons.auto_awesome_rounded,
+            label: summary.variantLabel.trim().isEmpty
+                ? 'Common'
+                : summary.variantLabel,
+            accentColor: AtlasColors.vaultGold,
+          ),
+      ],
+    );
+  }
+}
+
+class _MarketValuePanel extends StatelessWidget {
+  const _MarketValuePanel({
+    required this.summary,
+  });
+
+  final AtlasCollectorSummary summary;
+
+  @override
+  Widget build(BuildContext context) {
+    return AtlasGlassPanel(
+      accentColor: AtlasColors.vaultGold,
+      padding: const EdgeInsets.all(
+        AtlasSpacing.lg,
+      ),
+      child: Column(
+        children: [
+          Text(
+            '💰 ESTIMATED MARKET VALUE',
+            style: AtlasTypography.label.copyWith(
+              color: AtlasColors.vaultGold,
+              letterSpacing: 1.1,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(
+            height: AtlasSpacing.sm,
+          ),
+          Text(
+            summary.formattedMarketValue,
+            style: AtlasTypography.metricLarge.copyWith(
+              color: summary.hasMarketValue
+                  ? AtlasColors.textPrimary
+                  : AtlasColors.textSecondary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(
+            height: AtlasSpacing.sm,
+          ),
+          _TrendSection(
+            summary: summary,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TrendSection extends StatelessWidget {
+  const _TrendSection({
+    required this.summary,
+  });
+
+  final AtlasCollectorSummary summary;
+
+  @override
+  Widget build(BuildContext context) {
+    final double? trend = summary.trendPercent;
+
+    final IconData icon;
+    final Color accentColor;
+    final String heading;
+
+    if (trend == null || !trend.isFinite) {
+      icon = Icons.horizontal_rule_rounded;
+      accentColor = AtlasColors.textSecondary;
+      heading = '📊 No Market Trend Yet';
+    } else if (trend > 0) {
+      icon = Icons.trending_up_rounded;
+      accentColor = AtlasColors.success;
+      heading = '📈 Trending Up';
+    } else if (trend < 0) {
+      icon = Icons.trending_down_rounded;
+      accentColor = AtlasColors.danger;
+      heading = '📉 Trending Down';
+    } else {
+      icon = Icons.trending_flat_rounded;
+      accentColor = AtlasColors.textSecondary;
+      heading = '➖ Market Stable';
+    }
+
+    return Column(
+      children: [
+        _StatusBadge(
+          icon: icon,
+          label: summary.formattedTrend,
+          accentColor: accentColor,
+        ),
+        const SizedBox(
+          height: AtlasSpacing.sm,
+        ),
+        Text(
+          heading,
+          style: AtlasTypography.bodySmall.copyWith(
+            color: accentColor,
+            fontWeight: FontWeight.bold,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(
+          height: AtlasSpacing.xs,
+        ),
+        Text(
+          summary.trendDescription,
+          style: AtlasTypography.bodySmall,
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+}
+
+class _CollectionScopePanel extends StatelessWidget {
+  const _CollectionScopePanel({
+    required this.summary,
+  });
+
+  final AtlasCollectorSummary summary;
+
+  @override
+  Widget build(BuildContext context) {
+    return AtlasGlassPanel(
+      accentColor: summary.isOwned
+          ? AtlasColors.success
+          : AtlasColors.intelligenceBlue,
+      padding: const EdgeInsets.all(
+        AtlasSpacing.md,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '📦 YOUR COLLECTION',
+            style: AtlasTypography.label.copyWith(
+              color: summary.isOwned
+                  ? AtlasColors.success
+                  : AtlasColors.intelligenceBlue,
+              letterSpacing: 0.8,
+            ),
+          ),
+          const SizedBox(
+            height: AtlasSpacing.md,
+          ),
+          Wrap(
+            spacing: AtlasSpacing.sm,
+            runSpacing: AtlasSpacing.sm,
+            children: [
+              _StatusBadge(
+                icon: summary.isOwned
+                    ? Icons.verified_rounded
+                    : Icons.inventory_2_outlined,
+                label: summary.isOwned
+                    ? 'Owned: ${summary.formattedOwnership}'
+                    : 'Not owned',
+                accentColor: summary.isOwned
+                    ? AtlasColors.success
+                    : AtlasColors.textSecondary,
+              ),
+              _StatusBadge(
+                icon: Icons.collections_bookmark_outlined,
+                label: 'In collection: ${summary.collectionName}',
+                accentColor: AtlasColors.intelligenceBlue,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatusBadge extends StatelessWidget {
+  const _StatusBadge({
     required this.icon,
     required this.label,
-    required this.value,
+    required this.accentColor,
   });
 
   final IconData icon;
   final String label;
-  final String value;
+  final Color accentColor;
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-
     return Container(
-      constraints: const BoxConstraints(
-        minHeight: 108,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AtlasSpacing.md,
+        vertical: AtlasSpacing.sm,
       ),
-      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        border: Border.all(
-          color: theme.dividerColor,
+        color: accentColor.withValues(
+          alpha: 0.12,
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(
+          999,
+        ),
+        border: Border.all(
+          color: accentColor.withValues(
+            alpha: 0.32,
+          ),
+        ),
       ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
             icon,
-            size: 24,
+            size: 17,
+            color: accentColor,
           ),
           const SizedBox(
-            height: 8,
+            width: AtlasSpacing.sm,
           ),
-          Text(
-            label,
-            style: theme.textTheme.bodySmall,
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(
-            height: 5,
-          ),
-          Text(
-            value,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
+          Flexible(
+            child: Text(
+              label,
+              style: AtlasTypography.bodySmall.copyWith(
+                color: AtlasColors.textPrimary,
+                fontWeight: FontWeight.w600,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
-            textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
-    );
-  }
-}
-
-class _RecommendationSection extends StatelessWidget {
-  const _RecommendationSection({
-    required this.title,
-    required this.message,
-    required this.icon,
-  });
-
-  final String title;
-  final String message;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(
-          icon,
-          size: 30,
-        ),
-        const SizedBox(
-          width: 12,
-        ),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Atlas Recommendation',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(
-                height: 4,
-              ),
-              Text(
-                title,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(
-                height: 5,
-              ),
-              Text(
-                message,
-              ),
-            ],
-          ),
-        ),
-      ],
     );
   }
 }
