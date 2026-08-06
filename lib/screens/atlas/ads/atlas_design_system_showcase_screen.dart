@@ -2,13 +2,18 @@ import 'package:flutter/material.dart';
 
 import '../../../theme/atlas_colors.dart';
 import '../../../theme/atlas_icons.dart';
+import '../../../theme/atlas_motion.dart';
 import '../../../theme/atlas_spacing.dart';
 import '../../../theme/atlas_symbols.dart';
 import '../../../theme/atlas_typography.dart';
 import '../../../widgets/atlas/atlas_expandable_section.dart';
 import '../../../widgets/atlas/atlas_glass_card.dart';
 import '../../../widgets/atlas/atlas_glass_panel.dart';
+import '../../../widgets/atlas/components/atlas_action_row.dart';
+import '../../../widgets/atlas/components/atlas_empty_state.dart';
+import '../../../widgets/atlas/components/atlas_error_state.dart';
 import '../../../widgets/atlas/components/atlas_insight_panel.dart';
+import '../../../widgets/atlas/components/atlas_loading_state.dart';
 import '../../../widgets/atlas/components/atlas_metric_panel.dart';
 import '../../../widgets/atlas/components/atlas_progress_bar.dart';
 import '../../../widgets/atlas/components/atlas_section_header.dart';
@@ -54,6 +59,10 @@ class AtlasDesignSystemShowcaseScreen extends StatelessWidget {
           SizedBox(
             height: AtlasSpacing.lg,
           ),
+          _PatternsSection(),
+          SizedBox(
+            height: AtlasSpacing.lg,
+          ),
           _MotionSection(),
           SizedBox(
             height: AtlasSpacing.lg,
@@ -63,6 +72,10 @@ class AtlasDesignSystemShowcaseScreen extends StatelessWidget {
             height: AtlasSpacing.lg,
           ),
           _EmptyStatesSection(),
+          SizedBox(
+            height: AtlasSpacing.lg,
+          ),
+          _ErrorStatesSection(),
         ],
       ),
     );
@@ -1011,6 +1024,437 @@ class _InsightsSection extends StatelessWidget {
   }
 }
 
+class _PatternsSection extends StatelessWidget {
+  const _PatternsSection();
+
+  @override
+  Widget build(BuildContext context) {
+    return AtlasExpandableSection(
+      title: 'Patterns',
+      subtitle:
+      'Reusable layouts built from Atlas Design System components.',
+      icon: Icons.dashboard_outlined,
+      badge: const _MaturityBadge(
+        label: 'Growing',
+        status: _ComponentMaturity.stable,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: const [
+          _ProductHeroPatternPreview(),
+          SizedBox(height: AtlasSpacing.md),
+          _CollectorProgressPatternPreview(),
+          SizedBox(height: AtlasSpacing.md),
+          _RecommendationsPatternPreview(),
+          SizedBox(height: AtlasSpacing.md),
+          _VaultSummaryPatternPreview(),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProductHeroPatternPreview extends StatelessWidget {
+  const _ProductHeroPatternPreview();
+
+  @override
+  Widget build(BuildContext context) {
+    return AtlasGlassPanel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const AtlasSectionHeader(
+            title: 'Product Hero',
+            subtitle:
+            'Identity, ownership, variant, and value in one reusable composition.',
+            symbol: AtlasSymbols.collection,
+            accentColor: AtlasColors.vaultGold,
+            badge: AtlasStatusChip(
+              label: 'Live Pattern',
+              icon: Icons.auto_awesome_rounded,
+              accentColor: AtlasColors.intelligenceBlue,
+              size: AtlasStatusChipSize.compact,
+            ),
+          ),
+          const SizedBox(
+            height: AtlasSpacing.lg,
+          ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 64,
+                height: 82,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: AtlasColors.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: AtlasColors.border,
+                  ),
+                ),
+                child: const Icon(
+                  Icons.inventory_2_outlined,
+                  color: AtlasColors.vaultGold,
+                  size: 30,
+                ),
+              ),
+              const SizedBox(
+                width: AtlasSpacing.md,
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Batman',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AtlasTypography.headingSmall.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(
+                      height: AtlasSpacing.xs,
+                    ),
+                    Text(
+                      'DC Super Heroes • #275',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AtlasTypography.bodySmall.copyWith(
+                        color: AtlasColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(
+                      height: AtlasSpacing.md,
+                    ),
+                    const Wrap(
+                      spacing: AtlasSpacing.sm,
+                      runSpacing: AtlasSpacing.sm,
+                      children: [
+                        AtlasStatusChip(
+                          label: 'Owned',
+                          symbol: AtlasSymbols.owned,
+                          accentColor: AtlasColors.success,
+                          size: AtlasStatusChipSize.compact,
+                        ),
+                        AtlasStatusChip(
+                          label: 'Chase',
+                          symbol: AtlasSymbols.chase,
+                          accentColor: AtlasColors.vaultGold,
+                          size: AtlasStatusChipSize.compact,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(
+            height: AtlasSpacing.lg,
+          ),
+          const AtlasMetricPanel(
+            label: 'Current Value',
+            value: r'$37.00',
+            supportingText: 'No trend yet',
+            icon: Icons.attach_money_rounded,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CollectorProgressPatternPreview extends StatelessWidget {
+  const _CollectorProgressPatternPreview();
+
+  @override
+  Widget build(BuildContext context) {
+    return AtlasGlassPanel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const AtlasSectionHeader(
+            title: 'Collector Progress',
+            subtitle:
+            'Live pattern composed from ADS 2.0 components.',
+            symbol: AtlasSymbols.completion,
+            accentColor: AtlasColors.intelligenceBlue,
+            badge: AtlasStatusChip(
+              label: '75%',
+              accentColor: AtlasColors.vaultGold,
+              size: AtlasStatusChipSize.compact,
+            ),
+          ),
+          const SizedBox(
+            height: AtlasSpacing.lg,
+          ),
+          Text(
+            '3 of 4 Releases',
+            style: AtlasTypography.headingSmall.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(
+            height: AtlasSpacing.md,
+          ),
+          const AtlasProgressBar(
+            value: 0.75,
+            accentColor: AtlasColors.vaultGold,
+            height: 10,
+          ),
+          const SizedBox(
+            height: AtlasSpacing.md,
+          ),
+          const Wrap(
+            spacing: AtlasSpacing.sm,
+            runSpacing: AtlasSpacing.sm,
+            children: [
+              AtlasStatusChip(
+                label: '3 Owned',
+                symbol: AtlasSymbols.owned,
+                accentColor: AtlasColors.success,
+                size: AtlasStatusChipSize.compact,
+              ),
+              AtlasStatusChip(
+                label: '0 Wishlist',
+                symbol: AtlasSymbols.wishlist,
+                accentColor: AtlasColors.warning,
+                size: AtlasStatusChipSize.compact,
+              ),
+              AtlasStatusChip(
+                label: '1 Missing',
+                symbol: AtlasSymbols.missing,
+                accentColor: AtlasColors.textSecondary,
+                size: AtlasStatusChipSize.compact,
+              ),
+            ],
+          ),
+          const SizedBox(
+            height: AtlasSpacing.lg,
+          ),
+          const AtlasInsightPanel(
+            eyebrow: 'Next Goal',
+            title: 'Collect the final release',
+            message:
+            'This pattern combines a shared header, progress bar, status chips, and insight panel.',
+            symbol: AtlasSymbols.recommendation,
+            tone: AtlasInsightPanelTone.recommendation,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RecommendationsPatternPreview extends StatelessWidget {
+  const _RecommendationsPatternPreview();
+
+  @override
+  Widget build(BuildContext context) {
+    return AtlasGlassPanel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const AtlasSectionHeader(
+            title: 'Atlas Recommendations',
+            subtitle:
+            'A focused recommendation pattern built from shared ADS components.',
+            symbol: AtlasSymbols.recommendation,
+            accentColor: AtlasColors.vaultGold,
+            badge: AtlasStatusChip(
+              label: '2 Actions',
+              icon: Icons.lightbulb_outline_rounded,
+              accentColor: AtlasColors.vaultGold,
+              size: AtlasStatusChipSize.compact,
+            ),
+          ),
+          const SizedBox(
+            height: AtlasSpacing.lg,
+          ),
+          const AtlasInsightPanel(
+            eyebrow: 'Recommended Next Step',
+            title: 'Complete the missing catalog details',
+            message:
+            'Adding box condition and purchase price will improve valuation accuracy and collection analytics.',
+            symbol: AtlasSymbols.recommendation,
+            tone: AtlasInsightPanelTone.recommendation,
+          ),
+          const SizedBox(
+            height: AtlasSpacing.md,
+          ),
+          AtlasActionRow(
+            title: 'Add Box Condition',
+            description:
+            'Improve condition confidence and market-value accuracy.',
+            icon: Icons.inventory_2_outlined,
+            accentColor: AtlasColors.warning,
+            badge: const AtlasStatusChip(
+              label: 'High Priority',
+              icon: Icons.flag_outlined,
+              accentColor: AtlasColors.warning,
+              size: AtlasStatusChipSize.compact,
+            ),
+            onTap: () {},
+          ),
+          const SizedBox(
+            height: AtlasSpacing.sm,
+          ),
+          AtlasActionRow(
+            title: 'Add Purchase Price',
+            description:
+            'Unlock profit, loss, and collection-performance tracking.',
+            icon: Icons.attach_money_rounded,
+            accentColor: AtlasColors.intelligenceBlue,
+            badge: const AtlasStatusChip(
+              label: 'Suggested',
+              icon: Icons.flag_outlined,
+              accentColor: AtlasColors.intelligenceBlue,
+              size: AtlasStatusChipSize.compact,
+            ),
+            onTap: () {},
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _VaultSummaryPatternPreview extends StatelessWidget {
+  const _VaultSummaryPatternPreview();
+
+  @override
+  Widget build(BuildContext context) {
+    return AtlasGlassPanel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const AtlasSectionHeader(
+            title: 'Vault Summary',
+            subtitle:
+            'A dashboard pattern combining collection metrics, health, and next-step guidance.',
+            symbol: AtlasSymbols.vault,
+            accentColor: AtlasColors.intelligenceBlue,
+            badge: AtlasStatusChip(
+              label: 'Healthy',
+              icon: Icons.health_and_safety_outlined,
+              accentColor: AtlasColors.success,
+              size: AtlasStatusChipSize.compact,
+            ),
+          ),
+          const SizedBox(
+            height: AtlasSpacing.lg,
+          ),
+          LayoutBuilder(
+            builder: (
+                BuildContext context,
+                BoxConstraints constraints,
+                ) {
+              final bool useColumn =
+                  constraints.maxWidth < 350;
+
+              const AtlasMetricPanel ownedPanel =
+              AtlasMetricPanel(
+                label: 'Owned',
+                value: '423',
+                supportingText: 'Across 8 collections',
+                icon: Icons.inventory_2_rounded,
+                accentColor: AtlasColors.success,
+              );
+
+              const AtlasMetricPanel valuePanel =
+              AtlasMetricPanel(
+                label: 'Vault Value',
+                value: r'$12,480',
+                supportingText: 'Estimated market value',
+                icon: Icons.attach_money_rounded,
+                accentColor: AtlasColors.vaultGold,
+              );
+
+              if (useColumn) {
+                return const Column(
+                  children: [
+                    ownedPanel,
+                    SizedBox(
+                      height: AtlasSpacing.md,
+                    ),
+                    valuePanel,
+                  ],
+                );
+              }
+
+              return const Row(
+                crossAxisAlignment:
+                CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: ownedPanel,
+                  ),
+                  SizedBox(
+                    width: AtlasSpacing.md,
+                  ),
+                  Expanded(
+                    child: valuePanel,
+                  ),
+                ],
+              );
+            },
+          ),
+          const SizedBox(
+            height: AtlasSpacing.lg,
+          ),
+          const AtlasProgressBar(
+            value: 0.92,
+            label: 'Vault Health',
+            trailingLabel: '92%',
+            accentColor: AtlasColors.success,
+            height: 10,
+          ),
+          const SizedBox(
+            height: AtlasSpacing.md,
+          ),
+          const Wrap(
+            spacing: AtlasSpacing.sm,
+            runSpacing: AtlasSpacing.sm,
+            children: [
+              AtlasStatusChip(
+                label: '18 Wishlist',
+                symbol: AtlasSymbols.wishlist,
+                accentColor: AtlasColors.warning,
+                size: AtlasStatusChipSize.compact,
+              ),
+              AtlasStatusChip(
+                label: '7 Need Value',
+                symbol: AtlasSymbols.value,
+                accentColor: AtlasColors.vaultGold,
+                size: AtlasStatusChipSize.compact,
+              ),
+              AtlasStatusChip(
+                label: '2 Review Groups',
+                symbol: AtlasSymbols.reviewVariant,
+                accentColor: AtlasColors.intelligenceBlue,
+                size: AtlasStatusChipSize.compact,
+              ),
+            ],
+          ),
+          const SizedBox(
+            height: AtlasSpacing.lg,
+          ),
+          const AtlasInsightPanel(
+            eyebrow: 'Recommended Next Step',
+            title: 'Add missing values first',
+            message:
+            'Seven collectibles still need a value before Atlas can calculate a complete Vault total.',
+            symbol: AtlasSymbols.recommendation,
+            tone: AtlasInsightPanelTone.recommendation,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _MotionSection extends StatelessWidget {
   const _MotionSection();
 
@@ -1019,17 +1463,108 @@ class _MotionSection extends StatelessWidget {
     return AtlasExpandableSection(
       title: 'Motion',
       subtitle:
-      'Shared motion tokens and reusable transition components.',
+      'Shared durations and curves used across Atlas interactions.',
       icon: Icons.animation_rounded,
       badge: const _MaturityBadge(
-        label: 'Coming Soon',
-        status: _ComponentMaturity.comingSoon,
+        label: 'Stable',
+        status: _ComponentMaturity.stable,
       ),
-      child: const _PlannedComponentPanel(
-        title: 'Atlas Motion',
-        message:
-        'Future components will standardize press, reveal, expansion, loading, and navigation motion.',
-        icon: Icons.animation_rounded,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _ComponentLabel(
+            title: 'AtlasMotion',
+            description:
+            'Centralized motion tokens for presses, expansion, progress, and future transitions.',
+          ),
+          const SizedBox(
+            height: AtlasSpacing.md,
+          ),
+          const AtlasGlassPanel(
+            child: Column(
+              children: [
+                _MotionTokenRow(
+                  name: 'Fast',
+                  duration: AtlasMotion.fast,
+                ),
+                _MotionTokenRow(
+                  name: 'Standard',
+                  duration: AtlasMotion.standard,
+                ),
+                _MotionTokenRow(
+                  name: 'Emphasis',
+                  duration: AtlasMotion.emphasis,
+                ),
+                _MotionTokenRow(
+                  name: 'Slow',
+                  duration: AtlasMotion.slow,
+                  showBottomSpacing: false,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(
+            height: AtlasSpacing.lg,
+          ),
+          const AtlasInsightPanel(
+            eyebrow: 'Live Usage',
+            title: 'Motion tokens are active',
+            message:
+            'AtlasGlassCard, AtlasExpandableSection, and AtlasProgressBar now use shared ADS motion durations and curves.',
+            icon: Icons.animation_rounded,
+            tone: AtlasInsightPanelTone.intelligence,
+          ),
+          const SizedBox(
+            height: AtlasSpacing.lg,
+          ),
+          const AtlasProgressBar(
+            value: 0.72,
+            label: 'Progress Motion',
+            showPercentage: true,
+            accentColor: AtlasColors.intelligenceBlue,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MotionTokenRow extends StatelessWidget {
+  const _MotionTokenRow({
+    required this.name,
+    required this.duration,
+    this.showBottomSpacing = true,
+  });
+
+  final String name;
+  final Duration duration;
+  final bool showBottomSpacing;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: showBottomSpacing
+            ? AtlasSpacing.md
+            : 0,
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              name,
+              style: AtlasTypography.bodyMedium.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          AtlasStatusChip(
+            label: '${duration.inMilliseconds} ms',
+            icon: Icons.timer_outlined,
+            accentColor: AtlasColors.intelligenceBlue,
+            size: AtlasStatusChipSize.compact,
+          ),
+        ],
       ),
     );
   }
@@ -1046,14 +1581,49 @@ class _LoadingSection extends StatelessWidget {
       'Reusable loading states for catalog, intelligence, and Vault operations.',
       icon: Icons.hourglass_top_rounded,
       badge: const _MaturityBadge(
-        label: 'Planned',
-        status: _ComponentMaturity.planned,
+        label: 'Stable',
+        status: _ComponentMaturity.stable,
       ),
-      child: const _PlannedComponentPanel(
-        title: 'Atlas Loading State',
-        message:
-        'A shared loading surface will replace screen-specific spinners and placeholder cards.',
-        icon: Icons.sync_rounded,
+      child: const Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _ComponentLabel(
+            title: 'AtlasLoadingState',
+            description:
+            'Shared loading presentation for indeterminate, determinate, and compact workflows.',
+          ),
+          SizedBox(
+            height: AtlasSpacing.md,
+          ),
+          AtlasLoadingState(
+            title: 'Calculating collector progress',
+            message:
+            'Atlas is resolving the catalog family and comparing it with the current Vault.',
+            progressLabel: 'Atlas Intelligence',
+          ),
+          SizedBox(
+            height: AtlasSpacing.md,
+          ),
+          AtlasLoadingState(
+            title: 'Importing collection',
+            message:
+            'Atlas has processed 72 percent of the selected collection data.',
+            progress: 0.72,
+            progressLabel: '72% Complete',
+            tone: AtlasLoadingStateTone.recommendation,
+          ),
+          SizedBox(
+            height: AtlasSpacing.md,
+          ),
+          AtlasLoadingState(
+            title: 'Refreshing Vault',
+            message:
+            'Checking for updated ownership and Wishlist information.',
+            progressLabel: 'Syncing',
+            tone: AtlasLoadingStateTone.neutral,
+            compact: true,
+          ),
+        ],
       ),
     );
   }
@@ -1070,14 +1640,122 @@ class _EmptyStatesSection extends StatelessWidget {
       'Reusable no-results, unavailable, and first-use experiences.',
       icon: Icons.inbox_outlined,
       badge: const _MaturityBadge(
-        label: 'Planned',
-        status: _ComponentMaturity.planned,
+        label: 'Stable',
+        status: _ComponentMaturity.stable,
       ),
-      child: const _PlannedComponentPanel(
-        title: 'Atlas Empty State',
-        message:
-        'Future empty-state components will provide consistent guidance, actions, and visual hierarchy.',
-        icon: Icons.inventory_2_outlined,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _ComponentLabel(
+            title: 'AtlasEmptyState',
+            description:
+            'Shared presentation for missing data, unavailable matches, first-use experiences, and actionable resets.',
+          ),
+          const SizedBox(
+            height: AtlasSpacing.md,
+          ),
+          const AtlasEmptyState(
+            eyebrow: 'Collector Progress',
+            title: 'Catalog match unavailable',
+            message:
+            'Atlas could not connect this Vault record to a catalog release yet.',
+            symbol: AtlasSymbols.completion,
+            compact: true,
+          ),
+          const SizedBox(
+            height: AtlasSpacing.md,
+          ),
+          AtlasEmptyState(
+            eyebrow: 'Search',
+            title: 'No collectibles found',
+            message:
+            'Try changing the current search, category, or filter.',
+            icon: Icons.search_off_rounded,
+            tone: AtlasEmptyStateTone.intelligence,
+            actionLabel: 'Reset Search',
+            onAction: () {},
+          ),
+          const SizedBox(
+            height: AtlasSpacing.md,
+          ),
+          AtlasEmptyState(
+            eyebrow: 'Vault',
+            title: 'Start building your collection',
+            message:
+            'Add your first collectible to unlock Vault insights, completion tracking, and collection analytics.',
+            symbol: AtlasSymbols.collection,
+            tone: AtlasEmptyStateTone.recommendation,
+            actionLabel: 'Add Collectible',
+            onAction: () {},
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ErrorStatesSection extends StatelessWidget {
+  const _ErrorStatesSection();
+
+  @override
+  Widget build(BuildContext context) {
+    return AtlasExpandableSection(
+      title: 'Error States',
+      subtitle:
+      'Reusable retryable, warning, and critical failure experiences.',
+      icon: Icons.error_outline_rounded,
+      badge: const _MaturityBadge(
+        label: 'Stable',
+        status: _ComponentMaturity.stable,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _ComponentLabel(
+            title: 'AtlasErrorState',
+            description:
+            'Shared failure presentation with semantic severity, compact mode, and optional retry actions.',
+          ),
+          const SizedBox(
+            height: AtlasSpacing.md,
+          ),
+          AtlasErrorState(
+            eyebrow: 'Collector Progress',
+            title: 'Progress calculation unavailable',
+            message:
+            'Atlas could not calculate this variant family right now.',
+            symbol: AtlasSymbols.reviewVariant,
+            tone: AtlasErrorStateTone.warning,
+            actionLabel: 'Try Again',
+            compact: true,
+            onAction: () {},
+          ),
+          const SizedBox(
+            height: AtlasSpacing.md,
+          ),
+          AtlasErrorState(
+            eyebrow: 'Catalog',
+            title: 'Catalog request failed',
+            message:
+            'Atlas could not reach the catalog service. Check the connection and retry.',
+            symbol: AtlasSymbols.danger,
+            tone: AtlasErrorStateTone.danger,
+            actionLabel: 'Retry Catalog',
+            onAction: () {},
+          ),
+          const SizedBox(
+            height: AtlasSpacing.md,
+          ),
+          const AtlasErrorState(
+            eyebrow: 'Offline',
+            title: 'Atlas is unavailable',
+            message:
+            'This feature cannot load while the device is offline.',
+            symbol: AtlasSymbols.cloud,
+            tone: AtlasErrorStateTone.neutral,
+            actionLabel: '',
+          ),
+        ],
       ),
     );
   }
@@ -1115,30 +1793,6 @@ class _ComponentLabel extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _PlannedComponentPanel
-    extends StatelessWidget {
-  const _PlannedComponentPanel({
-    required this.title,
-    required this.message,
-    required this.icon,
-  });
-
-  final String title;
-  final String message;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    return AtlasInsightPanel(
-      eyebrow: 'Roadmap',
-      title: title,
-      message: message,
-      icon: icon,
-      tone: AtlasInsightPanelTone.neutral,
     );
   }
 }

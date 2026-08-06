@@ -6,10 +6,11 @@ import '../../theme/atlas_colors.dart';
 import '../../theme/atlas_spacing.dart';
 import '../../theme/atlas_typography.dart';
 import '../atlas/atlas_glass_card.dart';
-import '../atlas/atlas_glass_panel.dart';
+import '../atlas/components/atlas_action_row.dart';
 import '../atlas/components/atlas_chip.dart';
 import '../atlas/components/atlas_insight_panel.dart';
 import '../atlas/components/atlas_metric_panel.dart';
+import '../atlas/components/atlas_product_image.dart';
 import 'pop_identity_badges.dart';
 
 class AtlasProductHeroCard extends StatelessWidget {
@@ -53,7 +54,7 @@ class AtlasProductHeroCard extends StatelessWidget {
           ),
           const SizedBox(height: AtlasSpacing.lg),
           Center(
-            child: _ProductImage(
+            child: AtlasProductImage(
               imageUrl: pop.imageUrl,
             ),
           ),
@@ -102,9 +103,13 @@ class AtlasProductHeroCard extends StatelessWidget {
           ),
           if (completionPrompt != null) ...[
             const SizedBox(height: AtlasSpacing.lg),
-            _CompletionAction(
-              prompt: completionPrompt,
-              onPressed: onCompleteListing,
+            AtlasActionRow(
+              title: 'Complete Listing',
+              description:
+              '${completionPrompt.actionLabel}. ${completionPrompt.supportingText}',
+              icon: Icons.lightbulb_outline_rounded,
+              accentColor: AtlasColors.vaultGold,
+              onTap: onCompleteListing,
             ),
           ],
         ],
@@ -239,131 +244,6 @@ class _HeroMarketStats extends StatelessWidget {
     trend > 0 ? '+' : '';
 
     return '$direction${trend.toStringAsFixed(1)}% ($timeframe)';
-  }
-}
-
-class _CompletionAction extends StatelessWidget {
-  const _CompletionAction({
-    required this.prompt,
-    required this.onPressed,
-  });
-
-  final _CompletionPrompt prompt;
-  final VoidCallback? onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(AtlasSpacing.lg),
-        child: AtlasGlassPanel(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Icon(
-                Icons.lightbulb_outline_rounded,
-                color: AtlasColors.vaultGold,
-              ),
-              const SizedBox(width: AtlasSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Complete Listing',
-                      style: AtlasTypography.bodyMedium.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: AtlasSpacing.xs),
-                    Text(
-                      '+ ${prompt.actionLabel}',
-                      style: AtlasTypography.bodyMedium.copyWith(
-                        color: AtlasColors.vaultGold,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: AtlasSpacing.xs),
-                    Text(
-                      prompt.supportingText,
-                      style: AtlasTypography.bodySmall.copyWith(
-                        color: AtlasColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (onPressed != null)
-                const Padding(
-                  padding: EdgeInsets.only(top: 10),
-                  child: Icon(
-                    Icons.chevron_right_rounded,
-                    color: AtlasColors.textSecondary,
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ProductImage extends StatelessWidget {
-  const _ProductImage({
-    required this.imageUrl,
-  });
-
-  final String imageUrl;
-
-  @override
-  Widget build(BuildContext context) {
-    final cleanImageUrl = imageUrl.trim();
-
-    return Container(
-      width: 180,
-      height: 220,
-      decoration: BoxDecoration(
-        color: AtlasColors.textSecondary.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(AtlasSpacing.lg),
-        border: Border.all(
-          color: AtlasColors.vaultGold.withValues(alpha: 0.28),
-        ),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: cleanImageUrl.isEmpty
-          ? const Icon(
-        Icons.inventory_2_rounded,
-        size: 72,
-      )
-          : Image.network(
-        cleanImageUrl,
-        fit: BoxFit.contain,
-        loadingBuilder: (context, child, loadingProgress) {
-          if (loadingProgress == null) {
-            return child;
-          }
-
-          return const Center(
-            child: SizedBox(
-              width: 32,
-              height: 32,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-              ),
-            ),
-          );
-        },
-        errorBuilder: (context, error, stackTrace) {
-          return const Icon(
-            Icons.broken_image_rounded,
-            size: 72,
-          );
-        },
-      ),
-    );
   }
 }
 

@@ -9,11 +9,10 @@ import 'package:funkovault2/atlas/completion/services/atlas_completion_service.d
 import 'package:funkovault2/atlas/identity/product/atlas_product_id.dart';
 import 'package:funkovault2/models/pop.dart';
 import 'package:funkovault2/services/app_state.dart';
-import 'package:funkovault2/theme/atlas_colors.dart';
-import 'package:funkovault2/theme/atlas_spacing.dart';
 import 'package:funkovault2/theme/atlas_symbols.dart';
-import 'package:funkovault2/theme/atlas_typography.dart';
-import 'package:funkovault2/widgets/atlas/atlas_glass_card.dart';
+import 'package:funkovault2/widgets/atlas/components/atlas_empty_state.dart';
+import 'package:funkovault2/widgets/atlas/components/atlas_error_state.dart';
+import 'package:funkovault2/widgets/atlas/components/atlas_loading_state.dart';
 import 'package:funkovault2/widgets/atlas/completion/atlas_completion_card.dart';
 
 enum AtlasCompletionLoaderState {
@@ -135,15 +134,36 @@ class _AtlasCompletionLoaderState
 
     return switch (_loaderState) {
       AtlasCompletionLoaderState.loading =>
-      const _CompletionLoadingCard(),
+      const AtlasLoadingState(
+        title: 'Calculating collector progress',
+        message:
+        'Atlas is resolving this catalog family and comparing it with your Vault.',
+        symbol: AtlasSymbols.completion,
+        progressLabel: 'Atlas Intelligence',
+      ),
       AtlasCompletionLoaderState.loaded =>
           _buildLoadedCard(),
       AtlasCompletionLoaderState.unavailable =>
-      const _CompletionUnavailableCard(),
+      const AtlasEmptyState(
+        eyebrow: 'Collector Progress',
+        title: 'Catalog match unavailable',
+        message:
+        'Atlas could not connect this Vault record to a catalog release yet.',
+        symbol: AtlasSymbols.completion,
+        compact: true,
+      ),
       AtlasCompletionLoaderState.error =>
-          _CompletionErrorCard(
-            message: _errorMessage,
-            onRetry: () {
+          AtlasErrorState(
+            eyebrow: 'Collector Progress',
+            title: 'Progress calculation unavailable',
+            message:
+            _errorMessage ??
+                'Atlas could not calculate collector progress.',
+            symbol: AtlasSymbols.reviewVariant,
+            tone: AtlasErrorStateTone.warning,
+            actionLabel: 'Try Again',
+            compact: true,
+            onAction: () {
               _loadedDependencyKey = null;
 
               setState(
@@ -163,7 +183,14 @@ class _AtlasCompletionLoaderState
         _result;
 
     if (result == null) {
-      return const _CompletionUnavailableCard();
+      return const AtlasEmptyState(
+        eyebrow: 'Collector Progress',
+        title: 'Catalog match unavailable',
+        message:
+        'Atlas could not connect this Vault record to a catalog release yet.',
+        symbol: AtlasSymbols.completion,
+        compact: true,
+      );
     }
 
     return AtlasCompletionCard(
@@ -612,204 +639,6 @@ class _AtlasCompletionLoaderState
       ...wishlistParts,
     ].join(
       '::',
-    );
-  }
-}
-
-class _CompletionLoadingCard
-    extends StatelessWidget {
-  const _CompletionLoadingCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return AtlasGlassCard(
-      accentColor:
-      AtlasColors.intelligenceBlue,
-      child: Column(
-        crossAxisAlignment:
-        CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                AtlasSymbols.completion,
-                style: const TextStyle(
-                  fontSize: 22,
-                ),
-              ),
-              const SizedBox(
-                width: AtlasSpacing.md,
-              ),
-              Expanded(
-                child: Text(
-                  'Collector Progress',
-                  style: AtlasTypography
-                      .headingSmall,
-                ),
-              ),
-              const SizedBox(
-                width: 20,
-                height: 20,
-                child:
-                CircularProgressIndicator(
-                  strokeWidth: 2,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(
-            height: AtlasSpacing.md,
-          ),
-          Text(
-            'Atlas is calculating this variant family.',
-            style: AtlasTypography.bodySmall
-                .copyWith(
-              color:
-              AtlasColors.textSecondary,
-            ),
-          ),
-          const SizedBox(
-            height: AtlasSpacing.md,
-          ),
-          const LinearProgressIndicator(
-            minHeight: 7,
-            backgroundColor:
-            AtlasColors.surface,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CompletionUnavailableCard
-    extends StatelessWidget {
-  const _CompletionUnavailableCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return AtlasGlassCard(
-      accentColor:
-      AtlasColors.textSecondary,
-      child: Row(
-        crossAxisAlignment:
-        CrossAxisAlignment.start,
-        children: [
-          Text(
-            AtlasSymbols.completion,
-            style: const TextStyle(
-              fontSize: 22,
-            ),
-          ),
-          const SizedBox(
-            width: AtlasSpacing.md,
-          ),
-          Expanded(
-            child: Column(
-              crossAxisAlignment:
-              CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Collector Progress',
-                  style: AtlasTypography
-                      .headingSmall,
-                ),
-                const SizedBox(
-                  height: AtlasSpacing.xs,
-                ),
-                Text(
-                  'Atlas could not connect this Vault record to a catalog release yet.',
-                  style: AtlasTypography
-                      .bodySmall
-                      .copyWith(
-                    color: AtlasColors
-                        .textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CompletionErrorCard
-    extends StatelessWidget {
-  const _CompletionErrorCard({
-    required this.message,
-    required this.onRetry,
-  });
-
-  final String? message;
-
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return AtlasGlassCard(
-      accentColor: AtlasColors.warning,
-      onTap: onRetry,
-      child: Row(
-        crossAxisAlignment:
-        CrossAxisAlignment.start,
-        children: [
-          Text(
-            AtlasSymbols.reviewVariant,
-            style: const TextStyle(
-              fontSize: 22,
-            ),
-          ),
-          const SizedBox(
-            width: AtlasSpacing.md,
-          ),
-          Expanded(
-            child: Column(
-              crossAxisAlignment:
-              CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Collector Progress Unavailable',
-                  style: AtlasTypography
-                      .headingSmall,
-                ),
-                const SizedBox(
-                  height: AtlasSpacing.xs,
-                ),
-                Text(
-                  message ??
-                      'Atlas could not calculate progress.',
-                  style: AtlasTypography
-                      .bodySmall
-                      .copyWith(
-                    color: AtlasColors
-                        .textSecondary,
-                  ),
-                ),
-                const SizedBox(
-                  height: AtlasSpacing.sm,
-                ),
-                Text(
-                  'Tap to retry',
-                  style: AtlasTypography
-                      .bodySmall
-                      .copyWith(
-                    color: AtlasColors
-                        .intelligenceBlue,
-                    fontWeight:
-                    FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Icon(
-            Icons.refresh_rounded,
-            color: AtlasColors.warning,
-          ),
-        ],
-      ),
     );
   }
 }

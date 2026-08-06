@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../theme/atlas_colors.dart';
+import '../../theme/atlas_motion.dart';
 import '../../theme/atlas_spacing.dart';
 
 class AtlasGlassCard extends StatefulWidget {
@@ -40,11 +41,11 @@ class _AtlasGlassCardState extends State<AtlasGlassCard> {
 
     return AnimatedScale(
       scale: _isPressed ? 0.97 : 1.0,
-      duration: const Duration(milliseconds: 140),
-      curve: Curves.easeOut,
+      duration: AtlasMotion.pressDuration,
+      curve: AtlasMotion.pressCurve,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        curve: Curves.easeOut,
+        duration: AtlasMotion.hoverDuration,
+        curve: AtlasMotion.pressCurve,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(widget.borderRadius),
           boxShadow: [

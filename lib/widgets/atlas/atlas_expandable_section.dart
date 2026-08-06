@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../theme/atlas_colors.dart';
+import '../../theme/atlas_motion.dart';
 import '../../theme/atlas_spacing.dart';
 import '../../theme/atlas_typography.dart';
 import 'atlas_glass_card.dart';
@@ -120,8 +121,7 @@ class _AtlasExpandableSectionState
                         badge: widget.badge,
                         accentColor: widget.accentColor,
                         isExpanded: _isExpanded,
-                        useCompactHeader:
-                        useCompactHeader,
+                        useCompactHeader: useCompactHeader,
                       );
                     },
                   ),
@@ -131,10 +131,8 @@ class _AtlasExpandableSectionState
           ),
           ClipRect(
             child: AnimatedSize(
-              duration: const Duration(
-                milliseconds: 260,
-              ),
-              curve: Curves.easeOutCubic,
+              duration: AtlasMotion.expandDuration,
+              curve: AtlasMotion.expandCurve,
               alignment: Alignment.topCenter,
               child: _isExpanded
                   ? Padding(
@@ -246,10 +244,8 @@ class _ExpandableHeader extends StatelessWidget {
           ),
           child: AnimatedRotation(
             turns: isExpanded ? 0.5 : 0,
-            duration: const Duration(
-              milliseconds: 220,
-            ),
-            curve: Curves.easeOutCubic,
+            duration: AtlasMotion.expandDuration,
+            curve: AtlasMotion.expandCurve,
             child: Icon(
               Icons.keyboard_arrow_down_rounded,
               color: isExpanded

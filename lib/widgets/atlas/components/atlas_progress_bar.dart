@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../theme/atlas_colors.dart';
+import '../../../theme/atlas_motion.dart';
 import '../../../theme/atlas_spacing.dart';
 import '../../../theme/atlas_typography.dart';
 
@@ -14,9 +15,7 @@ class AtlasProgressBar extends StatelessWidget {
     this.backgroundColor = AtlasColors.surface,
     this.height = 10,
     this.showPercentage = false,
-    this.animationDuration = const Duration(
-      milliseconds: 320,
-    ),
+    this.animationDuration = AtlasMotion.progressDuration,
   }) : assert(
   value >= 0 && value <= 1,
   'AtlasProgressBar value must be between 0 and 1.',
@@ -103,7 +102,7 @@ class AtlasProgressBar extends StatelessWidget {
                 end: safeValue,
               ),
               duration: animationDuration,
-              curve: Curves.easeOutCubic,
+              curve: AtlasMotion.progressCurve,
               builder: (
                   BuildContext context,
                   double animatedValue,

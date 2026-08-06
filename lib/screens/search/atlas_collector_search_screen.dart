@@ -13,9 +13,18 @@ import 'package:funkovault2/models/pop.dart';
 import 'package:funkovault2/screens/pop/pop_details_screen.dart';
 import 'package:funkovault2/services/app_state.dart';
 import 'package:funkovault2/theme/atlas_colors.dart';
+import 'package:funkovault2/theme/atlas_motion.dart';
 import 'package:funkovault2/theme/atlas_spacing.dart';
 import 'package:funkovault2/theme/atlas_typography.dart';
 import 'package:funkovault2/widgets/atlas/atlas_glass_card.dart';
+import 'package:funkovault2/widgets/atlas/components/atlas_empty_state.dart';
+import 'package:funkovault2/widgets/atlas/components/atlas_error_state.dart';
+import 'package:funkovault2/widgets/atlas/components/atlas_insight_panel.dart';
+import 'package:funkovault2/widgets/atlas/components/atlas_loading_state.dart';
+import 'package:funkovault2/widgets/atlas/components/atlas_product_image.dart';
+import 'package:funkovault2/widgets/atlas/components/atlas_status_chip.dart';
+import 'package:funkovault2/widgets/atlas/components/atlas_search_status.dart';
+import 'package:funkovault2/widgets/atlas/components/atlas_search_field.dart';
 import 'package:funkovault2/widgets/atlas/completion/atlas_completion_preview_card.dart';
 
 class AtlasCollectorSearchScreen extends StatefulWidget {
@@ -73,6 +82,25 @@ class _AtlasCollectorSearchScreenState
 
   int _searchRequestId = 0;
 
+  String _buildSearchStatusText({
+    required String query,
+    required int resultCount,
+    required bool isSearching,
+  }) {
+    final bool hasQuery = query.trim().isNotEmpty;
+
+    if (!hasQuery) {
+      return 'Catalog + Vault Intelligence';
+    }
+
+    if (isSearching && resultCount == 0) {
+      return 'Searching Atlas catalog...';
+    }
+
+    return '$resultCount result'
+        '${resultCount == 1 ? '' : 's'} • Catalog + Vault';
+  }
+
   @override
   void initState() {
     super.initState();
@@ -122,9 +150,10 @@ class _AtlasCollectorSearchScreenState
                 AtlasSpacing.md,
                 AtlasSpacing.sm,
               ),
-              child: _SearchField(
+              child: AtlasSearchField(
                 controller: _searchController,
                 focusNode: _searchFocusNode,
+                hintText: 'Search Pops, variants, UPCs...',
                 onChanged: (
                     String value,
                     ) {
@@ -133,21 +162,19 @@ class _AtlasCollectorSearchScreenState
                     appState: appState,
                   );
                 },
-                onClear: () {
-                  _clearSearch();
-                },
+                onClear: _clearSearch,
               ),
             ),
             Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: AtlasSpacing.md,
               ),
-              child: _SearchStatusBar(
-                query: _query,
-                resultCount:
-                rankedResults.length,
-                isSearching:
-                _isSearching,
+              child: AtlasSearchStatus(
+                statusText: _buildSearchStatusText(
+                  query: _query,
+                  resultCount: rankedResults.length,
+                  isSearching: _isSearching,
+                ),
               ),
             ),
             const SizedBox(
@@ -198,9 +225,7 @@ class _AtlasCollectorSearchScreenState
     }
 
     _searchDebounce = Timer(
-      const Duration(
-        milliseconds: 350,
-      ),
+      AtlasMotion.searchDebounceDuration,
           () {
         _runSearch(
           query: cleanedQuery,
@@ -511,44 +536,86 @@ class _AtlasCollectorSearchScreenState
     required List<_AtlasSearchEntry> results,
   }) {
     if (_query.trim().isEmpty) {
-      return const _SearchEmptyState(
-        icon: Icons.manage_search_rounded,
-        title: 'Search the Atlas Catalog',
-        message:
-        'Search by name, number, series, category, variant, retailer, sticker, UPC, or catalog ID.',
+      return const Center(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.all(
+            AtlasSpacing.xl,
+          ),
+          child: AtlasEmptyState(
+            eyebrow: 'Search',
+            icon: Icons.manage_search_rounded,
+            title: 'Search the Atlas Catalog',
+            message:
+            'Search by name, number, series, category, variant, retailer, sticker, UPC, or catalog ID.',
+            tone: AtlasEmptyStateTone.intelligence,
+          ),
+        ),
       );
     }
 
     if (_isSearching &&
         results.isEmpty) {
-      return const _SearchLoadingState();
+      return const Center(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.all(
+            AtlasSpacing.xl,
+          ),
+          child: AtlasLoadingState(
+            title: 'Searching the Atlas catalog',
+            message:
+            'Atlas is checking catalog records and your Vault for the best matches.',
+            progressLabel: 'Atlas Search',
+            compact: true,
+          ),
+        ),
+      );
     }
 
     if (_searchError != null) {
-      return _SearchErrorState(
-        message: _searchError!,
-        onRetry: () {
-          final String cleanedQuery =
-          _query.trim();
+      return Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(
+            AtlasSpacing.xl,
+          ),
+          child: AtlasErrorState(
+            eyebrow: 'Search',
+            title: 'Search unavailable',
+            message: _searchError!,
+            tone: AtlasErrorStateTone.warning,
+            actionLabel: 'Try Again',
+            onAction: () {
+              final String cleanedQuery =
+              _query.trim();
 
-          if (cleanedQuery.isEmpty) {
-            return;
-          }
+              if (cleanedQuery.isEmpty) {
+                return;
+              }
 
-          _runSearch(
-            query: cleanedQuery,
-            appState: appState,
-          );
-        },
+              _runSearch(
+                query: cleanedQuery,
+                appState: appState,
+              );
+            },
+          ),
+        ),
       );
     }
 
     if (results.isEmpty) {
-      return _SearchEmptyState(
-        icon: Icons.search_off_rounded,
-        title: 'No Results Found',
-        message:
-        'Atlas could not find a catalog or Vault record matching “${_query.trim()}”.',
+      return Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(
+            AtlasSpacing.xl,
+          ),
+          child: AtlasEmptyState(
+            eyebrow: 'Search',
+            icon: Icons.search_off_rounded,
+            title: 'No Results Found',
+            message:
+            'Atlas could not find a catalog or Vault record matching “${_query.trim()}”.',
+            tone: AtlasEmptyStateTone.neutral,
+          ),
+        ),
       );
     }
 
@@ -933,128 +1000,6 @@ class _AtlasCollectorSearchScreenState
   }
 }
 
-class _SearchField extends StatelessWidget {
-  const _SearchField({
-    required this.controller,
-    required this.focusNode,
-    required this.onChanged,
-    required this.onClear,
-  });
-
-  final TextEditingController controller;
-  final FocusNode focusNode;
-  final ValueChanged<String> onChanged;
-  final VoidCallback onClear;
-
-  @override
-  Widget build(BuildContext context) {
-    return TextField(
-      controller: controller,
-      focusNode: focusNode,
-      onChanged: onChanged,
-      textInputAction:
-      TextInputAction.search,
-      decoration: InputDecoration(
-        hintText:
-        'Search Pops, variants, UPCs...',
-        prefixIcon: const Icon(
-          Icons.search_rounded,
-        ),
-        suffixIcon:
-        controller.text.isEmpty
-            ? null
-            : IconButton(
-          tooltip:
-          'Clear Search',
-          onPressed: onClear,
-          icon: const Icon(
-            Icons.close_rounded,
-          ),
-        ),
-        filled: true,
-        border: OutlineInputBorder(
-          borderRadius:
-          BorderRadius.circular(
-            18,
-          ),
-          borderSide:
-          BorderSide.none,
-        ),
-      ),
-    );
-  }
-}
-
-class _SearchStatusBar
-    extends StatelessWidget {
-  const _SearchStatusBar({
-    required this.query,
-    required this.resultCount,
-    required this.isSearching,
-  });
-
-  final String query;
-  final int resultCount;
-  final bool isSearching;
-
-  @override
-  Widget build(BuildContext context) {
-    final bool hasQuery =
-        query.trim().isNotEmpty;
-
-    final String statusText;
-
-    if (!hasQuery) {
-      statusText =
-      'Catalog + Vault Intelligence';
-    } else if (isSearching &&
-        resultCount == 0) {
-      statusText =
-      'Searching Atlas catalog...';
-    } else {
-      statusText =
-      '$resultCount result'
-          '${resultCount == 1 ? '' : 's'} • Catalog + Vault';
-    }
-
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            statusText,
-            style: AtlasTypography
-                .bodySmall
-                .copyWith(
-              color:
-              AtlasColors.textSecondary,
-            ),
-          ),
-        ),
-        const Icon(
-          Icons.hub_outlined,
-          size: 16,
-          color:
-          AtlasColors.intelligenceBlue,
-        ),
-        const SizedBox(
-          width: AtlasSpacing.xs,
-        ),
-        Text(
-          'Atlas Intelligence',
-          style: AtlasTypography
-              .bodySmall
-              .copyWith(
-            color:
-            AtlasColors.intelligenceBlue,
-            fontWeight:
-            FontWeight.bold,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 class _AtlasSearchResultCard
     extends StatelessWidget {
   const _AtlasSearchResultCard({
@@ -1115,9 +1060,14 @@ class _AtlasSearchResultCard
                     crossAxisAlignment:
                     CrossAxisAlignment.start,
                     children: [
-                      _SearchProductImage(
-                        imageUrl:
-                        pop.imageUrl,
+                      AtlasProductImage(
+                        imageUrl: pop.imageUrl,
+                        width: 64,
+                        height: 74,
+                        borderRadius: 12,
+                        placeholderIcon: Icons.inventory_2_outlined,
+                        errorIcon: Icons.broken_image_outlined,
+                        showBorder: false,
                       ),
                       const SizedBox(
                         width:
@@ -1191,11 +1141,11 @@ class _AtlasSearchResultCard
                       AtlasSpacing.sm,
                       children: [
                         for (final badge
-                        in insight.summary
-                            .identityBadges)
-                          _SearchBadge(
-                            label:
-                            badge.displayLabel,
+                        in insight.summary.identityBadges)
+                          AtlasStatusChip(
+                            label: badge.displayLabel,
+                            accentColor: AtlasColors.vaultGold,
+                            size: AtlasStatusChipSize.compact,
                           ),
                       ],
                     ),
@@ -1204,37 +1154,49 @@ class _AtlasSearchResultCard
                     height: AtlasSpacing.md,
                   ),
                   Wrap(
-                    spacing:
-                    AtlasSpacing.sm,
-                    runSpacing:
-                    AtlasSpacing.sm,
+                    spacing: AtlasSpacing.sm,
+                    runSpacing: AtlasSpacing.sm,
                     children: [
-                      _SearchStatusChip(
-                        icon: insight.isOwned
-                            ? Icons
-                            .inventory_2_rounded
-                            : Icons
-                            .inventory_2_outlined,
+                      AtlasStatusChip(
                         label: insight.isOwned
                             ? 'Owned x${insight.ownedQuantity}'
                             : 'Missing from Vault',
+                        icon: insight.isOwned
+                            ? Icons.inventory_2_rounded
+                            : Icons.inventory_2_outlined,
+                        accentColor: insight.isOwned
+                            ? AtlasColors.success
+                            : AtlasColors.textSecondary,
+                        size: AtlasStatusChipSize.compact,
                       ),
                       if (insight.isWishlisted)
-                        const _SearchStatusChip(
-                          icon: Icons
-                              .favorite_rounded,
+                        const AtlasStatusChip(
                           label: 'Wishlist',
+                          icon: Icons.favorite_rounded,
+                          accentColor: AtlasColors.warning,
+                          size: AtlasStatusChipSize.compact,
                         ),
-                      _SearchStatusChip(
-                        icon: Icons
-                            .attach_money_rounded,
-                        label: insight.summary
-                            .formattedMarketValue,
+                      AtlasStatusChip(
+                        label:
+                        insight.summary.formattedMarketValue,
+                        icon: Icons.attach_money_rounded,
+                        accentColor: AtlasColors.vaultGold,
+                        size: AtlasStatusChipSize.compact,
                       ),
                     ],
                   ),
                   const SizedBox(
                     height: AtlasSpacing.md,
+                  ),
+                  AtlasInsightPanel(
+                    eyebrow:
+                    insight.summary.recommendation.categoryLabel,
+                    title:
+                    insight.summary.recommendationTitle,
+                    message:
+                    insight.summary.recommendationMessage,
+                    icon: Icons.psychology_rounded,
+                    tone: AtlasInsightPanelTone.intelligence,
                   ),
                   Container(
                     width: double.infinity,
@@ -1336,332 +1298,6 @@ class _AtlasSearchResultCard
               ),
             ),
         ],
-      ),
-    );
-  }
-}
-
-class _SearchProductImage
-    extends StatelessWidget {
-  const _SearchProductImage({
-    required this.imageUrl,
-  });
-
-  final String imageUrl;
-
-  @override
-  Widget build(BuildContext context) {
-    final String normalizedUrl =
-    imageUrl.trim();
-
-    return SizedBox(
-      width: 64,
-      height: 74,
-      child: normalizedUrl.isEmpty
-          ? const DecoratedBox(
-        decoration: BoxDecoration(
-          color:
-          AtlasColors.surface,
-          borderRadius:
-          BorderRadius.all(
-            Radius.circular(
-              12,
-            ),
-          ),
-        ),
-        child: Icon(
-          Icons
-              .inventory_2_outlined,
-        ),
-      )
-          : ClipRRect(
-        borderRadius:
-        BorderRadius.circular(
-          12,
-        ),
-        child: Image.network(
-          normalizedUrl,
-          fit: BoxFit.contain,
-          filterQuality:
-          FilterQuality.high,
-          errorBuilder: (
-              BuildContext context,
-              Object error,
-              StackTrace?
-              stackTrace,
-              ) {
-            return const DecoratedBox(
-              decoration:
-              BoxDecoration(
-                color:
-                AtlasColors.surface,
-              ),
-              child: Icon(
-                Icons
-                    .broken_image_outlined,
-              ),
-            );
-          },
-        ),
-      ),
-    );
-  }
-}
-
-class _SearchBadge extends StatelessWidget {
-  const _SearchBadge({
-    required this.label,
-  });
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding:
-      const EdgeInsets.symmetric(
-        horizontal: 9,
-        vertical: 5,
-      ),
-      decoration: BoxDecoration(
-        borderRadius:
-        BorderRadius.circular(
-          999,
-        ),
-        color: AtlasColors.vaultGold
-            .withValues(
-          alpha: 0.10,
-        ),
-        border: Border.all(
-          color: AtlasColors.vaultGold
-              .withValues(
-            alpha: 0.28,
-          ),
-        ),
-      ),
-      child: Text(
-        label,
-        style:
-        AtlasTypography.bodySmall,
-      ),
-    );
-  }
-}
-
-class _SearchStatusChip
-    extends StatelessWidget {
-  const _SearchStatusChip({
-    required this.icon,
-    required this.label,
-  });
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding:
-      const EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 6,
-      ),
-      decoration: BoxDecoration(
-        borderRadius:
-        BorderRadius.circular(
-          999,
-        ),
-        color: AtlasColors.surface
-            .withValues(
-          alpha: 0.55,
-        ),
-        border: Border.all(
-          color: AtlasColors
-              .textSecondary
-              .withValues(
-            alpha: 0.18,
-          ),
-        ),
-      ),
-      child: Row(
-        mainAxisSize:
-        MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            size: 15,
-          ),
-          const SizedBox(
-            width: 5,
-          ),
-          Text(
-            label,
-            style:
-            AtlasTypography.bodySmall,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SearchLoadingState
-    extends StatelessWidget {
-  const _SearchLoadingState();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: Padding(
-        padding: EdgeInsets.all(
-          AtlasSpacing.xl,
-        ),
-        child: Column(
-          mainAxisSize:
-          MainAxisSize.min,
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(
-              height: AtlasSpacing.lg,
-            ),
-            Text(
-              'Searching the Atlas catalog...',
-              textAlign:
-              TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SearchErrorState
-    extends StatelessWidget {
-  const _SearchErrorState({
-    required this.message,
-    required this.onRetry,
-  });
-
-  final String message;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(
-          AtlasSpacing.xl,
-        ),
-        child: Column(
-          mainAxisAlignment:
-          MainAxisAlignment.center,
-          children: [
-            const Icon(
-              Icons
-                  .error_outline_rounded,
-              size: 72,
-              color:
-              AtlasColors.textSecondary,
-            ),
-            const SizedBox(
-              height: AtlasSpacing.lg,
-            ),
-            Text(
-              'Search Unavailable',
-              style: AtlasTypography
-                  .headingSmall,
-              textAlign:
-              TextAlign.center,
-            ),
-            const SizedBox(
-              height: AtlasSpacing.sm,
-            ),
-            Text(
-              message,
-              style: AtlasTypography
-                  .bodyMedium
-                  .copyWith(
-                color: AtlasColors
-                    .textSecondary,
-              ),
-              textAlign:
-              TextAlign.center,
-            ),
-            const SizedBox(
-              height: AtlasSpacing.lg,
-            ),
-            FilledButton.icon(
-              onPressed: onRetry,
-              icon: const Icon(
-                Icons.refresh_rounded,
-              ),
-              label: const Text(
-                'Try Again',
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SearchEmptyState
-    extends StatelessWidget {
-  const _SearchEmptyState({
-    required this.icon,
-    required this.title,
-    required this.message,
-  });
-
-  final IconData icon;
-  final String title;
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(
-          AtlasSpacing.xl,
-        ),
-        child: Column(
-          mainAxisAlignment:
-          MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 72,
-              color:
-              AtlasColors.textSecondary,
-            ),
-            const SizedBox(
-              height: AtlasSpacing.lg,
-            ),
-            Text(
-              title,
-              style: AtlasTypography
-                  .headingSmall,
-              textAlign:
-              TextAlign.center,
-            ),
-            const SizedBox(
-              height: AtlasSpacing.sm,
-            ),
-            Text(
-              message,
-              style: AtlasTypography
-                  .bodyMedium
-                  .copyWith(
-                color: AtlasColors
-                    .textSecondary,
-              ),
-              textAlign:
-              TextAlign.center,
-            ),
-          ],
-        ),
       ),
     );
   }
