@@ -26,7 +26,7 @@ class AtlasExpandableSection extends StatefulWidget {
   final String? subtitle;
   final IconData? icon;
 
-  /// Compact summary shown in the collapsed header.
+  /// Compact summary shown in the section header.
   ///
   /// Examples:
   /// - 53 / 100
@@ -41,8 +41,9 @@ class AtlasExpandableSection extends StatefulWidget {
   final Color accentColor;
 
   @override
-  State<AtlasExpandableSection> createState() =>
-      _AtlasExpandableSectionState();
+  State<AtlasExpandableSection> createState() {
+    return _AtlasExpandableSectionState();
+  }
 }
 
 class _AtlasExpandableSectionState
@@ -52,24 +53,32 @@ class _AtlasExpandableSectionState
   @override
   void initState() {
     super.initState();
+
     _isExpanded = widget.initiallyExpanded;
   }
 
   @override
-  void didUpdateWidget(covariant AtlasExpandableSection oldWidget) {
+  void didUpdateWidget(
+      covariant AtlasExpandableSection oldWidget,
+      ) {
     super.didUpdateWidget(oldWidget);
 
-    if (oldWidget.initiallyExpanded != widget.initiallyExpanded) {
+    if (oldWidget.initiallyExpanded !=
+        widget.initiallyExpanded) {
       _isExpanded = widget.initiallyExpanded;
     }
   }
 
   void _toggleExpanded() {
-    setState(() {
-      _isExpanded = !_isExpanded;
-    });
+    setState(
+          () {
+        _isExpanded = !_isExpanded;
+      },
+    );
 
-    widget.onExpandedChanged?.call(_isExpanded);
+    widget.onExpandedChanged?.call(
+      _isExpanded,
+    );
   }
 
   @override
@@ -83,89 +92,38 @@ class _AtlasExpandableSectionState
             button: true,
             expanded: _isExpanded,
             label:
-            '${widget.title}, ${_isExpanded ? 'expanded' : 'collapsed'}',
+            '${widget.title}, '
+                '${_isExpanded ? 'expanded' : 'collapsed'}',
             child: Material(
               color: Colors.transparent,
               child: InkWell(
                 onTap: _toggleExpanded,
-                borderRadius: BorderRadius.circular(AtlasSpacing.lg),
+                borderRadius: BorderRadius.circular(
+                  AtlasSpacing.lg,
+                ),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
                     vertical: AtlasSpacing.xs,
                   ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      if (widget.icon != null) ...[
-                        Container(
-                          width: 42,
-                          height: 42,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: widget.accentColor.withValues(
-                              alpha: 0.12,
-                            ),
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                              color: widget.accentColor.withValues(
-                                alpha: 0.22,
-                              ),
-                            ),
-                          ),
-                          child: Icon(
-                            widget.icon,
-                            color: widget.accentColor,
-                            size: 22,
-                          ),
-                        ),
-                        const SizedBox(width: AtlasSpacing.md),
-                      ],
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              widget.title,
-                              style: AtlasTypography.headingSmall.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            if (widget.subtitle != null &&
-                                widget.subtitle!.trim().isNotEmpty) ...[
-                              const SizedBox(height: AtlasSpacing.xs),
-                              Text(
-                                widget.subtitle!,
-                                maxLines: _isExpanded ? null : 2,
-                                overflow: _isExpanded
-                                    ? TextOverflow.visible
-                                    : TextOverflow.ellipsis,
-                                style: AtlasTypography.bodySmall.copyWith(
-                                  color: AtlasColors.textSecondary,
-                                  height: 1.35,
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                      if (widget.badge != null) ...[
-                        const SizedBox(width: AtlasSpacing.sm),
-                        widget.badge!,
-                      ],
-                      const SizedBox(width: AtlasSpacing.sm),
-                      AnimatedRotation(
-                        turns: _isExpanded ? 0.5 : 0,
-                        duration: const Duration(milliseconds: 220),
-                        curve: Curves.easeOutCubic,
-                        child: Icon(
-                          Icons.keyboard_arrow_down_rounded,
-                          color: _isExpanded
-                              ? widget.accentColor
-                              : AtlasColors.textSecondary,
-                          size: 28,
-                        ),
-                      ),
-                    ],
+                  child: LayoutBuilder(
+                    builder: (
+                        BuildContext context,
+                        BoxConstraints constraints,
+                        ) {
+                      final bool useCompactHeader =
+                          constraints.maxWidth < 430;
+
+                      return _ExpandableHeader(
+                        title: widget.title,
+                        subtitle: widget.subtitle,
+                        icon: widget.icon,
+                        badge: widget.badge,
+                        accentColor: widget.accentColor,
+                        isExpanded: _isExpanded,
+                        useCompactHeader:
+                        useCompactHeader,
+                      );
+                    },
                   ),
                 ),
               ),
@@ -173,7 +131,9 @@ class _AtlasExpandableSectionState
           ),
           ClipRect(
             child: AnimatedSize(
-              duration: const Duration(milliseconds: 260),
+              duration: const Duration(
+                milliseconds: 260,
+              ),
               curve: Curves.easeOutCubic,
               alignment: Alignment.topCenter,
               child: _isExpanded
@@ -190,6 +150,152 @@ class _AtlasExpandableSectionState
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ExpandableHeader extends StatelessWidget {
+  const _ExpandableHeader({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.badge,
+    required this.accentColor,
+    required this.isExpanded,
+    required this.useCompactHeader,
+  });
+
+  final String title;
+  final String? subtitle;
+  final IconData? icon;
+  final Widget? badge;
+  final Color accentColor;
+  final bool isExpanded;
+  final bool useCompactHeader;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (icon != null) ...[
+          _ExpandableIcon(
+            icon: icon!,
+            accentColor: accentColor,
+          ),
+          const SizedBox(
+            width: AtlasSpacing.md,
+          ),
+        ],
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AtlasTypography.headingSmall.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              if (subtitle != null &&
+                  subtitle!.trim().isNotEmpty) ...[
+                const SizedBox(
+                  height: AtlasSpacing.xs,
+                ),
+                Text(
+                  subtitle!,
+                  maxLines: isExpanded ? null : 2,
+                  overflow: isExpanded
+                      ? TextOverflow.visible
+                      : TextOverflow.ellipsis,
+                  style: AtlasTypography.bodySmall.copyWith(
+                    color: AtlasColors.textSecondary,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+              if (useCompactHeader &&
+                  badge != null) ...[
+                const SizedBox(
+                  height: AtlasSpacing.sm,
+                ),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: badge!,
+                ),
+              ],
+            ],
+          ),
+        ),
+        if (!useCompactHeader &&
+            badge != null) ...[
+          const SizedBox(
+            width: AtlasSpacing.sm,
+          ),
+          badge!,
+        ],
+        const SizedBox(
+          width: AtlasSpacing.sm,
+        ),
+        Padding(
+          padding: const EdgeInsets.only(
+            top: 7,
+          ),
+          child: AnimatedRotation(
+            turns: isExpanded ? 0.5 : 0,
+            duration: const Duration(
+              milliseconds: 220,
+            ),
+            curve: Curves.easeOutCubic,
+            child: Icon(
+              Icons.keyboard_arrow_down_rounded,
+              color: isExpanded
+                  ? accentColor
+                  : AtlasColors.textSecondary,
+              size: 28,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ExpandableIcon extends StatelessWidget {
+  const _ExpandableIcon({
+    required this.icon,
+    required this.accentColor,
+  });
+
+  final IconData icon;
+  final Color accentColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 42,
+      height: 42,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: accentColor.withValues(
+          alpha: 0.12,
+        ),
+        borderRadius: BorderRadius.circular(
+          14,
+        ),
+        border: Border.all(
+          color: accentColor.withValues(
+            alpha: 0.22,
+          ),
+        ),
+      ),
+      child: Icon(
+        icon,
+        color: accentColor,
+        size: 22,
       ),
     );
   }
@@ -216,10 +322,16 @@ class AtlasExpandableBadge extends StatelessWidget {
         vertical: 6,
       ),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(999),
+        color: color.withValues(
+          alpha: 0.10,
+        ),
+        borderRadius: BorderRadius.circular(
+          999,
+        ),
         border: Border.all(
-          color: color.withValues(alpha: 0.28),
+          color: color.withValues(
+            alpha: 0.28,
+          ),
         ),
       ),
       child: Row(
@@ -231,10 +343,14 @@ class AtlasExpandableBadge extends StatelessWidget {
               size: 15,
               color: color,
             ),
-            const SizedBox(width: AtlasSpacing.xs),
+            const SizedBox(
+              width: AtlasSpacing.xs,
+            ),
           ],
           Text(
             label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: AtlasTypography.bodySmall.copyWith(
               color: color,
               fontWeight: FontWeight.bold,

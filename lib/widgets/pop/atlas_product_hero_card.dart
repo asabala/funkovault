@@ -8,6 +8,8 @@ import '../../theme/atlas_typography.dart';
 import '../atlas/atlas_glass_card.dart';
 import '../atlas/atlas_glass_panel.dart';
 import '../atlas/components/atlas_chip.dart';
+import '../atlas/components/atlas_insight_panel.dart';
+import '../atlas/components/atlas_metric_panel.dart';
 import 'pop_identity_badges.dart';
 
 class AtlasProductHeroCard extends StatelessWidget {
@@ -78,39 +80,12 @@ class AtlasProductHeroCard extends StatelessWidget {
             trendTimeframe: trendTimeframe,
           ),
           const SizedBox(height: AtlasSpacing.lg),
-          AtlasGlassPanel(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Icon(
-                  Icons.auto_awesome_rounded,
-                  color: AtlasColors.vaultGold,
-                  size: 22,
-                ),
-                const SizedBox(width: AtlasSpacing.md),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Atlas says',
-                        style: AtlasTypography.bodyMedium.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: AtlasSpacing.xs),
-                      Text(
-                        heroSummary.summary,
-                        style: AtlasTypography.bodySmall.copyWith(
-                          color: AtlasColors.textSecondary,
-                          height: 1.45,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+          AtlasInsightPanel(
+            eyebrow: 'Atlas',
+            title: 'Collector Insight',
+            message: heroSummary.summary,
+            symbol: '🧠',
+            tone: AtlasInsightPanelTone.intelligence,
           ),
           const SizedBox(height: AtlasSpacing.lg),
           Text(
@@ -188,209 +163,82 @@ class _HeroMarketStats extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AtlasGlassPanel(
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final useVerticalLayout = constraints.maxWidth < 330;
+    final bool hasValue = value > 0;
 
-          if (useVerticalLayout) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _CurrentValueStat(
-                  value: value,
-                  trendPercent: trendPercent,
-                  trendTimeframe: trendTimeframe,
-                ),
-                const SizedBox(height: AtlasSpacing.lg),
-                _CollectorScoreStat(
-                  score: score,
-                  classification: classification,
-                ),
-              ],
-            );
-          }
+    return LayoutBuilder(
+      builder: (
+          BuildContext context,
+          BoxConstraints constraints,
+          ) {
+        final bool useVerticalLayout =
+            constraints.maxWidth < 330;
 
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                flex: 6,
-                child: _CurrentValueStat(
-                  value: value,
-                  trendPercent: trendPercent,
-                  trendTimeframe: trendTimeframe,
-                ),
-              ),
-              const SizedBox(width: AtlasSpacing.md),
-              Expanded(
-                flex: 4,
-                child: _CollectorScoreStat(
-                  score: score,
-                  classification: classification,
-                ),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _CurrentValueStat extends StatelessWidget {
-  const _CurrentValueStat({
-    required this.value,
-    required this.trendPercent,
-    required this.trendTimeframe,
-  });
-
-  final double value;
-  final double? trendPercent;
-  final String trendTimeframe;
-
-  @override
-  Widget build(BuildContext context) {
-    final hasValue = value > 0;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'CURRENT VALUE',
-          style: AtlasTypography.bodySmall.copyWith(
-            color: AtlasColors.textSecondary,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-
-        const SizedBox(height: AtlasSpacing.sm),
-
-        Text(
-          hasValue
+        final AtlasMetricPanel valuePanel =
+        AtlasMetricPanel(
+          label: 'Current Value',
+          value: hasValue
               ? '\$${value.toStringAsFixed(2)}'
               : 'Value needed',
-          style: AtlasTypography.headingSmall.copyWith(
-            color: AtlasColors.vaultGold,
-            fontWeight: FontWeight.w900,
+          supportingText: _trendLabel(
+            trendPercent: trendPercent,
+            timeframe: trendTimeframe,
           ),
-        ),
+          icon: Icons.attach_money_rounded,
+        );
 
-        const SizedBox(height: AtlasSpacing.xs),
+        final AtlasMetricPanel scorePanel =
+        AtlasMetricPanel(
+          label: 'Collector Score',
+          value: '$score / 100',
+          supportingText: classification,
+          icon: Icons.insights_rounded,
+        );
 
-        _TrendLabel(
-          trendPercent: trendPercent,
-          timeframe: trendTimeframe,
-        ),
-      ],
+        if (useVerticalLayout) {
+          return Column(
+            children: [
+              valuePanel,
+              const SizedBox(
+                height: AtlasSpacing.md,
+              ),
+              scorePanel,
+            ],
+          );
+        }
+
+        return Row(
+          crossAxisAlignment:
+          CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: valuePanel,
+            ),
+            const SizedBox(
+              width: AtlasSpacing.md,
+            ),
+            Expanded(
+              child: scorePanel,
+            ),
+          ],
+        );
+      },
     );
   }
-}
 
-class _TrendLabel extends StatelessWidget {
-  const _TrendLabel({
-    required this.trendPercent,
-    required this.timeframe,
-  });
-
-  final double? trendPercent;
-  final String timeframe;
-
-  @override
-  Widget build(BuildContext context) {
-    final trend = trendPercent;
+  String _trendLabel({
+    required double? trendPercent,
+    required String timeframe,
+  }) {
+    final double? trend = trendPercent;
 
     if (trend == null) {
-      return Text(
-        'No trend yet',
-        style: AtlasTypography.bodySmall.copyWith(
-          color: AtlasColors.textSecondary,
-          fontWeight: FontWeight.bold,
-        ),
-      );
+      return 'No trend yet';
     }
 
-    final isPositive = trend > 0;
-    final isNegative = trend < 0;
+    final String direction =
+    trend > 0 ? '+' : '';
 
-    final directionIcon = isPositive
-        ? Icons.arrow_upward_rounded
-        : isNegative
-        ? Icons.arrow_downward_rounded
-        : Icons.remove_rounded;
-
-    final directionSymbol = isPositive
-        ? '+'
-        : '';
-
-    final trendColor = isPositive
-        ? Colors.greenAccent
-        : isNegative
-        ? Colors.redAccent
-        : AtlasColors.textSecondary;
-
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(
-          directionIcon,
-          size: 16,
-          color: trendColor,
-        ),
-        const SizedBox(width: 2),
-        Text(
-          '$directionSymbol${trend.toStringAsFixed(1)}% ($timeframe)',
-          style: AtlasTypography.bodySmall.copyWith(
-            color: trendColor,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _CollectorScoreStat extends StatelessWidget {
-  const _CollectorScoreStat({
-    required this.score,
-    required this.classification,
-  });
-
-  final int score;
-  final String classification;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'COLLECTOR SCORE',
-          style: AtlasTypography.bodySmall.copyWith(
-            color: AtlasColors.textSecondary,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: AtlasSpacing.sm),
-        Text(
-          '$score / 100',
-          style: AtlasTypography.headingSmall.copyWith(
-            color: AtlasColors.vaultGold,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
-        const SizedBox(height: AtlasSpacing.xs),
-        Text(
-          classification,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: AtlasTypography.bodySmall.copyWith(
-            color: AtlasColors.textSecondary,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ],
-    );
+    return '$direction${trend.toStringAsFixed(1)}% ($timeframe)';
   }
 }
 

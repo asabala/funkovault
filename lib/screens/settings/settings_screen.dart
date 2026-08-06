@@ -11,6 +11,7 @@ import 'notifications_settings_screen.dart';
 import 'premium_settings_screen.dart';
 import 'security_settings_screen.dart';
 import 'vault_preferences_screen.dart';
+import '../atlas/ads/atlas_design_system_showcase_screen.dart';
 import '../profile/edit_collector_profile_screen.dart';
 import '../vault/vault_health_screen.dart';
 import '../vault/vault_maintenance_screen.dart';
@@ -165,6 +166,27 @@ class SettingsScreen extends StatelessWidget {
                 context,
                 MaterialPageRoute(
                   builder: (_) => const SecuritySettingsScreen(),
+                ),
+              );
+            },
+          ),
+          const Divider(),
+
+          const _SettingsSectionHeader(
+            title: 'Developer',
+          ),
+          _SettingsTile(
+            icon: Icons.dashboard_customize_outlined,
+            title: 'ADS Showcase',
+            subtitle:
+            'Preview Atlas Design System components, maturity, and roadmap',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) {
+                    return const AtlasDesignSystemShowcaseScreen();
+                  },
                 ),
               );
             },

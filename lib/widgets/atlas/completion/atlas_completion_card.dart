@@ -7,6 +7,11 @@ import 'package:funkovault2/theme/atlas_spacing.dart';
 import 'package:funkovault2/theme/atlas_symbols.dart';
 import 'package:funkovault2/theme/atlas_typography.dart';
 import 'package:funkovault2/widgets/atlas/atlas_glass_card.dart';
+import '../components/atlas_insight_panel.dart';
+import '../components/atlas_progress_bar.dart';
+import '../components/atlas_section_header.dart';
+import '../components/atlas_status_chip.dart';
+
 
 class AtlasCompletionCard extends StatelessWidget {
   const AtlasCompletionCard({
@@ -36,9 +41,18 @@ class AtlasCompletionCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _CompletionHeader(
+          AtlasSectionHeader(
             title: title,
-            isComplete: result.isComplete,
+            subtitle: result.milestoneMessage,
+            symbol: result.isComplete
+                ? AtlasSymbols.achievement
+                : AtlasSymbols.completion,
+            accentColor: _accentColor,
+            badge: AtlasStatusChip(
+              label: result.formattedCompletion,
+              accentColor: _accentColor,
+              size: AtlasStatusChipSize.compact,
+            ),
           ),
           const SizedBox(
             height: AtlasSpacing.lg,
@@ -50,8 +64,20 @@ class AtlasCompletionCard extends StatelessWidget {
             const SizedBox(
               height: AtlasSpacing.lg,
             ),
-            _CompletionNextGoal(
-              result: result,
+            AtlasInsightPanel(
+              eyebrow: result.isComplete
+                  ? 'Milestone'
+                  : 'Next Goal',
+              title: result.nextGoalLabel,
+              message: result.isComplete
+                  ? 'Every release in this catalog group is owned.'
+                  : result.milestoneMessage,
+              symbol: result.isComplete
+                  ? AtlasSymbols.achievement
+                  : AtlasSymbols.recommendation,
+              tone: result.isComplete
+                  ? AtlasInsightPanelTone.success
+                  : AtlasInsightPanelTone.recommendation,
             ),
           ],
           if (showItemBreakdown &&
@@ -87,85 +113,6 @@ class AtlasCompletionCard extends StatelessWidget {
     }
 
     return AtlasColors.intelligenceBlue;
-  }
-}
-
-class _CompletionHeader extends StatelessWidget {
-  const _CompletionHeader({
-    required this.title,
-    required this.isComplete,
-  });
-
-  final String title;
-
-  final bool isComplete;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 42,
-          height: 42,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: (
-                isComplete
-                    ? AtlasColors.success
-                    : AtlasColors.intelligenceBlue
-            ).withValues(
-              alpha: 0.12,
-            ),
-            border: Border.all(
-              color: (
-                  isComplete
-                      ? AtlasColors.success
-                      : AtlasColors.intelligenceBlue
-              ).withValues(
-                alpha: 0.28,
-              ),
-            ),
-          ),
-          child: Icon(
-            isComplete
-                ? Icons.verified_rounded
-                : Icons.track_changes_rounded,
-            color: isComplete
-                ? AtlasColors.success
-                : AtlasColors.intelligenceBlue,
-          ),
-        ),
-        const SizedBox(
-          width: AtlasSpacing.md,
-        ),
-        Expanded(
-          child: Column(
-            crossAxisAlignment:
-            CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style:
-                AtlasTypography.headingSmall,
-              ),
-              const SizedBox(
-                height: AtlasSpacing.xs,
-              ),
-              Text(
-                isComplete
-                    ? 'This catalog group is complete.'
-                    : 'Track owned, Wishlist, and missing releases.',
-                style: AtlasTypography.bodySmall
-                    .copyWith(
-                  color:
-                  AtlasColors.textSecondary,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
   }
 }
 
@@ -205,28 +152,12 @@ class _CompletionProgress extends StatelessWidget {
           ),
         ),
         const SizedBox(
-          height: AtlasSpacing.sm,
-        ),
-        Text(
-          result.milestoneMessage,
-          style: AtlasTypography.bodySmall.copyWith(
-            color: AtlasColors.textSecondary,
-            height: 1.4,
-          ),
-        ),
-        const SizedBox(
           height: AtlasSpacing.md,
         ),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(999),
-          child: LinearProgressIndicator(
-            value: result.completionRatio,
-            minHeight: 10,
-            backgroundColor: AtlasColors.surface,
-            valueColor: AlwaysStoppedAnimation<Color>(
-              progressColor,
-            ),
-          ),
+        AtlasProgressBar(
+          value: result.completionRatio,
+          accentColor: progressColor,
+          height: 10,
         ),
         const SizedBox(
           height: AtlasSpacing.md,
@@ -235,86 +166,27 @@ class _CompletionProgress extends StatelessWidget {
           spacing: AtlasSpacing.sm,
           runSpacing: AtlasSpacing.sm,
           children: [
-            _CompletionMetricChip(
-              icon: Icons.inventory_2_rounded,
+            AtlasStatusChip(
               label: '${result.ownedReleaseCount} Owned',
-              color: AtlasColors.success,
+              symbol: AtlasSymbols.owned,
+              accentColor: AtlasColors.success,
+              size: AtlasStatusChipSize.compact,
             ),
-            _CompletionMetricChip(
-              icon: Icons.favorite_rounded,
+            AtlasStatusChip(
               label: '${result.wishlistReleaseCount} Wishlist',
-              color: AtlasColors.warning,
+              symbol: AtlasSymbols.wishlist,
+              accentColor: AtlasColors.warning,
+              size: AtlasStatusChipSize.compact,
             ),
-            _CompletionMetricChip(
-              icon: Icons.remove_circle_outline,
+            AtlasStatusChip(
               label: '${result.missingReleaseCount} Missing',
-              color: AtlasColors.textSecondary,
+              symbol: AtlasSymbols.missing,
+              accentColor: AtlasColors.textSecondary,
+              size: AtlasStatusChipSize.compact,
             ),
           ],
         ),
       ],
-    );
-  }
-}
-
-class _CompletionNextGoal extends StatelessWidget {
-  const _CompletionNextGoal({
-    required this.result,
-  });
-
-  final AtlasCompletionResult result;
-
-  @override
-  Widget build(BuildContext context) {
-    final Color accentColor = result.isComplete
-        ? AtlasColors.success
-        : AtlasColors.vaultGold;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(AtlasSpacing.md),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        color: accentColor.withValues(alpha: 0.08),
-        border: Border.all(
-          color: accentColor.withValues(alpha: 0.22),
-        ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            result.isComplete
-                ? AtlasSymbols.achievement
-                : AtlasSymbols.recommendation,
-            style: const TextStyle(fontSize: 20),
-          ),
-          const SizedBox(width: AtlasSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  result.isComplete ? 'Milestone' : 'Next Goal',
-                  style: AtlasTypography.bodySmall.copyWith(
-                    color: accentColor,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.6,
-                  ),
-                ),
-                const SizedBox(height: AtlasSpacing.xs),
-                Text(
-                  result.nextGoalLabel,
-                  style: AtlasTypography.bodyMedium.copyWith(
-                    color: AtlasColors.textPrimary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
@@ -612,67 +484,6 @@ class _CompletionReleaseRow extends StatelessWidget {
 
     return parts.join(
       ' • ',
-    );
-  }
-}
-
-class _CompletionMetricChip
-    extends StatelessWidget {
-  const _CompletionMetricChip({
-    required this.icon,
-    required this.label,
-    required this.color,
-  });
-
-  final IconData icon;
-
-  final String label;
-
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 6,
-      ),
-      decoration: BoxDecoration(
-        borderRadius:
-        BorderRadius.circular(
-          999,
-        ),
-        color: color.withValues(
-          alpha: 0.10,
-        ),
-        border: Border.all(
-          color: color.withValues(
-            alpha: 0.24,
-          ),
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            size: 15,
-            color: color,
-          ),
-          const SizedBox(
-            width: 5,
-          ),
-          Text(
-            label,
-            style: AtlasTypography.bodySmall
-                .copyWith(
-              color:
-              AtlasColors.textPrimary,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
