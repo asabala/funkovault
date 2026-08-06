@@ -6,7 +6,6 @@ import '../../atlas/coordinator/atlas_dashboard_model.dart';
 import '../../atlas/engines/context/vault_context_explainer_engine.dart';
 import '../../atlas/screens/atlas_timeline_screen.dart';
 import '../../navigation/atlas_navigation_controller.dart';
-import '../search/atlas_collector_search_screen.dart';
 import '../../services/app_state.dart';
 import '../../theme/atlas_colors.dart';
 import '../../theme/atlas_icons.dart';
@@ -21,33 +20,55 @@ import '../../widgets/home/atlas_unified_search_launcher.dart';
 import '../../widgets/home/continue_journey_card.dart';
 import '../../widgets/vault/vault_ask_atlas_bottom_sheet.dart';
 import '../../widgets/vault/vault_scroll_view.dart';
+import '../search/atlas_collector_search_screen.dart';
 import '../vault/entire_vault_screen.dart';
 
 class AtlasHomeScreen extends StatelessWidget {
-  const AtlasHomeScreen({super.key});
+  const AtlasHomeScreen({
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final appState = context.watch<AppState>();
-    final profile = appState.collectorProfile;
+    final AppState appState =
+    context.watch<AppState>();
 
-    const dashboardBuilder = AtlasDashboard();
+    final profile =
+        appState.collectorProfile;
 
-    final AtlasDashboardModel dashboard = dashboardBuilder.build(appState);
-    final now = DateTime.now();
+    const AtlasDashboard dashboardBuilder =
+    AtlasDashboard();
+
+    final AtlasDashboardModel dashboard =
+    dashboardBuilder.build(
+      appState,
+    );
+
+    final DateTime now =
+    DateTime.now();
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Atlas Pulse'),
+        title: const Text(
+          'Atlas Pulse',
+        ),
         actions: [
           IconButton(
-            tooltip: 'Signed in as ${profile.displayName}',
-            onPressed: () => _openVault(context),
+            tooltip:
+            'Signed in as ${profile.displayName}',
+            onPressed: () {
+              _openVault(
+                context,
+              );
+            },
             icon: _HomeAvatar(
-              displayName: profile.displayName,
+              displayName:
+              profile.displayName,
             ),
           ),
-          const SizedBox(width: AtlasSpacing.sm),
+          const SizedBox(
+            width: AtlasSpacing.sm,
+          ),
         ],
       ),
       body: VaultScrollView(
@@ -67,8 +88,10 @@ class AtlasHomeScreen extends StatelessWidget {
               dashboard.confidence.score,
             ),
             summary: _summaryLabel(
-              totalPops: dashboard.totalPops,
-              confidence: dashboard.confidence.score,
+              totalPops:
+              dashboard.totalPops,
+              confidence:
+              dashboard.confidence.score,
             ),
           ),
           const SizedBox(
@@ -90,44 +113,79 @@ class AtlasHomeScreen extends StatelessWidget {
             height: AtlasSpacing.lg,
           ),
           _HomeAccountStatusCard(
-            displayName: profile.displayName,
-            collectorTitle: profile.collectorTitle,
-            totalPops: dashboard.totalPops,
-            confidence: dashboard.confidence.score,
-            onOpenVault: () => _openVault(context),
+            displayName:
+            profile.displayName,
+            collectorTitle:
+            profile.collectorTitle,
+            totalPops:
+            dashboard.totalPops,
+            confidence:
+            dashboard.confidence.score,
+            onOpenVault: () {
+              _openVault(
+                context,
+              );
+            },
           ),
-          const SizedBox(height: AtlasSpacing.lg),
+          const SizedBox(
+            height: AtlasSpacing.lg,
+          ),
           _HomeStatsCard(
-            totalPops: dashboard.totalPops,
-            totalValue: dashboard.totalValue,
-            confidence: dashboard.confidence.score,
+            totalPops:
+            dashboard.totalPops,
+            totalValue:
+            dashboard.totalValue,
+            confidence:
+            dashboard.confidence.score,
           ),
-          const SizedBox(height: AtlasSpacing.lg),
+          const SizedBox(
+            height: AtlasSpacing.lg,
+          ),
           _HomeAskAtlasCard(
-            onAskAtlas: () => _openAskAtlas(
-              context,
-              dashboard,
-            ),
+            onAskAtlas: () {
+              _openAskAtlas(
+                context,
+                dashboard,
+              );
+            },
           ),
-          const SizedBox(height: AtlasSpacing.lg),
+          const SizedBox(
+            height: AtlasSpacing.lg,
+          ),
           ContinueJourneyCard(
             title: 'Collector Vault',
             subtitle:
             'Continue organizing your collection and reviewing your Vault Rooms.',
-            onContinue: () => _openVault(context),
+            onContinue: () {
+              _openVault(
+                context,
+              );
+            },
           ),
-          const SizedBox(height: AtlasSpacing.lg),
+          const SizedBox(
+            height: AtlasSpacing.lg,
+          ),
           _RecentActivityCard(
-            hasActivity: appState.recentActivities.isNotEmpty,
-            latestActivity: appState.recentActivities.isEmpty
+            hasActivity:
+            appState.recentActivities.isNotEmpty,
+            latestActivity:
+            appState.recentActivities.isEmpty
                 ? null
-                : appState.recentActivities.first.details,
-            onOpenTimeline: () => _openTimeline(context),
+                : appState
+                .recentActivities
+                .first
+                .details,
+            onOpenTimeline: () {
+              _openTimeline(
+                context,
+              );
+            },
           ),
         ],
       ),
     );
   }
+
   static void _openCollectorSearch(
       BuildContext context,
       ) {
@@ -150,11 +208,16 @@ class AtlasHomeScreen extends StatelessWidget {
       2,
     );
   }
-  static void _openTimeline(BuildContext context) {
-    Navigator.push(
+
+  static void _openTimeline(
+      BuildContext context,
+      ) {
+    Navigator.push<void>(
       context,
-      MaterialPageRoute(
-        builder: (_) => const AtlasTimelineScreen(),
+      MaterialPageRoute<void>(
+        builder: (_) {
+          return const AtlasTimelineScreen();
+        },
       ),
     );
   }
@@ -163,13 +226,18 @@ class AtlasHomeScreen extends StatelessWidget {
       BuildContext context,
       AtlasDashboardModel dashboard,
       ) {
-    const explainerEngine = VaultContextExplainerEngine();
+    const VaultContextExplainerEngine
+    explainerEngine =
+    VaultContextExplainerEngine();
 
     VaultAskAtlasBottomSheet.show(
       context: context,
       dashboard: dashboard,
-      explainerEngine: explainerEngine,
-      onOpenVaultRequest: (request) {
+      explainerEngine:
+      explainerEngine,
+      onOpenVaultRequest: (
+          VaultNavigationRequest request,
+          ) {
         _openRequestedVault(
           context,
           request,
@@ -182,30 +250,44 @@ class AtlasHomeScreen extends StatelessWidget {
       BuildContext context,
       VaultNavigationRequest request,
       ) {
-    Navigator.push(
+    Navigator.push<void>(
       context,
-      MaterialPageRoute(
-        builder: (_) => EntireVaultScreen(
-          initialFilterKey: request.filterKey,
-          initialSearchQuery: request.searchQuery,
-          initialMinimumValue: request.minimumValue,
-          initialMaximumValue: request.maximumValue,
-          initialSortKey: request.sortKey,
-        ),
+      MaterialPageRoute<void>(
+        builder: (_) {
+          return EntireVaultScreen(
+            initialFilterKey:
+            request.filterKey,
+            initialSearchQuery:
+            request.searchQuery,
+            initialMinimumValue:
+            request.minimumValue,
+            initialMaximumValue:
+            request.maximumValue,
+            initialSortKey:
+            request.sortKey,
+          );
+        },
       ),
     );
   }
 
-  static void _openVault(BuildContext context) {
-    Navigator.push(
+  static void _openVault(
+      BuildContext context,
+      ) {
+    Navigator.push<void>(
       context,
-      MaterialPageRoute(
-        builder: (_) => const CollectorVaultScreen(),
+      MaterialPageRoute<void>(
+        builder: (_) {
+          return const CollectorVaultScreen();
+        },
       ),
     );
   }
 
-  static String _greeting(String name, DateTime now) {
+  static String _greeting(
+      String name,
+      DateTime now,
+      ) {
     if (now.hour < 12) {
       return 'Good Morning $name';
     }
@@ -217,8 +299,11 @@ class AtlasHomeScreen extends StatelessWidget {
     return 'Good Evening $name';
   }
 
-  static String _dateLabel(DateTime now) {
-    const weekdays = [
+  static String _dateLabel(
+      DateTime now,
+      ) {
+    const List<String> weekdays =
+    <String>[
       'Monday',
       'Tuesday',
       'Wednesday',
@@ -228,7 +313,8 @@ class AtlasHomeScreen extends StatelessWidget {
       'Sunday',
     ];
 
-    const months = [
+    const List<String> months =
+    <String>[
       'January',
       'February',
       'March',
@@ -244,23 +330,39 @@ class AtlasHomeScreen extends StatelessWidget {
     ];
 
     return '${weekdays[now.weekday - 1]}, '
-        '${months[now.month - 1]} ${now.day}, ${now.year}';
+        '${months[now.month - 1]} '
+        '${now.day}, ${now.year}';
   }
 
-  static String _timeLabel(DateTime now) {
-    final hour = now.hour == 0
+  static String _timeLabel(
+      DateTime now,
+      ) {
+    final int hour =
+    now.hour == 0
         ? 12
         : now.hour > 12
         ? now.hour - 12
         : now.hour;
 
-    final minute = now.minute.toString().padLeft(2, '0');
-    final period = now.hour >= 12 ? 'PM' : 'AM';
+    final String minute =
+    now.minute
+        .toString()
+        .padLeft(
+      2,
+      '0',
+    );
+
+    final String period =
+    now.hour >= 12
+        ? 'PM'
+        : 'AM';
 
     return '$hour:$minute $period';
   }
 
-  static String _statusLabel(double confidence) {
+  static String _statusLabel(
+      double confidence,
+      ) {
     if (confidence >= 90) {
       return 'Atlas systems are operating with high confidence.';
     }
@@ -299,21 +401,27 @@ class _HomeAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final initial = displayName.trim().isEmpty
+    final String initial =
+    displayName.trim().isEmpty
         ? 'A'
-        : displayName.trim()[0].toUpperCase();
+        : displayName
+        .trim()[0]
+        .toUpperCase();
 
     return Stack(
       clipBehavior: Clip.none,
       children: [
         CircleAvatar(
           radius: 16,
-          backgroundColor: AtlasColors.vaultGold,
+          backgroundColor:
+          AtlasColors.vaultGold,
           child: Text(
             initial,
             style: const TextStyle(
-              color: AtlasColors.background,
-              fontWeight: FontWeight.bold,
+              color:
+              AtlasColors.background,
+              fontWeight:
+              FontWeight.bold,
             ),
           ),
         ),
@@ -324,10 +432,12 @@ class _HomeAvatar extends StatelessWidget {
             width: 9,
             height: 9,
             decoration: BoxDecoration(
-              color: Colors.greenAccent,
+              color:
+              Colors.greenAccent,
               shape: BoxShape.circle,
               border: Border.all(
-                color: AtlasColors.background,
+                color:
+                AtlasColors.background,
                 width: 1.5,
               ),
             ),
@@ -338,7 +448,8 @@ class _HomeAvatar extends StatelessWidget {
   }
 }
 
-class _HomeAccountStatusCard extends StatelessWidget {
+class _HomeAccountStatusCard
+    extends StatelessWidget {
   const _HomeAccountStatusCard({
     required this.displayName,
     required this.collectorTitle,
@@ -360,40 +471,61 @@ class _HomeAccountStatusCard extends StatelessWidget {
         children: [
           const Icon(
             AtlasIcons.atlas,
-            color: AtlasColors.vaultGold,
+            color:
+            AtlasColors.vaultGold,
             size: 36,
           ),
-          const SizedBox(width: AtlasSpacing.md),
+          const SizedBox(
+            width: AtlasSpacing.md,
+          ),
           Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment:
+              CrossAxisAlignment.start,
               children: [
                 Text(
                   'Signed in as $displayName',
-                  style: AtlasTypography.headingSmall,
+                  style: AtlasTypography
+                      .headingSmall,
                 ),
-                const SizedBox(height: AtlasSpacing.xs),
+                const SizedBox(
+                  height:
+                  AtlasSpacing.xs,
+                ),
                 Text(
                   collectorTitle,
-                  style: AtlasTypography.bodySmall.copyWith(
-                    color: AtlasColors.textSecondary,
+                  style: AtlasTypography
+                      .bodySmall
+                      .copyWith(
+                    color: AtlasColors
+                        .textSecondary,
                   ),
                 ),
-                const SizedBox(height: AtlasSpacing.xs),
+                const SizedBox(
+                  height:
+                  AtlasSpacing.xs,
+                ),
                 Text(
                   '$totalPops Pops • '
                       '${confidence.toStringAsFixed(0)}% Atlas Confidence',
-                  style: AtlasTypography.bodySmall.copyWith(
-                    color: AtlasColors.textSecondary,
+                  style: AtlasTypography
+                      .bodySmall
+                      .copyWith(
+                    color: AtlasColors
+                        .textSecondary,
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: AtlasSpacing.md),
+          const SizedBox(
+            width: AtlasSpacing.md,
+          ),
           OutlinedButton(
             onPressed: onOpenVault,
-            child: const Text('Vault'),
+            child: const Text(
+              'Vault',
+            ),
           ),
         ],
       ),
@@ -401,7 +533,8 @@ class _HomeAccountStatusCard extends StatelessWidget {
   }
 }
 
-class _HomeStatsCard extends StatelessWidget {
+class _HomeStatsCard
+    extends StatelessWidget {
   const _HomeStatsCard({
     required this.totalPops,
     required this.totalValue,
@@ -420,22 +553,27 @@ class _HomeStatsCard extends StatelessWidget {
           children: [
             Expanded(
               child: AtlasStatTile(
-                icon: Icons.inventory_2_outlined,
+                icon: Icons
+                    .inventory_2_outlined,
                 value: '$totalPops',
                 label: 'Pops',
               ),
             ),
             Expanded(
               child: AtlasStatTile(
-                icon: Icons.attach_money,
-                value: '\$${totalValue.toStringAsFixed(0)}',
+                icon:
+                Icons.attach_money,
+                value:
+                '\$${totalValue.toStringAsFixed(0)}',
                 label: 'Value',
               ),
             ),
             Expanded(
               child: AtlasStatTile(
-                icon: Icons.health_and_safety_outlined,
-                value: '${confidence.toStringAsFixed(0)}%',
+                icon: Icons
+                    .health_and_safety_outlined,
+                value:
+                '${confidence.toStringAsFixed(0)}%',
                 label: 'Confidence',
               ),
             ),
@@ -446,7 +584,8 @@ class _HomeStatsCard extends StatelessWidget {
   }
 }
 
-class _HomeAskAtlasCard extends StatelessWidget {
+class _HomeAskAtlasCard
+    extends StatelessWidget {
   const _HomeAskAtlasCard({
     required this.onAskAtlas,
   });
@@ -457,37 +596,50 @@ class _HomeAskAtlasCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return AtlasGlassCard(
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment:
+        CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               const Icon(
                 Icons.auto_awesome_rounded,
-                color: AtlasColors.vaultGold,
+                color:
+                AtlasColors.vaultGold,
               ),
-              const SizedBox(width: AtlasSpacing.sm),
+              const SizedBox(
+                width: AtlasSpacing.sm,
+              ),
               Expanded(
                 child: Text(
                   'Ask Atlas',
-                  style: AtlasTypography.headingSmall,
+                  style: AtlasTypography
+                      .headingSmall,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: AtlasSpacing.sm),
+          const SizedBox(
+            height: AtlasSpacing.sm,
+          ),
           Text(
             'Ask trusted questions about your Vault, collection value, cleanup priorities, missing values, and health.',
-            style: AtlasTypography.bodyMedium.copyWith(
-              color: AtlasColors.textSecondary,
+            style: AtlasTypography
+                .bodyMedium
+                .copyWith(
+              color:
+              AtlasColors.textSecondary,
             ),
           ),
-          const SizedBox(height: AtlasSpacing.lg),
+          const SizedBox(
+            height: AtlasSpacing.lg,
+          ),
           SizedBox(
             width: double.infinity,
             child: FilledButton.icon(
               onPressed: onAskAtlas,
               icon: const Icon(
-                Icons.psychology_alt_rounded,
+                Icons
+                    .psychology_alt_rounded,
               ),
               label: const Text(
                 'Ask Atlas About My Vault',
@@ -500,7 +652,8 @@ class _HomeAskAtlasCard extends StatelessWidget {
   }
 }
 
-class _RecentActivityCard extends StatelessWidget {
+class _RecentActivityCard
+    extends StatelessWidget {
   const _RecentActivityCard({
     required this.hasActivity,
     required this.latestActivity,
@@ -515,45 +668,62 @@ class _RecentActivityCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return AtlasGlassCard(
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment:
+        CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Expanded(
                 child: Text(
                   'Latest Activity',
-                  style: AtlasTypography.headingSmall,
+                  style: AtlasTypography
+                      .headingSmall,
                 ),
               ),
               TextButton.icon(
-                onPressed: onOpenTimeline,
+                onPressed:
+                onOpenTimeline,
                 icon: const Icon(
                   Icons.timeline_rounded,
                   size: 18,
                 ),
-                label: const Text('View Timeline'),
+                label: const Text(
+                  'View Timeline',
+                ),
               ),
             ],
           ),
-          const SizedBox(height: AtlasSpacing.md),
+          const SizedBox(
+            height: AtlasSpacing.md,
+          ),
           AtlasGlassPanel(
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment:
+              CrossAxisAlignment.start,
               children: [
                 Icon(
                   hasActivity
                       ? Icons.history_rounded
-                      : Icons.history_toggle_off_rounded,
-                  color: AtlasColors.vaultGold,
+                      : Icons
+                      .history_toggle_off_rounded,
+                  color:
+                  AtlasColors.vaultGold,
                 ),
-                const SizedBox(width: AtlasSpacing.md),
+                const SizedBox(
+                  width:
+                  AtlasSpacing.md,
+                ),
                 Expanded(
                   child: Text(
                     hasActivity
-                        ? latestActivity ?? 'Activity detected.'
+                        ? latestActivity ??
+                        'Activity detected.'
                         : 'No recent activity yet. Add your first collectible to start building Atlas Memory.',
-                    style: AtlasTypography.bodyMedium.copyWith(
-                      color: AtlasColors.textSecondary,
+                    style: AtlasTypography
+                        .bodyMedium
+                        .copyWith(
+                      color: AtlasColors
+                          .textSecondary,
                     ),
                   ),
                 ),

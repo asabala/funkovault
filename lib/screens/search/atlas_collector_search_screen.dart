@@ -1,8 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'package:funkovault2/atlas/catalog/models/atlas_catalog_product.dart';
+import 'package:funkovault2/atlas/completion/models/atlas_completion_result.dart';
+import 'package:funkovault2/atlas/completion/services/atlas_completion_service.dart';
 import 'package:funkovault2/atlas/intelligence/engines/atlas_collector_insight_engine.dart';
 import 'package:funkovault2/atlas/intelligence/models/atlas_collector_insight.dart';
+import 'package:funkovault2/atlas/search/services/atlas_catalog_search_coordinator.dart';
 import 'package:funkovault2/models/pop.dart';
 import 'package:funkovault2/screens/pop/pop_details_screen.dart';
 import 'package:funkovault2/services/app_state.dart';
@@ -10,6 +16,7 @@ import 'package:funkovault2/theme/atlas_colors.dart';
 import 'package:funkovault2/theme/atlas_spacing.dart';
 import 'package:funkovault2/theme/atlas_typography.dart';
 import 'package:funkovault2/widgets/atlas/atlas_glass_card.dart';
+import 'package:funkovault2/widgets/atlas/completion/atlas_completion_preview_card.dart';
 
 class AtlasCollectorSearchScreen extends StatefulWidget {
   const AtlasCollectorSearchScreen({
@@ -26,9 +33,45 @@ class _AtlasCollectorSearchScreenState
   final TextEditingController _searchController =
   TextEditingController();
 
-  final FocusNode _searchFocusNode = FocusNode();
+  final FocusNode _searchFocusNode =
+  FocusNode();
+
+  final AtlasCatalogSearchCoordinator
+  _searchCoordinator =
+  AtlasCatalogSearchCoordinator();
+  final AtlasCompletionService
+  _completionService =
+      AtlasCompletionService.instance;
+  final Map<String, AtlasCompletionPreviewState>
+  _completionStates =
+  <String, AtlasCompletionPreviewState>{};
+
+  final Map<String, AtlasCompletionResult>
+  _completionResults =
+  <String, AtlasCompletionResult>{};
+
+  final Map<String, String> _completionErrors =
+  <String, String>{};
+
+  final Set<String> _expandedCompletionKeys =
+  <String>{};
+
+  final Map<String, int> _completionRequestIds =
+  <String, int>{};
+
+  int _nextCompletionRequestId = 0;
+
+  Timer? _searchDebounce;
+
+  List<_AtlasSearchEntry> _searchEntries =
+  const <_AtlasSearchEntry>[];
 
   String _query = '';
+  String? _searchError;
+
+  bool _isSearching = false;
+
+  int _searchRequestId = 0;
 
   @override
   void initState() {
@@ -45,6 +88,7 @@ class _AtlasCollectorSearchScreenState
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _searchController.dispose();
     _searchFocusNode.dispose();
 
@@ -56,14 +100,9 @@ class _AtlasCollectorSearchScreenState
     final AppState appState =
     context.watch<AppState>();
 
-    final List<_AtlasSearchEntry> allEntries =
-    _buildSearchEntries(
-      appState,
-    );
-
-    final List<_AtlasSearchEntry> results =
-    _filterEntries(
-      entries: allEntries,
+    final List<_AtlasSearchEntry> rankedResults =
+    _rankEntries(
+      entries: _searchEntries,
       query: _query,
     );
 
@@ -89,22 +128,13 @@ class _AtlasCollectorSearchScreenState
                 onChanged: (
                     String value,
                     ) {
-                  setState(
-                        () {
-                      _query = value;
-                    },
+                  _scheduleSearch(
+                    query: value,
+                    appState: appState,
                   );
                 },
                 onClear: () {
-                  _searchController.clear();
-
-                  setState(
-                        () {
-                      _query = '';
-                    },
-                  );
-
-                  _searchFocusNode.requestFocus();
+                  _clearSearch();
                 },
               ),
             ),
@@ -114,8 +144,10 @@ class _AtlasCollectorSearchScreenState
               ),
               child: _SearchStatusBar(
                 query: _query,
-                resultCount: results.length,
-                totalCount: allEntries.length,
+                resultCount:
+                rankedResults.length,
+                isSearching:
+                _isSearching,
               ),
             ),
             const SizedBox(
@@ -125,8 +157,7 @@ class _AtlasCollectorSearchScreenState
               child: _buildBody(
                 context: context,
                 appState: appState,
-                allEntries: allEntries,
-                results: results,
+                results: rankedResults,
               ),
             ),
           ],
@@ -135,27 +166,380 @@ class _AtlasCollectorSearchScreenState
     );
   }
 
-  Widget _buildBody({
-    required BuildContext context,
+  void _scheduleSearch({
+    required String query,
     required AppState appState,
-    required List<_AtlasSearchEntry> allEntries,
-    required List<_AtlasSearchEntry> results,
   }) {
-    if (allEntries.isEmpty) {
-      return const _SearchEmptyState(
-        icon: Icons.inventory_2_outlined,
-        title: 'Your Vault Is Empty',
-        message:
-        'Add collectibles to Atlas before searching your collection.',
+    _searchDebounce?.cancel();
+
+    final String cleanedQuery =
+    query.trim();
+
+    setState(
+          () {
+        _query = query;
+        _searchError = null;
+
+        _clearCompletionState();
+
+        if (cleanedQuery.isEmpty) {
+          _searchEntries =
+          const <_AtlasSearchEntry>[];
+
+          _isSearching = false;
+        }
+      },
+    );
+
+    if (cleanedQuery.isEmpty) {
+      _searchRequestId++;
+
+      return;
+    }
+
+    _searchDebounce = Timer(
+      const Duration(
+        milliseconds: 350,
+      ),
+          () {
+        _runSearch(
+          query: cleanedQuery,
+          appState: appState,
+        );
+      },
+    );
+  }
+
+  Future<void> _runSearch({
+    required String query,
+    required AppState appState,
+  }) async {
+    final int requestId =
+    ++_searchRequestId;
+
+    if (mounted) {
+      setState(
+            () {
+          _isSearching = true;
+          _searchError = null;
+        },
       );
     }
 
+    try {
+      final List<AtlasCatalogSearchCandidate>
+      candidates =
+      await _searchCoordinator.search(
+        query: query,
+        collections: appState.collections,
+        limit: 200,
+      );
+
+      if (!mounted ||
+          requestId != _searchRequestId) {
+        return;
+      }
+
+      final List<_AtlasSearchEntry> entries =
+      candidates
+          .map(
+            (
+            AtlasCatalogSearchCandidate
+            candidate,
+            ) {
+              return _AtlasSearchEntry(
+                pop: candidate.pop,
+                catalogProduct: candidate.catalogProduct,
+                sourceLabel: candidate.sourceLabel,
+                isCatalogBacked: candidate.isCatalogBacked,
+                collectionNames: candidate.collectionNames,
+              );
+        },
+      )
+          .toList(
+        growable: false,
+      );
+
+      setState(
+            () {
+          _searchEntries =
+          List<_AtlasSearchEntry>
+              .unmodifiable(
+            entries,
+          );
+
+          _isSearching = false;
+        },
+      );
+    } catch (error) {
+      if (!mounted ||
+          requestId != _searchRequestId) {
+        return;
+      }
+
+      setState(
+            () {
+          _searchEntries =
+          const <_AtlasSearchEntry>[];
+
+          _isSearching = false;
+
+          _searchError =
+          'Atlas could not search the catalog. '
+              'Please try again.';
+        },
+      );
+    }
+  }
+
+  void _clearSearch() {
+    _searchDebounce?.cancel();
+    _searchRequestId++;
+
+    _searchController.clear();
+
+    setState(
+          () {
+        _query = '';
+        _searchEntries =
+        const <_AtlasSearchEntry>[];
+
+        _searchError = null;
+        _isSearching = false;
+
+        _clearCompletionState();
+      },
+    );
+
+    _searchFocusNode.requestFocus();
+  }
+  void _clearCompletionState() {
+    _completionStates.clear();
+    _completionResults.clear();
+    _completionErrors.clear();
+    _expandedCompletionKeys.clear();
+    _completionRequestIds.clear();
+  }
+  void _handleCompletionPressed({
+    required _AtlasSearchEntry entry,
+    required AppState appState,
+  }) {
+    if (!entry.canLoadCompletion) {
+      return;
+    }
+
+    final String completionKey =
+    _completionKeyFor(
+      entry,
+    );
+
+    final AtlasCompletionPreviewState state =
+        _completionStates[completionKey] ??
+            AtlasCompletionPreviewState.idle;
+
+    if (state ==
+        AtlasCompletionPreviewState.loading) {
+      return;
+    }
+
+    if (state ==
+        AtlasCompletionPreviewState.loaded) {
+      setState(
+            () {
+          if (_expandedCompletionKeys.contains(
+            completionKey,
+          )) {
+            _expandedCompletionKeys.remove(
+              completionKey,
+            );
+          } else {
+            _expandedCompletionKeys.add(
+              completionKey,
+            );
+          }
+        },
+      );
+
+      return;
+    }
+
+    setState(
+          () {
+        _expandedCompletionKeys.add(
+          completionKey,
+        );
+
+        _completionStates[completionKey] =
+            AtlasCompletionPreviewState.loading;
+
+        _completionErrors.remove(
+          completionKey,
+        );
+      },
+    );
+
+    _loadCompletion(
+      entry: entry,
+      appState: appState,
+      completionKey: completionKey,
+    );
+  }
+
+  Future<void> _loadCompletion({
+    required _AtlasSearchEntry entry,
+    required AppState appState,
+    required String completionKey,
+  }) async {
+    final AtlasCatalogProduct? catalogProduct =
+        entry.catalogProduct;
+
+    if (catalogProduct == null) {
+      return;
+    }
+
+    final int requestId =
+    ++_nextCompletionRequestId;
+
+    _completionRequestIds[completionKey] =
+        requestId;
+
+    final List<Pop> vaultPops =
+    appState.collections.values
+        .expand(
+          (
+          List<Pop> collection,
+          ) {
+        return collection;
+      },
+    )
+        .toList(
+      growable: false,
+    );
+
+    try {
+      final AtlasCompletionResult result =
+      await _completionService
+          .evaluateVariantFamily(
+        selectedProduct: catalogProduct,
+        collectionPops: vaultPops,
+        ownedWishlistIdentityKeys:
+        appState.allOwnedWishlistIdentityKeys,
+        collectionName:
+        'All Atlas Collections',
+      );
+
+      if (!mounted ||
+          _completionRequestIds[completionKey] !=
+              requestId) {
+        return;
+      }
+
+      setState(
+            () {
+          _completionResults[completionKey] =
+              result;
+
+          _completionStates[completionKey] =
+              AtlasCompletionPreviewState.loaded;
+
+          _completionErrors.remove(
+            completionKey,
+          );
+        },
+      );
+    } catch (error) {
+      if (!mounted ||
+          _completionRequestIds[completionKey] !=
+              requestId) {
+        return;
+      }
+
+      setState(
+            () {
+          _completionStates[completionKey] =
+              AtlasCompletionPreviewState.error;
+
+          _completionErrors[completionKey] =
+          'Unable to calculate progress. Tap to retry.';
+        },
+      );
+    }
+  }
+
+  String _completionKeyFor(
+      _AtlasSearchEntry entry,
+      ) {
+    final String catalogProductId =
+        entry.catalogProduct
+            ?.productId.value
+            .trim()
+            .toLowerCase() ??
+            '';
+
+    if (catalogProductId.isNotEmpty) {
+      return 'catalog:$catalogProductId';
+    }
+
+    final String sourceCatalogId =
+    entry.pop.sourceCatalogId
+        .trim()
+        .toLowerCase();
+
+    if (sourceCatalogId.isNotEmpty) {
+      return 'catalog:$sourceCatalogId';
+    }
+
+    return <String>[
+      'release',
+      _normalizeSearchText(
+        entry.pop.name,
+      ),
+      _normalizeSearchText(
+        entry.pop.number,
+      ),
+      _normalizeSearchText(
+        entry.pop.variant,
+      ),
+    ].join(
+      ':',
+    );
+  }
+
+  Widget _buildBody({
+    required BuildContext context,
+    required AppState appState,
+    required List<_AtlasSearchEntry> results,
+  }) {
     if (_query.trim().isEmpty) {
       return const _SearchEmptyState(
         icon: Icons.manage_search_rounded,
-        title: 'Search Your Entire Atlas Vault',
+        title: 'Search the Atlas Catalog',
         message:
-        'Search by name, number, series, category, variant, retailer, sticker, owner, UPC, or catalog ID.',
+        'Search by name, number, series, category, variant, retailer, sticker, UPC, or catalog ID.',
+      );
+    }
+
+    if (_isSearching &&
+        results.isEmpty) {
+      return const _SearchLoadingState();
+    }
+
+    if (_searchError != null) {
+      return _SearchErrorState(
+        message: _searchError!,
+        onRetry: () {
+          final String cleanedQuery =
+          _query.trim();
+
+          if (cleanedQuery.isEmpty) {
+            return;
+          }
+
+          _runSearch(
+            query: cleanedQuery,
+            appState: appState,
+          );
+        },
       );
     }
 
@@ -164,118 +548,151 @@ class _AtlasCollectorSearchScreenState
         icon: Icons.search_off_rounded,
         title: 'No Results Found',
         message:
-        'Atlas could not find a collectible matching “${_query.trim()}”.',
+        'Atlas could not find a catalog or Vault record matching “${_query.trim()}”.',
       );
     }
 
-    final List<Pop> allCollectionPops =
-    allEntries
-        .map(
-          (_AtlasSearchEntry entry) => entry.pop,
+    final List<Pop> vaultPops =
+    appState.collections.values
+        .expand(
+          (
+          List<Pop> collection,
+          ) {
+        return collection;
+      },
     )
         .toList(
       growable: false,
     );
 
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(
-        AtlasSpacing.md,
-        AtlasSpacing.sm,
-        AtlasSpacing.md,
-        AtlasSpacing.xl,
-      ),
-      itemCount: results.length,
-      itemBuilder: (
-          BuildContext context,
-          int index,
-          ) {
-        final _AtlasSearchEntry entry =
-        results[index];
-
-        final AtlasCollectorInsight insight =
-        const AtlasCollectorInsightEngine()
-            .evaluateProduct(
-          product: entry.pop,
-          collectionPops: allCollectionPops,
-          collectionName: 'All Atlas Collections',
-          ownedWishlistIdentityKeys:
-          appState.allOwnedWishlistIdentityKeys,
-          source: 'Atlas Home Search',
-        );
-
-        return Padding(
-          padding: const EdgeInsets.only(
-            bottom: AtlasSpacing.md,
+    return Stack(
+      children: [
+        ListView.builder(
+          padding: const EdgeInsets.fromLTRB(
+            AtlasSpacing.md,
+            AtlasSpacing.sm,
+            AtlasSpacing.md,
+            AtlasSpacing.xl,
           ),
-          child: _AtlasSearchResultCard(
-            entry: entry,
-            insight: insight,
-            onPressed: () {
-              Navigator.push<void>(
-                context,
-                MaterialPageRoute<void>(
-                  builder: (_) {
-                    return PopDetailsScreen(
-                      pop: entry.pop,
-                    );
-                  },
-                ),
-              );
-            },
+          itemCount: results.length,
+          itemBuilder: (
+              BuildContext context,
+              int index,
+              ) {
+            final _AtlasSearchEntry entry =
+            results[index];
+
+            final String completionKey =
+            _completionKeyFor(
+              entry,
+            );
+
+            final AtlasCompletionPreviewState
+            completionState =
+                _completionStates[completionKey] ??
+                    AtlasCompletionPreviewState.idle;
+
+            final AtlasCompletionResult?
+            completionResult =
+            _completionResults[completionKey];
+
+            final bool isCompletionExpanded =
+            _expandedCompletionKeys.contains(
+              completionKey,
+            );
+
+            final AtlasCollectorInsight insight =
+            const AtlasCollectorInsightEngine()
+                .evaluateProduct(
+              product: entry.pop,
+
+              // Important:
+              // Only actual Vault records are passed
+              // into ownership evaluation.
+              collectionPops: vaultPops,
+
+              collectionName:
+              'All Atlas Collections',
+
+              ownedWishlistIdentityKeys:
+              appState
+                  .allOwnedWishlistIdentityKeys,
+
+              source:
+              entry.isCatalogBacked
+                  ? 'Atlas Catalog Search'
+                  : 'Atlas Vault Search',
+            );
+
+            return Padding(
+              padding: const EdgeInsets.only(
+                bottom: AtlasSpacing.md,
+              ),
+              child: _AtlasSearchResultCard(
+                entry: entry,
+                insight: insight,
+                completionState:
+                completionState,
+                completionResult:
+                completionResult,
+                completionError:
+                _completionErrors[completionKey],
+                isCompletionExpanded:
+                isCompletionExpanded,
+                onCompletionPressed:
+                entry.canLoadCompletion
+                    ? () {
+                  _handleCompletionPressed(
+                    entry: entry,
+                    appState: appState,
+                  );
+                }
+                    : null,
+                onPressed: () {
+                  Navigator.push<void>(
+                    context,
+                    MaterialPageRoute<void>(
+                      builder: (_) {
+                        return PopDetailsScreen(
+                          pop: _detailsPopFor(
+                            entry: entry,
+                            insight: insight,
+                          ),
+                        );
+                      },
+                    ),
+                  );
+                },
+              ),
+            );
+          },
+        ),
+        if (_isSearching)
+          const Positioned(
+            left: 0,
+            right: 0,
+            top: 0,
+            child: LinearProgressIndicator(),
           ),
-        );
-      },
+      ],
     );
   }
 
-  List<_AtlasSearchEntry> _buildSearchEntries(
-      AppState appState,
-      ) {
-    final List<_AtlasSearchEntry> entries =
-    <_AtlasSearchEntry>[];
+  Pop _detailsPopFor({
+    required _AtlasSearchEntry entry,
+    required AtlasCollectorInsight insight,
+  }) {
+    final Pop? ownedMatch =
+        insight.state.primaryOwnedMatch;
 
-    appState.collections.forEach(
-          (
-          String collectionName,
-          List<Pop> pops,
-          ) {
-        for (final Pop pop in pops) {
-          entries.add(
-            _AtlasSearchEntry(
-              pop: pop,
-              collectionName: collectionName,
-            ),
-          );
-        }
-      },
-    );
+    if (ownedMatch != null) {
+      return ownedMatch;
+    }
 
-    entries.sort(
-          (
-          _AtlasSearchEntry first,
-          _AtlasSearchEntry second,
-          ) {
-        final int nameComparison =
-        first.pop.name.toLowerCase().compareTo(
-          second.pop.name.toLowerCase(),
-        );
-
-        if (nameComparison != 0) {
-          return nameComparison;
-        }
-
-        return first.pop.number.compareTo(
-          second.pop.number,
-        );
-      },
-    );
-
-    return List<_AtlasSearchEntry>.unmodifiable(
-      entries,
-    );
+    return entry.pop;
   }
 
-  List<_AtlasSearchEntry> _filterEntries({
+  List<_AtlasSearchEntry> _rankEntries({
     required List<_AtlasSearchEntry> entries,
     required String query,
   }) {
@@ -288,13 +705,16 @@ class _AtlasCollectorSearchScreenState
       return const <_AtlasSearchEntry>[];
     }
 
-    final List<_RankedSearchEntry> rankedResults =
+    final List<_RankedSearchEntry>
+    rankedResults =
     <_RankedSearchEntry>[];
 
-    for (final _AtlasSearchEntry entry in entries) {
+    for (final _AtlasSearchEntry entry
+    in entries) {
       final int score = _searchScore(
         entry: entry,
-        normalizedQuery: normalizedQuery,
+        normalizedQuery:
+        normalizedQuery,
       );
 
       if (score < 0) {
@@ -335,8 +755,20 @@ class _AtlasCollectorSearchScreenState
           return nameComparison;
         }
 
-        return first.entry.pop.number.compareTo(
+        final int numberComparison =
+        first.entry.pop.number.compareTo(
           second.entry.pop.number,
+        );
+
+        if (numberComparison != 0) {
+          return numberComparison;
+        }
+
+        return first.entry.pop
+            .sourceCatalogId
+            .compareTo(
+          second.entry.pop
+              .sourceCatalogId,
         );
       },
     );
@@ -344,19 +776,24 @@ class _AtlasCollectorSearchScreenState
     return List<_AtlasSearchEntry>.unmodifiable(
       rankedResults
           .map(
-            (_RankedSearchEntry result) =>
-        result.entry,
+            (
+            _RankedSearchEntry result,
+            ) {
+          return result.entry;
+        },
       )
           .toList(
         growable: false,
       ),
     );
   }
+
   int _searchScore({
     required _AtlasSearchEntry entry,
     required String normalizedQuery,
   }) {
-    final Pop pop = entry.pop;
+    final Pop pop =
+        entry.pop;
 
     final String normalizedName =
     _normalizeSearchText(
@@ -388,19 +825,23 @@ class _AtlasCollectorSearchScreenState
       entry,
     );
 
-    if (normalizedName == normalizedQuery) {
+    if (normalizedName ==
+        normalizedQuery) {
       return 1000;
     }
 
-    if (normalizedNumber == normalizedQuery) {
+    if (normalizedNumber ==
+        normalizedQuery) {
       return 950;
     }
 
-    if (normalizedUpc == normalizedQuery) {
+    if (normalizedUpc ==
+        normalizedQuery) {
       return 940;
     }
 
-    if (normalizedCatalogId == normalizedQuery ||
+    if (normalizedCatalogId ==
+        normalizedQuery ||
         normalizedCollectibleId ==
             normalizedQuery) {
       return 930;
@@ -432,10 +873,12 @@ class _AtlasCollectorSearchScreenState
 
     return -1;
   }
+
   String _searchTextForEntry(
       _AtlasSearchEntry entry,
       ) {
-    final Pop pop = entry.pop;
+    final Pop pop =
+        entry.pop;
 
     return _normalizeSearchText(
       <String>[
@@ -454,8 +897,14 @@ class _AtlasCollectorSearchScreenState
         pop.sourceCatalogId,
         pop.sourceCollectibleId,
         pop.collectorLabel,
-        entry.collectionName,
-        pop.isWishlist ? 'wishlist' : 'owned',
+        entry.sourceLabel,
+        ...entry.collectionNames,
+        entry.isCatalogBacked
+            ? 'catalog'
+            : 'vault',
+        pop.isWishlist
+            ? 'wishlist'
+            : '',
       ].join(
         ' ',
       ),
@@ -469,13 +918,18 @@ class _AtlasCollectorSearchScreenState
         .trim()
         .toLowerCase()
         .replaceAll(
-      RegExp(r'[^a-z0-9]+'),
+      RegExp(
+        r'[^a-z0-9]+',
+      ),
       ' ',
     )
         .replaceAll(
-      RegExp(r'\s+'),
+      RegExp(
+        r'\s+',
+      ),
       ' ',
-    );
+    )
+        .trim();
   }
 }
 
@@ -498,16 +952,20 @@ class _SearchField extends StatelessWidget {
       controller: controller,
       focusNode: focusNode,
       onChanged: onChanged,
-      textInputAction: TextInputAction.search,
+      textInputAction:
+      TextInputAction.search,
       decoration: InputDecoration(
-        hintText: 'Search Pops, cards, variants, UPCs...',
+        hintText:
+        'Search Pops, variants, UPCs...',
         prefixIcon: const Icon(
           Icons.search_rounded,
         ),
-        suffixIcon: controller.text.isEmpty
+        suffixIcon:
+        controller.text.isEmpty
             ? null
             : IconButton(
-          tooltip: 'Clear Search',
+          tooltip:
+          'Clear Search',
           onPressed: onClear,
           icon: const Icon(
             Icons.close_rounded,
@@ -515,57 +973,81 @@ class _SearchField extends StatelessWidget {
         ),
         filled: true,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(
+          borderRadius:
+          BorderRadius.circular(
             18,
           ),
-          borderSide: BorderSide.none,
+          borderSide:
+          BorderSide.none,
         ),
       ),
     );
   }
 }
 
-class _SearchStatusBar extends StatelessWidget {
+class _SearchStatusBar
+    extends StatelessWidget {
   const _SearchStatusBar({
     required this.query,
     required this.resultCount,
-    required this.totalCount,
+    required this.isSearching,
   });
 
   final String query;
   final int resultCount;
-  final int totalCount;
+  final bool isSearching;
 
   @override
   Widget build(BuildContext context) {
     final bool hasQuery =
         query.trim().isNotEmpty;
 
+    final String statusText;
+
+    if (!hasQuery) {
+      statusText =
+      'Catalog + Vault Intelligence';
+    } else if (isSearching &&
+        resultCount == 0) {
+      statusText =
+      'Searching Atlas catalog...';
+    } else {
+      statusText =
+      '$resultCount result'
+          '${resultCount == 1 ? '' : 's'} • Catalog + Vault';
+    }
+
     return Row(
       children: [
         Expanded(
           child: Text(
-            hasQuery
-                ? '$resultCount result${resultCount == 1 ? '' : 's'} across all collections'
-                : '$totalCount searchable collectible${totalCount == 1 ? '' : 's'}',
-            style: AtlasTypography.bodySmall.copyWith(
-              color: AtlasColors.textSecondary,
+            statusText,
+            style: AtlasTypography
+                .bodySmall
+                .copyWith(
+              color:
+              AtlasColors.textSecondary,
             ),
           ),
         ),
         const Icon(
           Icons.hub_outlined,
           size: 16,
-          color: AtlasColors.intelligenceBlue,
+          color:
+          AtlasColors.intelligenceBlue,
         ),
         const SizedBox(
           width: AtlasSpacing.xs,
         ),
         Text(
           'Atlas Intelligence',
-          style: AtlasTypography.bodySmall.copyWith(
-            color: AtlasColors.intelligenceBlue,
-            fontWeight: FontWeight.bold,
+          style: AtlasTypography
+              .bodySmall
+              .copyWith(
+            color:
+            AtlasColors.intelligenceBlue,
+            fontWeight:
+            FontWeight.bold,
           ),
         ),
       ],
@@ -573,202 +1055,294 @@ class _SearchStatusBar extends StatelessWidget {
   }
 }
 
-class _AtlasSearchResultCard extends StatelessWidget {
+class _AtlasSearchResultCard
+    extends StatelessWidget {
   const _AtlasSearchResultCard({
     required this.entry,
     required this.insight,
+    required this.completionState,
+    required this.completionResult,
+    required this.isCompletionExpanded,
     required this.onPressed,
+    this.completionError,
+    this.onCompletionPressed,
   });
 
   final _AtlasSearchEntry entry;
+
   final AtlasCollectorInsight insight;
+
+  final AtlasCompletionPreviewState
+  completionState;
+
+  final AtlasCompletionResult?
+  completionResult;
+
+  final String? completionError;
+
+  final bool isCompletionExpanded;
+
+  final VoidCallback? onCompletionPressed;
+
   final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
-    final Pop pop = entry.pop;
+    final Pop pop =
+        entry.pop;
 
     return AtlasGlassCard(
-      child: InkWell(
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(
-          18,
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(
-            AtlasSpacing.md,
-          ),
-          child: Column(
-            crossAxisAlignment:
-            CrossAxisAlignment.start,
-            children: [
-              Row(
+      padding: EdgeInsets.zero,
+      child: Column(
+        crossAxisAlignment:
+        CrossAxisAlignment.start,
+        children: [
+          InkWell(
+            onTap: onPressed,
+            borderRadius:
+            BorderRadius.circular(
+              28,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(
+                AtlasSpacing.lg,
+              ),
+              child: Column(
                 crossAxisAlignment:
                 CrossAxisAlignment.start,
                 children: [
-                  _SearchProductImage(
-                    imageUrl: pop.imageUrl,
+                  Row(
+                    crossAxisAlignment:
+                    CrossAxisAlignment.start,
+                    children: [
+                      _SearchProductImage(
+                        imageUrl:
+                        pop.imageUrl,
+                      ),
+                      const SizedBox(
+                        width:
+                        AtlasSpacing.md,
+                      ),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment:
+                          CrossAxisAlignment
+                              .start,
+                          children: [
+                            Text(
+                              pop.name,
+                              style:
+                              AtlasTypography
+                                  .headingSmall,
+                            ),
+                            if (pop.number
+                                .trim()
+                                .isNotEmpty) ...[
+                              const SizedBox(
+                                height:
+                                AtlasSpacing.xs,
+                              ),
+                              Text(
+                                '#${pop.number.trim()}',
+                                style:
+                                AtlasTypography
+                                    .bodySmall
+                                    .copyWith(
+                                  color: AtlasColors
+                                      .textSecondary,
+                                ),
+                              ),
+                            ],
+                            const SizedBox(
+                              height:
+                              AtlasSpacing.xs,
+                            ),
+                            Text(
+                              entry.sourceLabel,
+                              style:
+                              AtlasTypography
+                                  .bodySmall
+                                  .copyWith(
+                                color: AtlasColors
+                                    .intelligenceBlue,
+                                fontWeight:
+                                FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(
+                        Icons
+                            .chevron_right_rounded,
+                      ),
+                    ],
+                  ),
+                  if (insight.summary
+                      .hasIdentityBadges) ...[
+                    const SizedBox(
+                      height:
+                      AtlasSpacing.md,
+                    ),
+                    Wrap(
+                      spacing:
+                      AtlasSpacing.sm,
+                      runSpacing:
+                      AtlasSpacing.sm,
+                      children: [
+                        for (final badge
+                        in insight.summary
+                            .identityBadges)
+                          _SearchBadge(
+                            label:
+                            badge.displayLabel,
+                          ),
+                      ],
+                    ),
+                  ],
+                  const SizedBox(
+                    height: AtlasSpacing.md,
+                  ),
+                  Wrap(
+                    spacing:
+                    AtlasSpacing.sm,
+                    runSpacing:
+                    AtlasSpacing.sm,
+                    children: [
+                      _SearchStatusChip(
+                        icon: insight.isOwned
+                            ? Icons
+                            .inventory_2_rounded
+                            : Icons
+                            .inventory_2_outlined,
+                        label: insight.isOwned
+                            ? 'Owned x${insight.ownedQuantity}'
+                            : 'Missing from Vault',
+                      ),
+                      if (insight.isWishlisted)
+                        const _SearchStatusChip(
+                          icon: Icons
+                              .favorite_rounded,
+                          label: 'Wishlist',
+                        ),
+                      _SearchStatusChip(
+                        icon: Icons
+                            .attach_money_rounded,
+                        label: insight.summary
+                            .formattedMarketValue,
+                      ),
+                    ],
                   ),
                   const SizedBox(
-                    width: AtlasSpacing.md,
+                    height: AtlasSpacing.md,
                   ),
-                  Expanded(
+                  Container(
+                    width: double.infinity,
+                    padding:
+                    const EdgeInsets.all(
+                      AtlasSpacing.md,
+                    ),
+                    decoration:
+                    BoxDecoration(
+                      borderRadius:
+                      BorderRadius.circular(
+                        14,
+                      ),
+                      color: AtlasColors
+                          .intelligenceBlue
+                          .withValues(
+                        alpha: 0.08,
+                      ),
+                      border: Border.all(
+                        color: AtlasColors
+                            .intelligenceBlue
+                            .withValues(
+                          alpha: 0.20,
+                        ),
+                      ),
+                    ),
                     child: Column(
                       crossAxisAlignment:
-                      CrossAxisAlignment.start,
+                      CrossAxisAlignment
+                          .start,
                       children: [
                         Text(
-                          pop.name,
-                          style:
-                          AtlasTypography.headingSmall,
+                          insight
+                              .summary
+                              .recommendation
+                              .categoryLabel
+                              .toUpperCase(),
+                          style: AtlasTypography
+                              .bodySmall
+                              .copyWith(
+                            color: AtlasColors
+                                .intelligenceBlue,
+                            fontWeight:
+                            FontWeight.bold,
+                            letterSpacing:
+                            0.7,
+                          ),
                         ),
-                        if (pop.number.trim().isNotEmpty) ...[
-                          const SizedBox(
-                            height: AtlasSpacing.xs,
-                          ),
-                          Text(
-                            '#${pop.number.trim()}',
-                            style: AtlasTypography.bodySmall
-                                .copyWith(
-                              color:
-                              AtlasColors.textSecondary,
-                            ),
-                          ),
-                        ],
                         const SizedBox(
-                          height: AtlasSpacing.xs,
+                          height:
+                          AtlasSpacing.xs,
                         ),
                         Text(
-                          entry.collectionName,
-                          style: AtlasTypography.bodySmall
+                          insight.summary
+                              .recommendationTitle,
+                          style:
+                          AtlasTypography
+                              .headingSmall,
+                        ),
+                        const SizedBox(
+                          height:
+                          AtlasSpacing.xs,
+                        ),
+                        Text(
+                          insight.summary
+                              .recommendationMessage,
+                          style: AtlasTypography
+                              .bodySmall
                               .copyWith(
-                            color:
-                            AtlasColors.intelligenceBlue,
-                            fontWeight: FontWeight.bold,
+                            color: AtlasColors
+                                .textSecondary,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const Icon(
-                    Icons.chevron_right_rounded,
-                  ),
                 ],
               ),
-              if (insight.summary.hasIdentityBadges) ...[
-                const SizedBox(
-                  height: AtlasSpacing.md,
-                ),
-                Wrap(
-                  spacing: AtlasSpacing.sm,
-                  runSpacing: AtlasSpacing.sm,
-                  children: [
-                    for (final badge
-                    in insight.summary.identityBadges)
-                      _SearchBadge(
-                        label: badge.displayLabel,
-                      ),
-                  ],
-                ),
-              ],
-              const SizedBox(
-                height: AtlasSpacing.md,
-              ),
-              Wrap(
-                spacing: AtlasSpacing.sm,
-                runSpacing: AtlasSpacing.sm,
-                children: [
-                  _SearchStatusChip(
-                    icon: insight.isOwned
-                        ? Icons.inventory_2_rounded
-                        : Icons.inventory_2_outlined,
-                    label: insight.isOwned
-                        ? 'Owned x${insight.ownedQuantity}'
-                        : 'Not Owned',
-                  ),
-                  if (insight.isWishlisted)
-                    const _SearchStatusChip(
-                      icon: Icons.favorite_rounded,
-                      label: 'Wishlist',
-                    ),
-                  _SearchStatusChip(
-                    icon: Icons.attach_money_rounded,
-                    label:
-                    insight.summary.formattedMarketValue,
-                  ),
-                ],
-              ),
-              const SizedBox(
-                height: AtlasSpacing.md,
-              ),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(
-                  AtlasSpacing.md,
-                ),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(
-                    14,
-                  ),
-                  color: AtlasColors.intelligenceBlue
-                      .withValues(
-                    alpha: 0.08,
-                  ),
-                  border: Border.all(
-                    color: AtlasColors.intelligenceBlue
-                        .withValues(
-                      alpha: 0.20,
-                    ),
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment:
-                  CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      insight.summary.recommendation
-                          .categoryLabel
-                          .toUpperCase(),
-                      style: AtlasTypography.bodySmall
-                          .copyWith(
-                        color:
-                        AtlasColors.intelligenceBlue,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 0.7,
-                      ),
-                    ),
-                    const SizedBox(
-                      height: AtlasSpacing.xs,
-                    ),
-                    Text(
-                      insight.summary.recommendationTitle,
-                      style:
-                      AtlasTypography.headingSmall,
-                    ),
-                    const SizedBox(
-                      height: AtlasSpacing.xs,
-                    ),
-                    Text(
-                      insight.summary
-                          .recommendationMessage,
-                      style: AtlasTypography.bodySmall
-                          .copyWith(
-                        color:
-                        AtlasColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
+          if (entry.canLoadCompletion &&
+              onCompletionPressed != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AtlasSpacing.lg,
+                0,
+                AtlasSpacing.lg,
+                AtlasSpacing.lg,
+              ),
+              child: AtlasCompletionPreviewCard(
+                state: completionState,
+                result: completionResult,
+                isExpanded:
+                isCompletionExpanded,
+                errorMessage:
+                completionError,
+                onTap:
+                onCompletionPressed,
+              ),
+            ),
+        ],
       ),
     );
   }
 }
 
-class _SearchProductImage extends StatelessWidget {
+class _SearchProductImage
+    extends StatelessWidget {
   const _SearchProductImage({
     required this.imageUrl,
   });
@@ -786,40 +1360,49 @@ class _SearchProductImage extends StatelessWidget {
       child: normalizedUrl.isEmpty
           ? const DecoratedBox(
         decoration: BoxDecoration(
-          color: AtlasColors.surface,
-          borderRadius: BorderRadius.all(
+          color:
+          AtlasColors.surface,
+          borderRadius:
+          BorderRadius.all(
             Radius.circular(
               12,
             ),
           ),
         ),
         child: Icon(
-          Icons.inventory_2_outlined,
+          Icons
+              .inventory_2_outlined,
         ),
       )
-          : Image.network(
-        normalizedUrl,
-        fit: BoxFit.contain,
-        filterQuality: FilterQuality.high,
-        errorBuilder: (
-            BuildContext context,
-            Object error,
-            StackTrace? stackTrace,
-            ) {
-          return const DecoratedBox(
-            decoration: BoxDecoration(
-              color: AtlasColors.surface,
-              borderRadius: BorderRadius.all(
-                Radius.circular(
-                  12,
-                ),
+          : ClipRRect(
+        borderRadius:
+        BorderRadius.circular(
+          12,
+        ),
+        child: Image.network(
+          normalizedUrl,
+          fit: BoxFit.contain,
+          filterQuality:
+          FilterQuality.high,
+          errorBuilder: (
+              BuildContext context,
+              Object error,
+              StackTrace?
+              stackTrace,
+              ) {
+            return const DecoratedBox(
+              decoration:
+              BoxDecoration(
+                color:
+                AtlasColors.surface,
               ),
-            ),
-            child: Icon(
-              Icons.broken_image_outlined,
-            ),
-          );
-        },
+              child: Icon(
+                Icons
+                    .broken_image_outlined,
+              ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -835,32 +1418,38 @@ class _SearchBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(
+      padding:
+      const EdgeInsets.symmetric(
         horizontal: 9,
         vertical: 5,
       ),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(
+        borderRadius:
+        BorderRadius.circular(
           999,
         ),
-        color: AtlasColors.vaultGold.withValues(
+        color: AtlasColors.vaultGold
+            .withValues(
           alpha: 0.10,
         ),
         border: Border.all(
-          color: AtlasColors.vaultGold.withValues(
+          color: AtlasColors.vaultGold
+              .withValues(
             alpha: 0.28,
           ),
         ),
       ),
       child: Text(
         label,
-        style: AtlasTypography.bodySmall,
+        style:
+        AtlasTypography.bodySmall,
       ),
     );
   }
 }
 
-class _SearchStatusChip extends StatelessWidget {
+class _SearchStatusChip
+    extends StatelessWidget {
   const _SearchStatusChip({
     required this.icon,
     required this.label,
@@ -872,25 +1461,31 @@ class _SearchStatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(
+      padding:
+      const EdgeInsets.symmetric(
         horizontal: 10,
         vertical: 6,
       ),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(
+        borderRadius:
+        BorderRadius.circular(
           999,
         ),
-        color: AtlasColors.surface.withValues(
+        color: AtlasColors.surface
+            .withValues(
           alpha: 0.55,
         ),
         border: Border.all(
-          color: AtlasColors.textSecondary.withValues(
+          color: AtlasColors
+              .textSecondary
+              .withValues(
             alpha: 0.18,
           ),
         ),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisSize:
+        MainAxisSize.min,
         children: [
           Icon(
             icon,
@@ -901,7 +1496,8 @@ class _SearchStatusChip extends StatelessWidget {
           ),
           Text(
             label,
-            style: AtlasTypography.bodySmall,
+            style:
+            AtlasTypography.bodySmall,
           ),
         ],
       ),
@@ -909,7 +1505,110 @@ class _SearchStatusChip extends StatelessWidget {
   }
 }
 
-class _SearchEmptyState extends StatelessWidget {
+class _SearchLoadingState
+    extends StatelessWidget {
+  const _SearchLoadingState();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: Padding(
+        padding: EdgeInsets.all(
+          AtlasSpacing.xl,
+        ),
+        child: Column(
+          mainAxisSize:
+          MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(
+              height: AtlasSpacing.lg,
+            ),
+            Text(
+              'Searching the Atlas catalog...',
+              textAlign:
+              TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SearchErrorState
+    extends StatelessWidget {
+  const _SearchErrorState({
+    required this.message,
+    required this.onRetry,
+  });
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(
+          AtlasSpacing.xl,
+        ),
+        child: Column(
+          mainAxisAlignment:
+          MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons
+                  .error_outline_rounded,
+              size: 72,
+              color:
+              AtlasColors.textSecondary,
+            ),
+            const SizedBox(
+              height: AtlasSpacing.lg,
+            ),
+            Text(
+              'Search Unavailable',
+              style: AtlasTypography
+                  .headingSmall,
+              textAlign:
+              TextAlign.center,
+            ),
+            const SizedBox(
+              height: AtlasSpacing.sm,
+            ),
+            Text(
+              message,
+              style: AtlasTypography
+                  .bodyMedium
+                  .copyWith(
+                color: AtlasColors
+                    .textSecondary,
+              ),
+              textAlign:
+              TextAlign.center,
+            ),
+            const SizedBox(
+              height: AtlasSpacing.lg,
+            ),
+            FilledButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(
+                Icons.refresh_rounded,
+              ),
+              label: const Text(
+                'Try Again',
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SearchEmptyState
+    extends StatelessWidget {
   const _SearchEmptyState({
     required this.icon,
     required this.title,
@@ -928,30 +1627,38 @@ class _SearchEmptyState extends StatelessWidget {
           AtlasSpacing.xl,
         ),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment:
+          MainAxisAlignment.center,
           children: [
             Icon(
               icon,
               size: 72,
-              color: AtlasColors.textSecondary,
+              color:
+              AtlasColors.textSecondary,
             ),
             const SizedBox(
               height: AtlasSpacing.lg,
             ),
             Text(
               title,
-              style: AtlasTypography.headingSmall,
-              textAlign: TextAlign.center,
+              style: AtlasTypography
+                  .headingSmall,
+              textAlign:
+              TextAlign.center,
             ),
             const SizedBox(
               height: AtlasSpacing.sm,
             ),
             Text(
               message,
-              style: AtlasTypography.bodyMedium.copyWith(
-                color: AtlasColors.textSecondary,
+              style: AtlasTypography
+                  .bodyMedium
+                  .copyWith(
+                color: AtlasColors
+                    .textSecondary,
               ),
-              textAlign: TextAlign.center,
+              textAlign:
+              TextAlign.center,
             ),
           ],
         ),
@@ -963,11 +1670,26 @@ class _SearchEmptyState extends StatelessWidget {
 class _AtlasSearchEntry {
   const _AtlasSearchEntry({
     required this.pop,
-    required this.collectionName,
+    required this.catalogProduct,
+    required this.sourceLabel,
+    required this.isCatalogBacked,
+    required this.collectionNames,
   });
 
   final Pop pop;
-  final String collectionName;
+
+  final AtlasCatalogProduct? catalogProduct;
+
+  final String sourceLabel;
+
+  final bool isCatalogBacked;
+
+  final List<String> collectionNames;
+
+  bool get canLoadCompletion {
+    return isCatalogBacked &&
+        catalogProduct != null;
+  }
 }
 
 class _RankedSearchEntry {
@@ -977,5 +1699,6 @@ class _RankedSearchEntry {
   });
 
   final _AtlasSearchEntry entry;
+
   final int score;
 }
