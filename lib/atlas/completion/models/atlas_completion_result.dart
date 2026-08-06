@@ -52,6 +52,10 @@ final class AtlasCompletionResult {
     ).length;
   }
 
+  int get remainingReleaseCount {
+    return totalReleaseCount - ownedReleaseCount;
+  }
+
   int get totalOwnedQuantity {
     return items.fold<int>(
       0,
@@ -74,6 +78,20 @@ final class AtlasCompletionResult {
             totalReleaseCount
     ) *
         100;
+  }
+
+  double get completionRatio {
+    if (totalReleaseCount == 0) {
+      return 0;
+    }
+
+    return (
+        ownedReleaseCount /
+            totalReleaseCount
+    ).clamp(
+      0,
+      1,
+    );
   }
 
   double get wishlistProgressPercent {
@@ -103,6 +121,51 @@ final class AtlasCompletionResult {
 
   bool get hasMissingItems {
     return missingReleaseCount > 0;
+  }
+
+  bool get hasStarted {
+    return ownedReleaseCount > 0;
+  }
+
+  bool get isNearCompletion {
+    return !isComplete &&
+        totalReleaseCount > 1 &&
+        remainingReleaseCount <= 2;
+  }
+
+  bool get isHalfComplete {
+    return !isComplete &&
+        completionPercent >= 50;
+  }
+
+  bool get hasMissingChase {
+    return missingItems.any(
+          (AtlasCompletionItem item) {
+        final String searchableText =
+        <String>[
+          item.displayName,
+          item.variantName ?? '',
+          item.catalogProduct.attributes
+          ['rarity']
+              ?.toString() ??
+              '',
+          item.catalogProduct.attributes
+          ['treatment']
+              ?.toString() ??
+              '',
+          item.catalogProduct.attributes
+          ['finish']
+              ?.toString() ??
+              '',
+        ].join(
+          ' ',
+        ).toLowerCase();
+
+        return searchableText.contains(
+          'chase',
+        );
+      },
+    );
   }
 
   List<AtlasCompletionItem> get ownedItems {
@@ -182,6 +245,82 @@ final class AtlasCompletionResult {
 
   String get formattedProgress {
     return '$ownedReleaseCount / $totalReleaseCount';
+  }
+
+  String get formattedReleaseProgress {
+    return '$ownedReleaseCount of '
+        '$totalReleaseCount '
+        '${totalReleaseCount == 1 ? 'Release' : 'Releases'}';
+  }
+
+  String get milestoneMessage {
+    if (totalReleaseCount == 0) {
+      return 'No related catalog releases were found.';
+    }
+
+    if (isComplete) {
+      return 'Collection complete. Every release is owned.';
+    }
+
+    if (ownedReleaseCount == 0 &&
+        wishlistReleaseCount > 0) {
+      return 'Your next collecting goal is already on the Wishlist.';
+    }
+
+    if (ownedReleaseCount == 0) {
+      return 'Start this collection with your first release.';
+    }
+
+    if (remainingReleaseCount == 1) {
+      return hasMissingChase
+          ? 'Only the Chase remains.'
+          : 'Only one release remains.';
+    }
+
+    if (isNearCompletion) {
+      return hasMissingChase
+          ? 'Almost complete. A Chase is still missing.'
+          : 'Almost complete. Only '
+          '$remainingReleaseCount releases remain.';
+    }
+
+    if (completionPercent >= 75) {
+      return 'The finish line is in sight.';
+    }
+
+    if (completionPercent >= 50) {
+      return 'You are halfway there.';
+    }
+
+    if (hasWishlistItems) {
+      return 'Good progress. Your Wishlist can guide the next move.';
+    }
+
+    return 'Great start. Keep building this collection.';
+  }
+
+  String get nextGoalLabel {
+    if (totalReleaseCount == 0) {
+      return 'Catalog review needed';
+    }
+
+    if (isComplete) {
+      return 'All releases collected';
+    }
+
+    if (remainingReleaseCount == 1) {
+      return 'Collect the final release';
+    }
+
+    if (hasMissingChase) {
+      return 'Track down the missing Chase';
+    }
+
+    if (wishlistReleaseCount > 0) {
+      return 'Review Wishlist releases';
+    }
+
+    return 'Collect the next missing release';
   }
 
   String get summaryLabel {

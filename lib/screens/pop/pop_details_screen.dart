@@ -16,6 +16,7 @@ import '../../theme/atlas_typography.dart';
 import '../../widgets/atlas/atlas_expandable_section.dart';
 import '../../widgets/atlas/atlas_glass_card.dart';
 import '../../widgets/atlas/atlas_glass_panel.dart';
+import '../../widgets/atlas/completion/atlas_completion_loader.dart';
 import '../../widgets/atlas/components/atlas_chip.dart';
 import '../../widgets/atlas/components/atlas_section_header.dart';
 import '../../widgets/pop/pop_source_details_section.dart';
@@ -222,8 +223,6 @@ class _PopDetailsScreenState extends State<PopDetailsScreen> {
     final paidLabel = pop.pricePaid <= 0
         ? 'Not entered'
         : '\$${pop.pricePaid.toStringAsFixed(2)}';
-    final dateAddedLabel = _formatDateLabel(pop.dateAdded);
-    final lastUpdatedLabel = _formatDateLabel(pop.lastUpdated);
     final appState = context.watch<AppState>();
 
     final popActivities = appState.recentActivities
@@ -264,14 +263,15 @@ class _PopDetailsScreenState extends State<PopDetailsScreen> {
           AtlasProductHeroCard(
             pop: pop,
             heroSummary: intelligence.heroSummary,
-
-            // Leave this null until Market Intelligence has
-            // real historical pricing data.
             trendPercent: null,
             trendTimeframe: '30d',
-
-            // Opens the standard edit screen for now.
             onCompleteListing: _editPop,
+          ),
+
+          const SizedBox(height: AtlasSpacing.lg),
+
+          AtlasCompletionLoader(
+            pop: pop,
           ),
 
           const SizedBox(height: AtlasSpacing.lg),
@@ -288,185 +288,6 @@ class _PopDetailsScreenState extends State<PopDetailsScreen> {
 
           const SizedBox(height: AtlasSpacing.lg),
 
-          AtlasGlassCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: AtlasSpacing.lg),
-                AtlasGlassCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const AtlasSectionHeader(
-                        title: 'Collection Information',
-                        subtitle:
-                            'Collectible details, ownership, value, and condition',
-                        icon: Icons.inventory_2_outlined,
-                      ),
-
-                      const SizedBox(height: AtlasSpacing.lg),
-                      Text('Timeline', style: AtlasTypography.headingSmall),
-                      const SizedBox(height: AtlasSpacing.sm),
-                      _DetailRow(label: 'Added', value: dateAddedLabel),
-                      _DetailRow(label: 'Updated', value: lastUpdatedLabel),
-
-                      const SizedBox(height: AtlasSpacing.lg),
-                      Text(
-                        'Basic Information',
-                        style: AtlasTypography.headingSmall,
-                      ),
-                      const SizedBox(height: AtlasSpacing.sm),
-                      _DetailRow(label: 'Number', value: pop.number),
-                      _DetailRow(label: 'Category', value: pop.category),
-                      _DetailRow(label: 'Series', value: pop.series),
-                      _DetailRow(label: 'Edition', value: pop.edition),
-                      _DetailRow(label: 'Owner', value: pop.owner),
-
-                      const SizedBox(height: AtlasSpacing.lg),
-                      Text(
-                        'Collector Identity',
-                        style: AtlasTypography.headingSmall,
-                      ),
-                      const SizedBox(height: AtlasSpacing.sm),
-                      _IdentityBadgeWrap(
-                        badges: intelligence.identityBadges,
-                      ),
-                      const SizedBox(height: AtlasSpacing.md),
-                      _DetailRow(label: 'Variant', value: pop.variant),
-                      _DetailRow(
-                        label: 'Retail Exclusive',
-                        value: pop.retailExclusive,
-                      ),
-                      _DetailRow(
-                        label: 'Event Sticker',
-                        value: pop.eventSticker,
-                      ),
-                      _DetailRow(
-                        label: 'Limited Edition',
-                        value: pop.limitedEdition,
-                      ),
-                      _DetailRow(label: 'Signature', value: pop.signature),
-
-                      const SizedBox(height: AtlasSpacing.lg),
-                      Text(
-                        'Value & Condition',
-                        style: AtlasTypography.headingSmall,
-                      ),
-                      const SizedBox(height: AtlasSpacing.sm),
-
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: AtlasGlassPanel(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    'Quantity',
-                                    style: AtlasTypography.bodySmall.copyWith(
-                                      color: AtlasColors.textSecondary,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  const SizedBox(height: AtlasSpacing.sm),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      IconButton(
-                                        tooltip: 'Decrease quantity',
-                                        visualDensity: VisualDensity.compact,
-                                        constraints: const BoxConstraints(
-                                          minWidth: 36,
-                                          minHeight: 36,
-                                        ),
-                                        padding: EdgeInsets.zero,
-                                        iconSize: 22,
-                                        icon: const Icon(
-                                          Icons.remove_circle_outline_rounded,
-                                        ),
-                                        onPressed: pop.quantity <= 1
-                                            ? null
-                                            : () => _updateQuantity(
-                                                pop.quantity - 1,
-                                              ),
-                                      ),
-                                      SizedBox(
-                                        width: 24,
-                                        child: Text(
-                                          '${pop.quantity}',
-                                          textAlign: TextAlign.center,
-                                          style: AtlasTypography.headingSmall
-                                              .copyWith(
-                                                color: AtlasColors.vaultGold,
-                                              ),
-                                        ),
-                                      ),
-                                      IconButton(
-                                        tooltip: 'Increase quantity',
-                                        visualDensity: VisualDensity.compact,
-                                        constraints: const BoxConstraints(
-                                          minWidth: 36,
-                                          minHeight: 36,
-                                        ),
-                                        padding: EdgeInsets.zero,
-                                        iconSize: 22,
-                                        icon: const Icon(
-                                          Icons.add_circle_outline_rounded,
-                                        ),
-                                        onPressed: () =>
-                                            _updateQuantity(pop.quantity + 1),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: AtlasSpacing.sm),
-                          Expanded(
-                            child: AtlasGlassPanel(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    'Current Value',
-                                    style: AtlasTypography.bodySmall.copyWith(
-                                      color: AtlasColors.textSecondary,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  const SizedBox(height: AtlasSpacing.md),
-                                  Text(
-                                    valueLabel,
-                                    textAlign: TextAlign.center,
-                                    style: AtlasTypography.headingSmall
-                                        .copyWith(color: AtlasColors.vaultGold),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: AtlasSpacing.sm),
-                      _DetailRow(label: 'Price Paid', value: paidLabel),
-                      _DetailRow(
-                        label: 'Item Condition',
-                        value: pop.itemCondition,
-                      ),
-                      _DetailRow(
-                        label: 'Box Condition',
-                        value: pop.boxCondition,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-
           AtlasExpandableSection(
             title: 'Collection Information',
             subtitle: _buildCollectionInformationSubtitle(pop),
@@ -481,22 +302,6 @@ class _PopDetailsScreenState extends State<PopDetailsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Timeline',
-                  style: AtlasTypography.headingSmall,
-                ),
-                const SizedBox(height: AtlasSpacing.sm),
-                _DetailRow(
-                  label: 'Added',
-                  value: dateAddedLabel,
-                ),
-                _DetailRow(
-                  label: 'Updated',
-                  value: lastUpdatedLabel,
-                ),
-
-                const SizedBox(height: AtlasSpacing.lg),
-
                 Text(
                   'Basic Information',
                   style: AtlasTypography.headingSmall,
@@ -647,8 +452,9 @@ class _PopDetailsScreenState extends State<PopDetailsScreen> {
                           Text(
                             valueLabel,
                             textAlign: TextAlign.center,
-                            style: AtlasTypography.headingSmall.copyWith(
+                            style: AtlasTypography.headingLarge.copyWith(
                               color: AtlasColors.vaultGold,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ],
@@ -1106,26 +912,6 @@ class _IdentityBadgeWrap extends StatelessWidget {
           .toList(),
     );
   }
-}
-
-String _formatDateLabel(String value) {
-  final cleaned = value.trim();
-
-  if (cleaned.isEmpty) {
-    return 'Before date tracking';
-  }
-
-  final parsed = DateTime.tryParse(cleaned);
-
-  if (parsed == null) {
-    return cleaned;
-  }
-
-  final month = parsed.month.toString().padLeft(2, '0');
-  final day = parsed.day.toString().padLeft(2, '0');
-  final year = parsed.year.toString();
-
-  return '$month/$day/$year';
 }
 
 String _displayValue(String value) {

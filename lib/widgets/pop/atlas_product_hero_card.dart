@@ -263,27 +263,24 @@ class _CurrentValueStat extends StatelessWidget {
             fontWeight: FontWeight.bold,
           ),
         ),
+
         const SizedBox(height: AtlasSpacing.sm),
-        Wrap(
-          crossAxisAlignment: WrapCrossAlignment.center,
-          spacing: AtlasSpacing.sm,
-          runSpacing: AtlasSpacing.xs,
-          children: [
-            Text(
-              hasValue
-                  ? '\$${value.toStringAsFixed(2)}'
-                  : 'Value needed',
-              style: AtlasTypography.headingSmall.copyWith(
-                color: AtlasColors.vaultGold,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-            if (hasValue)
-              _TrendLabel(
-                trendPercent: trendPercent,
-                timeframe: trendTimeframe,
-              ),
-          ],
+
+        Text(
+          hasValue
+              ? '\$${value.toStringAsFixed(2)}'
+              : 'Value needed',
+          style: AtlasTypography.headingSmall.copyWith(
+            color: AtlasColors.vaultGold,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+
+        const SizedBox(height: AtlasSpacing.xs),
+
+        _TrendLabel(
+          trendPercent: trendPercent,
+          timeframe: trendTimeframe,
         ),
       ],
     );
@@ -305,7 +302,7 @@ class _TrendLabel extends StatelessWidget {
 
     if (trend == null) {
       return Text(
-        '— No trend yet',
+        'No trend yet',
         style: AtlasTypography.bodySmall.copyWith(
           color: AtlasColors.textSecondary,
           fontWeight: FontWeight.bold,

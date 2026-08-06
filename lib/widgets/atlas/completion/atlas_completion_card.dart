@@ -46,6 +46,14 @@ class AtlasCompletionCard extends StatelessWidget {
           _CompletionProgress(
             result: result,
           ),
+          if (result.isNotEmpty) ...[
+            const SizedBox(
+              height: AtlasSpacing.lg,
+            ),
+            _CompletionNextGoal(
+              result: result,
+            ),
+          ],
           if (showItemBreakdown &&
               result.isNotEmpty) ...[
             const SizedBox(
@@ -161,8 +169,7 @@ class _CompletionHeader extends StatelessWidget {
   }
 }
 
-class _CompletionProgress
-    extends StatelessWidget {
+class _CompletionProgress extends StatelessWidget {
   const _CompletionProgress({
     required this.result,
   });
@@ -171,79 +178,53 @@ class _CompletionProgress
 
   @override
   Widget build(BuildContext context) {
-    final double progress =
-    result.totalReleaseCount == 0
-        ? 0
-        : (
-        result.completionPercent /
-            100
-    )
-        .clamp(
-      0,
-      1,
-    );
+    final Color progressColor = result.isComplete
+        ? AtlasColors.success
+        : result.completionPercent >= 75
+        ? AtlasColors.vaultGold
+        : AtlasColors.intelligenceBlue;
 
     return Column(
-      crossAxisAlignment:
-      CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          crossAxisAlignment:
-          CrossAxisAlignment.end,
-          children: [
-            Expanded(
-              child: Text(
-                result.formattedProgress,
-                style: AtlasTypography.headingLarge
-                    .copyWith(
-                  color:
-                  AtlasColors.textPrimary,
-                ),
-              ),
-            ),
-            Text(
-              result.formattedCompletion,
-              style: AtlasTypography.headingSmall
-                  .copyWith(
-                color: result.isComplete
-                    ? AtlasColors.success
-                    : AtlasColors.vaultGold,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
+        Text(
+          result.formattedCompletion,
+          style: AtlasTypography.headingLarge.copyWith(
+            color: progressColor,
+            fontWeight: FontWeight.w900,
+          ),
         ),
         const SizedBox(
           height: AtlasSpacing.xs,
         ),
         Text(
-          result.totalReleaseCount == 1
-              ? 'release owned'
-              : 'releases owned',
-          style: AtlasTypography.bodySmall
-              .copyWith(
-            color:
-            AtlasColors.textSecondary,
+          result.formattedReleaseProgress,
+          style: AtlasTypography.headingSmall.copyWith(
+            color: AtlasColors.textPrimary,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(
+          height: AtlasSpacing.sm,
+        ),
+        Text(
+          result.milestoneMessage,
+          style: AtlasTypography.bodySmall.copyWith(
+            color: AtlasColors.textSecondary,
+            height: 1.4,
           ),
         ),
         const SizedBox(
           height: AtlasSpacing.md,
         ),
         ClipRRect(
-          borderRadius:
-          BorderRadius.circular(
-            999,
-          ),
+          borderRadius: BorderRadius.circular(999),
           child: LinearProgressIndicator(
-            value: progress,
+            value: result.completionRatio,
             minHeight: 10,
-            backgroundColor:
-            AtlasColors.surface,
-            valueColor:
-            AlwaysStoppedAnimation<Color>(
-              result.isComplete
-                  ? AtlasColors.success
-                  : AtlasColors.vaultGold,
+            backgroundColor: AtlasColors.surface,
+            valueColor: AlwaysStoppedAnimation<Color>(
+              progressColor,
             ),
           ),
         ),
@@ -256,25 +237,84 @@ class _CompletionProgress
           children: [
             _CompletionMetricChip(
               icon: Icons.inventory_2_rounded,
-              label:
-              '${result.ownedReleaseCount} Owned',
+              label: '${result.ownedReleaseCount} Owned',
               color: AtlasColors.success,
             ),
             _CompletionMetricChip(
               icon: Icons.favorite_rounded,
-              label:
-              '${result.wishlistReleaseCount} Wishlist',
+              label: '${result.wishlistReleaseCount} Wishlist',
               color: AtlasColors.warning,
             ),
             _CompletionMetricChip(
               icon: Icons.remove_circle_outline,
-              label:
-              '${result.missingReleaseCount} Missing',
+              label: '${result.missingReleaseCount} Missing',
               color: AtlasColors.textSecondary,
             ),
           ],
         ),
       ],
+    );
+  }
+}
+
+class _CompletionNextGoal extends StatelessWidget {
+  const _CompletionNextGoal({
+    required this.result,
+  });
+
+  final AtlasCompletionResult result;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color accentColor = result.isComplete
+        ? AtlasColors.success
+        : AtlasColors.vaultGold;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AtlasSpacing.md),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        color: accentColor.withValues(alpha: 0.08),
+        border: Border.all(
+          color: accentColor.withValues(alpha: 0.22),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            result.isComplete
+                ? AtlasSymbols.achievement
+                : AtlasSymbols.recommendation,
+            style: const TextStyle(fontSize: 20),
+          ),
+          const SizedBox(width: AtlasSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  result.isComplete ? 'Milestone' : 'Next Goal',
+                  style: AtlasTypography.bodySmall.copyWith(
+                    color: accentColor,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.6,
+                  ),
+                ),
+                const SizedBox(height: AtlasSpacing.xs),
+                Text(
+                  result.nextGoalLabel,
+                  style: AtlasTypography.bodyMedium.copyWith(
+                    color: AtlasColors.textPrimary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
