@@ -2,18 +2,24 @@ import 'package:flutter/material.dart';
 
 import '../../theme/atlas_colors.dart';
 import '../../theme/atlas_spacing.dart';
-import '../../theme/atlas_typography.dart';
 import '../../widgets/atlas/atlas_glass_card.dart';
-import '../../widgets/atlas/atlas_glass_panel.dart';
+import '../../widgets/atlas/components/atlas_action_row.dart';
+import '../../widgets/atlas/components/atlas_info_banner.dart';
+import '../../widgets/atlas/components/atlas_section_header.dart';
+import '../../widgets/atlas/components/atlas_status_chip.dart';
 
 class BackupSyncSettingsScreen extends StatelessWidget {
-  const BackupSyncSettingsScreen({super.key});
+  const BackupSyncSettingsScreen({
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Backup & Sync'),
+        title: const Text(
+          'Backup & Sync',
+        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -26,144 +32,184 @@ class BackupSyncSettingsScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              AtlasGlassCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Backup & Sync',
-                      style: AtlasTypography.headingLarge,
-                    ),
-                    const SizedBox(height: AtlasSpacing.sm),
-                    Text(
-                      'Prepare cloud backup, restore, and multi-device sync options for your vault.',
-                      style: AtlasTypography.bodyMedium.copyWith(
-                        color: AtlasColors.textSecondary,
-                      ),
-                    ),
-                  ],
+              const AtlasGlassCard(
+                accentColor: AtlasColors.vaultGold,
+                child: AtlasSectionHeader(
+                  title: 'Backup & Sync',
+                  subtitle:
+                  'Prepare cloud backup, restore, and multi-device sync options for your vault.',
+                  icon: Icons.cloud_sync_rounded,
+                  accentColor: AtlasColors.vaultGold,
                 ),
               ),
-              const SizedBox(height: AtlasSpacing.lg),
-              AtlasGlassCard(
+
+              const SizedBox(
+                height: AtlasSpacing.lg,
+              ),
+
+              const AtlasGlassCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Backup Status',
-                      style: AtlasTypography.headingSmall,
-                    ),
-                    const SizedBox(height: AtlasSpacing.sm),
-                    Text(
+                    AtlasSectionHeader(
+                      title: 'Backup Status',
+                      subtitle:
                       'Atlas is currently using local vault data. Cloud backup and restore tools will be connected later.',
-                      style: AtlasTypography.bodyMedium.copyWith(
-                        color: AtlasColors.textSecondary,
+                      icon: Icons.storage_rounded,
+                    ),
+
+                    SizedBox(
+                      height: AtlasSpacing.lg,
+                    ),
+
+                    AtlasActionRow(
+                      title: 'Local Data',
+                      description:
+                      'Your vault is available on this device.',
+                      icon: Icons.storage_rounded,
+                      showChevron: false,
+                      compact: true,
+                      badge: AtlasStatusChip(
+                        label: 'Active',
+                        accentColor: AtlasColors.vaultGold,
+                        size: AtlasStatusChipSize.compact,
                       ),
                     ),
-                    const SizedBox(height: AtlasSpacing.lg),
-                    const _BackupStatusPanel(
-                      icon: Icons.storage_rounded,
-                      title: 'Local Data',
-                      message: 'Your vault is available on this device.',
-                      status: 'Active',
+
+                    SizedBox(
+                      height: AtlasSpacing.sm,
                     ),
-                    SizedBox(height: AtlasSpacing.sm),
-                    const _BackupStatusPanel(
-                      icon: Icons.cloud_queue_rounded,
+
+                    AtlasActionRow(
                       title: 'Cloud Backup',
-                      message: 'Future backup support will protect your vault in the cloud.',
-                      status: 'Coming Soon',
+                      description:
+                      'Future backup support will protect your vault in the cloud.',
+                      icon: Icons.cloud_queue_rounded,
+                      showChevron: false,
+                      compact: true,
+                      badge: AtlasStatusChip(
+                        label: 'Coming Soon',
+                        accentColor: AtlasColors.vaultGold,
+                        size: AtlasStatusChipSize.compact,
+                      ),
                     ),
-                    SizedBox(height: AtlasSpacing.sm),
-                    const _BackupStatusPanel(
-                      icon: Icons.sync_rounded,
+
+                    SizedBox(
+                      height: AtlasSpacing.sm,
+                    ),
+
+                    AtlasActionRow(
                       title: 'Multi-Device Sync',
-                      message: 'Future sync support will help keep devices aligned.',
-                      status: 'Future',
+                      description:
+                      'Future sync support will help keep devices aligned.',
+                      icon: Icons.sync_rounded,
+                      showChevron: false,
+                      compact: true,
+                      badge: AtlasStatusChip(
+                        label: 'Future',
+                        accentColor: AtlasColors.vaultGold,
+                        size: AtlasStatusChipSize.compact,
+                      ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: AtlasSpacing.lg),
+
+              const SizedBox(
+                height: AtlasSpacing.lg,
+              ),
+
               AtlasGlassCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Future Sync Tools',
-                      style: AtlasTypography.headingSmall,
-                    ),
-                    const SizedBox(height: AtlasSpacing.sm),
-                    Text(
+                    const AtlasSectionHeader(
+                      title: 'Future Sync Tools',
+                      subtitle:
                       'These actions are staged now so backup and sync can be added safely later.',
-                      style: AtlasTypography.bodyMedium.copyWith(
-                        color: AtlasColors.textSecondary,
-                      ),
+                      icon: Icons.cloud_done_outlined,
                     ),
-                    const SizedBox(height: AtlasSpacing.lg),
-                    _BackupActionRow(
-                      icon: Icons.cloud_upload_outlined,
+
+                    const SizedBox(
+                      height: AtlasSpacing.lg,
+                    ),
+
+                    AtlasActionRow(
                       title: 'Cloud Backup',
-                      subtitle: 'Back up your vault to your Atlas account.',
-                      onTap: () => _showComingSoonMessage(
-                        context,
-                        'Cloud backup is coming soon.',
-                      ),
+                      description:
+                      'Back up your vault to your Atlas account.',
+                      icon: Icons.cloud_upload_outlined,
+                      onTap: () {
+                        _showComingSoonMessage(
+                          context,
+                          'Cloud backup is coming soon.',
+                        );
+                      },
                     ),
-                    const SizedBox(height: AtlasSpacing.sm),
-                    _BackupActionRow(
-                      icon: Icons.restore_rounded,
+
+                    const SizedBox(
+                      height: AtlasSpacing.sm,
+                    ),
+
+                    AtlasActionRow(
                       title: 'Restore Vault',
-                      subtitle: 'Restore vault data from a previous backup.',
-                      onTap: () => _showComingSoonMessage(
-                        context,
-                        'Vault restore is coming soon.',
-                      ),
+                      description:
+                      'Restore vault data from a previous backup.',
+                      icon: Icons.restore_rounded,
+                      onTap: () {
+                        _showComingSoonMessage(
+                          context,
+                          'Vault restore is coming soon.',
+                        );
+                      },
                     ),
-                    const SizedBox(height: AtlasSpacing.sm),
-                    _BackupActionRow(
-                      icon: Icons.devices_other_rounded,
+
+                    const SizedBox(
+                      height: AtlasSpacing.sm,
+                    ),
+
+                    AtlasActionRow(
                       title: 'Sync Devices',
-                      subtitle: 'Keep your collection available across devices.',
-                      onTap: () => _showComingSoonMessage(
-                        context,
-                        'Device sync is coming soon.',
-                      ),
+                      description:
+                      'Keep your collection available across devices.',
+                      icon: Icons.devices_other_rounded,
+                      onTap: () {
+                        _showComingSoonMessage(
+                          context,
+                          'Device sync is coming soon.',
+                        );
+                      },
                     ),
-                    const SizedBox(height: AtlasSpacing.sm),
-                    _BackupActionRow(
-                      icon: Icons.file_download_outlined,
+
+                    const SizedBox(
+                      height: AtlasSpacing.sm,
+                    ),
+
+                    AtlasActionRow(
                       title: 'Export Backup',
-                      subtitle: 'Create an export copy of your collection data.',
-                      onTap: () => _showComingSoonMessage(
-                        context,
-                        'Backup export is coming soon.',
-                      ),
+                      description:
+                      'Create an export copy of your collection data.',
+                      icon: Icons.file_download_outlined,
+                      onTap: () {
+                        _showComingSoonMessage(
+                          context,
+                          'Backup export is coming soon.',
+                        );
+                      },
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: AtlasSpacing.lg),
-              AtlasGlassPanel(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Icon(
-                      Icons.info_outline_rounded,
-                      color: AtlasColors.vaultGold,
-                    ),
-                    const SizedBox(width: AtlasSpacing.md),
-                    Expanded(
-                      child: Text(
-                        'Backup and sync should be added carefully so vault data stays safe, recoverable, and consistent across devices.',
-                        style: AtlasTypography.bodySmall.copyWith(
-                          color: AtlasColors.textSecondary,
-                          height: 1.35,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+
+              const SizedBox(
+                height: AtlasSpacing.lg,
+              ),
+
+              const AtlasInfoBanner(
+                icon: Icons.info_outline_rounded,
+                title: 'Data Safety',
+                message:
+                'Backup and sync should be added carefully so vault data stays safe, recoverable, and consistent across devices.',
               ),
             ],
           ),
@@ -178,156 +224,8 @@ class BackupSyncSettingsScreen extends StatelessWidget {
       ) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
-      ),
-    );
-  }
-}
-
-class _BackupStatusPanel extends StatelessWidget {
-  const _BackupStatusPanel({
-    required this.icon,
-    required this.title,
-    required this.message,
-    required this.status,
-  });
-
-  final IconData icon;
-  final String title;
-  final String message;
-  final String status;
-
-  @override
-  Widget build(BuildContext context) {
-    return AtlasGlassPanel(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(
-            icon,
-            color: AtlasColors.vaultGold,
-          ),
-          const SizedBox(width: AtlasSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: AtlasTypography.bodyMedium.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: AtlasSpacing.xs),
-                Text(
-                  message,
-                  style: AtlasTypography.bodySmall.copyWith(
-                    color: AtlasColors.textSecondary,
-                    height: 1.35,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: AtlasSpacing.sm),
-          _BackupStatusBadge(
-            label: status,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _BackupActionRow extends StatelessWidget {
-  const _BackupActionRow({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return AtlasGlassPanel(
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(AtlasSpacing.sm),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(
-                icon,
-                color: AtlasColors.vaultGold,
-              ),
-              const SizedBox(width: AtlasSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: AtlasTypography.bodyMedium.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: AtlasSpacing.xs),
-                    Text(
-                      subtitle,
-                      style: AtlasTypography.bodySmall.copyWith(
-                        color: AtlasColors.textSecondary,
-                        height: 1.35,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: AtlasSpacing.sm),
-              const Icon(
-                Icons.chevron_right_rounded,
-                color: AtlasColors.vaultGold,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _BackupStatusBadge extends StatelessWidget {
-  const _BackupStatusBadge({
-    required this.label,
-  });
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AtlasSpacing.sm,
-        vertical: 4,
-      ),
-      decoration: BoxDecoration(
-        color: AtlasColors.vaultGold.withValues(alpha: 0.14),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(
-          color: AtlasColors.vaultGold.withValues(alpha: 0.34),
-        ),
-      ),
-      child: Text(
-        label,
-        style: AtlasTypography.bodySmall.copyWith(
-          color: AtlasColors.vaultGold,
-          fontWeight: FontWeight.bold,
+        content: Text(
+          message,
         ),
       ),
     );

@@ -2,18 +2,24 @@ import 'package:flutter/material.dart';
 
 import '../../theme/atlas_colors.dart';
 import '../../theme/atlas_spacing.dart';
-import '../../theme/atlas_typography.dart';
 import '../../widgets/atlas/atlas_glass_card.dart';
-import '../../widgets/atlas/atlas_glass_panel.dart';
+import '../../widgets/atlas/components/atlas_action_row.dart';
+import '../../widgets/atlas/components/atlas_info_banner.dart';
+import '../../widgets/atlas/components/atlas_section_header.dart';
+import '../../widgets/atlas/components/atlas_status_chip.dart';
 
 class SecuritySettingsScreen extends StatelessWidget {
-  const SecuritySettingsScreen({super.key});
+  const SecuritySettingsScreen({
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Security'),
+        title: const Text(
+          'Security',
+        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -26,138 +32,204 @@ class SecuritySettingsScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              AtlasGlassCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Security',
-                      style: AtlasTypography.headingLarge,
-                    ),
-                    const SizedBox(height: AtlasSpacing.sm),
-                    Text(
-                      'Manage account protection, future two-step verification, and security tools.',
-                      style: AtlasTypography.bodyMedium.copyWith(
-                        color: AtlasColors.textSecondary,
-                      ),
-                    ),
-                  ],
+              const AtlasGlassCard(
+                accentColor: AtlasColors.vaultGold,
+                child: AtlasSectionHeader(
+                  title: 'Security',
+                  subtitle:
+                  'Manage account protection, future two-step verification, and security tools.',
+                  icon: Icons.security_rounded,
+                  accentColor: AtlasColors.vaultGold,
                 ),
               ),
-              const SizedBox(height: AtlasSpacing.lg),
+
+              const SizedBox(
+                height: AtlasSpacing.lg,
+              ),
+
               AtlasGlassCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Account Protection',
-                      style: AtlasTypography.headingSmall,
-                    ),
-                    const SizedBox(height: AtlasSpacing.sm),
-                    Text(
+                    const AtlasSectionHeader(
+                      title: 'Account Protection',
+                      subtitle:
                       'Core security stays simple now, with stronger account protection planned as Atlas grows.',
-                      style: AtlasTypography.bodyMedium.copyWith(
-                        color: AtlasColors.textSecondary,
-                      ),
+                      icon: Icons.shield_outlined,
                     ),
-                    const SizedBox(height: AtlasSpacing.lg),
-                    _SecuritySettingsRow(
-                      icon: Icons.password_rounded,
+
+                    const SizedBox(
+                      height: AtlasSpacing.lg,
+                    ),
+
+                    AtlasActionRow(
                       title: 'Password',
-                      subtitle: 'Password management will connect to account auth later.',
-                      status: 'Coming Soon',
-                      onTap: () => _showComingSoonMessage(
-                        context,
-                        'Password management is coming soon.',
+                      description:
+                      'Password management will connect to account auth later.',
+                      icon: Icons.password_rounded,
+                      badge: const AtlasStatusChip(
+                        label: 'Coming Soon',
+                        accentColor: AtlasColors.vaultGold,
+                        size: AtlasStatusChipSize.compact,
                       ),
+                      onTap: () {
+                        _showComingSoonMessage(
+                          context,
+                          'Password management is coming soon.',
+                        );
+                      },
                     ),
-                    const SizedBox(height: AtlasSpacing.sm),
-                    _SecuritySettingsRow(
-                      icon: Icons.verified_user_outlined,
+
+                    const SizedBox(
+                      height: AtlasSpacing.sm,
+                    ),
+
+                    AtlasActionRow(
                       title: 'Two-Step Verification',
-                      subtitle: 'Add an extra layer of protection for collector accounts.',
-                      status: 'Planned',
-                      onTap: () => _showComingSoonMessage(
-                        context,
-                        'Two-step verification is planned for a future security update.',
+                      description:
+                      'Add an extra layer of protection for collector accounts.',
+                      icon: Icons.verified_user_outlined,
+                      badge: const AtlasStatusChip(
+                        label: 'Planned',
+                        accentColor: AtlasColors.vaultGold,
+                        size: AtlasStatusChipSize.compact,
                       ),
+                      onTap: () {
+                        _showComingSoonMessage(
+                          context,
+                          'Two-step verification is planned for a future security update.',
+                        );
+                      },
                     ),
-                    const SizedBox(height: AtlasSpacing.sm),
-                    _SecuritySettingsRow(
-                      icon: Icons.devices_rounded,
+
+                    const SizedBox(
+                      height: AtlasSpacing.sm,
+                    ),
+
+                    AtlasActionRow(
                       title: 'Trusted Devices',
-                      subtitle: 'Review devices that have access to your vault.',
-                      status: 'Future',
-                      onTap: () => _showComingSoonMessage(
-                        context,
-                        'Trusted devices are coming in a future update.',
+                      description:
+                      'Review devices that have access to your vault.',
+                      icon: Icons.devices_rounded,
+                      badge: const AtlasStatusChip(
+                        label: 'Future',
+                        accentColor: AtlasColors.vaultGold,
+                        size: AtlasStatusChipSize.compact,
                       ),
+                      onTap: () {
+                        _showComingSoonMessage(
+                          context,
+                          'Trusted devices are coming in a future update.',
+                        );
+                      },
                     ),
-                    const SizedBox(height: AtlasSpacing.sm),
-                    _SecuritySettingsRow(
-                      icon: Icons.notifications_active_outlined,
+
+                    const SizedBox(
+                      height: AtlasSpacing.sm,
+                    ),
+
+                    AtlasActionRow(
                       title: 'Login Alerts',
-                      subtitle: 'Receive alerts for important account activity.',
-                      status: 'Future',
-                      onTap: () => _showComingSoonMessage(
-                        context,
-                        'Login alerts are coming in a future update.',
+                      description:
+                      'Receive alerts for important account activity.',
+                      icon: Icons.notifications_active_outlined,
+                      badge: const AtlasStatusChip(
+                        label: 'Future',
+                        accentColor: AtlasColors.vaultGold,
+                        size: AtlasStatusChipSize.compact,
                       ),
+                      onTap: () {
+                        _showComingSoonMessage(
+                          context,
+                          'Login alerts are coming in a future update.',
+                        );
+                      },
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: AtlasSpacing.lg),
-              AtlasGlassCard(
+
+              const SizedBox(
+                height: AtlasSpacing.lg,
+              ),
+
+              const AtlasGlassCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Security Status',
-                      style: AtlasTypography.headingSmall,
+                    AtlasSectionHeader(
+                      title: 'Security Status',
+                      subtitle:
+                      'Current protection and planned security capabilities for your Atlas account.',
+                      icon: Icons.health_and_safety_outlined,
                     ),
-                    const SizedBox(height: AtlasSpacing.lg),
-                    const _SecurityStatusItem(
-                      icon: Icons.lock_outline_rounded,
+
+                    SizedBox(
+                      height: AtlasSpacing.lg,
+                    ),
+
+                    AtlasActionRow(
                       title: 'Basic Protection',
-                      message: 'Account access is protected by the current sign-in system.',
+                      description:
+                      'Account access is protected by the current sign-in system.',
+                      icon: Icons.lock_outline_rounded,
+                      showChevron: false,
+                      compact: true,
+                      badge: AtlasStatusChip(
+                        label: 'Active',
+                        accentColor: AtlasColors.vaultGold,
+                        size: AtlasStatusChipSize.compact,
+                      ),
                     ),
-                    SizedBox(height: AtlasSpacing.sm),
-                    const _SecurityStatusItem(
-                      icon: Icons.shield_outlined,
+
+                    SizedBox(
+                      height: AtlasSpacing.sm,
+                    ),
+
+                    AtlasActionRow(
                       title: 'Two-Step Verification',
-                      message: 'Planned for stronger account protection later.',
+                      description:
+                      'Planned for stronger account protection later.',
+                      icon: Icons.shield_outlined,
+                      showChevron: false,
+                      compact: true,
+                      badge: AtlasStatusChip(
+                        label: 'Planned',
+                        accentColor: AtlasColors.vaultGold,
+                        size: AtlasStatusChipSize.compact,
+                      ),
                     ),
-                    SizedBox(height: AtlasSpacing.sm),
-                    const _SecurityStatusItem(
-                      icon: Icons.privacy_tip_outlined,
+
+                    SizedBox(
+                      height: AtlasSpacing.sm,
+                    ),
+
+                    AtlasActionRow(
                       title: 'Collector Data',
-                      message: 'Future security tools will focus on keeping vault data protected.',
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: AtlasSpacing.lg),
-              AtlasGlassPanel(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Icon(
-                      Icons.info_outline_rounded,
-                      color: AtlasColors.vaultGold,
-                    ),
-                    const SizedBox(width: AtlasSpacing.md),
-                    Expanded(
-                      child: Text(
-                        'Security features will be connected carefully so account protection stays reliable and does not break the login flow.',
-                        style: AtlasTypography.bodySmall.copyWith(
-                          color: AtlasColors.textSecondary,
-                          height: 1.35,
-                        ),
+                      description:
+                      'Future security tools will focus on keeping vault data protected.',
+                      icon: Icons.privacy_tip_outlined,
+                      showChevron: false,
+                      compact: true,
+                      badge: AtlasStatusChip(
+                        label: 'Protected',
+                        accentColor: AtlasColors.vaultGold,
+                        size: AtlasStatusChipSize.compact,
                       ),
                     ),
                   ],
                 ),
+              ),
+
+              const SizedBox(
+                height: AtlasSpacing.lg,
+              ),
+
+              const AtlasInfoBanner(
+                icon: Icons.info_outline_rounded,
+                title: 'Security First',
+                message:
+                'Security features will be connected carefully so account protection stays reliable and does not break the login flow.',
               ),
             ],
           ),
@@ -172,152 +244,9 @@ class SecuritySettingsScreen extends StatelessWidget {
       ) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
-      ),
-    );
-  }
-}
-
-class _SecuritySettingsRow extends StatelessWidget {
-  const _SecuritySettingsRow({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.status,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final String status;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return AtlasGlassPanel(
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(AtlasSpacing.sm),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(
-                icon,
-                color: AtlasColors.vaultGold,
-              ),
-              const SizedBox(width: AtlasSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: AtlasTypography.bodyMedium.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: AtlasSpacing.xs),
-                    Text(
-                      subtitle,
-                      style: AtlasTypography.bodySmall.copyWith(
-                        color: AtlasColors.textSecondary,
-                        height: 1.35,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: AtlasSpacing.sm),
-              _SecurityStatusBadge(
-                label: status,
-              ),
-            ],
-          ),
+        content: Text(
+          message,
         ),
-      ),
-    );
-  }
-}
-
-class _SecurityStatusBadge extends StatelessWidget {
-  const _SecurityStatusBadge({
-    required this.label,
-  });
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AtlasSpacing.sm,
-        vertical: 4,
-      ),
-      decoration: BoxDecoration(
-        color: AtlasColors.vaultGold.withValues(alpha: 0.14),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(
-          color: AtlasColors.vaultGold.withValues(alpha: 0.34),
-        ),
-      ),
-      child: Text(
-        label,
-        style: AtlasTypography.bodySmall.copyWith(
-          color: AtlasColors.vaultGold,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
-}
-
-class _SecurityStatusItem extends StatelessWidget {
-  const _SecurityStatusItem({
-    required this.icon,
-    required this.title,
-    required this.message,
-  });
-
-  final IconData icon;
-  final String title;
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return AtlasGlassPanel(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(
-            icon,
-            color: AtlasColors.vaultGold,
-          ),
-          const SizedBox(width: AtlasSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: AtlasTypography.bodyMedium.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: AtlasSpacing.xs),
-                Text(
-                  message,
-                  style: AtlasTypography.bodySmall.copyWith(
-                    color: AtlasColors.textSecondary,
-                    height: 1.35,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }

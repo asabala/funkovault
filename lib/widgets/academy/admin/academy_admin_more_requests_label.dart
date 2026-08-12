@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../../theme/atlas_colors.dart';
+import '../../../theme/atlas_typography.dart';
+
 class AcademyAdminMoreRequestsLabel extends StatelessWidget {
   const AcademyAdminMoreRequestsLabel({
     super.key,
@@ -14,11 +17,15 @@ class AcademyAdminMoreRequestsLabel extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
+    final String label =
+    hiddenRequestCount == 1
+        ? '+1 more request'
+        : '+$hiddenRequestCount more requests';
+
     return Text(
-      '+$hiddenRequestCount more request(s)',
-      style: TextStyle(
-        color: Colors.white.withValues(alpha: 0.58),
-        fontSize: 12,
+      label,
+      style: AtlasTypography.bodySmall.copyWith(
+        color: AtlasColors.textSecondary,
         fontWeight: FontWeight.w700,
       ),
     );

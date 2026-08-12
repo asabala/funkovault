@@ -6,6 +6,7 @@ import '../../../theme/atlas_typography.dart';
 import '../../../vault/duplicate_review/duplicate_review_engine.dart';
 import '../../atlas/atlas_glass_card.dart';
 import '../../atlas/atlas_glass_panel.dart';
+import '../../atlas/components/atlas_action_row.dart';
 import '../../atlas/components/atlas_chip.dart';
 import '../../atlas/components/atlas_section_header.dart';
 import 'vault_pop_tile.dart';
@@ -102,96 +103,62 @@ class _DuplicateReviewGroupCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  color: AtlasColors.vaultGold.withValues(
-                    alpha: 0.14,
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(
-                  Icons.content_copy_rounded,
-                  color: AtlasColors.vaultGold,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: AtlasSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '${group.name} ${group.number}',
-                      style: AtlasTypography.bodyMedium.copyWith(
-                        color: AtlasColors.textPrimary,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: AtlasSpacing.xs),
-                    Text(
-                      'Possible duplicate or variant review group • '
-                          '${group.itemCount} '
-                          'item${group.itemCount == 1 ? '' : 's'}',
-                      style: AtlasTypography.bodySmall.copyWith(
-                        color: AtlasColors.textSecondary,
-                      ),
-                    ),
-                    if (group.differenceLabels.isNotEmpty) ...[
-                      const SizedBox(height: AtlasSpacing.sm),
-                      Wrap(
-                        spacing: AtlasSpacing.xs,
-                        runSpacing: AtlasSpacing.xs,
-                        children: group.differenceLabels
-                            .map(
-                              (label) => AtlasChip(
-                            label: label,
-                            icon: Icons.compare_arrows_rounded,
-                            size: AtlasChipSize.compact,
-                          ),
-                        )
-                            .toList(),
-                      ),
-                    ] else ...[
-                      const SizedBox(height: AtlasSpacing.sm),
-                      Text(
-                        'No saved metadata differences detected. '
-                            'Compare images and item details manually.',
-                        style: AtlasTypography.bodySmall.copyWith(
-                          color: AtlasColors.textSecondary,
-                          height: 1.35,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ],
+          AtlasActionRow(
+            title: '${group.name} ${group.number}',
+            description:
+            'Possible duplicate or variant review group • '
+                '${group.itemCount} '
+                'item${group.itemCount == 1 ? '' : 's'}',
+            icon: Icons.content_copy_rounded,
+            accentColor: AtlasColors.vaultGold,
+            onTap: onReview,
           ),
-          const SizedBox(height: AtlasSpacing.md),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              onPressed: onReview,
-              icon: const Icon(
-                Icons.compare_rounded,
-              ),
-              label: Text(
-                'Review ${group.itemCount} Items',
+
+          if (group.differenceLabels.isNotEmpty) ...[
+            const SizedBox(
+              height: AtlasSpacing.sm,
+            ),
+            Wrap(
+              spacing: AtlasSpacing.xs,
+              runSpacing: AtlasSpacing.xs,
+              children: group.differenceLabels
+                  .map(
+                    (label) => AtlasChip(
+                  label: label,
+                  icon: Icons.compare_arrows_rounded,
+                  size: AtlasChipSize.compact,
+                ),
+              )
+                  .toList(),
+            ),
+          ] else ...[
+            const SizedBox(
+              height: AtlasSpacing.sm,
+            ),
+            Text(
+              'No saved metadata differences detected. '
+                  'Compare images and item details manually.',
+              style: AtlasTypography.bodySmall.copyWith(
+                color: AtlasColors.textSecondary,
+                height: 1.35,
               ),
             ),
+          ],
+
+          const SizedBox(
+            height: AtlasSpacing.md,
           ),
-          const SizedBox(height: AtlasSpacing.md),
+
           Divider(
             color: AtlasColors.textSecondary.withValues(
               alpha: 0.18,
             ),
           ),
-          const SizedBox(height: AtlasSpacing.md),
+
+          const SizedBox(
+            height: AtlasSpacing.md,
+          ),
+
           ...group.pops.map(
                 (pop) => Padding(
               padding: const EdgeInsets.only(

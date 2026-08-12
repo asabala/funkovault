@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../academy/models/academy_request.dart';
+import '../../../theme/atlas_colors.dart';
+import '../../atlas/components/atlas_status_chip.dart';
 
 class AcademyRequestTypeBadge extends StatelessWidget {
   const AcademyRequestTypeBadge({
@@ -12,37 +14,11 @@ class AcademyRequestTypeBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 6,
-      ),
-      decoration: BoxDecoration(
-        color: _badgeColor.withValues(alpha: 0.14),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(
-          color: _badgeColor.withValues(alpha: 0.32),
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            _icon,
-            size: 13,
-            color: _badgeColor,
-          ),
-          const SizedBox(width: 6),
-          Text(
-            request.typeLabel,
-            style: TextStyle(
-              color: _badgeColor,
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ],
-      ),
+    return AtlasStatusChip(
+      label: request.typeLabel,
+      icon: _icon,
+      accentColor: _accentColor,
+      size: AtlasStatusChipSize.compact,
     );
   }
 
@@ -50,17 +26,19 @@ class AcademyRequestTypeBadge extends StatelessWidget {
     switch (request.type) {
       case AcademyRequestType.topic:
         return Icons.lightbulb_outline_rounded;
+
       case AcademyRequestType.track:
         return Icons.route_rounded;
     }
   }
 
-  Color get _badgeColor {
+  Color get _accentColor {
     switch (request.type) {
       case AcademyRequestType.topic:
-        return Colors.purpleAccent;
+        return AtlasColors.vaultGold;
+
       case AcademyRequestType.track:
-        return Colors.cyanAccent;
+        return AtlasColors.intelligenceBlue;
     }
   }
 }

@@ -3,7 +3,13 @@ import 'package:provider/provider.dart';
 
 import '../../models/pop.dart';
 import '../../services/app_state.dart';
-import '../pop/pop_details_screen.dart';
+import '../../theme/atlas_colors.dart';
+import '../../theme/atlas_spacing.dart';
+import '../../widgets/atlas/atlas_glass_card.dart';
+import '../../widgets/atlas/components/atlas_empty_state.dart';
+import '../../widgets/atlas/components/atlas_section_header.dart';
+import '../../widgets/vault/components/vault_pop_tile.dart';
+import '../../widgets/vault/vault_scroll_view.dart';
 
 class WishlistScreen extends StatelessWidget {
   const WishlistScreen({
@@ -24,138 +30,49 @@ class WishlistScreen extends StatelessWidget {
           'Wishlist',
         ),
       ),
-      body: wishlistPops.isEmpty
-          ? const _EmptyWishlist()
-          : ListView.builder(
-        padding: const EdgeInsets.symmetric(
-          vertical: 6,
-        ),
-        itemCount: wishlistPops.length,
-        itemBuilder: (
-            BuildContext context,
-            int index,
-            ) {
-          final Pop pop =
-          wishlistPops[index];
-
-          return Card(
-            margin: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 6,
+      body: VaultScrollView(
+        children: [
+          AtlasGlassCard(
+            accentColor: AtlasColors.vaultGold,
+            child: AtlasSectionHeader(
+              title: 'Wishlist',
+              subtitle: wishlistPops.isEmpty
+                  ? 'Save collectibles you want to hunt for later.'
+                  : '${wishlistPops.length} '
+                  'wishlist '
+                  '${wishlistPops.length == 1 ? 'item' : 'items'} '
+                  'currently tracked.',
+              icon: Icons.favorite_border_rounded,
+              accentColor: AtlasColors.vaultGold,
             ),
-            child: ListTile(
-              leading: CircleAvatar(
-                backgroundImage:
-                pop.imageUrl.trim().isNotEmpty
-                    ? NetworkImage(
-                  pop.imageUrl,
-                )
-                    : null,
-                child:
-                pop.imageUrl.trim().isEmpty
-                    ? const Icon(
-                  Icons.favorite,
-                )
-                    : null,
-              ),
-              title: Text(
-                pop.name,
-              ),
-              subtitle: Text(
-                _subtitleForPop(
-                  pop,
+          ),
+
+          const SizedBox(
+            height: AtlasSpacing.lg,
+          ),
+
+          if (wishlistPops.isEmpty)
+            const AtlasEmptyState(
+              eyebrow: 'Wishlist',
+              title: 'No Wishlist Items',
+              message:
+              'Tap the heart on a collectible to add it to your wishlist.',
+              icon: Icons.favorite_border_rounded,
+              compact: true,
+            )
+          else
+            ...wishlistPops.map(
+                  (Pop pop) => Padding(
+                padding: const EdgeInsets.only(
+                  bottom: AtlasSpacing.sm,
+                ),
+                child: VaultPopTile(
+                  pop: pop,
+                  showImage: true,
                 ),
               ),
-              trailing: const Icon(
-                Icons.chevron_right,
-              ),
-              onTap: () {
-                Navigator.push<void>(
-                  context,
-                  MaterialPageRoute<void>(
-                    builder: (_) {
-                      return PopDetailsScreen(
-                        pop: pop,
-                      );
-                    },
-                  ),
-                );
-              },
             ),
-          );
-        },
-      ),
-    );
-  }
-
-  String _subtitleForPop(
-      Pop pop,
-      ) {
-    final List<String> parts = <String>[
-      pop.owner,
-    ];
-
-    if (pop.number.trim().isNotEmpty) {
-      parts.add(
-        '#${pop.number.trim()}',
-      );
-    }
-
-    if (pop.value > 0) {
-      parts.add(
-        '\$${pop.value.toStringAsFixed(2)}',
-      );
-    }
-
-    if (!pop.isWishlist) {
-      parts.add(
-        'Owned',
-      );
-    }
-
-    return parts.join(
-      ' • ',
-    );
-  }
-}
-
-class _EmptyWishlist extends StatelessWidget {
-  const _EmptyWishlist();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: Padding(
-        padding: EdgeInsets.all(
-          24,
-        ),
-        child: Column(
-          mainAxisAlignment:
-          MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.favorite_border,
-              size: 80,
-            ),
-            SizedBox(
-              height: 16,
-            ),
-            Text(
-              'No Wishlist Items',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            SizedBox(
-              height: 8,
-            ),
-            Text(
-              'Tap the heart on a collectible to add it here.',
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
+        ],
       ),
     );
   }

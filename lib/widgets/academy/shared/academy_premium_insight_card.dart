@@ -2,16 +2,17 @@ import 'package:flutter/material.dart';
 
 import '../../../theme/atlas_colors.dart';
 import '../../../theme/atlas_spacing.dart';
-import '../../../theme/atlas_typography.dart';
 import '../../atlas/atlas_glass_card.dart';
-import '../../atlas/atlas_glass_panel.dart';
+import '../../atlas/components/atlas_info_banner.dart';
+import '../../atlas/components/atlas_section_header.dart';
+import '../../premium/premium_badge.dart';
 
 class AcademyPremiumInsightCard extends StatelessWidget {
   const AcademyPremiumInsightCard({
     super.key,
     this.title = 'Premium Insight',
     this.message =
-    'Atlas Premium will connect this topic to your Vault, value trends, condition risks, and smarter collecting decisions.',
+    'Atlas Premium can connect this topic to deeper collector intelligence, personalization, value context, and smarter collection decisions.',
   });
 
   final String title;
@@ -19,50 +20,36 @@ class AcademyPremiumInsightCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final String cleanedTitle = title.trim();
+    final String cleanedMessage = message.trim();
+
     return AtlasGlassCard(
-      child: AtlasGlassPanel(
-        child: Padding(
-          padding: const EdgeInsets.all(AtlasSpacing.md),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 46,
-                height: 46,
-                decoration: BoxDecoration(
-                  color: AtlasColors.vaultGold.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: const Icon(
-                  Icons.workspace_premium,
-                  color: AtlasColors.vaultGold,
-                ),
-              ),
-              const SizedBox(width: AtlasSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: AtlasTypography.headingSmall.copyWith(
-                        color: AtlasColors.vaultGold,
-                      ),
-                    ),
-                    const SizedBox(height: AtlasSpacing.xs),
-                    Text(
-                      message,
-                      style: AtlasTypography.bodySmall.copyWith(
-                        color: AtlasColors.textSecondary,
-                        height: 1.4,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+      accentColor: AtlasColors.vaultGold,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AtlasSectionHeader(
+            title: cleanedTitle.isEmpty
+                ? 'Premium Insight'
+                : cleanedTitle,
+            subtitle:
+            'Advanced Academy intelligence for Atlas Premium.',
+            icon: Icons.workspace_premium_rounded,
+            accentColor: AtlasColors.vaultGold,
+            badge: const PremiumBadge(),
           ),
-        ),
+          const SizedBox(
+            height: AtlasSpacing.md,
+          ),
+          AtlasInfoBanner(
+            icon: Icons.auto_awesome_rounded,
+            title: 'Premium Intelligence',
+            message: cleanedMessage.isEmpty
+                ? 'More Premium Academy intelligence is planned for this topic.'
+                : cleanedMessage,
+            accentColor: AtlasColors.vaultGold,
+          ),
+        ],
       ),
     );
   }

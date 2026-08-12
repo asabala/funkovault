@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../academy/models/academy_request.dart';
+import '../../../theme/atlas_spacing.dart';
 import 'academy_admin_request_badge_card.dart';
 import 'academy_admin_request_inbox_card.dart';
 
@@ -23,11 +24,14 @@ class AcademyLocalAdminToolsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         AcademyAdminRequestBadgeCard(
           newRequestCount: newRequestCount,
         ),
-        const SizedBox(height: 12),
+        const SizedBox(
+          height: AtlasSpacing.sm,
+        ),
         AcademyAdminRequestInboxCard(
           requests: requests,
           onReviewTap: onReviewTap,

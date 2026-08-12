@@ -1,5 +1,13 @@
 import 'package:flutter/material.dart';
 
+import '../../../academy/models/academy_track_selector_item.dart';
+import '../../../theme/atlas_colors.dart';
+import '../../../theme/atlas_spacing.dart';
+import '../../../theme/atlas_typography.dart';
+import '../../atlas/atlas_glass_card.dart';
+import '../../atlas/components/atlas_section_header.dart';
+import '../../atlas/components/atlas_status_chip.dart';
+
 class AcademyTrackSelectorCard extends StatelessWidget {
   const AcademyTrackSelectorCard({
     super.key,
@@ -18,102 +26,57 @@ class AcademyTrackSelectorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Card(
-      elevation: 0,
-      margin: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24),
-        side: BorderSide(
-          color: theme.colorScheme.outline.withValues(alpha: 0.18),
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  height: 44,
-                  width: 44,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    color: theme.colorScheme.primary.withValues(alpha: 0.12),
-                  ),
-                  child: Icon(
-                    Icons.school_rounded,
-                    color: theme.colorScheme.primary,
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        subtitle,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                          height: 1.35,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+    return AtlasGlassCard(
+      accentColor: AtlasColors.intelligenceBlue,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AtlasSectionHeader(
+            title: title.trim().isEmpty
+                ? 'Choose Academy Track'
+                : title.trim(),
+            subtitle: subtitle.trim().isEmpty
+                ? 'Choose the collector path you want to explore.'
+                : subtitle.trim(),
+            icon: Icons.school_rounded,
+            accentColor: AtlasColors.intelligenceBlue,
+          ),
+          if (tracks.isNotEmpty) ...[
+            const SizedBox(
+              height: AtlasSpacing.lg,
             ),
-            const SizedBox(height: 16),
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
-                children: tracks.map((track) {
-                  final isSelected = track.id == selectedTrackId;
-
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 10),
-                    child: _TrackChip(
-                      track: track,
-                      isSelected: isSelected,
-                      onTap: () => onTrackSelected(track.id),
+                children: [
+                  for (
+                  int index = 0;
+                  index < tracks.length;
+                  index++
+                  ) ...[
+                    _TrackChip(
+                      track: tracks[index],
+                      isSelected:
+                      tracks[index].id == selectedTrackId,
+                      onTap: () {
+                        onTrackSelected(
+                          tracks[index].id,
+                        );
+                      },
                     ),
-                  );
-                }).toList(),
+                    if (index != tracks.length - 1)
+                      const SizedBox(
+                        width: AtlasSpacing.sm,
+                      ),
+                  ],
+                ],
               ),
             ),
           ],
-        ),
+        ],
       ),
     );
   }
-}
-
-class AcademyTrackSelectorItem {
-  const AcademyTrackSelectorItem({
-    required this.id,
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-    required this.isAvailable,
-    this.badge,
-  });
-
-  final String id;
-  final String title;
-  final String subtitle;
-  final IconData icon;
-  final bool isAvailable;
-  final String? badge;
 }
 
 class _TrackChip extends StatelessWidget {
@@ -129,126 +92,132 @@ class _TrackChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    final backgroundColor = isSelected
-        ? theme.colorScheme.primary
-        : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.68);
-
-    final foregroundColor = isSelected
-        ? theme.colorScheme.onPrimary
-        : theme.colorScheme.onSurface;
-
-    final borderColor = isSelected
-        ? theme.colorScheme.primary
-        : theme.colorScheme.outline.withValues(alpha: 0.16);
+    final Color accentColor = track.isAvailable
+        ? AtlasColors.intelligenceBlue
+        : AtlasColors.textSecondary;
 
     return InkWell(
-      borderRadius: BorderRadius.circular(22),
+      borderRadius: BorderRadius.circular(
+        22,
+      ),
       onTap: onTap,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
+        duration: const Duration(
+          milliseconds: 180,
+        ),
         curve: Curves.easeOut,
-        width: 190,
-        padding: const EdgeInsets.all(14),
+        width: 200,
+        padding: const EdgeInsets.all(
+          AtlasSpacing.md,
+        ),
         decoration: BoxDecoration(
-          color: backgroundColor,
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: borderColor),
+          color: isSelected
+              ? accentColor.withValues(
+            alpha: 0.16,
+          )
+              : AtlasColors.background.withValues(
+            alpha: 0.72,
+          ),
+          borderRadius: BorderRadius.circular(
+            22,
+          ),
+          border: Border.all(
+            color: isSelected
+                ? accentColor.withValues(
+              alpha: 0.70,
+            )
+                : Colors.white.withValues(
+              alpha: 0.08,
+            ),
+          ),
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment:
+          CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Icon(
-                  track.icon,
-                  size: 20,
-                  color: foregroundColor,
+                Container(
+                  width: 38,
+                  height: 38,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: accentColor.withValues(
+                      alpha: 0.14,
+                    ),
+                    borderRadius:
+                    BorderRadius.circular(
+                      13,
+                    ),
+                  ),
+                  child: Icon(
+                    track.icon,
+                    size: 20,
+                    color: accentColor,
+                  ),
                 ),
                 const Spacer(),
-                if (track.badge != null)
-                  _TrackBadge(
-                    label: track.badge!,
-                    isSelected: isSelected,
+                if (track.badge != null &&
+                    track.badge!.trim().isNotEmpty)
+                  AtlasStatusChip(
+                    label: track.badge!.trim(),
+                    accentColor: track.isAvailable
+                        ? AtlasColors.vaultGold
+                        : AtlasColors.textSecondary,
+                    size:
+                    AtlasStatusChipSize.compact,
                   ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(
+              height: AtlasSpacing.md,
+            ),
             Text(
               track.title,
               maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.titleSmall?.copyWith(
-                color: foregroundColor,
-                fontWeight: FontWeight.w800,
+              overflow:
+              TextOverflow.ellipsis,
+              style:
+              AtlasTypography.headingSmall.copyWith(
+                color: isSelected
+                    ? AtlasColors.textPrimary
+                    : AtlasColors.textPrimary,
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(
+              height: AtlasSpacing.xs,
+            ),
             Text(
               track.subtitle,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: foregroundColor.withValues(alpha: 0.78),
-                height: 1.25,
+              maxLines: 3,
+              overflow:
+              TextOverflow.ellipsis,
+              style:
+              AtlasTypography.bodySmall.copyWith(
+                color:
+                AtlasColors.textSecondary,
+                height: 1.3,
               ),
             ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Icon(
-                  track.isAvailable
-                      ? Icons.check_circle_rounded
-                      : Icons.lock_clock_rounded,
-                  size: 16,
-                  color: foregroundColor.withValues(alpha: 0.84),
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  track.isAvailable ? 'Available' : 'Coming Soon',
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: foregroundColor.withValues(alpha: 0.84),
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
+            const SizedBox(
+              height: AtlasSpacing.md,
+            ),
+            AtlasStatusChip(
+              label: track.isAvailable
+                  ? 'Available'
+                  : 'Coming Soon',
+              icon: track.isAvailable
+                  ? Icons
+                  .check_circle_outline_rounded
+                  : Icons
+                  .lock_clock_outlined,
+              accentColor: track.isAvailable
+                  ? AtlasColors.success
+                  : AtlasColors.textSecondary,
+              size:
+              AtlasStatusChipSize.compact,
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _TrackBadge extends StatelessWidget {
-  const _TrackBadge({
-    required this.label,
-    required this.isSelected,
-  });
-
-  final String label;
-  final bool isSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: isSelected
-            ? theme.colorScheme.onPrimary.withValues(alpha: 0.16)
-            : theme.colorScheme.primary.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label,
-        style: theme.textTheme.labelSmall?.copyWith(
-          color: isSelected
-              ? theme.colorScheme.onPrimary
-              : theme.colorScheme.primary,
-          fontWeight: FontWeight.w800,
         ),
       ),
     );

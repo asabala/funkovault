@@ -2,17 +2,19 @@ import 'package:flutter/material.dart';
 
 import '../../atlas/recommendations/models/atlas_recommendation.dart';
 import '../../atlas/recommendations/models/atlas_recommendation_summary.dart';
-import '../../theme/atlas_colors.dart';
 import '../../theme/atlas_spacing.dart';
-import '../../theme/atlas_typography.dart';
 import '../atlas/atlas_expandable_section.dart';
-import '../atlas/atlas_glass_panel.dart';
+import '../atlas/components/atlas_empty_state.dart';
+import '../atlas/components/atlas_insight_panel.dart';
 import 'atlas_recommendation_tile.dart';
 
 /// Reusable presentation for completed Atlas recommendation intelligence.
 ///
 /// The recommendation engine remains responsible for recommendation creation,
 /// priority, sorting, deduplication, descriptions, reasons, and action labels.
+///
+/// Presentation is intentionally composed from shared ADS components so this
+/// card stays focused on orchestration rather than owning one-off UI.
 class AtlasRecommendationsCard extends StatelessWidget {
   const AtlasRecommendationsCard({
     super.key,
@@ -44,50 +46,80 @@ class AtlasRecommendationsCard extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    final visibleRecommendations = summary.recommendations
+    final List<AtlasRecommendation> visibleRecommendations =
+    summary.recommendations
         .take(maxRecommendations)
-        .toList(growable: false);
+        .toList(
+      growable: false,
+    );
+
+    final AtlasRecommendation? primaryRecommendation =
+        summary.primaryRecommendation;
 
     return AtlasExpandableSection(
       title: 'Atlas Recommendations',
-      subtitle: _buildRecommendationSubtitle(summary),
+      subtitle: _buildRecommendationSubtitle(
+        summary,
+      ),
       icon: Icons.recommend_outlined,
       initiallyExpanded: initiallyExpanded,
       badge: AtlasExpandableBadge(
-        label: '${summary.count} ${summary.count == 1 ? 'Action' : 'Actions'}',
+        label:
+        '${summary.count} '
+            '${summary.count == 1 ? 'Action' : 'Actions'}',
         icon: Icons.lightbulb_outline,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (!summary.hasRecommendations)
-            const _RecommendationEmptyState()
+            const AtlasEmptyState(
+              eyebrow: 'Recommendations',
+              title: 'Profile looks complete',
+              message:
+              'Atlas did not identify any immediate collectible record improvements.',
+              icon: Icons.task_alt_rounded,
+              tone: AtlasEmptyStateTone.recommendation,
+              compact: true,
+            )
           else ...[
-            if (summary.primaryRecommendation != null) ...[
-              _PrimaryRecommendationPanel(
-                recommendation: summary.primaryRecommendation!,
+            if (primaryRecommendation != null) ...[
+              AtlasInsightPanel(
+                eyebrow: 'Recommended Next Step',
+                title: primaryRecommendation.title,
+                message: primaryRecommendation.reason,
+                icon: Icons.auto_awesome_rounded,
+                tone: AtlasInsightPanelTone.recommendation,
               ),
-              const SizedBox(height: AtlasSpacing.md),
+              const SizedBox(
+                height: AtlasSpacing.md,
+              ),
             ],
 
             ...visibleRecommendations.map(
-                  (recommendation) => Padding(
-                padding: const EdgeInsets.only(
-                  bottom: AtlasSpacing.sm,
-                ),
-                child: AtlasRecommendationTile(
-                  recommendation: recommendation,
-                  onAction: onRecommendationAction,
-                  showAction:
-                  onRecommendationAction != null,
-                ),
-              ),
+                  (
+                  AtlasRecommendation recommendation,
+                  ) {
+                return Padding(
+                  padding: const EdgeInsets.only(
+                    bottom: AtlasSpacing.sm,
+                  ),
+                  child: AtlasRecommendationTile(
+                    recommendation: recommendation,
+                    onAction: onRecommendationAction,
+                    showAction:
+                    onRecommendationAction != null,
+                  ),
+                );
+              },
             ),
 
             if (summary.count >
                 visibleRecommendations.length ||
                 onViewAll != null) ...[
-              const SizedBox(height: AtlasSpacing.sm),
+              const SizedBox(
+                height: AtlasSpacing.sm,
+              ),
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton.icon(
@@ -119,109 +151,12 @@ String _buildRecommendationSubtitle(
     return 'No immediate improvements recommended';
   }
 
-  final primary = summary.primaryRecommendation;
+  final AtlasRecommendation? primary =
+      summary.primaryRecommendation;
 
   if (primary == null) {
     return '${summary.count} recommendations available';
   }
 
   return primary.title;
-}
-
-class _PrimaryRecommendationPanel extends StatelessWidget {
-  const _PrimaryRecommendationPanel({required this.recommendation});
-
-  final AtlasRecommendation recommendation;
-
-  @override
-  Widget build(BuildContext context) {
-    return AtlasGlassPanel(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: AtlasColors.vaultGold.withValues(alpha: 0.14),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: const Icon(
-              Icons.auto_awesome_rounded,
-              color: AtlasColors.vaultGold,
-            ),
-          ),
-          const SizedBox(width: AtlasSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Recommended Next Step',
-                  style: AtlasTypography.bodySmall.copyWith(
-                    color: AtlasColors.vaultGold,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: AtlasSpacing.xs),
-                Text(
-                  recommendation.title,
-                  style: AtlasTypography.bodyMedium.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: AtlasSpacing.xs),
-                Text(
-                  recommendation.reason,
-                  style: AtlasTypography.bodySmall.copyWith(
-                    color: AtlasColors.textSecondary,
-                    height: 1.4,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _RecommendationEmptyState extends StatelessWidget {
-  const _RecommendationEmptyState();
-
-  @override
-  Widget build(BuildContext context) {
-    return AtlasGlassPanel(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(Icons.task_alt_rounded, color: AtlasColors.vaultGold),
-          const SizedBox(width: AtlasSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Profile looks complete',
-                  style: AtlasTypography.bodyMedium.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: AtlasSpacing.xs),
-                Text(
-                  'Atlas did not identify any immediate collectible record improvements.',
-                  style: AtlasTypography.bodySmall.copyWith(
-                    color: AtlasColors.textSecondary,
-                    height: 1.4,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }

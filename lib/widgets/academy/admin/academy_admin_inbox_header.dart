@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../../theme/atlas_colors.dart';
+import '../../atlas/components/atlas_section_header.dart';
+import '../../atlas/components/atlas_status_chip.dart';
+
 class AcademyAdminInboxHeader extends StatelessWidget {
   const AcademyAdminInboxHeader({
     super.key,
@@ -10,48 +14,37 @@ class AcademyAdminInboxHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          height: 44,
-          width: 44,
-          decoration: BoxDecoration(
-            color: const Color(0xFFD6B25E).withValues(alpha: 0.14),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: const Icon(
-            Icons.admin_panel_settings_rounded,
-            color: Color(0xFFD6B25E),
-          ),
-        ),
-        const SizedBox(width: 14),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Admin Request Inbox',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                requestCount == 0
-                    ? 'No Academy requests yet.'
-                    : '$requestCount request(s) waiting for review.',
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.65),
-                  fontSize: 13,
-                  height: 1.35,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
+    final bool hasRequests =
+        requestCount > 0;
+
+    final String requestLabel =
+    requestCount == 1
+        ? '1 Request'
+        : '$requestCount Requests';
+
+    return AtlasSectionHeader(
+      title: 'Admin Request Inbox',
+      subtitle: hasRequests
+          ? '$requestLabel available for Academy review.'
+          : 'No Academy requests are currently waiting for review.',
+      icon:
+      Icons.admin_panel_settings_rounded,
+      accentColor:
+      AtlasColors.vaultGold,
+      badge: AtlasStatusChip(
+        label: hasRequests
+            ? requestLabel
+            : 'Inbox Clear',
+        icon: hasRequests
+            ? Icons
+            .mark_email_unread_outlined
+            : Icons.mark_email_read_outlined,
+        accentColor: hasRequests
+            ? AtlasColors.vaultGold
+            : AtlasColors.success,
+        size:
+        AtlasStatusChipSize.compact,
+      ),
     );
   }
 }

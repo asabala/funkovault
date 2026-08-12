@@ -8,6 +8,7 @@ import '../../../../theme/atlas_typography.dart';
 import '../../atlas/atlas_glass_panel.dart';
 import '../../../vault/utils/vault_display_utils.dart';
 import '../../atlas/components/atlas_chip.dart';
+import '../../atlas/components/atlas_product_image.dart';
 
 class VaultPopTile extends StatelessWidget {
   const VaultPopTile({
@@ -67,8 +68,13 @@ class VaultPopTile extends StatelessWidget {
           children: [
             if (showImage) ...[
               Center(
-                child: VaultPopThumbnail(
+                child: AtlasProductImage(
                   imageUrl: pop.imageUrl,
+                  width: 54,
+                  height: 68,
+                  borderRadius: AtlasSpacing.sm,
+                  placeholderIcon: Icons.inventory_2_rounded,
+                  errorIcon: Icons.broken_image_rounded,
                 ),
               ),
               const SizedBox(
@@ -275,76 +281,5 @@ class VaultPopBadges extends StatelessWidget {
     }
 
     return '${cleaned.substring(0, 16)}...';
-  }
-}
-
-class VaultPopThumbnail extends StatelessWidget {
-  const VaultPopThumbnail({
-    super.key,
-    required this.imageUrl,
-  });
-
-  final String imageUrl;
-
-  @override
-  Widget build(BuildContext context) {
-    final cleanImageUrl = imageUrl.trim();
-
-    return Container(
-      width: 54,
-      height: 68,
-      decoration: BoxDecoration(
-        color: AtlasColors.textSecondary.withValues(
-          alpha: 0.06,
-        ),
-        borderRadius: BorderRadius.circular(
-          AtlasSpacing.sm,
-        ),
-        border: Border.all(
-          color: AtlasColors.vaultGold.withValues(
-            alpha: 0.28,
-          ),
-        ),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: cleanImageUrl.isEmpty
-          ? const Icon(
-        Icons.inventory_2_rounded,
-        size: 28,
-      )
-          : Image.network(
-        cleanImageUrl,
-        fit: BoxFit.contain,
-        loadingBuilder: (
-            context,
-            child,
-            loadingProgress,
-            ) {
-          if (loadingProgress == null) {
-            return child;
-          }
-
-          return const Center(
-            child: SizedBox(
-              width: 18,
-              height: 18,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-              ),
-            ),
-          );
-        },
-        errorBuilder: (
-            context,
-            error,
-            stackTrace,
-            ) {
-          return const Icon(
-            Icons.broken_image_rounded,
-            size: 28,
-          );
-        },
-      ),
-    );
   }
 }

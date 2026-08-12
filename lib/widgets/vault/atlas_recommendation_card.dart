@@ -6,6 +6,8 @@ import '../../theme/atlas_spacing.dart';
 import '../../theme/atlas_typography.dart';
 import '../atlas/atlas_glass_card.dart';
 import '../atlas/atlas_glass_panel.dart';
+import '../atlas/components/atlas_section_header.dart';
+import '../atlas/components/atlas_status_chip.dart';
 
 class AtlasRecommendationCard extends StatelessWidget {
   const AtlasRecommendationCard({
@@ -30,31 +32,25 @@ class AtlasRecommendationCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const Icon(
-                AtlasIcons.intelligence,
-                color: AtlasColors.vaultGold,
-                size: 22,
-              ),
-              const SizedBox(width: AtlasSpacing.sm),
-              Expanded(
-                child: Text(
-                  'Atlas Recommendation',
-                  style: AtlasTypography.headingSmall,
-                ),
-              ),
-              Text(
-                '$confidence%',
-                style: AtlasTypography.headingSmall.copyWith(
-                  color: AtlasColors.vaultGold,
-                ),
-              ),
-            ],
+          const AtlasSectionHeader(
+            title: 'Atlas Recommendation',
+            subtitle:
+            'Collector guidance generated from your current vault snapshot.',
+            icon: AtlasIcons.intelligence,
+            accentColor: AtlasColors.vaultGold,
           ),
-
-          const SizedBox(height: AtlasSpacing.md),
-
+          const SizedBox(
+            height: AtlasSpacing.md,
+          ),
+          AtlasStatusChip(
+            label: '$confidence% Confidence',
+            icon: Icons.verified_rounded,
+            accentColor: AtlasColors.vaultGold,
+            size: AtlasStatusChipSize.compact,
+          ),
+          const SizedBox(
+            height: AtlasSpacing.md,
+          ),
           AtlasGlassPanel(
             child: Text(
               message,
@@ -63,9 +59,9 @@ class AtlasRecommendationCard extends StatelessWidget {
               ),
             ),
           ),
-
-          const SizedBox(height: AtlasSpacing.md),
-
+          const SizedBox(
+            height: AtlasSpacing.md,
+          ),
           Row(
             children: [
               Expanded(
@@ -74,7 +70,9 @@ class AtlasRecommendationCard extends StatelessWidget {
                   value: estimatedCost ?? 'Learning',
                 ),
               ),
-              const SizedBox(width: AtlasSpacing.sm),
+              const SizedBox(
+                width: AtlasSpacing.sm,
+              ),
               Expanded(
                 child: _RecommendationMeta(
                   label: 'Difficulty',
@@ -83,17 +81,24 @@ class AtlasRecommendationCard extends StatelessWidget {
               ),
             ],
           ),
-
-          const SizedBox(height: AtlasSpacing.md),
-
-          Align(
-            alignment: Alignment.centerRight,
-            child: OutlinedButton.icon(
-              onPressed: onViewDetails,
-              icon: const Icon(Icons.arrow_forward, size: 16),
-              label: const Text('View Details'),
+          if (onViewDetails != null) ...[
+            const SizedBox(
+              height: AtlasSpacing.md,
             ),
-          ),
+            Align(
+              alignment: Alignment.centerRight,
+              child: OutlinedButton.icon(
+                onPressed: onViewDetails,
+                icon: const Icon(
+                  Icons.arrow_forward_rounded,
+                  size: 16,
+                ),
+                label: const Text(
+                  'View Details',
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -112,7 +117,9 @@ class _RecommendationMeta extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AtlasGlassPanel(
-      padding: const EdgeInsets.all(AtlasSpacing.sm),
+      padding: const EdgeInsets.all(
+        AtlasSpacing.sm,
+      ),
       borderRadius: 16,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -123,7 +130,9 @@ class _RecommendationMeta extends StatelessWidget {
               color: AtlasColors.textSecondary,
             ),
           ),
-          const SizedBox(height: AtlasSpacing.xs),
+          const SizedBox(
+            height: AtlasSpacing.xs,
+          ),
           Text(
             value,
             maxLines: 1,

@@ -14,6 +14,10 @@ import '../../theme/atlas_spacing.dart';
 import '../../theme/atlas_typography.dart';
 import '../../widgets/atlas/atlas_glass_card.dart';
 import '../../widgets/atlas/atlas_glass_panel.dart';
+import '../../widgets/atlas/components/atlas_dropdown_panel.dart';
+import '../../widgets/atlas/components/atlas_form_field.dart';
+import '../../widgets/atlas/components/atlas_product_image.dart';
+import '../../widgets/atlas/components/atlas_section_header.dart';
 import '../../widgets/pop/labeled_dropdown.dart';
 import '../../widgets/vault/vault_scroll_view.dart';
 
@@ -354,8 +358,12 @@ class _AddPopScreenState extends State<AddPopScreen> {
                     AtlasGlassPanel(
                       child: Row(
                         children: [
-                          _AddPopImage(
+                          AtlasProductImage(
                             imageUrl: _catalogImageUrl,
+                            width: 76,
+                            height: 96,
+                            borderRadius: AtlasSpacing.md,
+                            showBorder: true,
                           ),
                           const SizedBox(width: AtlasSpacing.md),
                           Expanded(
@@ -388,30 +396,32 @@ class _AddPopScreenState extends State<AddPopScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const _AddSectionHeader(
+                  const AtlasSectionHeader(
                     title: 'Basic Information',
+                    subtitle: 'Enter the core identity of this collectible.',
                     icon: Icons.info_outline_rounded,
+                    accentColor: AtlasColors.vaultGold,
                   ),
                   const SizedBox(height: AtlasSpacing.md),
-                  _AtlasTextField(
+                  AtlasFormField(
                     controller: _nameController,
                     label: 'Pop Name',
                     icon: Icons.badge_outlined,
                   ),
                   const SizedBox(height: AtlasSpacing.md),
-                  _AtlasTextField(
+                  AtlasFormField(
                     controller: _numberController,
                     label: 'Pop Number',
                     icon: Icons.tag_rounded,
                   ),
                   const SizedBox(height: AtlasSpacing.md),
-                  _AtlasTextField(
+                  AtlasFormField(
                     controller: _categoryController,
                     label: 'Category',
                     icon: Icons.category_outlined,
                   ),
                   const SizedBox(height: AtlasSpacing.md),
-                  _AtlasTextField(
+                  AtlasFormField(
                     controller: _seriesController,
                     label: 'Series',
                     hintText: 'Pop! Marvel',
@@ -425,9 +435,12 @@ class _AddPopScreenState extends State<AddPopScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const _AddSectionHeader(
+                  const AtlasSectionHeader(
                     title: 'Collector Identity',
+                    subtitle:
+                    'Capture variants, exclusives, stickers, limited editions, and signatures.',
                     icon: Icons.verified_rounded,
+                    accentColor: AtlasColors.vaultGold,
                   ),
                   const SizedBox(height: AtlasSpacing.md),
                   AtlasInsightCard(
@@ -443,7 +456,7 @@ class _AddPopScreenState extends State<AddPopScreen> {
                     ),
                   ],
                   const SizedBox(height: AtlasSpacing.lg),
-                  _AtlasDropdownPanel(
+                  AtlasDropdownPanel(
                     child: LabeledDropdown(
                       label: 'Variant',
                       value: _variant,
@@ -457,7 +470,7 @@ class _AddPopScreenState extends State<AddPopScreen> {
                   ),
                   if (_variant == 'Other') ...[
                     const SizedBox(height: AtlasSpacing.md),
-                    _AtlasTextField(
+                    AtlasFormField(
                       controller: _customVariantController,
                       label: 'Custom Variant',
                       hintText: 'Enter the variant type',
@@ -466,7 +479,7 @@ class _AddPopScreenState extends State<AddPopScreen> {
                   ],
 
                   const SizedBox(height: AtlasSpacing.md),
-                  _AtlasDropdownPanel(
+                  AtlasDropdownPanel(
                     child: LabeledDropdown(
                       label: 'Retail Exclusive',
                       value: _retailExclusive,
@@ -480,7 +493,7 @@ class _AddPopScreenState extends State<AddPopScreen> {
                   ),
                   if (_retailExclusive == 'Other') ...[
                     const SizedBox(height: AtlasSpacing.md),
-                    _AtlasTextField(
+                    AtlasFormField(
                       controller: _customRetailExclusiveController,
                       label: 'Custom Retail Exclusive',
                       hintText: 'Enter the store or retailer',
@@ -488,7 +501,7 @@ class _AddPopScreenState extends State<AddPopScreen> {
                     ),
                   ],
                   const SizedBox(height: AtlasSpacing.md),
-                  _AtlasDropdownPanel(
+                  AtlasDropdownPanel(
                     child: LabeledDropdown(
                       label: 'Event Sticker',
                       value: _eventSticker,
@@ -502,7 +515,7 @@ class _AddPopScreenState extends State<AddPopScreen> {
                   ),
                   if (_eventSticker == 'Other') ...[
                     const SizedBox(height: AtlasSpacing.md),
-                    _AtlasTextField(
+                    AtlasFormField(
                       controller: _customEventStickerController,
                       label: 'Custom Event Sticker',
                       hintText: 'Enter the event or sticker',
@@ -511,7 +524,7 @@ class _AddPopScreenState extends State<AddPopScreen> {
                   ],
 
                   const SizedBox(height: AtlasSpacing.md),
-                  _AtlasDropdownPanel(
+                  AtlasDropdownPanel(
                     child: LabeledDropdown(
                       label: 'Limited Edition',
                       value: _limitedEdition,
@@ -525,7 +538,7 @@ class _AddPopScreenState extends State<AddPopScreen> {
                   ),
                   if (_limitedEdition == 'Other') ...[
                     const SizedBox(height: AtlasSpacing.md),
-                    _AtlasTextField(
+                    AtlasFormField(
                       controller: _customLimitedEditionController,
                       label: 'Custom Limited Edition',
                       hintText: 'Example: LE 1250',
@@ -534,7 +547,7 @@ class _AddPopScreenState extends State<AddPopScreen> {
                   ],
 
                   const SizedBox(height: AtlasSpacing.md),
-                  _AtlasDropdownPanel(
+                  AtlasDropdownPanel(
                     child: LabeledDropdown(
                       label: 'Signature',
                       value: _signature,
@@ -548,7 +561,7 @@ class _AddPopScreenState extends State<AddPopScreen> {
                   ),
                   if (_signature == 'Other') ...[
                     const SizedBox(height: AtlasSpacing.md),
-                    _AtlasTextField(
+                    AtlasFormField(
                       controller: _customSignatureController,
                       label: 'Custom Signature Details',
                       hintText: 'Enter signer or authentication details',
@@ -563,12 +576,14 @@ class _AddPopScreenState extends State<AddPopScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const _AddSectionHeader(
+                  const AtlasSectionHeader(
                     title: 'Value',
+                    subtitle: 'Track estimated market value and what you paid.',
                     icon: Icons.attach_money_rounded,
+                    accentColor: AtlasColors.vaultGold,
                   ),
                   const SizedBox(height: AtlasSpacing.md),
-                  _AtlasTextField(
+                  AtlasFormField(
                     controller: _valueController,
                     label: 'Estimated Value (\$)',
                     icon: Icons.trending_up_rounded,
@@ -578,7 +593,7 @@ class _AddPopScreenState extends State<AddPopScreen> {
                     },
                   ),
                   const SizedBox(height: AtlasSpacing.md),
-                  _AtlasTextField(
+                  AtlasFormField(
                     controller: _pricePaidController,
                     label: 'Price Paid (\$)',
                     icon: Icons.payments_outlined,
@@ -595,12 +610,14 @@ class _AddPopScreenState extends State<AddPopScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const _AddSectionHeader(
+                  const AtlasSectionHeader(
                     title: 'Ownership',
+                    subtitle: 'Record how many identical physical copies you own.',
                     icon: Icons.inventory_2_rounded,
+                    accentColor: AtlasColors.vaultGold,
                   ),
                   const SizedBox(height: AtlasSpacing.md),
-                  _AtlasTextField(
+                  AtlasFormField(
                     controller: _quantityController,
                     label: 'Quantity',
                     icon: Icons.format_list_numbered_rounded,
@@ -630,126 +647,6 @@ class _AddPopScreenState extends State<AddPopScreen> {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _AddPopImage extends StatelessWidget {
-  const _AddPopImage({
-    required this.imageUrl,
-  });
-
-  final String imageUrl;
-
-  @override
-  Widget build(BuildContext context) {
-    final cleanImageUrl = imageUrl.trim();
-
-    return Container(
-      width: 76,
-      height: 96,
-      decoration: BoxDecoration(
-        color: AtlasColors.textSecondary.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(AtlasSpacing.md),
-        border: Border.all(
-          color: AtlasColors.vaultGold.withValues(alpha: 0.28),
-        ),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: cleanImageUrl.isEmpty
-          ? const Icon(
-        Icons.inventory_2_rounded,
-        size: 40,
-      )
-          : Image.network(
-        cleanImageUrl,
-        fit: BoxFit.contain,
-        errorBuilder: (context, error, stackTrace) {
-          return const Icon(
-            Icons.broken_image_rounded,
-            size: 40,
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _AddSectionHeader extends StatelessWidget {
-  const _AddSectionHeader({
-    required this.title,
-    required this.icon,
-  });
-
-  final String title;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(
-          icon,
-          color: AtlasColors.vaultGold,
-        ),
-        const SizedBox(width: AtlasSpacing.sm),
-        Expanded(
-          child: Text(
-            title,
-            style: AtlasTypography.headingSmall,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _AtlasTextField extends StatelessWidget {
-  const _AtlasTextField({
-    required this.controller,
-    required this.label,
-    required this.icon,
-    this.hintText,
-    this.keyboardType,
-    this.onChanged,
-  });
-
-  final TextEditingController controller;
-  final String label;
-  final IconData icon;
-  final String? hintText;
-  final TextInputType? keyboardType;
-  final ValueChanged<String>? onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return AtlasGlassPanel(
-      child: TextFormField(
-        controller: controller,
-        keyboardType: keyboardType,
-        onChanged: onChanged,
-        decoration: InputDecoration(
-          labelText: label,
-          hintText: hintText,
-          prefixIcon: Icon(icon),
-          border: const OutlineInputBorder(),
-        ),
-      ),
-    );
-  }
-}
-
-class _AtlasDropdownPanel extends StatelessWidget {
-  const _AtlasDropdownPanel({
-    required this.child,
-  });
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return AtlasGlassPanel(
-      child: child,
     );
   }
 }

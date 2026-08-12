@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../../theme/atlas_colors.dart';
+import '../../../theme/atlas_typography.dart';
+import '../../atlas/components/atlas_section_header.dart';
+
 class AcademyHeroHeader extends StatelessWidget {
   const AcademyHeroHeader({
     super.key,
@@ -12,27 +16,19 @@ class AcademyHeroHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 26,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
-        const SizedBox(height: 10),
-        Text(
-          subtitle,
-          style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.65),
-            fontSize: 14,
-            height: 1.45,
-          ),
-        ),
-      ],
+    final String cleanedTitle = title.trim();
+    final String cleanedSubtitle = subtitle.trim();
+
+    return AtlasSectionHeader(
+      title: cleanedTitle.isEmpty
+          ? 'Atlas Academy'
+          : cleanedTitle,
+      subtitle: cleanedSubtitle.isEmpty
+          ? 'Learn collector knowledge, strategy, and terminology inside Atlas.'
+          : cleanedSubtitle,
+      icon: Icons.school_rounded,
+      accentColor: AtlasColors.vaultGold,
+      titleStyle: AtlasTypography.headingLarge,
     );
   }
 }

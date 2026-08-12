@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../academy/models/academy_request.dart';
+import '../../../theme/atlas_colors.dart';
+import '../../atlas/components/atlas_status_chip.dart';
 
 class AcademyRequestStatusBadge extends StatelessWidget {
   const AcademyRequestStatusBadge({
@@ -12,52 +14,43 @@ class AcademyRequestStatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 6,
-      ),
-      decoration: BoxDecoration(
-        color: _backgroundColor.withValues(alpha: 0.16),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(
-          color: _backgroundColor.withValues(alpha: 0.35),
-        ),
-      ),
-      child: Text(
-        request.statusLabel,
-        style: TextStyle(
-          color: _textColor,
-          fontSize: 11,
-          fontWeight: FontWeight.w800,
-        ),
-      ),
+    return AtlasStatusChip(
+      label: request.statusLabel,
+      icon: _icon,
+      accentColor: _accentColor,
+      size: AtlasStatusChipSize.compact,
     );
   }
 
-  Color get _backgroundColor {
+  IconData get _icon {
     switch (request.status) {
       case AcademyRequestStatus.newRequest:
-        return Colors.lightBlueAccent;
+        return Icons.mark_email_unread_outlined;
+
       case AcademyRequestStatus.reviewed:
-        return Colors.amberAccent;
+        return Icons.visibility_outlined;
+
       case AcademyRequestStatus.approved:
-        return Colors.greenAccent;
+        return Icons.check_circle_outline_rounded;
+
       case AcademyRequestStatus.declined:
-        return Colors.redAccent;
+        return Icons.cancel_outlined;
     }
   }
 
-  Color get _textColor {
+  Color get _accentColor {
     switch (request.status) {
       case AcademyRequestStatus.newRequest:
-        return Colors.lightBlueAccent;
+        return AtlasColors.intelligenceBlue;
+
       case AcademyRequestStatus.reviewed:
-        return Colors.amberAccent;
+        return AtlasColors.warning;
+
       case AcademyRequestStatus.approved:
-        return Colors.greenAccent;
+        return AtlasColors.success;
+
       case AcademyRequestStatus.declined:
-        return Colors.redAccent;
+        return AtlasColors.warning;
     }
   }
 }

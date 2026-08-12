@@ -6,23 +6,40 @@ import '../../theme/atlas_colors.dart';
 import '../../theme/atlas_spacing.dart';
 import '../../theme/atlas_typography.dart';
 import '../../widgets/atlas/atlas_glass_card.dart';
+import '../../widgets/atlas/components/atlas_form_field.dart';
+import '../../widgets/atlas/components/atlas_info_banner.dart';
+import '../../widgets/atlas/components/atlas_section_header.dart';
 
 class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({super.key});
+  const RegisterScreen({
+    super.key,
+  });
 
   @override
-  State<RegisterScreen> createState() => _RegisterScreenState();
+  State<RegisterScreen> createState() {
+    return _RegisterScreenState();
+  }
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  final _formKey = GlobalKey<FormState>();
+  final GlobalKey<FormState> _formKey =
+  GlobalKey<FormState>();
 
-  final _displayNameController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
+  final TextEditingController _displayNameController =
+  TextEditingController();
+
+  final TextEditingController _emailController =
+  TextEditingController();
+
+  final TextEditingController _passwordController =
+  TextEditingController();
+
+  final TextEditingController _confirmPasswordController =
+  TextEditingController();
 
   bool _isLoading = false;
+  bool _isPasswordVisible = false;
+  bool _isConfirmPasswordVisible = false;
 
   @override
   void dispose() {
@@ -30,13 +47,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+
     super.dispose();
   }
 
   Future<void> _createAccount() async {
+    if (_isLoading) {
+      return;
+    }
+
     if (!_formKey.currentState!.validate()) {
       return;
     }
+
+    FocusScope.of(context).unfocus();
 
     setState(() {
       _isLoading = true;
@@ -44,9 +68,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     try {
       await context.read<AuthProvider>().register(
-        displayName: _displayNameController.text.trim(),
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
+        displayName:
+        _displayNameController.text.trim(),
+        email:
+        _emailController.text.trim(),
+        password:
+        _passwordController.text,
       );
 
       if (!mounted) {
@@ -55,7 +82,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Account created successfully. Please check your email.'),
+          content: Text(
+            'Account created successfully. Check your email to continue.',
+          ),
         ),
       );
 
@@ -66,8 +95,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Account creation failed: $error'),
+        const SnackBar(
+          content: Text(
+            'Atlas could not create your account. Check your information and try again.',
+          ),
         ),
       );
     } finally {
@@ -79,39 +110,83 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
-  String? _validateDisplayName(String? value) {
-    if (value == null || value.trim().isEmpty) {
+  void _togglePasswordVisibility() {
+    if (_isLoading) {
+      return;
+    }
+
+    setState(() {
+      _isPasswordVisible =
+      !_isPasswordVisible;
+    });
+  }
+
+  void _toggleConfirmPasswordVisibility() {
+    if (_isLoading) {
+      return;
+    }
+
+    setState(() {
+      _isConfirmPasswordVisible =
+      !_isConfirmPasswordVisible;
+    });
+  }
+
+  String? _validateDisplayName(
+      String? value,
+      ) {
+    final String displayName =
+        value?.trim() ?? '';
+
+    if (displayName.isEmpty) {
       return 'Enter your display name.';
+    }
+
+    if (displayName.length < 2) {
+      return 'Display name must be at least 2 characters.';
     }
 
     return null;
   }
 
-  String? _validateEmail(String? value) {
-    if (value == null || value.trim().isEmpty) {
+  String? _validateEmail(
+      String? value,
+      ) {
+    final String email =
+        value?.trim() ?? '';
+
+    if (email.isEmpty) {
       return 'Enter your email.';
     }
 
-    if (!value.contains('@')) {
+    final RegExp emailPattern = RegExp(
+      r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+    );
+
+    if (!emailPattern.hasMatch(email)) {
       return 'Enter a valid email address.';
     }
 
     return null;
   }
 
-  String? _validatePassword(String? value) {
+  String? _validatePassword(
+      String? value,
+      ) {
     if (value == null || value.isEmpty) {
       return 'Enter a password.';
     }
 
-    if (value.length < 6) {
-      return 'Password must be at least 6 characters.';
+    if (value.length < 8) {
+      return 'Password must be at least 8 characters.';
     }
 
     return null;
   }
 
-  String? _validateConfirmPassword(String? value) {
+  String? _validateConfirmPassword(
+      String? value,
+      ) {
     if (value == null || value.isEmpty) {
       return 'Confirm your password.';
     }
@@ -126,96 +201,243 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AtlasColors.background,
+      backgroundColor:
+      AtlasColors.background,
       appBar: AppBar(
-        title: const Text('Create Atlas Account'),
+        title: const Text(
+          'Create Atlas Account',
+        ),
       ),
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(AtlasSpacing.xl),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 460),
-            child: AtlasGlassCard(
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      'Join Atlas',
-                      textAlign: TextAlign.center,
-                      style: AtlasTypography.headingLarge,
-                    ),
-                    const SizedBox(height: AtlasSpacing.sm),
-                    Text(
-                      'Create your secure collector account and sync your Vault across devices.',
-                      textAlign: TextAlign.center,
-                      style: AtlasTypography.bodyMedium.copyWith(
-                        color: AtlasColors.textSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: AtlasSpacing.xl),
-                    TextFormField(
-                      controller: _displayNameController,
-                      enabled: !_isLoading,
-                      textInputAction: TextInputAction.next,
-                      decoration: const InputDecoration(
-                        labelText: 'Display Name',
-                        prefixIcon: Icon(Icons.person_outline),
-                      ),
-                      validator: _validateDisplayName,
-                    ),
-                    const SizedBox(height: AtlasSpacing.md),
-                    TextFormField(
-                      controller: _emailController,
-                      enabled: !_isLoading,
-                      keyboardType: TextInputType.emailAddress,
-                      textInputAction: TextInputAction.next,
-                      decoration: const InputDecoration(
-                        labelText: 'Email',
-                        prefixIcon: Icon(Icons.email_outlined),
-                      ),
-                      validator: _validateEmail,
-                    ),
-                    const SizedBox(height: AtlasSpacing.md),
-                    TextFormField(
-                      controller: _passwordController,
-                      enabled: !_isLoading,
-                      obscureText: true,
-                      textInputAction: TextInputAction.next,
-                      decoration: const InputDecoration(
-                        labelText: 'Password',
-                        prefixIcon: Icon(Icons.lock_outline),
-                      ),
-                      validator: _validatePassword,
-                    ),
-                    const SizedBox(height: AtlasSpacing.md),
-                    TextFormField(
-                      controller: _confirmPasswordController,
-                      enabled: !_isLoading,
-                      obscureText: true,
-                      textInputAction: TextInputAction.done,
-                      decoration: const InputDecoration(
-                        labelText: 'Confirm Password',
-                        prefixIcon: Icon(Icons.lock_reset_outlined),
-                      ),
-                      validator: _validateConfirmPassword,
-                      onFieldSubmitted: (_) => _createAccount(),
-                    ),
-                    const SizedBox(height: AtlasSpacing.xl),
-                    FilledButton(
-                      onPressed: _isLoading ? null : _createAccount,
-                      child: _isLoading
-                          ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(
+              AtlasSpacing.xl,
+            ),
+            child: ConstrainedBox(
+              constraints:
+              const BoxConstraints(
+                maxWidth: 460,
+              ),
+              child: AtlasGlassCard(
+                accentColor:
+                AtlasColors.vaultGold,
+                child: Form(
+                  key: _formKey,
+                  child: AutofillGroup(
+                    child: Column(
+                      crossAxisAlignment:
+                      CrossAxisAlignment
+                          .stretch,
+                      children: [
+                        const AtlasSectionHeader(
+                          title: 'Join Atlas',
+                          subtitle:
+                          'Create your collector account and build your vault identity.',
+                          icon:
+                          Icons.person_add_alt_1_rounded,
+                          accentColor:
+                          AtlasColors.vaultGold,
+                          titleStyle:
+                          AtlasTypography
+                              .headingLarge,
                         ),
-                      )
-                          : const Text('Create Account'),
+                        const SizedBox(
+                          height:
+                          AtlasSpacing.lg,
+                        ),
+                        const AtlasInfoBanner(
+                          icon:
+                          Icons.shield_outlined,
+                          title:
+                          'Account Security',
+                          message:
+                          'Use a unique password for Atlas. Account verification and recovery are handled through your registered email.',
+                        ),
+                        const SizedBox(
+                          height:
+                          AtlasSpacing.lg,
+                        ),
+                        AtlasFormField(
+                          controller:
+                          _displayNameController,
+                          label:
+                          'Display Name',
+                          icon:
+                          Icons.person_outline,
+                          enabled:
+                          !_isLoading,
+                          textInputAction:
+                          TextInputAction.next,
+                          textCapitalization:
+                          TextCapitalization.words,
+                          autofillHints: const [
+                            AutofillHints.name,
+                          ],
+                          validator:
+                          _validateDisplayName,
+                        ),
+                        const SizedBox(
+                          height:
+                          AtlasSpacing.md,
+                        ),
+                        AtlasFormField(
+                          controller:
+                          _emailController,
+                          label: 'Email',
+                          icon:
+                          Icons.email_outlined,
+                          enabled:
+                          !_isLoading,
+                          keyboardType:
+                          TextInputType
+                              .emailAddress,
+                          textInputAction:
+                          TextInputAction.next,
+                          textCapitalization:
+                          TextCapitalization
+                              .none,
+                          autocorrect: false,
+                          enableSuggestions:
+                          false,
+                          autofillHints: const [
+                            AutofillHints
+                                .newUsername,
+                            AutofillHints.email,
+                          ],
+                          validator:
+                          _validateEmail,
+                        ),
+                        const SizedBox(
+                          height:
+                          AtlasSpacing.md,
+                        ),
+                        AtlasFormField(
+                          controller:
+                          _passwordController,
+                          label: 'Password',
+                          icon:
+                          Icons.lock_outline,
+                          enabled:
+                          !_isLoading,
+                          obscureText:
+                          !_isPasswordVisible,
+                          textInputAction:
+                          TextInputAction.next,
+                          autocorrect: false,
+                          enableSuggestions:
+                          false,
+                          autofillHints: const [
+                            AutofillHints
+                                .newPassword,
+                          ],
+                          validator:
+                          _validatePassword,
+                          suffixIcon:
+                          IconButton(
+                            tooltip:
+                            _isPasswordVisible
+                                ? 'Hide password'
+                                : 'Show password',
+                            onPressed:
+                            _isLoading
+                                ? null
+                                : _togglePasswordVisibility,
+                            icon: Icon(
+                              _isPasswordVisible
+                                  ? Icons
+                                  .visibility_off_outlined
+                                  : Icons
+                                  .visibility_outlined,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(
+                          height:
+                          AtlasSpacing.md,
+                        ),
+                        AtlasFormField(
+                          controller:
+                          _confirmPasswordController,
+                          label:
+                          'Confirm Password',
+                          icon: Icons
+                              .lock_reset_outlined,
+                          enabled:
+                          !_isLoading,
+                          obscureText:
+                          !_isConfirmPasswordVisible,
+                          textInputAction:
+                          TextInputAction.done,
+                          autocorrect: false,
+                          enableSuggestions:
+                          false,
+                          autofillHints: const [
+                            AutofillHints
+                                .newPassword,
+                          ],
+                          validator:
+                          _validateConfirmPassword,
+                          onFieldSubmitted:
+                              (_) {
+                            _createAccount();
+                          },
+                          suffixIcon:
+                          IconButton(
+                            tooltip:
+                            _isConfirmPasswordVisible
+                                ? 'Hide password'
+                                : 'Show password',
+                            onPressed:
+                            _isLoading
+                                ? null
+                                : _toggleConfirmPasswordVisibility,
+                            icon: Icon(
+                              _isConfirmPasswordVisible
+                                  ? Icons
+                                  .visibility_off_outlined
+                                  : Icons
+                                  .visibility_outlined,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(
+                          height:
+                          AtlasSpacing.xl,
+                        ),
+                        SizedBox(
+                          width:
+                          double.infinity,
+                          child:
+                          FilledButton.icon(
+                            onPressed:
+                            _isLoading
+                                ? null
+                                : _createAccount,
+                            icon: _isLoading
+                                ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child:
+                              CircularProgressIndicator(
+                                strokeWidth:
+                                2,
+                              ),
+                            )
+                                : const Icon(
+                              Icons
+                                  .person_add_alt_1_rounded,
+                            ),
+                            label: Text(
+                              _isLoading
+                                  ? 'Creating Account'
+                                  : 'Create Account',
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),

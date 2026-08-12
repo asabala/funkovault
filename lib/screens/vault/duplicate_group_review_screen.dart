@@ -13,6 +13,7 @@ import '../../widgets/atlas/components/atlas_chip.dart';
 import '../../widgets/atlas/components/atlas_empty_state.dart';
 import '../../widgets/atlas/components/atlas_info_banner.dart';
 import '../../widgets/atlas/components/atlas_section_header.dart';
+import '../../widgets/atlas/components/atlas_status_chip.dart';
 import '../../widgets/vault/components/vault_pop_tile.dart';
 import '../pop/edit_pop_screen.dart';
 
@@ -261,24 +262,43 @@ class _ActiveDuplicateGroupView extends StatelessWidget {
                     'owner, and collection status.',
                 icon: Icons.layers_rounded,
               ),
-              const SizedBox(height: AtlasSpacing.md),
-              Text(
-                '${group.itemCount} saved records • '
-                    '${group.totalQuantity} total '
-                    '${group.totalQuantity == 1 ? 'copy' : 'copies'}',
-                style: AtlasTypography.bodyMedium.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+              const SizedBox(
+                height: AtlasSpacing.md,
               ),
-              const SizedBox(height: AtlasSpacing.sm),
-              Text(
-                'Consolidation keeps one record and combines the quantities. '
-                    'Only use this when these are truly identical copies.',
-                style: AtlasTypography.bodySmall.copyWith(
-                  height: 1.4,
-                ),
+
+              Wrap(
+                spacing: AtlasSpacing.sm,
+                runSpacing: AtlasSpacing.sm,
+                children: [
+                  AtlasStatusChip(
+                    label:
+                    '${group.itemCount} Saved Records',
+                    icon: Icons.layers_rounded,
+                    size: AtlasStatusChipSize.compact,
+                  ),
+                  AtlasStatusChip(
+                    label:
+                    '${group.totalQuantity} Total ${group.totalQuantity == 1 ? 'Copy' : 'Copies'}',
+                    icon: Icons.inventory_2_outlined,
+                    size: AtlasStatusChipSize.compact,
+                  ),
+                ],
               ),
-              const SizedBox(height: AtlasSpacing.md),
+
+              const SizedBox(
+                height: AtlasSpacing.md,
+              ),
+
+              const AtlasInfoBanner(
+                icon: Icons.merge_rounded,
+                title: 'How Consolidation Works',
+                message:
+                'Consolidation keeps one record and combines the quantities. Only use this when these are truly identical copies.',
+              ),
+
+              const SizedBox(
+                height: AtlasSpacing.md,
+              ),
               SizedBox(
                 width: double.infinity,
                 child: FilledButton.icon(

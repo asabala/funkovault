@@ -1,7 +1,16 @@
 import 'package:flutter/material.dart';
 
 import '../../academy/models/academy_category.dart';
+import '../../academy/models/academy_lesson.dart';
 import '../../academy/repository/academy_repository.dart';
+import '../../theme/atlas_colors.dart';
+import '../../theme/atlas_spacing.dart';
+import '../../widgets/atlas/atlas_glass_card.dart';
+import '../../widgets/atlas/components/atlas_action_row.dart';
+import '../../widgets/atlas/components/atlas_empty_state.dart';
+import '../../widgets/atlas/components/atlas_info_banner.dart';
+import '../../widgets/atlas/components/atlas_section_header.dart';
+import '../../widgets/atlas/components/atlas_status_chip.dart';
 import 'academy_lesson_screen.dart';
 
 class AcademyCategoryScreen extends StatelessWidget {
@@ -12,164 +21,182 @@ class AcademyCategoryScreen extends StatelessWidget {
 
   final AcademyCategory category;
 
-  static const _repository = AcademyRepository();
+  static const AcademyRepository _repository =
+  AcademyRepository();
 
   @override
   Widget build(BuildContext context) {
-    final lessons = _repository.getLessonsForCategory(category.id);
+    final List<AcademyLesson> lessons =
+    _repository
+        .getLessonsForCategory(
+      category.id,
+    )
+        .toList(
+      growable: false,
+    );
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(category.title),
+        title: Text(
+          category.title,
+        ),
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+        padding: const EdgeInsets.fromLTRB(
+          AtlasSpacing.md,
+          AtlasSpacing.sm,
+          AtlasSpacing.md,
+          AtlasSpacing.xl,
+        ),
         children: [
-          Text(
-            category.icon,
-            style: const TextStyle(fontSize: 42),
-          ),
-          const SizedBox(height: 14),
-          Text(
-            category.title,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 26,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            category.subtitle,
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.65),
-              fontSize: 14,
-              height: 1.45,
-            ),
-          ),
-          const SizedBox(height: 22),
-          if (lessons.isEmpty)
-            _EmptyLessonsCard(category: category)
-          else
-            for (final lesson in lessons) ...[
-              _LessonPreviewCard(
-                title: lesson.title,
-                subtitle: lesson.subtitle,
-                readingTimeMinutes: lesson.readingTimeMinutes,
-                difficulty: lesson.difficulty,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => AcademyLessonScreen(
-                        lesson: lesson,
-                      ),
-                    ),
-                  );
-                },
+          AtlasGlassCard(
+            accentColor:
+            AtlasColors.vaultGold,
+            child: AtlasSectionHeader(
+              title: category.title,
+              subtitle: category.subtitle,
+              icon:
+              Icons.school_rounded,
+              accentColor:
+              AtlasColors.vaultGold,
+              badge: Text(
+                category.icon,
+                style: const TextStyle(
+                  fontSize: 30,
+                ),
               ),
-              const SizedBox(height: 12),
-            ],
+            ),
+          ),
+          const SizedBox(
+            height: AtlasSpacing.lg,
+          ),
+          if (lessons.isEmpty)
+            _EmptyLessonsSection(
+              category: category,
+            )
+          else
+            _LessonsSection(
+              lessons: lessons,
+              onOpenLesson: (
+                  AcademyLesson lesson,
+                  ) {
+                _openLesson(
+                  context,
+                  lesson,
+                );
+              },
+            ),
+        ],
+      ),
+    );
+  }
+
+  void _openLesson(
+      BuildContext context,
+      AcademyLesson lesson,
+      ) {
+    Navigator.push<void>(
+      context,
+      MaterialPageRoute<void>(
+        builder: (_) =>
+            AcademyLessonScreen(
+              lesson: lesson,
+            ),
+      ),
+    );
+  }
+}
+
+class _LessonsSection extends StatelessWidget {
+  const _LessonsSection({
+    required this.lessons,
+    required this.onOpenLesson,
+  });
+
+  final List<AcademyLesson> lessons;
+  final ValueChanged<AcademyLesson>
+  onOpenLesson;
+
+  @override
+  Widget build(BuildContext context) {
+    return AtlasGlassCard(
+      child: Column(
+        crossAxisAlignment:
+        CrossAxisAlignment.start,
+        children: [
+          AtlasSectionHeader(
+            title: 'Lessons',
+            subtitle:
+            '${lessons.length} '
+                '${lessons.length == 1 ? 'lesson' : 'lessons'} '
+                'available in this Academy category.',
+            icon:
+            Icons.auto_stories_rounded,
+          ),
+          const SizedBox(
+            height: AtlasSpacing.lg,
+          ),
+          for (
+          int index = 0;
+          index < lessons.length;
+          index++
+          ) ...[
+            _LessonPreviewRow(
+              lesson: lessons[index],
+              onTap: () {
+                onOpenLesson(
+                  lessons[index],
+                );
+              },
+            ),
+            if (index !=
+                lessons.length - 1)
+              const SizedBox(
+                height: AtlasSpacing.sm,
+              ),
+          ],
         ],
       ),
     );
   }
 }
 
-class _LessonPreviewCard extends StatelessWidget {
-  const _LessonPreviewCard({
-    required this.title,
-    required this.subtitle,
-    required this.readingTimeMinutes,
-    required this.difficulty,
+class _LessonPreviewRow
+    extends StatelessWidget {
+  const _LessonPreviewRow({
+    required this.lesson,
     required this.onTap,
   });
 
-  final String title;
-  final String subtitle;
-  final int readingTimeMinutes;
-  final String difficulty;
+  final AcademyLesson lesson;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      color: const Color(0xFF171717),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: BorderSide(
-          color: Colors.white.withValues(alpha: 0.08),
-        ),
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(20),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(18),
-          child: Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFD6B25E).withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: const Icon(
-                  Icons.school_rounded,
-                  color: Color(0xFFD6B25E),
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      subtitle,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.62),
-                        fontSize: 13,
-                        height: 1.35,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      '$readingTimeMinutes min • $difficulty',
-                      style: const TextStyle(
-                        color: Color(0xFFD6B25E),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Icon(
-                Icons.chevron_right_rounded,
-                color: Colors.white.withValues(alpha: 0.45),
-              ),
-            ],
-          ),
-        ),
+    return AtlasActionRow(
+      title: lesson.title,
+      description: lesson.subtitle,
+      icon: Icons.school_rounded,
+      accentColor:
+      AtlasColors.vaultGold,
+      onTap: onTap,
+      badge: AtlasStatusChip(
+        label:
+        '${lesson.readingTimeMinutes} min • ${lesson.difficulty}',
+        icon:
+        Icons.schedule_rounded,
+        accentColor:
+        AtlasColors.vaultGold,
+        size:
+        AtlasStatusChipSize.compact,
       ),
     );
   }
 }
 
-class _EmptyLessonsCard extends StatelessWidget {
-  const _EmptyLessonsCard({
+class _EmptyLessonsSection
+    extends StatelessWidget {
+  const _EmptyLessonsSection({
     required this.category,
   });
 
@@ -177,105 +204,58 @@ class _EmptyLessonsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      color: const Color(0xFF171717),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(22),
-        side: BorderSide(
-          color: Colors.white.withValues(alpha: 0.08),
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 54,
-              height: 54,
-              decoration: BoxDecoration(
-                color: const Color(0xFFD6B25E).withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(18),
-              ),
-              child: const Icon(
-                Icons.auto_stories_outlined,
-                color: Color(0xFFD6B25E),
-                size: 28,
-              ),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Lessons Coming Soon',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 22,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              '${category.title} is already part of the Atlas Academy structure. Full lessons for this path are planned for a future update.',
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.68),
-                fontSize: 14,
-                height: 1.45,
-              ),
-            ),
-            const SizedBox(height: 16),
-            _ComingSoonNote(
-              icon: Icons.psychology_outlined,
-              text:
-              'Ask Atlas may already recognize some related terms from the roadmap.',
-            ),
-            const SizedBox(height: 10),
-            _ComingSoonNote(
-              icon: Icons.map_outlined,
-              text:
-              'Check the Funko Academy Roadmap for upcoming topics in this area.',
-            ),
-            const SizedBox(height: 10),
-            _ComingSoonNote(
-              icon: Icons.workspace_premium_outlined,
-              text:
-              'Advanced collector intelligence may become part of Atlas Premium later.',
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ComingSoonNote extends StatelessWidget {
-  const _ComingSoonNote({
-    required this.icon,
-    required this.text,
-  });
-
-  final IconData icon;
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Column(
+      crossAxisAlignment:
+      CrossAxisAlignment.stretch,
       children: [
-        Icon(
-          icon,
-          size: 18,
-          color: const Color(0xFFD6B25E).withValues(alpha: 0.90),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            text,
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.62),
-              fontSize: 13,
-              height: 1.35,
-            ),
+        AtlasGlassCard(
+          child: AtlasEmptyState(
+            eyebrow:
+            'Atlas Academy',
+            title:
+            'Lessons Coming Soon',
+            message:
+            '${category.title} is already part of the Atlas Academy structure. '
+                'Full lessons for this learning path are planned for a future update.',
+            icon:
+            Icons.auto_stories_outlined,
+            compact: true,
           ),
+        ),
+        const SizedBox(
+          height: AtlasSpacing.lg,
+        ),
+        const AtlasInfoBanner(
+          icon:
+          Icons.psychology_outlined,
+          title:
+          'Ask Atlas',
+          message:
+          'Ask Atlas may already recognize related collector terms even when a full Academy lesson has not been published yet.',
+        ),
+        const SizedBox(
+          height: AtlasSpacing.sm,
+        ),
+        const AtlasInfoBanner(
+          icon:
+          Icons.map_outlined,
+          title:
+          'Academy Roadmap',
+          message:
+          'Upcoming topics for this learning path can appear in the Funko Academy roadmap before full lessons are released.',
+        ),
+        const SizedBox(
+          height: AtlasSpacing.sm,
+        ),
+        const AtlasInfoBanner(
+          icon:
+          Icons.workspace_premium_outlined,
+          title:
+          'Advanced Learning',
+          message:
+          'Advanced collector intelligence and deeper strategy lessons may expand through Atlas Premium later.',
+          accentColor:
+          AtlasColors.vaultGold,
         ),
       ],
     );

@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import '../../theme/atlas_colors.dart';
 import '../../theme/atlas_icons.dart';
 import '../../theme/atlas_spacing.dart';
-import '../../theme/atlas_typography.dart';
 import '../atlas/atlas_action_tile.dart';
+import '../atlas/components/atlas_section_header.dart';
 
 class CollectorToolsCard extends StatelessWidget {
   const CollectorToolsCard({
@@ -29,15 +29,16 @@ class CollectorToolsCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Collector Tools',
-          style: AtlasTypography.headingSmall.copyWith(
-            color: AtlasColors.vaultGold,
-          ),
+        const AtlasSectionHeader(
+          title: 'Collector Tools',
+          subtitle:
+          'Quick access to collection management and Atlas intelligence.',
+          icon: Icons.dashboard_customize_outlined,
+          accentColor: AtlasColors.vaultGold,
         ),
-
-        const SizedBox(height: AtlasSpacing.md),
-
+        const SizedBox(
+          height: AtlasSpacing.md,
+        ),
         GridView.count(
           crossAxisCount: 3,
           shrinkWrap: true,

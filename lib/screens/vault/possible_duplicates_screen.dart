@@ -10,6 +10,13 @@ import '../../theme/atlas_typography.dart';
 import '../../widgets/atlas/atlas_glass_card.dart';
 import '../../widgets/atlas/atlas_glass_panel.dart';
 import '../pop/pop_details_screen.dart';
+import '../../theme/atlas_motion.dart';
+import '../../widgets/atlas/components/atlas_action_row.dart';
+import '../../widgets/atlas/components/atlas_chip.dart';
+import '../../widgets/atlas/components/atlas_empty_state.dart';
+import '../../widgets/atlas/components/atlas_product_image.dart';
+import '../../widgets/atlas/components/atlas_section_header.dart';
+import '../../widgets/atlas/components/atlas_status_chip.dart';
 
 class PossibleDuplicatesScreen extends StatefulWidget {
   const PossibleDuplicatesScreen({super.key});
@@ -56,8 +63,8 @@ class _PossibleDuplicatesScreenState extends State<PossibleDuplicatesScreen> {
 
     _scrollController.animateTo(
       0,
-      duration: const Duration(milliseconds: 350),
-      curve: Curves.easeOutCubic,
+      duration: AtlasMotion.emphasis,
+      curve: AtlasMotion.enter,
     );
   }
 
@@ -101,41 +108,43 @@ class _PossibleDuplicatesScreenState extends State<PossibleDuplicatesScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               AtlasGlassCard(
+                accentColor: AtlasColors.vaultGold,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Atlas Identity Intelligence',
-                      style: AtlasTypography.headingLarge,
-                    ),
-                    const SizedBox(height: AtlasSpacing.sm),
-                    Text(
+                    const AtlasSectionHeader(
+                      title: 'Atlas Identity Intelligence',
+                      subtitle:
                       'Atlas separates exact duplicates from related collectible releases and explains meaningful differences such as variants, stickers, finishes, packaging, production runs, signatures, and authentication.',
-                      style: AtlasTypography.bodyMedium.copyWith(
-                        color: AtlasColors.textSecondary,
-                      ),
+                      icon: Icons.manage_search_rounded,
+                      accentColor: AtlasColors.vaultGold,
                     ),
-                    const SizedBox(height: AtlasSpacing.lg),
-                    AtlasGlassPanel(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _SummaryLine(
-                            label: 'Exact Duplicate Groups',
-                            value: '${duplicateReport.exactDuplicateGroupCount}',
-                          ),
-                          const SizedBox(height: AtlasSpacing.xs),
-                          _SummaryLine(
-                            label: 'Identity Review Groups',
-                            value: '${duplicateReport.reviewGroupCount}',
-                          ),
-                          const SizedBox(height: AtlasSpacing.xs),
-                          _SummaryLine(
-                            label: 'Total Identity Groups',
-                            value: '${duplicateReport.totalGroups}',
-                          ),
-                        ],
-                      ),
+                    const SizedBox(
+                      height: AtlasSpacing.lg,
+                    ),
+                    Wrap(
+                      spacing: AtlasSpacing.sm,
+                      runSpacing: AtlasSpacing.sm,
+                      children: [
+                        AtlasStatusChip(
+                          label:
+                          '${duplicateReport.exactDuplicateGroupCount} Exact Duplicates',
+                          icon: Icons.content_copy_rounded,
+                          accentColor: AtlasColors.vaultGold,
+                        ),
+                        AtlasStatusChip(
+                          label:
+                          '${duplicateReport.reviewGroupCount} Review Groups',
+                          icon: Icons.compare_arrows_rounded,
+                          accentColor: AtlasColors.vaultGold,
+                        ),
+                        AtlasStatusChip(
+                          label:
+                          '${duplicateReport.totalGroups} Total Groups',
+                          icon: Icons.inventory_2_outlined,
+                          accentColor: AtlasColors.vaultGold,
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -150,36 +159,23 @@ class _PossibleDuplicatesScreenState extends State<PossibleDuplicatesScreen> {
                 },
               ),
               const SizedBox(height: AtlasSpacing.md),
-              AtlasGlassCard(
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        _showImages
-                            ? 'Images are on. Scrolling may be slower.'
-                            : 'Images are off for faster scrolling.',
-                        style: AtlasTypography.bodyMedium.copyWith(
-                          color: AtlasColors.textSecondary,
-                        ),
-                      ),
-                    ),
-                    TextButton.icon(
-                      onPressed: () {
-                        setState(() {
-                          _showImages = !_showImages;
-                        });
-                      },
-                      icon: Icon(
-                        _showImages
-                            ? Icons.image_not_supported_outlined
-                            : Icons.image_outlined,
-                      ),
-                      label: Text(
-                        _showImages ? 'Hide Images' : 'Show Images',
-                      ),
-                    ),
-                  ],
-                ),
+
+              AtlasActionRow(
+                title: _showImages
+                    ? 'Hide Review Images'
+                    : 'Show Review Images',
+                description: _showImages
+                    ? 'Images are on. Turn them off for faster scrolling.'
+                    : 'Images are off for faster scrolling. Turn them on when visual comparison is useful.',
+                icon: _showImages
+                    ? Icons.image_rounded
+                    : Icons.image_not_supported_outlined,
+                accentColor: AtlasColors.vaultGold,
+                onTap: () {
+                  setState(() {
+                    _showImages = !_showImages;
+                  });
+                },
               ),
               if (showSameIdentity) ...[
                 const SizedBox(height: AtlasSpacing.lg),
@@ -236,18 +232,15 @@ class _DuplicateFilterCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Review Filter',
-            style: AtlasTypography.headingSmall,
-          ),
-          const SizedBox(height: AtlasSpacing.sm),
-          Text(
+          const AtlasSectionHeader(
+            title: 'Review Filter',
+            subtitle:
             'Choose which identity groups you want to review.',
-            style: AtlasTypography.bodyMedium.copyWith(
-              color: AtlasColors.textSecondary,
-            ),
+            icon: Icons.filter_alt_outlined,
           ),
-          const SizedBox(height: AtlasSpacing.md),
+          const SizedBox(
+            height: AtlasSpacing.md,
+          ),
           Wrap(
             spacing: AtlasSpacing.sm,
             runSpacing: AtlasSpacing.sm,
@@ -309,37 +302,7 @@ class _FilterChipButton extends StatelessWidget {
   }
 }
 
-class _SummaryLine extends StatelessWidget {
-  const _SummaryLine({
-    required this.label,
-    required this.value,
-  });
 
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            label,
-            style: AtlasTypography.bodyMedium.copyWith(
-              color: AtlasColors.textSecondary,
-            ),
-          ),
-        ),
-        Text(
-          value,
-          style: AtlasTypography.headingSmall.copyWith(
-            color: AtlasColors.vaultGold,
-          ),
-        ),
-      ],
-    );
-  }
-}
 
 class _DuplicateSection extends StatelessWidget {
   const _DuplicateSection({
@@ -366,26 +329,19 @@ class _DuplicateSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: AtlasTypography.headingSmall,
-          ),
-          const SizedBox(height: AtlasSpacing.sm),
-          Text(
-            subtitle,
-            style: AtlasTypography.bodyMedium.copyWith(
-              color: AtlasColors.textSecondary,
-            ),
+          AtlasSectionHeader(
+            title: title,
+            subtitle: subtitle,
+            icon: Icons.content_copy_rounded,
           ),
           const SizedBox(height: AtlasSpacing.md),
           if (groups.isEmpty)
-            AtlasGlassPanel(
-              child: Text(
-                emptyMessage,
-                style: AtlasTypography.bodyMedium.copyWith(
-                  color: AtlasColors.textSecondary,
-                ),
-              ),
+            AtlasEmptyState(
+              eyebrow: 'Identity Review',
+              title: 'No Groups Found',
+              message: emptyMessage,
+              icon: Icons.task_alt_rounded,
+              compact: true,
             )
           else
             ...groups.map(
@@ -431,9 +387,12 @@ class _DuplicateGroupCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              _DuplicateBadge(
-                text: group.title.isEmpty ? badgeText : group.title,
-                color: badgeColor,
+              AtlasStatusChip(
+                label: group.title.isEmpty
+                    ? badgeText
+                    : group.title,
+                accentColor: badgeColor,
+                size: AtlasStatusChipSize.compact,
               ),
               const SizedBox(width: AtlasSpacing.sm),
               Expanded(
@@ -705,40 +664,6 @@ class _GroupDifferenceSummary extends StatelessWidget {
   }
 }
 
-class _DuplicateBadge extends StatelessWidget {
-  const _DuplicateBadge({
-    required this.text,
-    required this.color,
-  });
-
-  final String text;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AtlasSpacing.sm,
-        vertical: 4,
-      ),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.16),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(
-          color: color.withValues(alpha: 0.50),
-        ),
-      ),
-      child: Text(
-        text,
-        style: AtlasTypography.bodySmall.copyWith(
-          color: color,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
-}
-
 class _DuplicatePopTile extends StatelessWidget {
   const _DuplicatePopTile({
     required this.pop,
@@ -781,9 +706,36 @@ class _DuplicatePopTile extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Center(
-            child: _DuplicatePopImage(
+            child: showImages
+                ? AtlasProductImage(
               imageUrl: pop.imageUrl,
-              showImage: showImages,
+              width: 120,
+              height: 150,
+              borderRadius: AtlasSpacing.md,
+              showBorder: true,
+            )
+                : Container(
+              width: 120,
+              height: 150,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: AtlasColors.textSecondary.withValues(
+                  alpha: 0.06,
+                ),
+                borderRadius: BorderRadius.circular(
+                  AtlasSpacing.md,
+                ),
+                border: Border.all(
+                  color: AtlasColors.textSecondary.withValues(
+                    alpha: 0.18,
+                  ),
+                ),
+              ),
+              child: const Icon(
+                Icons.image_outlined,
+                size: 48,
+                color: AtlasColors.textSecondary,
+              ),
             ),
           ),
           const SizedBox(height: AtlasSpacing.md),
@@ -887,12 +839,9 @@ class _DuplicateIdentityBadges extends StatelessWidget {
     final badges = _buildBadges();
 
     if (badges.isEmpty) {
-      return Text(
-        'Common / Standard',
-        style: AtlasTypography.bodySmall.copyWith(
-          color: AtlasColors.textSecondary,
-          fontWeight: FontWeight.bold,
-        ),
+      return const AtlasChip(
+        label: 'Common / Standard',
+        size: AtlasChipSize.compact,
       );
     }
 
@@ -901,8 +850,9 @@ class _DuplicateIdentityBadges extends StatelessWidget {
       runSpacing: AtlasSpacing.xs,
       children: badges
           .map(
-            (badge) => _IdentityBadge(
+            (badge) => AtlasChip(
           label: badge,
+          size: AtlasChipSize.compact,
         ),
       )
           .toList(),
@@ -969,98 +919,5 @@ class _DuplicateIdentityBadges extends StatelessWidget {
     }
 
     return '${cleaned.substring(0, 18)}...';
-  }
-}
-
-class _IdentityBadge extends StatelessWidget {
-  const _IdentityBadge({
-    required this.label,
-  });
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AtlasSpacing.sm,
-        vertical: 4,
-      ),
-      decoration: BoxDecoration(
-        color: AtlasColors.vaultGold.withValues(alpha: 0.14),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(
-          color: AtlasColors.vaultGold.withValues(alpha: 0.38),
-        ),
-      ),
-      child: Text(
-        label,
-        style: AtlasTypography.bodySmall.copyWith(
-          color: AtlasColors.vaultGold,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
-}
-
-class _DuplicatePopImage extends StatelessWidget {
-  const _DuplicatePopImage({
-    required this.imageUrl,
-    required this.showImage,
-  });
-
-  final String imageUrl;
-  final bool showImage;
-
-  @override
-  Widget build(BuildContext context) {
-    final cleanImageUrl = imageUrl.trim();
-
-    return Container(
-      width: 120,
-      height: 150,
-      decoration: BoxDecoration(
-        color: AtlasColors.textSecondary.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(AtlasSpacing.md),
-        border: Border.all(
-          color: AtlasColors.textSecondary.withValues(alpha: 0.18),
-        ),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: !showImage
-          ? const Icon(
-        Icons.image_outlined,
-        size: 48,
-      )
-          : cleanImageUrl.isEmpty
-          ? const Icon(
-        Icons.inventory_2_rounded,
-        size: 48,
-      )
-          : Image.network(
-        cleanImageUrl,
-        fit: BoxFit.contain,
-        loadingBuilder: (context, child, loadingProgress) {
-          if (loadingProgress == null) {
-            return child;
-          }
-
-          return const Center(
-            child: SizedBox(
-              width: 28,
-              height: 28,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
-          );
-        },
-        errorBuilder: (context, error, stackTrace) {
-          return const Icon(
-            Icons.broken_image_rounded,
-            size: 48,
-          );
-        },
-      ),
-    );
   }
 }

@@ -8,6 +8,7 @@ import '../../atlas/repositories/vault_repository.dart';
 import '../../models/pop.dart';
 import '../../services/app_state.dart';
 import '../../services/hive_service.dart';
+import '../../theme/atlas_motion.dart';
 import '../../theme/atlas_spacing.dart';
 import '../../theme/atlas_typography.dart';
 import '../../vault/duplicate_review/duplicate_review_engine.dart';
@@ -231,8 +232,8 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
 
     _scrollController.animateTo(
       0,
-      duration: const Duration(milliseconds: 350),
-      curve: Curves.easeOutCubic,
+      duration: AtlasMotion.emphasis,
+      curve: AtlasMotion.enter,
     );
   }
 

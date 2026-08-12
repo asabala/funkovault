@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../theme/atlas_colors.dart';
 import '../../theme/atlas_icons.dart';
 import '../../theme/atlas_spacing.dart';
-import '../../theme/atlas_typography.dart';
+import '../atlas/components/atlas_section_header.dart';
 import 'vault_room_card.dart';
 
 class CollectionRoomsCard extends StatelessWidget {
@@ -35,13 +35,16 @@ class CollectionRoomsCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Vault Rooms',
-          style: AtlasTypography.headingSmall.copyWith(
-            color: AtlasColors.vaultGold,
-          ),
+        const AtlasSectionHeader(
+          title: 'Vault Rooms',
+          subtitle:
+          'Explore your collection by room, category, and collector workflow.',
+          icon: Icons.grid_view_rounded,
+          accentColor: AtlasColors.vaultGold,
         ),
-        const SizedBox(height: AtlasSpacing.md),
+        const SizedBox(
+          height: AtlasSpacing.md,
+        ),
         GridView.count(
           crossAxisCount: 2,
           shrinkWrap: true,

@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 
+import '../../../academy/academy_ids.dart';
 import '../../../academy/models/academy_category.dart';
 import '../../../academy/models/academy_topic.dart';
+import '../../../theme/atlas_spacing.dart';
+import '../ask_atlas/ask_atlas_card.dart';
+import '../roadmap/funko_academy_roadmap_section.dart';
 import '../shared/academy_category_card.dart';
 import '../shared/academy_learning_path_card.dart';
 import '../shared/academy_topic_request_card.dart';
 import 'academy_track_banner.dart';
-import '../ask_atlas/ask_atlas_card.dart';
-import '../roadmap/funko_academy_roadmap_section.dart';
 
 class FunkoAcademyTrackSection extends StatelessWidget {
   const FunkoAcademyTrackSection({
@@ -29,8 +31,24 @@ class FunkoAcademyTrackSection extends StatelessWidget {
   final ValueChanged<String> onTopicRequestSubmitted;
   final int collectorBasicsLessonCount;
 
+  AcademyCategory? get _collectorBasicsCategory {
+    for (final AcademyCategory category in categories) {
+      if (category.id ==
+          AcademyCategoryIds.funkoCollectorBasics) {
+        return category;
+      }
+    }
+
+    return categories.isEmpty
+        ? null
+        : categories.first;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final AcademyCategory? collectorBasicsCategory =
+        _collectorBasicsCategory;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -38,41 +56,68 @@ class FunkoAcademyTrackSection extends StatelessWidget {
           suggestions: askAtlasSuggestions,
           onAsk: onAskAtlasQuestion,
         ),
-        const SizedBox(height: 22),
+        const SizedBox(
+          height: AtlasSpacing.lg,
+        ),
         const AcademyTrackBanner(
           emoji: '🎓',
           title: 'First track: Funko Collecting',
           subtitle:
           'Atlas Academy is built to teach collectible knowledge one approved track at a time.',
         ),
-        const SizedBox(height: 20),
+        const SizedBox(
+          height: AtlasSpacing.lg,
+        ),
         AcademyLearningPathCard(
           title: 'Collector Basics',
-          subtitle: 'Start here to learn the foundation terms collectors use.',
+          subtitle:
+          'Start here to learn the foundation terms collectors use.',
           lessonCount: collectorBasicsLessonCount,
           onTap: () {
-            if (categories.isEmpty) {
+            final AcademyCategory? category =
+                collectorBasicsCategory;
+
+            if (category == null) {
               return;
             }
 
-            onOpenCategory(categories.first);
+            onOpenCategory(
+              category,
+            );
           },
         ),
-        const SizedBox(height: 20),
-        for (final category in categories) ...[
+        const SizedBox(
+          height: AtlasSpacing.lg,
+        ),
+        for (
+        int index = 0;
+        index < categories.length;
+        index++
+        ) ...[
           AcademyCategoryCard(
-            category: category,
-            onTap: () => onOpenCategory(category),
+            category: categories[index],
+            onTap: () {
+              onOpenCategory(
+                categories[index],
+              );
+            },
           ),
-          const SizedBox(height: 12),
+          if (index != categories.length - 1)
+            const SizedBox(
+              height: AtlasSpacing.sm,
+            ),
         ],
         if (roadmapTopics.isNotEmpty) ...[
-          const SizedBox(height: 18),
+          const SizedBox(
+            height: AtlasSpacing.lg,
+          ),
           FunkoAcademyRoadmapSection(
             topics: roadmapTopics,
           ),
         ],
-        const SizedBox(height: 18),
+        const SizedBox(
+          height: AtlasSpacing.lg,
+        ),
         AcademyTopicRequestCard(
           onSubmit: onTopicRequestSubmitted,
         ),

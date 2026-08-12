@@ -6,6 +6,8 @@ import '../../theme/atlas_spacing.dart';
 import '../../theme/atlas_typography.dart';
 import '../atlas/atlas_glass_card.dart';
 import '../atlas/atlas_glass_panel.dart';
+import '../atlas/components/atlas_section_header.dart';
+import '../atlas/components/atlas_status_chip.dart';
 
 class AtlasMissionCard extends StatelessWidget {
   const AtlasMissionCard({
@@ -24,59 +26,65 @@ class AtlasMissionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AtlasGlassCard(
+      accentColor: AtlasColors.vaultGold,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const Icon(
-                AtlasIcons.intelligence,
-                color: AtlasColors.vaultGold,
-              ),
-              const SizedBox(width: AtlasSpacing.sm),
-              Expanded(
-                child: Text(
-                  "Today's Atlas Mission",
-                  style: AtlasTypography.headingSmall,
-                ),
-              ),
-            ],
+          const AtlasSectionHeader(
+            title: "Today's Atlas Mission",
+            subtitle:
+            'A focused next step based on your current collector profile and vault.',
+            icon: AtlasIcons.intelligence,
+            accentColor: AtlasColors.vaultGold,
           ),
-          const SizedBox(height: AtlasSpacing.md),
+          const SizedBox(
+            height: AtlasSpacing.md,
+          ),
           AtlasGlassPanel(
             child: Text(
               mission,
               style: AtlasTypography.bodyMedium,
             ),
           ),
-          const SizedBox(height: AtlasSpacing.md),
-          Row(
+          const SizedBox(
+            height: AtlasSpacing.md,
+          ),
+          Wrap(
+            spacing: AtlasSpacing.sm,
+            runSpacing: AtlasSpacing.sm,
             children: [
-              Expanded(
-                child: Text(
-                  'Type: $collectorType',
-                  style: AtlasTypography.bodySmall.copyWith(
-                    color: AtlasColors.textSecondary,
-                  ),
-                ),
+              AtlasStatusChip(
+                label: collectorType,
+                icon: Icons.person_search_rounded,
+                accentColor: AtlasColors.vaultGold,
+                size: AtlasStatusChipSize.compact,
               ),
-              Text(
-                '$confidence%',
-                style: AtlasTypography.headingSmall.copyWith(
-                  color: AtlasColors.vaultGold,
-                ),
+              AtlasStatusChip(
+                label: '$confidence% Confidence',
+                icon: Icons.verified_rounded,
+                accentColor: AtlasColors.vaultGold,
+                size: AtlasStatusChipSize.compact,
               ),
             ],
           ),
-          const SizedBox(height: AtlasSpacing.md),
-          Align(
-            alignment: Alignment.centerRight,
-            child: OutlinedButton.icon(
-              onPressed: onContinue,
-              icon: const Icon(Icons.arrow_forward, size: 16),
-              label: const Text('Continue'),
+          if (onContinue != null) ...[
+            const SizedBox(
+              height: AtlasSpacing.md,
             ),
-          ),
+            Align(
+              alignment: Alignment.centerRight,
+              child: OutlinedButton.icon(
+                onPressed: onContinue,
+                icon: const Icon(
+                  Icons.arrow_forward_rounded,
+                  size: 16,
+                ),
+                label: const Text(
+                  'Continue',
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );

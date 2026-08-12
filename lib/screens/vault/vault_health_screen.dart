@@ -11,6 +11,8 @@ import '../../vault/health/vault_health_engine.dart';
 import '../../widgets/atlas/atlas_glass_card.dart';
 import '../../widgets/atlas/atlas_glass_panel.dart';
 import '../../widgets/atlas/atlas_stat_tile.dart';
+import '../../widgets/atlas/components/atlas_action_row.dart';
+import '../../widgets/atlas/components/atlas_insight_panel.dart';
 import '../../widgets/atlas/components/atlas_section_header.dart';
 import '../../widgets/vault/advanced_vault_health_preview.dart';
 
@@ -197,34 +199,59 @@ class VaultHealthScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: const [
-                      _AdvancedVaultHealthTeaserHeader(),
+                      AtlasSectionHeader(
+                        title: 'Advanced Vault Health',
+                        subtitle:
+                        'Premium intelligence for deeper vault analysis and cleanup prioritization.',
+                        icon: Icons.workspace_premium_rounded,
+                        accentColor: AtlasColors.vaultGold,
+                      ),
                       SizedBox(height: AtlasSpacing.md),
-                      _AdvancedVaultHealthTeaserItem(
-                        icon: Icons.warning_amber_rounded,
+
+                      AtlasActionRow(
                         title: 'Risk Score',
-                        message:
+                        description:
                         'See which parts of your collection may need the most attention.',
+                        icon: Icons.warning_amber_rounded,
+                        accentColor: AtlasColors.vaultGold,
+                        showChevron: false,
+                        compact: true,
                       ),
+
                       SizedBox(height: AtlasSpacing.sm),
-                      _AdvancedVaultHealthTeaserItem(
-                        icon: Icons.content_copy_rounded,
+
+                      AtlasActionRow(
                         title: 'Duplicate Intelligence',
-                        message:
+                        description:
                         'Review possible duplicates with smarter context for variants, stickers, exclusives, and signed Pops.',
+                        icon: Icons.content_copy_rounded,
+                        accentColor: AtlasColors.vaultGold,
+                        showChevron: false,
+                        compact: true,
                       ),
+
                       SizedBox(height: AtlasSpacing.sm),
-                      _AdvancedVaultHealthTeaserItem(
-                        icon: Icons.attach_money_rounded,
+
+                      AtlasActionRow(
                         title: 'Value Cleanup Priority',
-                        message:
+                        description:
                         'Prioritize missing values based on impact instead of cleaning everything randomly.',
+                        icon: Icons.attach_money_rounded,
+                        accentColor: AtlasColors.vaultGold,
+                        showChevron: false,
+                        compact: true,
                       ),
+
                       SizedBox(height: AtlasSpacing.sm),
-                      _AdvancedVaultHealthTeaserItem(
-                        icon: Icons.show_chart_rounded,
+
+                      AtlasActionRow(
                         title: 'Collection Health Trends',
-                        message:
+                        description:
                         'Track how your vault health improves as your collection becomes cleaner.',
+                        icon: Icons.show_chart_rounded,
+                        accentColor: AtlasColors.vaultGold,
+                        showChevron: false,
+                        compact: true,
                       ),
                     ],
                   ),
@@ -238,82 +265,6 @@ class VaultHealthScreen extends StatelessWidget {
   }
 }
 
-
-
-class _AdvancedVaultHealthTeaserHeader extends StatelessWidget {
-  const _AdvancedVaultHealthTeaserHeader();
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        const Icon(
-          Icons.workspace_premium_rounded,
-          color: AtlasColors.vaultGold,
-        ),
-        const SizedBox(width: AtlasSpacing.sm),
-        Expanded(
-          child: Text(
-            'Advanced Vault Health',
-            style: AtlasTypography.headingSmall,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _AdvancedVaultHealthTeaserItem extends StatelessWidget {
-  const _AdvancedVaultHealthTeaserItem({
-    required this.icon,
-    required this.title,
-    required this.message,
-  });
-
-  final IconData icon;
-  final String title;
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return AtlasGlassPanel(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(
-            icon,
-            color: AtlasColors.vaultGold,
-            size: 20,
-          ),
-          const SizedBox(width: AtlasSpacing.sm),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: AtlasTypography.bodyMedium.copyWith(
-                    color: AtlasColors.textPrimary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  message,
-                  style: AtlasTypography.bodySmall.copyWith(
-                    color: AtlasColors.textSecondary,
-                    height: 1.35,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _VaultHealthScoreExplanation extends StatelessWidget {
   const _VaultHealthScoreExplanation();
 
@@ -322,113 +273,65 @@ class _VaultHealthScoreExplanation extends StatelessWidget {
     return AtlasGlassPanel(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
-          _VaultHealthExplanationHeader(),
-          SizedBox(height: AtlasSpacing.md),
-          _VaultHealthExplanationItem(
-            icon: Icons.favorite_rounded,
+        children: [
+          const AtlasInsightPanel(
+            eyebrow: 'Vault Health',
+            title: 'How Vault Health Works',
+            message:
+            'Atlas starts from a clean-vault baseline and lowers the score when important collection data still needs attention.',
+            icon: Icons.info_outline_rounded,
+            tone: AtlasInsightPanelTone.intelligence,
+          ),
+          const SizedBox(
+            height: AtlasSpacing.md,
+          ),
+          const AtlasActionRow(
             title: 'Starts at 100%',
-            message:
+            description:
             'A clean vault starts with a full health score before issues are counted.',
+            icon: Icons.favorite_rounded,
+            accentColor: AtlasColors.vaultGold,
+            showChevron: false,
+            compact: true,
           ),
-          SizedBox(height: AtlasSpacing.sm),
-          _VaultHealthExplanationItem(
-            icon: Icons.attach_money_rounded,
+          const SizedBox(
+            height: AtlasSpacing.sm,
+          ),
+          const AtlasActionRow(
             title: 'Missing values lower the score',
-            message:
+            description:
             'Pops without values make the vault less complete and reduce the health score.',
+            icon: Icons.attach_money_rounded,
+            accentColor: AtlasColors.vaultGold,
+            showChevron: false,
+            compact: true,
           ),
-          SizedBox(height: AtlasSpacing.sm),
-          _VaultHealthExplanationItem(
-            icon: Icons.content_copy_rounded,
+          const SizedBox(
+            height: AtlasSpacing.sm,
+          ),
+          const AtlasActionRow(
             title: 'Duplicate review groups lower the score',
-            message:
+            description:
             'Possible duplicate groups are counted as review items until they are confirmed as variants or cleaned up.',
+            icon: Icons.content_copy_rounded,
+            accentColor: AtlasColors.vaultGold,
+            showChevron: false,
+            compact: true,
           ),
-          SizedBox(height: AtlasSpacing.sm),
-          _VaultHealthExplanationItem(
-            icon: Icons.trending_up_rounded,
+          const SizedBox(
+            height: AtlasSpacing.sm,
+          ),
+          const AtlasActionRow(
             title: 'Higher score means a cleaner vault',
-            message:
+            description:
             'A higher score means fewer missing values and fewer possible duplicate review groups.',
+            icon: Icons.trending_up_rounded,
+            accentColor: AtlasColors.vaultGold,
+            showChevron: false,
+            compact: true,
           ),
         ],
       ),
-    );
-  }
-}
-
-class _VaultHealthExplanationHeader extends StatelessWidget {
-  const _VaultHealthExplanationHeader();
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        const Icon(
-          Icons.info_outline_rounded,
-          color: AtlasColors.vaultGold,
-        ),
-        const SizedBox(width: AtlasSpacing.sm),
-        Expanded(
-          child: Text(
-            'How Vault Health Works',
-            style: AtlasTypography.bodyMedium.copyWith(
-              color: AtlasColors.textPrimary,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _VaultHealthExplanationItem extends StatelessWidget {
-  const _VaultHealthExplanationItem({
-    required this.icon,
-    required this.title,
-    required this.message,
-  });
-
-  final IconData icon;
-  final String title;
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(
-          icon,
-          color: AtlasColors.vaultGold,
-          size: 20,
-        ),
-        const SizedBox(width: AtlasSpacing.sm),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: AtlasTypography.bodySmall.copyWith(
-                  color: AtlasColors.textPrimary,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                message,
-                style: AtlasTypography.bodySmall.copyWith(
-                  color: AtlasColors.textSecondary,
-                  height: 1.35,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
     );
   }
 }
@@ -438,95 +341,54 @@ class _VaultHealthActionGuide extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AtlasGlassPanel(
+    return const AtlasGlassPanel(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
-          _VaultHealthActionStep(
-            number: '1',
-            title: 'Add missing values first',
-            message:
+        children: [
+          AtlasSectionHeader(
+            title: 'Recommended Next Steps',
+            subtitle:
+            'Work through the highest-impact vault cleanup opportunities first.',
+            icon: Icons.route_rounded,
+          ),
+          SizedBox(
+            height: AtlasSpacing.md,
+          ),
+          AtlasActionRow(
+            title: '1. Add missing values first',
+            description:
             'Missing values make it harder for Atlas to estimate your collection strength.',
+            icon: Icons.attach_money_rounded,
+            accentColor: AtlasColors.vaultGold,
+            showChevron: false,
+            compact: true,
           ),
-          SizedBox(height: AtlasSpacing.sm),
-          _VaultHealthActionStep(
-            number: '2',
-            title: 'Review duplicate groups',
-            message:
+          SizedBox(
+            height: AtlasSpacing.sm,
+          ),
+          AtlasActionRow(
+            title: '2. Review duplicate groups',
+            description:
             'Duplicates are review groups only. Check variants, Chase versions, stickers, exclusives, and signatures before making changes.',
+            icon: Icons.content_copy_rounded,
+            accentColor: AtlasColors.vaultGold,
+            showChevron: false,
+            compact: true,
           ),
-          SizedBox(height: AtlasSpacing.sm),
-          _VaultHealthActionStep(
-            number: '3',
-            title: 'Protect important variants',
-            message:
+          SizedBox(
+            height: AtlasSpacing.sm,
+          ),
+          AtlasActionRow(
+            title: '3. Protect important variants',
+            description:
             'Variant details, sticker details, limited editions, and signed Pops should stay clearly labeled.',
+            icon: Icons.verified_user_outlined,
+            accentColor: AtlasColors.vaultGold,
+            showChevron: false,
+            compact: true,
           ),
         ],
       ),
-    );
-  }
-}
-
-class _VaultHealthActionStep extends StatelessWidget {
-  const _VaultHealthActionStep({
-    required this.number,
-    required this.title,
-    required this.message,
-  });
-
-  final String number;
-  final String title;
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: 26,
-          height: 26,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: AtlasColors.vaultGold.withValues(alpha: 0.14),
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(
-              color: AtlasColors.vaultGold.withValues(alpha: 0.34),
-            ),
-          ),
-          child: Text(
-            number,
-            style: AtlasTypography.bodySmall.copyWith(
-              color: AtlasColors.vaultGold,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-        const SizedBox(width: AtlasSpacing.sm),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: AtlasTypography.bodyMedium.copyWith(
-                  color: AtlasColors.textPrimary,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                message,
-                style: AtlasTypography.bodySmall.copyWith(
-                  color: AtlasColors.textSecondary,
-                  height: 1.35,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
     );
   }
 }

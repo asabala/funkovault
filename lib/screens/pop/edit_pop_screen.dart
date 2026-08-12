@@ -13,6 +13,10 @@ import '../../theme/atlas_spacing.dart';
 import '../../theme/atlas_typography.dart';
 import '../../widgets/atlas/atlas_glass_card.dart';
 import '../../widgets/atlas/atlas_glass_panel.dart';
+import '../../widgets/atlas/components/atlas_dropdown_panel.dart';
+import '../../widgets/atlas/components/atlas_form_field.dart';
+import '../../widgets/atlas/components/atlas_product_image.dart';
+import '../../widgets/atlas/components/atlas_section_header.dart';
 import '../../widgets/pop/labeled_dropdown.dart';
 import '../../widgets/vault/vault_scroll_view.dart';
 
@@ -461,8 +465,12 @@ return '${pop.name} value changed from $previousLabel to $updatedLabel';
                   AtlasGlassPanel(
                     child: Row(
                       children: [
-                        _EditPopImage(
+                        AtlasProductImage(
                           imageUrl: widget.pop.imageUrl,
+                          width: 76,
+                          height: 96,
+                          borderRadius: AtlasSpacing.md,
+                          showBorder: true,
                         ),
                         const SizedBox(width: AtlasSpacing.md),
                         Expanded(
@@ -504,30 +512,32 @@ return '${pop.name} value changed from $previousLabel to $updatedLabel';
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const _EditSectionHeader(
+                  const AtlasSectionHeader(
                     title: 'Basic Information',
+                    subtitle: 'Update the core identity of this collectible.',
                     icon: Icons.info_outline_rounded,
+                    accentColor: AtlasColors.vaultGold,
                   ),
                   const SizedBox(height: AtlasSpacing.md),
-                  _AtlasTextField(
+                  AtlasFormField(
                     controller: _nameController,
                     label: 'Pop Name',
                     icon: Icons.badge_outlined,
                   ),
                   const SizedBox(height: AtlasSpacing.md),
-                  _AtlasTextField(
+                  AtlasFormField(
                     controller: _numberController,
                     label: 'Pop Number',
                     icon: Icons.tag_rounded,
                   ),
                   const SizedBox(height: AtlasSpacing.md),
-                  _AtlasTextField(
+                  AtlasFormField(
                     controller: _categoryController,
                     label: 'Category',
                     icon: Icons.category_outlined,
                   ),
                   const SizedBox(height: AtlasSpacing.md),
-                  _AtlasTextField(
+                  AtlasFormField(
                     controller: _seriesController,
                     label: 'Series',
                     icon: Icons.collections_bookmark_outlined,
@@ -540,9 +550,12 @@ return '${pop.name} value changed from $previousLabel to $updatedLabel';
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const _EditSectionHeader(
+                  const AtlasSectionHeader(
                     title: 'Collector Identity',
+                    subtitle:
+                    'Update variants, exclusives, stickers, limited editions, and signatures.',
                     icon: Icons.verified_rounded,
+                    accentColor: AtlasColors.vaultGold,
                   ),
                   const SizedBox(height: AtlasSpacing.md),
                   AtlasInsightCard(
@@ -558,7 +571,7 @@ return '${pop.name} value changed from $previousLabel to $updatedLabel';
                     ),
                   ],
                   const SizedBox(height: AtlasSpacing.lg),
-                  _AtlasDropdownPanel(
+                  AtlasDropdownPanel(
                     child: LabeledDropdown(
                       label: 'Variant',
                       value: _variant,
@@ -572,14 +585,14 @@ return '${pop.name} value changed from $previousLabel to $updatedLabel';
                   ),
                   if (_variant == 'Other') ...[
                     const SizedBox(height: AtlasSpacing.md),
-                    _AtlasTextField(
+                    AtlasFormField(
                       controller: _customVariantController,
                       label: 'Custom Variant',
                       icon: Icons.edit_note_rounded,
                     ),
                   ],
                   const SizedBox(height: AtlasSpacing.md),
-                  _AtlasDropdownPanel(
+                  AtlasDropdownPanel(
                     child: LabeledDropdown(
                       label: 'Retail Exclusive',
                       value: _retailExclusive,
@@ -593,14 +606,14 @@ return '${pop.name} value changed from $previousLabel to $updatedLabel';
                   ),
                   if (_retailExclusive == 'Other') ...[
                     const SizedBox(height: AtlasSpacing.md),
-                    _AtlasTextField(
+                    AtlasFormField(
                       controller: _customRetailExclusiveController,
                       label: 'Custom Retail Exclusive',
                       icon: Icons.storefront_outlined,
                     ),
                   ],
                   const SizedBox(height: AtlasSpacing.md),
-                  _AtlasDropdownPanel(
+                  AtlasDropdownPanel(
                     child: LabeledDropdown(
                       label: 'Event Sticker',
                       value: _eventSticker,
@@ -614,14 +627,14 @@ return '${pop.name} value changed from $previousLabel to $updatedLabel';
                   ),
                   if (_eventSticker == 'Other') ...[
                     const SizedBox(height: AtlasSpacing.md),
-                    _AtlasTextField(
+                    AtlasFormField(
                       controller: _customEventStickerController,
                       label: 'Custom Event Sticker',
                       icon: Icons.local_activity_outlined,
                     ),
                   ],
                   const SizedBox(height: AtlasSpacing.md),
-                  _AtlasDropdownPanel(
+                  AtlasDropdownPanel(
                     child: LabeledDropdown(
                       label: 'Limited Edition',
                       value: _limitedEdition,
@@ -635,14 +648,14 @@ return '${pop.name} value changed from $previousLabel to $updatedLabel';
                   ),
                   if (_limitedEdition == 'Other') ...[
                     const SizedBox(height: AtlasSpacing.md),
-                    _AtlasTextField(
+                    AtlasFormField(
                       controller: _customLimitedEditionController,
                       label: 'Custom Limited Edition',
                       icon: Icons.numbers_rounded,
                     ),
                   ],
                   const SizedBox(height: AtlasSpacing.md),
-                  _AtlasDropdownPanel(
+                  AtlasDropdownPanel(
                     child: LabeledDropdown(
                       label: 'Signature',
                       value: _signature,
@@ -656,7 +669,7 @@ return '${pop.name} value changed from $previousLabel to $updatedLabel';
                   ),
                   if (_signature == 'Other') ...[
                     const SizedBox(height: AtlasSpacing.md),
-                    _AtlasTextField(
+                    AtlasFormField(
                       controller: _customSignatureController,
                       label: 'Custom Signature Details',
                       icon: Icons.draw_outlined,
@@ -670,12 +683,14 @@ return '${pop.name} value changed from $previousLabel to $updatedLabel';
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const _EditSectionHeader(
+                  const AtlasSectionHeader(
                     title: 'Ownership',
+                    subtitle: 'Update the owner and physical copy count.',
                     icon: Icons.inventory_2_rounded,
+                    accentColor: AtlasColors.vaultGold,
                   ),
                   const SizedBox(height: AtlasSpacing.md),
-                  _AtlasDropdownPanel(
+                  AtlasDropdownPanel(
                     child: LabeledDropdown(
                       label: 'Owner',
                       value: _owner,
@@ -688,7 +703,7 @@ return '${pop.name} value changed from $previousLabel to $updatedLabel';
                     ),
                   ),
                   const SizedBox(height: AtlasSpacing.md),
-                  _AtlasTextField(
+                  AtlasFormField(
                     controller: _quantityController,
                     label: 'Quantity',
                     icon: Icons.format_list_numbered_rounded,
@@ -703,12 +718,14 @@ return '${pop.name} value changed from $previousLabel to $updatedLabel';
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const _EditSectionHeader(
+                  const AtlasSectionHeader(
                     title: 'Value',
+                    subtitle: 'Update estimated market value and what you paid.',
                     icon: Icons.attach_money_rounded,
+                    accentColor: AtlasColors.vaultGold,
                   ),
                   const SizedBox(height: AtlasSpacing.md),
-                  _AtlasTextField(
+                  AtlasFormField(
                     controller: _valueController,
                     focusNode: _valueFocusNode,
                     label: 'Estimated Value (\$)',
@@ -721,7 +738,7 @@ return '${pop.name} value changed from $previousLabel to $updatedLabel';
                     },
                   ),
                   const SizedBox(height: AtlasSpacing.md),
-                  _AtlasTextField(
+                  AtlasFormField(
                     controller: _pricePaidController,
                     label: 'Price Paid (\$)',
                     icon: Icons.payments_outlined,
@@ -747,123 +764,6 @@ return '${pop.name} value changed from $previousLabel to $updatedLabel';
           ],
         ),
       ),
-    );
-  }
-}
-
-class _EditPopImage extends StatelessWidget {
-  const _EditPopImage({
-    required this.imageUrl,
-  });
-
-  final String imageUrl;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 76,
-      height: 96,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AtlasSpacing.md),
-        border: Border.all(
-          color: AtlasColors.vaultGold.withValues(alpha: 0.28),
-        ),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: imageUrl.trim().isEmpty
-          ? const Icon(
-        Icons.inventory_2_rounded,
-        size: 40,
-      )
-          : Image.network(
-        imageUrl,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return const Icon(
-            Icons.inventory_2_rounded,
-            size: 40,
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _EditSectionHeader extends StatelessWidget {
-  const _EditSectionHeader({
-    required this.title,
-    required this.icon,
-  });
-
-  final String title;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(
-          icon,
-          color: AtlasColors.vaultGold,
-        ),
-        const SizedBox(width: AtlasSpacing.sm),
-        Expanded(
-          child: Text(
-            title,
-            style: AtlasTypography.headingSmall,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _AtlasTextField extends StatelessWidget {
-  const _AtlasTextField({
-    required this.controller,
-    required this.label,
-    required this.icon,
-    this.focusNode,
-    this.keyboardType,
-    this.onChanged,
-  });
-
-  final TextEditingController controller;
-  final String label;
-  final IconData icon;
-  final FocusNode? focusNode;
-  final TextInputType? keyboardType;
-  final ValueChanged<String>? onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return AtlasGlassPanel(
-      child: TextFormField(
-        controller: controller,
-        focusNode: focusNode,
-        keyboardType: keyboardType,
-        onChanged: onChanged,
-        decoration: InputDecoration(
-          labelText: label,
-          prefixIcon: Icon(icon),
-          border: const OutlineInputBorder(),
-        ),
-      ),
-    );
-  }
-}
-
-class _AtlasDropdownPanel extends StatelessWidget {
-  const _AtlasDropdownPanel({
-    required this.child,
-  });
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return AtlasGlassPanel(
-      child: child,
     );
   }
 }

@@ -7,9 +7,14 @@ class AcademySnackbars {
     required BuildContext context,
     required String trackTitle,
   }) {
+    final String cleanedTrackTitle =
+    trackTitle.trim();
+
     _show(
       context: context,
-      message: '$trackTitle Academy is coming soon.',
+      message: cleanedTrackTitle.isEmpty
+          ? 'This Academy track is coming soon.'
+          : '$cleanedTrackTitle Academy is coming soon.',
     );
   }
 
@@ -18,10 +23,19 @@ class AcademySnackbars {
     required String topic,
     required int newRequestCount,
   }) {
+    final String cleanedTopic =
+    topic.trim();
+
+    final String requestCountLabel =
+    _requestCountLabel(
+      newRequestCount,
+    );
+
     _show(
       context: context,
-      message:
-      'Topic request received: $topic • $newRequestCount new admin request(s)',
+      message: cleanedTopic.isEmpty
+          ? 'Academy topic request received • $requestCountLabel'
+          : 'Topic request received: $cleanedTopic • $requestCountLabel',
     );
   }
 
@@ -30,10 +44,19 @@ class AcademySnackbars {
     required String trackTitle,
     required int newRequestCount,
   }) {
+    final String cleanedTrackTitle =
+    trackTitle.trim();
+
+    final String requestCountLabel =
+    _requestCountLabel(
+      newRequestCount,
+    );
+
     _show(
       context: context,
-      message:
-      '$trackTitle Academy request received • $newRequestCount new admin request(s)',
+      message: cleanedTrackTitle.isEmpty
+          ? 'Academy track request received • $requestCountLabel'
+          : '$cleanedTrackTitle Academy request received • $requestCountLabel',
     );
   }
 
@@ -41,20 +64,46 @@ class AcademySnackbars {
     required BuildContext context,
     required String message,
   }) {
+    final String cleanedMessage =
+    message.trim();
+
     _show(
       context: context,
-      message: message,
+      message: cleanedMessage.isEmpty
+          ? 'Academy request updated.'
+          : cleanedMessage,
     );
+  }
+
+  static String _requestCountLabel(
+      int count,
+      ) {
+    final int safeCount =
+    count < 0 ? 0 : count;
+
+    if (safeCount == 1) {
+      return '1 new admin request';
+    }
+
+    return '$safeCount new admin requests';
   }
 
   static void _show({
     required BuildContext context,
     required String message,
   }) {
-    ScaffoldMessenger.of(context).showSnackBar(
+    final ScaffoldMessengerState messenger =
+    ScaffoldMessenger.of(context);
+
+    messenger.hideCurrentSnackBar();
+
+    messenger.showSnackBar(
       SnackBar(
-        content: Text(message),
-        behavior: SnackBarBehavior.floating,
+        content: Text(
+          message,
+        ),
+        behavior:
+        SnackBarBehavior.floating,
       ),
     );
   }

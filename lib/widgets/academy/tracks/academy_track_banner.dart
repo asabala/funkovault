@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../theme/atlas_colors.dart';
 import '../../../theme/atlas_spacing.dart';
 import '../../../theme/atlas_typography.dart';
+import '../../atlas/atlas_glass_card.dart';
 
 class AcademyTrackBanner extends StatelessWidget {
   const AcademyTrackBanner({
@@ -18,38 +19,55 @@ class AcademyTrackBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(AtlasSpacing.lg),
-      decoration: BoxDecoration(
-        color: AtlasColors.vaultGold.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: AtlasColors.vaultGold.withValues(alpha: 0.22),
-        ),
-      ),
+    final String cleanedTitle = title.trim();
+    final String cleanedSubtitle = subtitle.trim();
+
+    return AtlasGlassCard(
+      accentColor: AtlasColors.vaultGold,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            emoji,
-            style: const TextStyle(fontSize: 30),
+          Container(
+            width: 50,
+            height: 50,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: AtlasColors.vaultGold.withValues(
+                alpha: 0.12,
+              ),
+              borderRadius: BorderRadius.circular(
+                16,
+              ),
+            ),
+            child: Text(
+              emoji.trim().isEmpty ? '🎓' : emoji.trim(),
+              style: const TextStyle(
+                fontSize: 28,
+              ),
+            ),
           ),
-          const SizedBox(width: AtlasSpacing.md),
+          const SizedBox(
+            width: AtlasSpacing.md,
+          ),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title,
-                  style: AtlasTypography.bodyMedium.copyWith(
+                  cleanedTitle.isEmpty
+                      ? 'Academy Track'
+                      : cleanedTitle,
+                  style: AtlasTypography.headingSmall.copyWith(
                     color: AtlasColors.vaultGold,
-                    fontWeight: FontWeight.w800,
                   ),
                 ),
-                const SizedBox(height: AtlasSpacing.xs),
+                const SizedBox(
+                  height: AtlasSpacing.xs,
+                ),
                 Text(
-                  subtitle,
+                  cleanedSubtitle.isEmpty
+                      ? 'More Academy track details are coming soon.'
+                      : cleanedSubtitle,
                   style: AtlasTypography.bodySmall.copyWith(
                     color: AtlasColors.textSecondary,
                     height: 1.4,

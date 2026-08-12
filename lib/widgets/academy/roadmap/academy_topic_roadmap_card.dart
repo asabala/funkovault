@@ -5,7 +5,7 @@ import '../../../theme/atlas_colors.dart';
 import '../../../theme/atlas_spacing.dart';
 import '../../../theme/atlas_typography.dart';
 import '../../atlas/atlas_glass_card.dart';
-import '../../atlas/atlas_glass_panel.dart';
+import '../../atlas/components/atlas_status_chip.dart';
 
 class AcademyTopicRoadmapCard extends StatelessWidget {
   const AcademyTopicRoadmapCard({
@@ -19,71 +19,128 @@ class AcademyTopicRoadmapCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Color accentColor = _accentColorForTopic(
+      topic,
+    );
+
     return AtlasGlassCard(
-      child: AtlasGlassPanel(
-        child: InkWell(
-          borderRadius: BorderRadius.circular(18),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.all(AtlasSpacing.md),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      onTap: onTap,
+      accentColor: accentColor,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _TopicStatusIcon(
+            isPremium: topic.isPremium,
+            isAvailable: topic.isAvailable,
+          ),
+          const SizedBox(
+            width: AtlasSpacing.md,
+          ),
+          Expanded(
+            child: Column(
+              crossAxisAlignment:
+              CrossAxisAlignment.start,
               children: [
-                _TopicStatusIcon(
-                  isPremium: topic.isPremium,
-                  isAvailable: topic.isAvailable,
+                Text(
+                  topic.title,
+                  style: AtlasTypography.headingSmall,
                 ),
-                const SizedBox(width: AtlasSpacing.md),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Wrap(
-                        spacing: AtlasSpacing.sm,
-                        runSpacing: AtlasSpacing.xs,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: [
-                          Text(
-                            topic.title,
-                            style: AtlasTypography.headingSmall,
-                          ),
-                          if (topic.isPremium)
-                            const _TopicBadge(
-                              label: 'Premium',
-                              icon: Icons.workspace_premium,
-                            ),
-                        ],
-                      ),
-                      const SizedBox(height: AtlasSpacing.xs),
-                      Text(
-                        topic.subtitle,
-                        style: AtlasTypography.bodySmall.copyWith(
-                          color: AtlasColors.textSecondary,
-                          height: 1.35,
-                        ),
-                      ),
-                      const SizedBox(height: AtlasSpacing.sm),
-                      Text(
-                        topic.category,
-                        style: AtlasTypography.label.copyWith(
-                          color: AtlasColors.vaultGold,
-                        ),
-                      ),
-                    ],
+                const SizedBox(
+                  height: AtlasSpacing.xs,
+                ),
+                Text(
+                  topic.subtitle,
+                  style: AtlasTypography.bodySmall.copyWith(
+                    color: AtlasColors.textSecondary,
+                    height: 1.35,
                   ),
                 ),
-                const SizedBox(width: AtlasSpacing.sm),
-                const Icon(
-                  Icons.arrow_forward_ios,
-                  size: 16,
-                  color: AtlasColors.textSecondary,
+                const SizedBox(
+                  height: AtlasSpacing.sm,
+                ),
+                Wrap(
+                  spacing: AtlasSpacing.sm,
+                  runSpacing: AtlasSpacing.sm,
+                  children: [
+                    AtlasStatusChip(
+                      label: topic.category,
+                      icon: Icons.category_outlined,
+                      accentColor:
+                      AtlasColors.vaultGold,
+                      size:
+                      AtlasStatusChipSize.compact,
+                    ),
+                    AtlasStatusChip(
+                      label: _statusLabel(
+                        topic,
+                      ),
+                      icon: _statusIcon(
+                        topic,
+                      ),
+                      accentColor:
+                      accentColor,
+                      size:
+                      AtlasStatusChipSize.compact,
+                    ),
+                    if (topic.isPremium)
+                      const AtlasStatusChip(
+                        label: 'Premium',
+                        icon: Icons
+                            .workspace_premium_rounded,
+                        accentColor:
+                        AtlasColors.vaultGold,
+                        size:
+                        AtlasStatusChipSize.compact,
+                      ),
+                  ],
                 ),
               ],
             ),
           ),
-        ),
+          const SizedBox(
+            width: AtlasSpacing.sm,
+          ),
+          const Icon(
+            Icons.chevron_right_rounded,
+            color: AtlasColors.textSecondary,
+          ),
+        ],
       ),
     );
+  }
+
+  static String _statusLabel(
+      AcademyTopic topic,
+      ) {
+    if (topic.isAvailable) {
+      return 'Available';
+    }
+
+    return 'Roadmap';
+  }
+
+  static IconData _statusIcon(
+      AcademyTopic topic,
+      ) {
+    if (topic.isAvailable) {
+      return Icons.check_circle_outline_rounded;
+    }
+
+    return Icons.schedule_rounded;
+  }
+
+  static Color _accentColorForTopic(
+      AcademyTopic topic,
+      ) {
+    if (topic.isPremium) {
+      return AtlasColors.vaultGold;
+    }
+
+    if (topic.isAvailable) {
+      return AtlasColors.success;
+    }
+
+    return AtlasColors.intelligenceBlue;
   }
 }
 
@@ -98,72 +155,36 @@ class _TopicStatusIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final icon = isPremium
-        ? Icons.workspace_premium
-        : isAvailable
-        ? Icons.check_circle_outline
-        : Icons.auto_stories_outlined;
+    final IconData icon;
 
-    final color = isPremium
-        ? AtlasColors.vaultGold
-        : isAvailable
-        ? AtlasColors.success
-        : AtlasColors.intelligenceBlue;
+    final Color color;
+
+    if (isPremium) {
+      icon = Icons.workspace_premium_rounded;
+      color = AtlasColors.vaultGold;
+    } else if (isAvailable) {
+      icon = Icons.check_circle_outline_rounded;
+      color = AtlasColors.success;
+    } else {
+      icon = Icons.auto_stories_outlined;
+      color = AtlasColors.intelligenceBlue;
+    }
 
     return Container(
       width: 46,
       height: 46,
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.14),
-        borderRadius: BorderRadius.circular(16),
+        color: color.withValues(
+          alpha: 0.14,
+        ),
+        borderRadius: BorderRadius.circular(
+          16,
+        ),
       ),
+      alignment: Alignment.center,
       child: Icon(
         icon,
         color: color,
-      ),
-    );
-  }
-}
-
-class _TopicBadge extends StatelessWidget {
-  const _TopicBadge({
-    required this.label,
-    required this.icon,
-  });
-
-  final String label;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 8,
-        vertical: 5,
-      ),
-      decoration: BoxDecoration(
-        color: AtlasColors.vaultGold.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(
-          color: AtlasColors.vaultGold.withValues(alpha: 0.22),
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            size: 13,
-            color: AtlasColors.vaultGold,
-          ),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: AtlasTypography.label.copyWith(
-              color: AtlasColors.vaultGold,
-            ),
-          ),
-        ],
       ),
     );
   }

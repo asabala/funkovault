@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../theme/atlas_colors.dart';
 import '../../theme/atlas_spacing.dart';
-import '../../theme/atlas_typography.dart';
 import '../../widgets/atlas/atlas_glass_card.dart';
+import '../../widgets/atlas/components/atlas_action_row.dart';
+import '../../widgets/atlas/components/atlas_section_header.dart';
 import 'backup_sync_settings_screen.dart';
 import 'help_roadmap_screen.dart';
 import 'import_csv_screen.dart';
@@ -17,13 +18,17 @@ import '../vault/vault_health_screen.dart';
 import '../vault/vault_maintenance_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
-  const SettingsScreen({super.key});
+  const SettingsScreen({
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Settings'),
+        title: const Text(
+          'Settings',
+        ),
       ),
       body: ListView(
         padding: const EdgeInsets.only(
@@ -43,181 +48,270 @@ class SettingsScreen extends StatelessWidget {
           const _SettingsSectionHeader(
             title: 'Account',
           ),
-          _SettingsTile(
-            icon: Icons.person_outline,
-            title: 'Collector Profile',
-            subtitle: 'Update your name, title, bio, and collector details',
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const EditCollectorProfileScreen(),
+
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AtlasSpacing.md,
+            ),
+            child: Column(
+              children: [
+                AtlasActionRow(
+                  title: 'Collector Profile',
+                  description:
+                  'Update your name, title, bio, and collector details.',
+                  icon: Icons.person_outline,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) =>
+                        const EditCollectorProfileScreen(),
+                      ),
+                    );
+                  },
                 ),
-              );
-            },
-          ),
-          _SettingsTile(
-            icon: Icons.workspace_premium_outlined,
-            title: 'Premium',
-            subtitle: 'Manage Premium features, upgrades, and advanced tools',
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const PremiumSettingsScreen(),
+                const SizedBox(
+                  height: AtlasSpacing.sm,
                 ),
-              );
-            },
+                AtlasActionRow(
+                  title: 'Premium',
+                  description:
+                  'Manage Premium features, upgrades, and advanced tools.',
+                  icon: Icons.workspace_premium_outlined,
+                  accentColor: AtlasColors.vaultGold,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) =>
+                        const PremiumSettingsScreen(),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
-          const Divider(),
+
+          const _SettingsDivider(),
 
           const _SettingsSectionHeader(
             title: 'Collection Tools',
           ),
-          _SettingsTile(
-            icon: Icons.upload_file,
-            title: 'Import Collection CSV',
-            subtitle: 'Import a HobbyDB export',
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const ImportCsvScreen(),
+
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AtlasSpacing.md,
+            ),
+            child: Column(
+              children: [
+                AtlasActionRow(
+                  title: 'Import Collection CSV',
+                  description:
+                  'Import a HobbyDB export into your collection.',
+                  icon: Icons.upload_file,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) =>
+                        const ImportCsvScreen(),
+                      ),
+                    );
+                  },
                 ),
-              );
-            },
-          ),
-          _SettingsTile(
-            icon: Icons.build_circle_outlined,
-            title: 'Vault Maintenance',
-            subtitle: 'Review, repair, or reset your current collection',
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const VaultMaintenanceScreen(),
+                const SizedBox(
+                  height: AtlasSpacing.sm,
                 ),
-              );
-            },
-          ),
-          _SettingsTile(
-            icon: Icons.health_and_safety_outlined,
-            title: 'Vault Health',
-            subtitle: 'Review health score, cleanup priority, and premium health insights',
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const VaultHealthScreen(),
+                AtlasActionRow(
+                  title: 'Vault Maintenance',
+                  description:
+                  'Review, repair, or reset your current collection.',
+                  icon: Icons.build_circle_outlined,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) =>
+                        const VaultMaintenanceScreen(),
+                      ),
+                    );
+                  },
                 ),
-              );
-            },
+                const SizedBox(
+                  height: AtlasSpacing.sm,
+                ),
+                AtlasActionRow(
+                  title: 'Vault Health',
+                  description:
+                  'Review health score, cleanup priority, and Premium health insights.',
+                  icon: Icons.health_and_safety_outlined,
+                  accentColor: AtlasColors.vaultGold,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) =>
+                        const VaultHealthScreen(),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
-          const Divider(),
+
+          const _SettingsDivider(),
 
           const _SettingsSectionHeader(
             title: 'Preferences',
           ),
-          _SettingsTile(
-            icon: Icons.tune_outlined,
-            title: 'Vault Preferences',
-            subtitle: 'Manage saved views, image defaults, filters, and sorting',
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const VaultPreferencesScreen(),
+
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AtlasSpacing.md,
+            ),
+            child: Column(
+              children: [
+                AtlasActionRow(
+                  title: 'Vault Preferences',
+                  description:
+                  'Manage saved views, image defaults, filters, and sorting.',
+                  icon: Icons.tune_outlined,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) =>
+                        const VaultPreferencesScreen(),
+                      ),
+                    );
+                  },
                 ),
-              );
-            },
-          ),
-          _SettingsTile(
-            icon: Icons.cloud_sync_outlined,
-            title: 'Backup & Sync',
-            subtitle: 'Prepare cloud backup, restore, and sync options',
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const BackupSyncSettingsScreen(),
+                const SizedBox(
+                  height: AtlasSpacing.sm,
                 ),
-              );
-            },
-          ),
-          _SettingsTile(
-            icon: Icons.notifications_none_rounded,
-            title: 'Notifications',
-            subtitle: 'Manage future drop alerts, cleanup reminders, and value updates',
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const NotificationsSettingsScreen(),
+                AtlasActionRow(
+                  title: 'Backup & Sync',
+                  description:
+                  'Prepare cloud backup, restore, and sync options.',
+                  icon: Icons.cloud_sync_outlined,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) =>
+                        const BackupSyncSettingsScreen(),
+                      ),
+                    );
+                  },
                 ),
-              );
-            },
-          ),
-          _SettingsTile(
-            icon: Icons.security_outlined,
-            title: 'Security',
-            subtitle: 'Manage account protection and future two-step verification',
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const SecuritySettingsScreen(),
+                const SizedBox(
+                  height: AtlasSpacing.sm,
                 ),
-              );
-            },
+                AtlasActionRow(
+                  title: 'Notifications',
+                  description:
+                  'Manage future drop alerts, cleanup reminders, and value updates.',
+                  icon: Icons.notifications_none_rounded,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) =>
+                        const NotificationsSettingsScreen(),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(
+                  height: AtlasSpacing.sm,
+                ),
+                AtlasActionRow(
+                  title: 'Security',
+                  description:
+                  'Manage account protection and future two-step verification.',
+                  icon: Icons.security_outlined,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) =>
+                        const SecuritySettingsScreen(),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
-          const Divider(),
+
+          const _SettingsDivider(),
 
           const _SettingsSectionHeader(
             title: 'Developer',
           ),
-          _SettingsTile(
-            icon: Icons.dashboard_customize_outlined,
-            title: 'ADS Showcase',
-            subtitle:
-            'Preview Atlas Design System components, maturity, and roadmap',
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) {
-                    return const AtlasDesignSystemShowcaseScreen();
-                  },
-                ),
-              );
-            },
+
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AtlasSpacing.md,
+            ),
+            child: AtlasActionRow(
+              title: 'ADS Showcase',
+              description:
+              'Preview Atlas Design System components, maturity, and roadmap.',
+              icon: Icons.dashboard_customize_outlined,
+              accentColor: AtlasColors.intelligenceBlue,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                    const AtlasDesignSystemShowcaseScreen(),
+                  ),
+                );
+              },
+            ),
           ),
-          const Divider(),
+
+          const _SettingsDivider(),
 
           const _SettingsSectionHeader(
             title: 'Support & About',
           ),
-          _SettingsTile(
-            icon: Icons.route_outlined,
-            title: 'Help & Roadmap',
-            subtitle: 'Review planned features, guidance, and future Atlas tools',
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const HelpRoadmapScreen(),
+
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AtlasSpacing.md,
+            ),
+            child: Column(
+              children: [
+                AtlasActionRow(
+                  title: 'Help & Roadmap',
+                  description:
+                  'Review planned features, guidance, and future Atlas tools.',
+                  icon: Icons.route_outlined,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) =>
+                        const HelpRoadmapScreen(),
+                      ),
+                    );
+                  },
                 ),
-              );
-            },
-          ),
-          const ListTile(
-            leading: Icon(
-              Icons.info_outline,
-            ),
-            title: Text(
-              'Funko Vault',
-            ),
-            subtitle: Text(
-              'Version 1.0',
+                const SizedBox(
+                  height: AtlasSpacing.sm,
+                ),
+                const AtlasActionRow(
+                  title: 'Funko Vault',
+                  description: 'Version 1.0',
+                  icon: Icons.info_outline,
+                  showChevron: false,
+                  compact: true,
+                ),
+              ],
             ),
           ),
         ],
@@ -231,43 +325,14 @@ class _SettingsHeaderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AtlasGlassCard(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 46,
-            height: 46,
-            decoration: BoxDecoration(
-              color: AtlasColors.vaultGold.withValues(alpha: 0.14),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: const Icon(
-              Icons.settings_suggest_rounded,
-              color: AtlasColors.vaultGold,
-            ),
-          ),
-          const SizedBox(width: AtlasSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Atlas Control Center',
-                  style: AtlasTypography.headingSmall,
-                ),
-                const SizedBox(height: AtlasSpacing.xs),
-                Text(
-                  'Manage your collector profile, Premium tools, vault health, preferences, backup, and security.',
-                  style: AtlasTypography.bodySmall.copyWith(
-                    color: AtlasColors.textSecondary,
-                    height: 1.35,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+    return const AtlasGlassCard(
+      accentColor: AtlasColors.vaultGold,
+      child: AtlasSectionHeader(
+        title: 'Atlas Control Center',
+        subtitle:
+        'Manage your collector profile, Premium tools, vault health, preferences, backup, and security.',
+        icon: Icons.settings_suggest_rounded,
+        accentColor: AtlasColors.vaultGold,
       ),
     );
   }
@@ -284,10 +349,10 @@ class _SettingsSectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-        16,
-        20,
-        16,
-        8,
+        AtlasSpacing.md,
+        AtlasSpacing.lg,
+        AtlasSpacing.md,
+        AtlasSpacing.sm,
       ),
       child: Text(
         title.toUpperCase(),
@@ -301,35 +366,23 @@ class _SettingsSectionHeader extends StatelessWidget {
   }
 }
 
-class _SettingsTile extends StatelessWidget {
-  const _SettingsTile({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
+class _SettingsDivider extends StatelessWidget {
+  const _SettingsDivider();
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      leading: Icon(
-        icon,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AtlasSpacing.md,
+        AtlasSpacing.lg,
+        AtlasSpacing.md,
+        0,
       ),
-      title: Text(
-        title,
+      child: Divider(
+        color: AtlasColors.textSecondary.withValues(
+          alpha: 0.18,
+        ),
       ),
-      subtitle: Text(
-        subtitle,
-      ),
-      trailing: const Icon(
-        Icons.chevron_right,
-      ),
-      onTap: onTap,
     );
   }
 }

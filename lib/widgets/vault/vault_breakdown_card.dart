@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../theme/atlas_colors.dart';
 import '../../theme/atlas_spacing.dart';
+import '../../theme/atlas_typography.dart';
+import '../atlas/atlas_glass_card.dart';
+import '../atlas/components/atlas_section_header.dart';
 
 class VaultBreakdownCard extends StatelessWidget {
   const VaultBreakdownCard({
@@ -25,11 +28,13 @@ class VaultBreakdownCard extends StatelessWidget {
   final int signedCount;
   final int limitedCount;
   final int needsValueCount;
+
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    final items = [
+    final List<_VaultBreakdownItem> items =
+    <_VaultBreakdownItem>[
       _VaultBreakdownItem(
         label: 'Owned',
         value: ownedCount,
@@ -72,68 +77,43 @@ class VaultBreakdownCard extends StatelessWidget {
       ),
     ];
 
-    return InkWell(
-        borderRadius: BorderRadius.circular(24),
-        onTap: onTap,
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(AtlasSpacing.lg),
-      decoration: BoxDecoration(
-        color: AtlasColors.card,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: AtlasColors.vaultGold.withValues(alpha: 0.18),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.18),
-            blurRadius: 18,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
+    return AtlasGlassCard(
+      accentColor: AtlasColors.vaultGold,
+      onTap: onTap,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
-            children: [
-              Icon(
-                Icons.dashboard_customize_rounded,
-                color: AtlasColors.vaultGold,
-              ),
-              SizedBox(width: AtlasSpacing.sm),
-              Expanded(
-                child: Text(
-                  'Vault Breakdown',
-                  style: TextStyle(
-                    color: AtlasColors.textPrimary,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AtlasSpacing.xs),
-          const Text(
+          const AtlasSectionHeader(
+            title: 'Vault Breakdown',
+            subtitle:
             'Quick snapshot of what is inside your collection.',
-            style: TextStyle(
-              color: AtlasColors.textSecondary,
-              fontSize: 13,
-            ),
+            icon: Icons.dashboard_customize_rounded,
+            accentColor: AtlasColors.vaultGold,
           ),
-          const SizedBox(height: AtlasSpacing.lg),
+          const SizedBox(
+            height: AtlasSpacing.lg,
+          ),
           Wrap(
             spacing: AtlasSpacing.sm,
             runSpacing: AtlasSpacing.sm,
             children: items
                 .map(
-                  (item) => _VaultBreakdownChip(item: item),
+                  (
+                  _VaultBreakdownItem item,
+                  ) {
+                return _VaultBreakdownChip(
+                  item: item,
+                );
+              },
             )
-                .toList(),
+                .toList(
+              growable: false,
+            ),
           ),
           if (onTap != null) ...[
-            const SizedBox(height: AtlasSpacing.lg),
+            const SizedBox(
+              height: AtlasSpacing.lg,
+            ),
             Row(
               children: [
                 const Icon(
@@ -141,13 +121,14 @@ class VaultBreakdownCard extends StatelessWidget {
                   color: AtlasColors.vaultGold,
                   size: 18,
                 ),
-                const SizedBox(width: AtlasSpacing.sm),
+                const SizedBox(
+                  width: AtlasSpacing.sm,
+                ),
                 Expanded(
                   child: Text(
                     'Tap to review Entire Vault',
-                    style: TextStyle(
+                    style: AtlasTypography.bodySmall.copyWith(
                       color: AtlasColors.vaultGold,
-                      fontSize: 13,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -161,7 +142,6 @@ class VaultBreakdownCard extends StatelessWidget {
           ],
         ],
       ),
-        ),
     );
   }
 }
@@ -177,12 +157,20 @@ class _VaultBreakdownChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: 150,
-      padding: const EdgeInsets.all(AtlasSpacing.md),
+      padding: const EdgeInsets.all(
+        AtlasSpacing.md,
+      ),
       decoration: BoxDecoration(
-        color: AtlasColors.background.withValues(alpha: 0.72),
-        borderRadius: BorderRadius.circular(18),
+        color: AtlasColors.background.withValues(
+          alpha: 0.72,
+        ),
+        borderRadius: BorderRadius.circular(
+          18,
+        ),
         border: Border.all(
-          color: Colors.white.withValues(alpha: 0.08),
+          color: Colors.white.withValues(
+            alpha: 0.08,
+          ),
         ),
       ),
       child: Row(
@@ -190,9 +178,14 @@ class _VaultBreakdownChip extends StatelessWidget {
           Container(
             width: 34,
             height: 34,
+            alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: AtlasColors.vaultGold.withValues(alpha: 0.14),
-              borderRadius: BorderRadius.circular(12),
+              color: AtlasColors.vaultGold.withValues(
+                alpha: 0.14,
+              ),
+              borderRadius: BorderRadius.circular(
+                12,
+              ),
             ),
             child: Icon(
               item.icon,
@@ -200,29 +193,32 @@ class _VaultBreakdownChip extends StatelessWidget {
               size: 19,
             ),
           ),
-          const SizedBox(width: AtlasSpacing.sm),
+          const SizedBox(
+            width: AtlasSpacing.sm,
+          ),
           Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment:
+              CrossAxisAlignment.start,
               children: [
                 Text(
                   item.value.toString(),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: AtlasTypography.bodyMedium.copyWith(
                     color: AtlasColors.textPrimary,
-                    fontSize: 17,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(
+                  height: 2,
+                ),
                 Text(
                   item.label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: AtlasTypography.bodySmall.copyWith(
                     color: AtlasColors.textSecondary,
-                    fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
                 ),

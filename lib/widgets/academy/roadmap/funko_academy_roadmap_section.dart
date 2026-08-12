@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'academy_topic_roadmap_card.dart';
-import 'academy_roadmap_topic_preview_launcher.dart';
 
-import '../shared/academy_section_header.dart';
 import '../../../academy/models/academy_topic.dart';
+import '../../../theme/atlas_spacing.dart';
+import '../../atlas/components/atlas_section_header.dart';
+import 'academy_roadmap_topic_preview_launcher.dart';
+import 'academy_topic_roadmap_card.dart';
 
 class FunkoAcademyRoadmapSection extends StatelessWidget {
   const FunkoAcademyRoadmapSection({
@@ -22,15 +23,26 @@ class FunkoAcademyRoadmapSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const AcademySectionHeader(
+        const AtlasSectionHeader(
           title: 'Funko Academy Roadmap',
-          subtitle: 'Upcoming lessons Atlas Academy is being built to support.',
+          subtitle:
+          'Upcoming lessons Atlas Academy is being built to support.',
+          icon: Icons.route_rounded,
         ),
-        const SizedBox(height: 14),
-        for (final topic in topics) ...[
+        const SizedBox(
+          height: AtlasSpacing.md,
+        ),
+        for (
+        int index = 0;
+        index < topics.length;
+        index++
+        ) ...[
           AcademyTopicRoadmapCard(
-            topic: topic,
+            topic: topics[index],
             onTap: () {
+              final AcademyTopic topic =
+              topics[index];
+
               AcademyRoadmapTopicPreviewLauncher.show(
                 context: context,
                 title: topic.title,
@@ -39,7 +51,10 @@ class FunkoAcademyRoadmapSection extends StatelessWidget {
               );
             },
           ),
-          const SizedBox(height: 12),
+          if (index != topics.length - 1)
+            const SizedBox(
+              height: AtlasSpacing.sm,
+            ),
         ],
       ],
     );

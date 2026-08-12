@@ -10,6 +10,8 @@ import '../../theme/atlas_typography.dart';
 import '../../widgets/atlas/atlas_glass_card.dart';
 import '../../widgets/atlas/atlas_glass_panel.dart';
 import '../../widgets/atlas/atlas_stat_tile.dart';
+import '../../widgets/atlas/components/atlas_action_row.dart';
+import '../../widgets/atlas/components/atlas_status_chip.dart';
 import '../../widgets/atlas/components/atlas_empty_state.dart';
 import '../../widgets/atlas/components/atlas_info_banner.dart';
 import '../../widgets/atlas/components/atlas_section_header.dart';
@@ -198,29 +200,11 @@ class _MultipleCopyCard extends StatelessWidget {
                   ],
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AtlasSpacing.md,
-                  vertical: AtlasSpacing.sm,
-                ),
-                decoration: BoxDecoration(
-                  color: AtlasColors.vaultGold.withValues(
-                    alpha: 0.14,
-                  ),
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(
-                    color: AtlasColors.vaultGold.withValues(
-                      alpha: 0.38,
-                    ),
-                  ),
-                ),
-                child: Text(
-                  'Qty ${pop.quantity}',
-                  style: AtlasTypography.bodyMedium.copyWith(
-                    color: AtlasColors.vaultGold,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+              AtlasStatusChip(
+                label: 'Qty ${pop.quantity}',
+                icon: Icons.layers_rounded,
+                accentColor: AtlasColors.vaultGold,
+                size: AtlasStatusChipSize.compact,
               ),
             ],
           ),
@@ -230,39 +214,22 @@ class _MultipleCopyCard extends StatelessWidget {
             showImage: true,
           ),
           const SizedBox(height: AtlasSpacing.md),
-          AtlasGlassPanel(
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.add_box_outlined,
-                  color: AtlasColors.vaultGold,
-                ),
-                const SizedBox(width: AtlasSpacing.sm),
-                Expanded(
-                  child: Text(
-                    '$extraCopyCount extra '
-                        '${extraCopyCount == 1 ? 'copy' : 'copies'} '
-                        'represented by this record.',
-                    style: AtlasTypography.bodyMedium.copyWith(
-                      color: AtlasColors.textSecondary,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+          AtlasInfoBanner(
+            icon: Icons.add_box_outlined,
+            title: 'Extra Copies',
+            message:
+            '$extraCopyCount extra '
+                '${extraCopyCount == 1 ? 'copy is' : 'copies are'} '
+                'represented by this record.',
           ),
           const SizedBox(height: AtlasSpacing.md),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              onPressed: onEdit,
-              icon: const Icon(
-                Icons.edit_outlined,
-              ),
-              label: const Text(
-                'Edit Quantity',
-              ),
-            ),
+          AtlasActionRow(
+            title: 'Edit Quantity',
+            description:
+            'Update the physical copy count represented by this collectible record.',
+            icon: Icons.edit_outlined,
+            accentColor: AtlasColors.vaultGold,
+            onTap: onEdit,
           ),
         ],
       ),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../academy/models/academy_request.dart';
+import '../../../theme/atlas_spacing.dart';
+import '../../atlas/atlas_glass_card.dart';
 import 'academy_admin_inbox_header.dart';
 import 'academy_admin_request_list.dart';
 
@@ -20,23 +22,16 @@ class AcademyAdminRequestInboxCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.10),
-        ),
-      ),
+    return AtlasGlassCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           AcademyAdminInboxHeader(
             requestCount: requests.length,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(
+            height: AtlasSpacing.lg,
+          ),
           AcademyAdminRequestList(
             requests: requests,
             onReviewTap: onReviewTap,

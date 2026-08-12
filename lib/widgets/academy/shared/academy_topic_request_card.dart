@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../../theme/atlas_colors.dart';
 import '../../../theme/atlas_spacing.dart';
-import '../../../theme/atlas_typography.dart';
 import '../../atlas/atlas_glass_card.dart';
-import '../../atlas/atlas_glass_panel.dart';
+import '../../atlas/components/atlas_form_field.dart';
+import '../../atlas/components/atlas_info_banner.dart';
+import '../../atlas/components/atlas_section_header.dart';
 
 class AcademyTopicRequestCard extends StatefulWidget {
   const AcademyTopicRequestCard({
@@ -15,22 +16,53 @@ class AcademyTopicRequestCard extends StatefulWidget {
   final ValueChanged<String> onSubmit;
 
   @override
-  State<AcademyTopicRequestCard> createState() =>
-      _AcademyTopicRequestCardState();
+  State<AcademyTopicRequestCard> createState() {
+    return _AcademyTopicRequestCardState();
+  }
 }
 
-class _AcademyTopicRequestCardState extends State<AcademyTopicRequestCard> {
-  final TextEditingController _topicController = TextEditingController();
+class _AcademyTopicRequestCardState
+    extends State<AcademyTopicRequestCard> {
+  static const int _maxTopicLength = 80;
+
+  final TextEditingController _topicController =
+  TextEditingController();
+
+  bool get _canSubmit {
+    return _topicController.text.trim().isNotEmpty;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    _topicController.addListener(
+      _handleTopicChanged,
+    );
+  }
 
   @override
   void dispose() {
+    _topicController.removeListener(
+      _handleTopicChanged,
+    );
+
     _topicController.dispose();
 
     super.dispose();
   }
 
+  void _handleTopicChanged() {
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {});
+  }
+
   void _submitTopic() {
-    final topic = _topicController.text.trim();
+    final String topic =
+    _topicController.text.trim();
 
     if (topic.isEmpty) {
       return;
@@ -39,66 +71,61 @@ class _AcademyTopicRequestCardState extends State<AcademyTopicRequestCard> {
     widget.onSubmit(topic);
 
     _topicController.clear();
+
+    FocusScope.of(context).unfocus();
   }
 
   @override
   Widget build(BuildContext context) {
     return AtlasGlassCard(
-      child: AtlasGlassPanel(
-        child: Padding(
-          padding: const EdgeInsets.all(AtlasSpacing.md),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const Icon(
-                    Icons.lightbulb_outline,
-                    color: AtlasColors.vaultGold,
-                  ),
-                  const SizedBox(width: AtlasSpacing.sm),
-                  Expanded(
-                    child: Text(
-                      'Suggest an Academy Topic',
-                      style: AtlasTypography.headingSmall,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AtlasSpacing.sm),
-              Text(
-                'Want Atlas to teach something else? Suggest a collector topic for future Academy review.',
-                style: AtlasTypography.bodySmall.copyWith(
-                  color: AtlasColors.textSecondary,
-                  height: 1.4,
-                ),
-              ),
-              const SizedBox(height: AtlasSpacing.md),
-              TextField(
-                controller: _topicController,
-                textInputAction: TextInputAction.done,
-                onSubmitted: (_) => _submitTopic(),
-                decoration: InputDecoration(
-                  hintText: 'Example: Limited Edition stickers',
-                  prefixIcon: const Icon(Icons.edit_note),
-                  suffixIcon: IconButton(
-                    tooltip: 'Submit topic request',
-                    icon: const Icon(Icons.send),
-                    onPressed: _submitTopic,
-                  ),
-                ),
-              ),
-              const SizedBox(height: AtlasSpacing.sm),
-              Text(
-                'Future version: topic requests can be sent to the Atlas admin review queue.',
-                style: AtlasTypography.bodySmall.copyWith(
-                  color: AtlasColors.textSecondary,
-                  height: 1.35,
-                ),
-              ),
-            ],
+      accentColor: AtlasColors.vaultGold,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const AtlasSectionHeader(
+            title: 'Suggest an Academy Topic',
+            subtitle:
+            'Want Atlas to teach something else? Suggest a collector topic for future Academy review.',
+            icon: Icons.lightbulb_outline_rounded,
+            accentColor: AtlasColors.vaultGold,
           ),
-        ),
+          const SizedBox(
+            height: AtlasSpacing.lg,
+          ),
+          AtlasFormField(
+            controller: _topicController,
+            label: 'Topic Request',
+            hintText:
+            'Example: Limited Edition stickers',
+            icon: Icons.edit_note_rounded,
+            maxLength: _maxTopicLength,
+            textInputAction: TextInputAction.done,
+            textCapitalization:
+            TextCapitalization.sentences,
+            onFieldSubmitted: (_) {
+              if (_canSubmit) {
+                _submitTopic();
+              }
+            },
+            suffixIcon: IconButton(
+              tooltip: 'Submit topic request',
+              onPressed:
+              _canSubmit ? _submitTopic : null,
+              icon: const Icon(
+                Icons.send_rounded,
+              ),
+            ),
+          ),
+          const SizedBox(
+            height: AtlasSpacing.md,
+          ),
+          const AtlasInfoBanner(
+            icon: Icons.admin_panel_settings_outlined,
+            title: 'Review Queue',
+            message:
+            'Topic requests can be reviewed through the Atlas Academy admin request workflow.',
+          ),
+        ],
       ),
     );
   }

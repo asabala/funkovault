@@ -5,6 +5,7 @@ import '../../theme/atlas_colors.dart';
 import '../../theme/atlas_spacing.dart';
 import '../../theme/atlas_typography.dart';
 import '../atlas/atlas_glass_panel.dart';
+import '../atlas/components/atlas_status_chip.dart';
 
 /// Reusable presentation for one completed Atlas recommendation.
 ///
@@ -51,7 +52,16 @@ class AtlasRecommendationTile extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: AtlasSpacing.sm),
-                    _PriorityBadge(priorityName: recommendation.priority.name),
+                    AtlasStatusChip(
+                      label: _formatEnumName(
+                        recommendation.priority.name,
+                      ),
+                      icon: _iconForPriority(
+                        recommendation.priority.name,
+                      ),
+                      accentColor: AtlasColors.vaultGold,
+                      size: AtlasStatusChipSize.compact,
+                    ),
                   ],
                 ),
                 const SizedBox(height: AtlasSpacing.xs),
@@ -105,36 +115,6 @@ class _PriorityIndicator extends StatelessWidget {
         _iconForPriority(priorityName),
         color: AtlasColors.vaultGold,
         size: 21,
-      ),
-    );
-  }
-}
-
-class _PriorityBadge extends StatelessWidget {
-  const _PriorityBadge({required this.priorityName});
-
-  final String priorityName;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AtlasSpacing.sm,
-        vertical: 4,
-      ),
-      decoration: BoxDecoration(
-        color: AtlasColors.vaultGold.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(
-          color: AtlasColors.vaultGold.withValues(alpha: 0.25),
-        ),
-      ),
-      child: Text(
-        _formatEnumName(priorityName),
-        style: AtlasTypography.bodySmall.copyWith(
-          color: AtlasColors.vaultGold,
-          fontWeight: FontWeight.bold,
-        ),
       ),
     );
   }

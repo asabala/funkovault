@@ -16,8 +16,12 @@ import '../../theme/atlas_typography.dart';
 import '../../widgets/atlas/atlas_expandable_section.dart';
 import '../../widgets/atlas/atlas_glass_card.dart';
 import '../../widgets/atlas/atlas_glass_panel.dart';
+import '../../widgets/atlas/components/atlas_action_row.dart';
 import '../../widgets/atlas/completion/atlas_completion_loader.dart';
 import '../../widgets/atlas/components/atlas_chip.dart';
+import '../../widgets/atlas/components/atlas_empty_state.dart';
+import '../../widgets/atlas/components/atlas_insight_panel.dart';
+import '../../widgets/atlas/components/atlas_metric_panel.dart';
 import '../../widgets/atlas/components/atlas_section_header.dart';
 import '../../widgets/pop/pop_source_details_section.dart';
 import '../../widgets/timeline/atlas_timeline_card.dart';
@@ -437,28 +441,14 @@ class _PopDetailsScreenState extends State<PopDetailsScreen> {
                       ),
                     );
 
-                    final valuePanel = AtlasGlassPanel(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            'Current Value',
-                            style: AtlasTypography.bodySmall.copyWith(
-                              color: AtlasColors.textSecondary,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: AtlasSpacing.md),
-                          Text(
-                            valueLabel,
-                            textAlign: TextAlign.center,
-                            style: AtlasTypography.headingLarge.copyWith(
-                              color: AtlasColors.vaultGold,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
+                    final valuePanel = AtlasMetricPanel(
+                      label: 'Current Value',
+                      value: valueLabel,
+                      supportingText: pop.value <= 0
+                          ? 'Add a value to improve collection analytics'
+                          : 'Recorded collection value',
+                      icon: Icons.attach_money_rounded,
+                      accentColor: AtlasColors.vaultGold,
                     );
 
                     if (useColumn) {
@@ -541,73 +531,73 @@ class _PopDetailsScreenState extends State<PopDetailsScreen> {
                   icon: Icons.tune_rounded,
                 ),
                 const SizedBox(height: AtlasSpacing.lg),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton.icon(
-                    onPressed: _openAskAtlas,
-                    icon: const Icon(
-                      Icons.auto_awesome_rounded,
-                    ),
-                    label: const Text(
-                      'Ask Atlas About This Pop',
-                    ),
-                  ),
+                AtlasActionRow(
+                  title: 'Ask Atlas About This Pop',
+                  description:
+                  'Get contextual intelligence about this collectible and its place in your collection.',
+                  icon: Icons.auto_awesome_rounded,
+                  accentColor: AtlasColors.intelligenceBlue,
+                  onTap: _openAskAtlas,
                 ),
                 const SizedBox(height: AtlasSpacing.sm),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: _editValue,
-                    icon: Icon(
-                      pop.value <= 0
-                          ? Icons.add_chart_rounded
-                          : Icons.price_change_rounded,
-                    ),
-                    label: Text(
-                      pop.value <= 0
-                          ? 'Add Current Value'
-                          : 'Update Current Value',
-                    ),
-                  ),
+
+                AtlasActionRow(
+                  title: pop.value <= 0
+                      ? 'Add Current Value'
+                      : 'Update Current Value',
+                  description: pop.value <= 0
+                      ? 'Record a current value to improve collection analytics and tracking.'
+                      : 'Update the recorded market value for this collectible.',
+                  icon: pop.value <= 0
+                      ? Icons.add_chart_rounded
+                      : Icons.price_change_rounded,
+                  accentColor: AtlasColors.vaultGold,
+                  onTap: _editValue,
                 ),
                 const SizedBox(height: AtlasSpacing.sm),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: _editPop,
-                    icon: const Icon(Icons.edit_rounded),
-                    label: const Text('Edit Pop Details'),
-                  ),
+
+                AtlasActionRow(
+                  title: 'Edit Pop Details',
+                  description:
+                  'Update identity, condition, ownership, and other collectible information.',
+                  icon: Icons.edit_rounded,
+                  onTap: _editPop,
                 ),
                 const SizedBox(height: AtlasSpacing.sm),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: _toggleWishlist,
-                    icon: Icon(
-                      pop.isWishlist
-                          ? Icons.inventory_2_rounded
-                          : Icons.favorite_border_rounded,
-                    ),
-                    label: Text(
-                      pop.isWishlist
-                          ? 'Move to Owned Collection'
-                          : 'Move to Wishlist',
-                    ),
-                  ),
+
+                AtlasActionRow(
+                  title: pop.isWishlist
+                      ? 'Move to Owned Collection'
+                      : 'Move to Wishlist',
+                  description: pop.isWishlist
+                      ? 'Mark this collectible as owned and move it out of your wishlist.'
+                      : 'Move this collectible to your wishlist without removing its details.',
+                  icon: pop.isWishlist
+                      ? Icons.inventory_2_rounded
+                      : Icons.favorite_border_rounded,
+                  accentColor: pop.isWishlist
+                      ? AtlasColors.success
+                      : AtlasColors.warning,
+                  onTap: _toggleWishlist,
                 ),
+
                 const SizedBox(height: AtlasSpacing.lg),
+
                 Divider(
-                  color: AtlasColors.textSecondary.withValues(alpha: 0.18),
-                ),
-                const SizedBox(height: AtlasSpacing.sm),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: _confirmDeletePop,
-                    icon: const Icon(Icons.delete_outline_rounded),
-                    label: const Text('Delete Pop'),
+                  color: AtlasColors.textSecondary.withValues(
+                    alpha: 0.18,
                   ),
+                ),
+
+                const SizedBox(height: AtlasSpacing.sm),
+
+                AtlasActionRow(
+                  title: 'Delete Pop',
+                  description:
+                  'Permanently remove this collectible from the current collection.',
+                  icon: Icons.delete_outline_rounded,
+                  accentColor: AtlasColors.danger,
+                  onTap: _confirmDeletePop,
                 ),
               ],
             ),
@@ -723,58 +713,30 @@ class _PopRecentActivityCard extends StatelessWidget {
             icon: Icons.history_rounded,
           ),
           const SizedBox(height: AtlasSpacing.lg),
-          AtlasGlassPanel(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Icon(
-                  Icons.auto_awesome_rounded,
-                  color: AtlasColors.vaultGold,
-                ),
-                const SizedBox(width: AtlasSpacing.md),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        summary.title,
-                        style: AtlasTypography.bodyMedium.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: AtlasSpacing.xs),
-                      Text(
-                        summary.summary,
-                        style: AtlasTypography.bodySmall.copyWith(
-                          color: AtlasColors.textSecondary,
-                        ),
-                      ),
-                      if (summary.hasActivity) ...[
-                        const SizedBox(height: AtlasSpacing.xs),
-                        Text(
-                          '${summary.activityCount} recorded '
-                              '${summary.activityCount == 1 ? 'event' : 'events'}',
-                          style: AtlasTypography.bodySmall.copyWith(
-                            color: AtlasColors.vaultGold,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ],
-            ),
+
+          AtlasInsightPanel(
+            eyebrow: summary.hasActivity
+                ? '${summary.activityCount} recorded '
+                '${summary.activityCount == 1 ? 'event' : 'events'}'
+                : 'Activity Intelligence',
+            title: summary.title,
+            message: summary.summary,
+            icon: Icons.auto_awesome_rounded,
+            tone: AtlasInsightPanelTone.intelligence,
           ),
+
+          const SizedBox(height: AtlasSpacing.md),
+
+          if (activities.isEmpty)
           const SizedBox(height: AtlasSpacing.md),
           if (activities.isEmpty)
-            AtlasGlassPanel(
-              child: Text(
-                'Value updates, quantity changes, edits, and ownership moves will appear here.',
-                style: AtlasTypography.bodyMedium.copyWith(
-                  color: AtlasColors.textSecondary,
-                ),
-              ),
+            const AtlasEmptyState(
+              eyebrow: 'Timeline',
+              title: 'No activity yet',
+              message:
+              'Value updates, quantity changes, edits, and ownership moves will appear here.',
+              icon: Icons.history_toggle_off_rounded,
+              compact: true,
             )
           else
             ...activities.map(
@@ -782,9 +744,19 @@ class _PopRecentActivityCard extends StatelessWidget {
                 padding: const EdgeInsets.only(
                   bottom: AtlasSpacing.sm,
                 ),
-                child: _PopActivityRow(
-                  activity: activity,
-                ),
+                    child: AtlasActionRow(
+                      title: _activityTitle(
+                        activity.action,
+                      ),
+                      description:
+                      '${activity.details}\n${_formatActivityTime(activity.timestamp)}',
+                      icon: _activityIcon(
+                        activity.action,
+                      ),
+                      accentColor: AtlasColors.vaultGold,
+                      showChevron: false,
+                      compact: true,
+                    ),
               ),
             ),
           const SizedBox(height: AtlasSpacing.sm),
@@ -794,57 +766,6 @@ class _PopRecentActivityCard extends StatelessWidget {
               onPressed: onOpenTimeline,
               icon: const Icon(Icons.timeline_rounded),
               label: const Text('View Full Timeline'),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _PopActivityRow extends StatelessWidget {
-  const _PopActivityRow({
-    required this.activity,
-  });
-
-  final Activity activity;
-
-  @override
-  Widget build(BuildContext context) {
-    return AtlasGlassPanel(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(
-            _activityIcon(activity.action),
-            color: AtlasColors.vaultGold,
-          ),
-          const SizedBox(width: AtlasSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _activityTitle(activity.action),
-                  style: AtlasTypography.bodyMedium.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: AtlasSpacing.xs),
-                Text(
-                  activity.details,
-                  style: AtlasTypography.bodySmall.copyWith(
-                    color: AtlasColors.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: AtlasSpacing.xs),
-                Text(
-                  _formatActivityTime(activity.timestamp),
-                  style: AtlasTypography.bodySmall.copyWith(
-                    color: AtlasColors.textSecondary,
-                  ),
-                ),
-              ],
             ),
           ),
         ],

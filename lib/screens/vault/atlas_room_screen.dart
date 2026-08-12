@@ -10,6 +10,9 @@ import '../../theme/atlas_typography.dart';
 import '../../widgets/atlas/atlas_glass_card.dart';
 import '../../widgets/atlas/atlas_glass_panel.dart';
 import '../../widgets/atlas/atlas_stat_tile.dart';
+import '../../widgets/atlas/components/atlas_empty_state.dart';
+import '../../widgets/atlas/components/atlas_info_banner.dart';
+import '../../widgets/atlas/components/atlas_section_header.dart';
 import '../../widgets/vault/vault_scroll_view.dart';
 import '../catalog/funko_catalog_screen.dart';
 
@@ -34,12 +37,24 @@ class AtlasRoomScreen extends StatelessWidget {
 
     final allPops = repository.allPops(appState);
     final roomPops = _roomPops(allPops);
+
     final roomValue = roomPops.fold<double>(
       0,
           (total, pop) => total + pop.value,
     );
-    final wishlistCount = roomPops.where((pop) => pop.isWishlist).length;
-    final missingValueCount = roomPops.where((pop) => pop.value <= 0).length;
+
+    final wishlistCount = roomPops
+        .where(
+          (pop) => pop.isWishlist,
+    )
+        .length;
+
+    final missingValueCount = roomPops
+        .where(
+          (pop) => pop.value <= 0,
+    )
+        .length;
+
     final previewPops = roomPops.take(5).toList();
 
     return Scaffold(
@@ -49,61 +64,66 @@ class AtlasRoomScreen extends StatelessWidget {
       body: VaultScrollView(
         children: [
           AtlasGlassCard(
+            accentColor: AtlasColors.vaultGold,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(
-                  icon,
-                  size: 48,
-                  color: AtlasColors.vaultGold,
+                AtlasSectionHeader(
+                  title: roomName,
+                  subtitle: description,
+                  icon: icon,
+                  titleStyle: AtlasTypography.headingLarge,
+                  accentColor: AtlasColors.vaultGold,
                 ),
-                const SizedBox(height: AtlasSpacing.lg),
-                Text(
-                  roomName,
-                  style: AtlasTypography.headingLarge,
+                const SizedBox(
+                  height: AtlasSpacing.lg,
                 ),
-                const SizedBox(height: AtlasSpacing.sm),
-                Text(
-                  description,
-                  style: AtlasTypography.bodyMedium.copyWith(
-                    color: AtlasColors.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: AtlasSpacing.lg),
                 _RoomStatsPanel(
                   totalPops: roomPops.length,
                   totalValue: roomValue,
                   wishlistCount: wishlistCount,
                 ),
-                const SizedBox(height: AtlasSpacing.lg),
-                Text(
-                  _roomStatusText(roomPops.length),
-                  style: AtlasTypography.headingSmall,
+                const SizedBox(
+                  height: AtlasSpacing.lg,
                 ),
-                const SizedBox(height: AtlasSpacing.sm),
-                Text(
-                  _roomDescriptionText(roomPops.length),
-                  style: AtlasTypography.bodyMedium.copyWith(
-                    color: AtlasColors.textSecondary,
+                AtlasInfoBanner(
+                  icon: Icons.auto_awesome_rounded,
+                  title: _roomStatusText(
+                    roomPops.length,
+                  ),
+                  message: _roomDescriptionText(
+                    roomPops.length,
                   ),
                 ),
-                const SizedBox(height: AtlasSpacing.xl),
-                FilledButton.icon(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const FunkoCatalogScreen(),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.search_rounded),
-                  label: const Text('Browse Catalog'),
+                const SizedBox(
+                  height: AtlasSpacing.lg,
+                ),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                          const FunkoCatalogScreen(),
+                        ),
+                      );
+                    },
+                    icon: const Icon(
+                      Icons.search_rounded,
+                    ),
+                    label: const Text(
+                      'Browse Catalog',
+                    ),
+                  ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: AtlasSpacing.lg),
+          const SizedBox(
+            height: AtlasSpacing.lg,
+          ),
           _RoomInsightCard(
             roomName: roomName,
             totalPops: roomPops.length,
@@ -111,7 +131,9 @@ class AtlasRoomScreen extends StatelessWidget {
             wishlistCount: wishlistCount,
             missingValueCount: missingValueCount,
           ),
-          const SizedBox(height: AtlasSpacing.lg),
+          const SizedBox(
+            height: AtlasSpacing.lg,
+          ),
           _RoomPopPreviewCard(
             roomName: roomName,
             roomPops: previewPops,
@@ -123,19 +145,27 @@ class AtlasRoomScreen extends StatelessWidget {
   }
 
   List<Pop> _roomPops(List<Pop> pops) {
-    final category = categoryName?.trim().toLowerCase();
+    final category = categoryName
+        ?.trim()
+        .toLowerCase();
 
     if (category == null || category.isEmpty) {
       return pops;
     }
 
-    return pops.where((pop) {
-      return pop.category.trim().toLowerCase() == category;
-    }).toList();
+    return pops.where(
+          (pop) {
+        return pop.category
+            .trim()
+            .toLowerCase() ==
+            category;
+      },
+    ).toList();
   }
 
   String _roomStatusText(int roomPopCount) {
-    if (categoryName == null || categoryName!.trim().isEmpty) {
+    if (categoryName == null ||
+        categoryName!.trim().isEmpty) {
       return 'Room filters are coming soon.';
     }
 
@@ -143,19 +173,27 @@ class AtlasRoomScreen extends StatelessWidget {
       return 'No matching Pops found yet.';
     }
 
-    return 'Atlas found $roomPopCount matching Pop${roomPopCount == 1 ? '' : 's'}.';
+    return 'Atlas found $roomPopCount matching '
+        'Pop${roomPopCount == 1 ? '' : 's'}.';
   }
 
   String _roomDescriptionText(int roomPopCount) {
-    if (categoryName == null || categoryName!.trim().isEmpty) {
-      return 'This room will eventually show matching Pops from your vault, quick stats, value insights, missing grails, wishlist targets, and Atlas recommendations for this category.';
+    if (categoryName == null ||
+        categoryName!.trim().isEmpty) {
+      return 'This room will eventually show matching Pops from your '
+          'vault, quick stats, value insights, missing grails, wishlist '
+          'targets, and Atlas recommendations for this category.';
     }
 
     if (roomPopCount == 0) {
-      return 'Once you add Pops in this category, this room will show vault stats, value insights, wishlist targets, and Atlas recommendations.';
+      return 'Once you add Pops in this category, this room will show '
+          'vault stats, value insights, wishlist targets, and Atlas '
+          'recommendations.';
     }
 
-    return 'This room is now connected to your vault data. Next, we can add grail tracking, missing value warnings, and room-specific recommendations.';
+    return 'This room is now connected to your vault data. Next, we can '
+        'add grail tracking, missing value warnings, and room-specific '
+        'recommendations.';
   }
 }
 
@@ -184,7 +222,7 @@ class _RoomStatsPanel extends StatelessWidget {
           ),
           Expanded(
             child: AtlasStatTile(
-              icon: Icons.attach_money,
+              icon: Icons.attach_money_rounded,
               value: '\$${totalValue.toStringAsFixed(0)}',
               label: 'Value',
             ),
@@ -220,21 +258,24 @@ class _RoomInsightCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AtlasGlassCard(
+      accentColor: AtlasColors.vaultGold,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Atlas Room Insight',
-            style: AtlasTypography.headingSmall,
+          const AtlasSectionHeader(
+            title: 'Atlas Room Insight',
+            subtitle:
+            'Collector guidance based on the current room snapshot.',
+            icon: Icons.insights_rounded,
+            accentColor: AtlasColors.vaultGold,
           ),
-          const SizedBox(height: AtlasSpacing.md),
-          AtlasGlassPanel(
-            child: Text(
-              _insight,
-              style: AtlasTypography.bodyMedium.copyWith(
-                color: AtlasColors.textSecondary,
-              ),
-            ),
+          const SizedBox(
+            height: AtlasSpacing.md,
+          ),
+          AtlasInfoBanner(
+            icon: Icons.auto_awesome_rounded,
+            title: 'Room Analysis',
+            message: _insight,
           ),
         ],
       ),
@@ -243,22 +284,30 @@ class _RoomInsightCard extends StatelessWidget {
 
   String get _insight {
     if (totalPops == 0) {
-      return '$roomName is ready. Add matching Pops to unlock room insights, value tracking, and wishlist recommendations.';
+      return '$roomName is ready. Add matching Pops to unlock room '
+          'insights, value tracking, and wishlist recommendations.';
     }
 
     if (missingValueCount > 0) {
-      return '$roomName has $missingValueCount Pop${missingValueCount == 1 ? '' : 's'} missing values. Updating those will improve Atlas accuracy for this room.';
+      return '$roomName has $missingValueCount '
+          'Pop${missingValueCount == 1 ? '' : 's'} missing values. '
+          'Updating those will improve Atlas accuracy for this room.';
     }
 
     if (wishlistCount > 0) {
-      return '$roomName has $wishlistCount wishlist target${wishlistCount == 1 ? '' : 's'}. Atlas can use this room to help prioritize future pickups.';
+      return '$roomName has $wishlistCount wishlist '
+          'target${wishlistCount == 1 ? '' : 's'}. Atlas can use this '
+          'room to help prioritize future pickups.';
     }
 
     if (totalValue >= 500) {
-      return '$roomName is becoming one of your stronger value rooms with an estimated value of \$${totalValue.toStringAsFixed(0)}.';
+      return '$roomName is becoming one of your stronger value rooms '
+          'with an estimated value of '
+          '\$${totalValue.toStringAsFixed(0)}.';
     }
 
-    return '$roomName is connected to your vault. Atlas will continue learning from this room as you add more Pops.';
+    return '$roomName is connected to your vault. Atlas will continue '
+        'learning from this room as you add more Pops.';
   }
 }
 
@@ -276,35 +325,37 @@ class _RoomPopPreviewCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AtlasGlassCard(
+      accentColor: AtlasColors.vaultGold,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Room Preview',
-            style: AtlasTypography.headingSmall,
+          AtlasSectionHeader(
+            title: 'Room Preview',
+            subtitle: _previewSubtitle,
+            icon: Icons.inventory_2_outlined,
+            accentColor: AtlasColors.vaultGold,
           ),
-          const SizedBox(height: AtlasSpacing.sm),
-          Text(
-            _previewSubtitle,
-            style: AtlasTypography.bodySmall.copyWith(
-              color: AtlasColors.textSecondary,
-            ),
+          const SizedBox(
+            height: AtlasSpacing.md,
           ),
-          const SizedBox(height: AtlasSpacing.md),
           if (roomPops.isEmpty)
-            AtlasGlassPanel(
-              child: Text(
-                'No Pops found in this room yet.',
-                style: AtlasTypography.bodyMedium.copyWith(
-                  color: AtlasColors.textSecondary,
-                ),
-              ),
+            const AtlasEmptyState(
+              eyebrow: 'Room Preview',
+              title: 'No Pops Found',
+              message:
+              'No Pops found in this room yet. Add matching collectibles to start building this room.',
+              icon: Icons.inventory_2_outlined,
+              compact: true,
             )
           else
             ...roomPops.map(
                   (pop) => Padding(
-                padding: const EdgeInsets.only(bottom: AtlasSpacing.sm),
-                child: _RoomPopPreviewTile(pop: pop),
+                padding: const EdgeInsets.only(
+                  bottom: AtlasSpacing.sm,
+                ),
+                child: _RoomPopPreviewTile(
+                  pop: pop,
+                ),
               ),
             ),
         ],
@@ -318,7 +369,8 @@ class _RoomPopPreviewCard extends StatelessWidget {
     }
 
     if (totalRoomPops <= roomPops.length) {
-      return 'Showing all $totalRoomPops matching Pop${totalRoomPops == 1 ? '' : 's'}.';
+      return 'Showing all $totalRoomPops matching '
+          'Pop${totalRoomPops == 1 ? '' : 's'}.';
     }
 
     return 'Showing ${roomPops.length} of $totalRoomPops matching Pops.';
@@ -334,9 +386,17 @@ class _RoomPopPreviewTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final numberLabel = pop.number.trim().isEmpty ? 'No #' : '#${pop.number}';
-    final valueLabel =
-    pop.value <= 0 ? 'Value needed' : '\$${pop.value.toStringAsFixed(0)}';
+    final numberLabel = pop.number.trim().isEmpty
+        ? 'No #'
+        : '#${pop.number}';
+
+    final categoryLabel = pop.category.trim().isEmpty
+        ? 'No category'
+        : pop.category.trim();
+
+    final valueLabel = pop.value <= 0
+        ? 'Value needed'
+        : '\$${pop.value.toStringAsFixed(0)}';
 
     return AtlasGlassPanel(
       child: Row(
@@ -345,20 +405,28 @@ class _RoomPopPreviewTile extends StatelessWidget {
             Icons.inventory_2_outlined,
             color: AtlasColors.vaultGold,
           ),
-          const SizedBox(width: AtlasSpacing.md),
+          const SizedBox(
+            width: AtlasSpacing.md,
+          ),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   pop.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: AtlasTypography.bodyMedium.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: AtlasSpacing.xs),
+                const SizedBox(
+                  height: AtlasSpacing.xs,
+                ),
                 Text(
-                  '$numberLabel • ${pop.category}',
+                  '$numberLabel • $categoryLabel',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: AtlasTypography.bodySmall.copyWith(
                     color: AtlasColors.textSecondary,
                   ),
@@ -366,7 +434,9 @@ class _RoomPopPreviewTile extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: AtlasSpacing.md),
+          const SizedBox(
+            width: AtlasSpacing.md,
+          ),
           Text(
             valueLabel,
             style: AtlasTypography.bodySmall.copyWith(

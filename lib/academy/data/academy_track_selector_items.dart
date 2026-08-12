@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 
 import '../academy_ids.dart';
-import '../../widgets/academy/tracks/academy_track_selector_card.dart';
+import '../models/academy_track_selector_item.dart';
+
+export '../models/academy_track_selector_item.dart';
 
 class AcademyTrackSelectorItems {
   const AcademyTrackSelectorItems._();
 
-  static const all = [
+  static const List<AcademyTrackSelectorItem> all =
+  <AcademyTrackSelectorItem>[
     AcademyTrackSelectorItem(
       id: AcademyTrackIds.funkoCollecting,
       title: AcademyTrackTitles.funkoCollecting,

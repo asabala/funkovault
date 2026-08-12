@@ -2,6 +2,14 @@ import 'package:flutter/material.dart';
 
 import '../../academy/models/academy_lesson.dart';
 import '../../academy/repository/academy_repository.dart';
+import '../../theme/atlas_colors.dart';
+import '../../theme/atlas_spacing.dart';
+import '../../theme/atlas_typography.dart';
+import '../../widgets/atlas/atlas_glass_card.dart';
+import '../../widgets/atlas/components/atlas_action_row.dart';
+import '../../widgets/atlas/components/atlas_info_banner.dart';
+import '../../widgets/atlas/components/atlas_section_header.dart';
+import '../../widgets/atlas/components/atlas_status_chip.dart';
 
 class AcademyLessonScreen extends StatelessWidget {
   const AcademyLessonScreen({
@@ -11,172 +19,297 @@ class AcademyLessonScreen extends StatelessWidget {
 
   final AcademyLesson lesson;
 
-  static const _repository = AcademyRepository();
+  static const AcademyRepository _repository =
+  AcademyRepository();
 
   @override
   Widget build(BuildContext context) {
-    final atlasTip = lesson.atlasTips.isEmpty
+    final String atlasTip = lesson.atlasTips.isEmpty
         ? 'Keep learning. Small details can make a big difference in collecting.'
         : lesson.atlasTips.first;
 
-    final relatedLessons = lesson.relatedLessonIds
+    final List<AcademyLesson> relatedLessons =
+    lesson.relatedLessonIds
         .map(_repository.getLessonById)
         .whereType<AcademyLesson>()
-        .toList();
+        .where(
+          (AcademyLesson relatedLesson) {
+        return relatedLesson.id != lesson.id;
+      },
+    )
+        .toList(
+      growable: false,
+    );
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(lesson.title),
+        title: Text(
+          lesson.title,
+        ),
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+        padding: const EdgeInsets.fromLTRB(
+          AtlasSpacing.md,
+          AtlasSpacing.sm,
+          AtlasSpacing.md,
+          AtlasSpacing.xl,
+        ),
         children: [
-          Text(
-            lesson.category,
-            style: const TextStyle(
-              color: Color(0xFFD6B25E),
-              fontSize: 13,
-              fontWeight: FontWeight.w800,
+          AtlasGlassCard(
+            accentColor: AtlasColors.vaultGold,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AtlasSectionHeader(
+                  title: lesson.title,
+                  subtitle: lesson.subtitle,
+                  icon: Icons.menu_book_rounded,
+                  accentColor: AtlasColors.vaultGold,
+                  titleStyle: AtlasTypography.headingLarge,
+                ),
+                const SizedBox(
+                  height: AtlasSpacing.lg,
+                ),
+                Wrap(
+                  spacing: AtlasSpacing.sm,
+                  runSpacing: AtlasSpacing.sm,
+                  children: [
+                    AtlasStatusChip(
+                      label: lesson.category,
+                      icon: Icons.category_outlined,
+                      accentColor: AtlasColors.vaultGold,
+                      size: AtlasStatusChipSize.compact,
+                    ),
+                    AtlasStatusChip(
+                      label:
+                      '${lesson.readingTimeMinutes} min',
+                      icon: Icons.schedule_rounded,
+                      accentColor: AtlasColors.vaultGold,
+                      size: AtlasStatusChipSize.compact,
+                    ),
+                    AtlasStatusChip(
+                      label: lesson.difficulty,
+                      icon: Icons.school_rounded,
+                      accentColor: AtlasColors.vaultGold,
+                      size: AtlasStatusChipSize.compact,
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            lesson.title,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 30,
-              fontWeight: FontWeight.w900,
-            ),
+          const SizedBox(
+            height: AtlasSpacing.lg,
           ),
-          const SizedBox(height: 8),
-          Text(
-            lesson.subtitle,
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.65),
-              fontSize: 15,
-              height: 1.45,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              _LessonMetaPill(
-                icon: Icons.schedule_rounded,
-                label: '${lesson.readingTimeMinutes} min',
-              ),
-              const SizedBox(width: 10),
-              _LessonMetaPill(
-                icon: Icons.school_rounded,
-                label: lesson.difficulty,
-              ),
-            ],
-          ),
-          const SizedBox(height: 22),
-          _LessonCard(
+          _LessonContentCard(
             title: 'Quick Answer',
             body: lesson.quickAnswer,
+            icon: Icons.flash_on_rounded,
           ),
-          const SizedBox(height: 14),
-          _LessonCard(
+          const SizedBox(
+            height: AtlasSpacing.md,
+          ),
+          _LessonContentCard(
             title: 'Atlas Explains',
-            body: '${lesson.deepAnswer}\n\n${lesson.analogy}',
+            body: _combinedExplanation(
+              deepAnswer: lesson.deepAnswer,
+              analogy: lesson.analogy,
+            ),
+            icon: Icons.psychology_outlined,
           ),
-          const SizedBox(height: 14),
-          _AtlasTipCard(tip: atlasTip),
-          const SizedBox(height: 14),
-          _LessonCard(
+          const SizedBox(
+            height: AtlasSpacing.md,
+          ),
+          AtlasInfoBanner(
+            icon: Icons.lightbulb_outline_rounded,
+            title: 'Atlas Tip',
+            message: atlasTip,
+            accentColor: AtlasColors.vaultGold,
+          ),
+          const SizedBox(
+            height: AtlasSpacing.md,
+          ),
+          _LessonContentCard(
             title: 'Collector Warning',
             body: lesson.collectorWarning,
+            icon: Icons.warning_amber_rounded,
+            accentColor: AtlasColors.warning,
           ),
-          const SizedBox(height: 22),
-          for (final section in lesson.sections) ...[
-            _LessonCard(
-              title: section.heading,
-              body: section.body,
+          if (lesson.sections.isNotEmpty) ...[
+            const SizedBox(
+              height: AtlasSpacing.lg,
             ),
-            const SizedBox(height: 14),
+            AtlasGlassCard(
+              child: Column(
+                crossAxisAlignment:
+                CrossAxisAlignment.start,
+                children: [
+                  const AtlasSectionHeader(
+                    title: 'Lesson Details',
+                    subtitle:
+                    'Go deeper with the key collector concepts covered in this lesson.',
+                    icon: Icons.auto_stories_rounded,
+                  ),
+                  const SizedBox(
+                    height: AtlasSpacing.lg,
+                  ),
+                  for (
+                  int index = 0;
+                  index < lesson.sections.length;
+                  index++
+                  ) ...[
+                    _LessonContentPanel(
+                      title:
+                      lesson.sections[index].heading,
+                      body:
+                      lesson.sections[index].body,
+                    ),
+                    if (index !=
+                        lesson.sections.length - 1)
+                      const SizedBox(
+                        height: AtlasSpacing.sm,
+                      ),
+                  ],
+                ],
+              ),
+            ),
           ],
           if (relatedLessons.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            const Text(
-              'Related Lessons',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 22,
-                fontWeight: FontWeight.w900,
-              ),
+            const SizedBox(
+              height: AtlasSpacing.lg,
             ),
-            const SizedBox(height: 8),
-            Text(
-              'Keep learning with connected collector topics.',
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.65),
-                fontSize: 14,
-                height: 1.45,
-              ),
-            ),
-            const SizedBox(height: 14),
-            for (final relatedLesson in relatedLessons) ...[
-              _RelatedLessonCard(
-                lesson: relatedLesson,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => AcademyLessonScreen(
-                        lesson: relatedLesson,
+            AtlasGlassCard(
+              child: Column(
+                crossAxisAlignment:
+                CrossAxisAlignment.start,
+                children: [
+                  const AtlasSectionHeader(
+                    title: 'Related Lessons',
+                    subtitle:
+                    'Keep learning with connected collector topics.',
+                    icon: Icons.link_rounded,
+                  ),
+                  const SizedBox(
+                    height: AtlasSpacing.lg,
+                  ),
+                  for (
+                  int index = 0;
+                  index < relatedLessons.length;
+                  index++
+                  ) ...[
+                    AtlasActionRow(
+                      title:
+                      relatedLessons[index].title,
+                      description:
+                      relatedLessons[index].subtitle,
+                      icon:
+                      Icons.menu_book_outlined,
+                      accentColor:
+                      AtlasColors.vaultGold,
+                      badge: AtlasStatusChip(
+                        label:
+                        '${relatedLessons[index].readingTimeMinutes} min',
+                        icon:
+                        Icons.schedule_rounded,
+                        accentColor:
+                        AtlasColors.vaultGold,
+                        size:
+                        AtlasStatusChipSize.compact,
                       ),
+                      onTap: () {
+                        _openRelatedLesson(
+                          context,
+                          relatedLessons[index],
+                        );
+                      },
                     ),
-                  );
-                },
+                    if (index !=
+                        relatedLessons.length - 1)
+                      const SizedBox(
+                        height: AtlasSpacing.sm,
+                      ),
+                  ],
+                ],
               ),
-              const SizedBox(height: 12),
-            ],
+            ),
           ],
         ],
       ),
     );
   }
+
+  static String _combinedExplanation({
+    required String deepAnswer,
+    required String analogy,
+  }) {
+    final String cleanedDeepAnswer =
+    deepAnswer.trim();
+
+    final String cleanedAnalogy =
+    analogy.trim();
+
+    if (cleanedDeepAnswer.isEmpty) {
+      return cleanedAnalogy;
+    }
+
+    if (cleanedAnalogy.isEmpty) {
+      return cleanedDeepAnswer;
+    }
+
+    return '$cleanedDeepAnswer\n\n$cleanedAnalogy';
+  }
+
+  void _openRelatedLesson(
+      BuildContext context,
+      AcademyLesson relatedLesson,
+      ) {
+    Navigator.push<void>(
+      context,
+      MaterialPageRoute<void>(
+        builder: (_) => AcademyLessonScreen(
+          lesson: relatedLesson,
+        ),
+      ),
+    );
+  }
 }
 
-class _LessonMetaPill extends StatelessWidget {
-  const _LessonMetaPill({
+class _LessonContentCard extends StatelessWidget {
+  const _LessonContentCard({
+    required this.title,
+    required this.body,
     required this.icon,
-    required this.label,
+    this.accentColor,
   });
 
+  final String title;
+  final String body;
   final IconData icon;
-  final String label;
+  final Color? accentColor;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 12,
-        vertical: 8,
-      ),
-      decoration: BoxDecoration(
-        color: const Color(0xFF171717),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.08),
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
+    final Color effectiveAccent =
+        accentColor ?? AtlasColors.vaultGold;
+
+    return AtlasGlassCard(
+      accentColor: effectiveAccent,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            icon,
-            size: 16,
-            color: const Color(0xFFD6B25E),
+          AtlasSectionHeader(
+            title: title,
+            icon: icon,
+            accentColor: effectiveAccent,
           ),
-          const SizedBox(width: 6),
+          const SizedBox(
+            height: AtlasSpacing.md,
+          ),
           Text(
-            label,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
+            _displayBody(body),
+            style: AtlasTypography.bodyMedium.copyWith(
+              color: AtlasColors.textSecondary,
+              height: 1.5,
             ),
           ),
         ],
@@ -185,8 +318,8 @@ class _LessonMetaPill extends StatelessWidget {
   }
 }
 
-class _LessonCard extends StatelessWidget {
-  const _LessonCard({
+class _LessonContentPanel extends StatelessWidget {
+  const _LessonContentPanel({
     required this.title,
     required this.body,
   });
@@ -196,147 +329,40 @@ class _LessonCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      color: const Color(0xFF171717),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: BorderSide(
-          color: Colors.white.withValues(alpha: 0.08),
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(
-                color: Color(0xFFD6B25E),
-                fontSize: 14,
-                fontWeight: FontWeight.w900,
-              ),
+    return AtlasGlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title.trim().isEmpty
+                ? 'Lesson Note'
+                : title.trim(),
+            style: AtlasTypography.headingSmall.copyWith(
+              color: AtlasColors.vaultGold,
             ),
-            const SizedBox(height: 10),
-            Text(
-              body,
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.78),
-                fontSize: 14,
-                height: 1.5,
-              ),
+          ),
+          const SizedBox(
+            height: AtlasSpacing.sm,
+          ),
+          Text(
+            _displayBody(body),
+            style: AtlasTypography.bodyMedium.copyWith(
+              color: AtlasColors.textSecondary,
+              height: 1.5,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _AtlasTipCard extends StatelessWidget {
-  const _AtlasTipCard({
-    required this.tip,
-  });
+String _displayBody(String value) {
+  final String cleaned = value.trim();
 
-  final String tip;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      color: const Color(0xFFD6B25E).withValues(alpha: 0.10),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: BorderSide(
-          color: const Color(0xFFD6B25E).withValues(alpha: 0.22),
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              '💡',
-              style: TextStyle(fontSize: 24),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                'Atlas Tip: $tip',
-                style: const TextStyle(
-                  color: Color(0xFFD6B25E),
-                  fontSize: 14,
-                  height: 1.45,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+  if (cleaned.isEmpty) {
+    return 'More lesson details are coming soon.';
   }
-}
 
-class _RelatedLessonCard extends StatelessWidget {
-  const _RelatedLessonCard({
-    required this.lesson,
-    required this.onTap,
-  });
-
-  final AcademyLesson lesson;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      color: const Color(0xFF171717),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: BorderSide(
-          color: Colors.white.withValues(alpha: 0.08),
-        ),
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 18,
-          vertical: 8,
-        ),
-        leading: Container(
-          width: 42,
-          height: 42,
-          decoration: BoxDecoration(
-            color: const Color(0xFFD6B25E).withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: const Icon(
-            Icons.menu_book_outlined,
-            color: Color(0xFFD6B25E),
-          ),
-        ),
-        title: Text(
-          lesson.title,
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        subtitle: Text(
-          lesson.subtitle,
-          style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.62),
-            height: 1.35,
-          ),
-        ),
-        trailing: const Icon(
-          Icons.arrow_forward_ios,
-          size: 16,
-        ),
-        onTap: onTap,
-      ),
-    );
-  }
+  return cleaned;
 }

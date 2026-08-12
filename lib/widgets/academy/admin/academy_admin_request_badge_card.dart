@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../../../theme/atlas_colors.dart';
+import '../../../theme/atlas_spacing.dart';
+import '../../../theme/atlas_typography.dart';
+import '../../atlas/atlas_glass_card.dart';
+import '../../atlas/components/atlas_status_chip.dart';
+
 class AcademyAdminRequestBadgeCard extends StatelessWidget {
   const AcademyAdminRequestBadgeCard({
     super.key,
@@ -10,67 +16,86 @@ class AcademyAdminRequestBadgeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasNewRequests = newRequestCount > 0;
+    final bool hasNewRequests =
+        newRequestCount > 0;
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: hasNewRequests
-            ? const Color(0xFFD6B25E).withValues(alpha: 0.12)
-            : Colors.white.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: hasNewRequests
-              ? const Color(0xFFD6B25E).withValues(alpha: 0.28)
-              : Colors.white.withValues(alpha: 0.10),
-        ),
-      ),
+    return AtlasGlassCard(
+      accentColor: hasNewRequests
+          ? AtlasColors.vaultGold
+          : AtlasColors.textSecondary,
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
-            height: 42,
-            width: 42,
+            width: 44,
+            height: 44,
+            alignment: Alignment.center,
             decoration: BoxDecoration(
               color: hasNewRequests
-                  ? const Color(0xFFD6B25E).withValues(alpha: 0.18)
-                  : Colors.white.withValues(alpha: 0.07),
-              borderRadius: BorderRadius.circular(15),
+                  ? AtlasColors.vaultGold.withValues(
+                alpha: 0.14,
+              )
+                  : AtlasColors.textSecondary.withValues(
+                alpha: 0.08,
+              ),
+              borderRadius: BorderRadius.circular(
+                15,
+              ),
             ),
             child: Icon(
               hasNewRequests
                   ? Icons.notifications_active_rounded
                   : Icons.notifications_none_rounded,
               color: hasNewRequests
-                  ? const Color(0xFFD6B25E)
-                  : Colors.white.withValues(alpha: 0.58),
+                  ? AtlasColors.vaultGold
+                  : AtlasColors.textSecondary,
             ),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(
+            width: AtlasSpacing.md,
+          ),
           Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment:
+              CrossAxisAlignment.start,
               children: [
                 Text(
                   hasNewRequests
-                      ? '$newRequestCount new Academy request(s)'
-                      : 'No new Academy requests',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w900,
-                  ),
+                      ? '$newRequestCount new '
+                      '${newRequestCount == 1 ? 'Academy request' : 'Academy requests'}'
+                      : 'No New Academy Requests',
+                  style:
+                  AtlasTypography.headingSmall,
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(
+                  height: AtlasSpacing.xs,
+                ),
                 Text(
                   hasNewRequests
                       ? 'Review requested topics and future track interest.'
                       : 'Topic and track requests will appear here when submitted.',
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.65),
-                    fontSize: 12,
+                  style:
+                  AtlasTypography.bodySmall.copyWith(
+                    color:
+                    AtlasColors.textSecondary,
                     height: 1.35,
                   ),
+                ),
+                const SizedBox(
+                  height: AtlasSpacing.sm,
+                ),
+                AtlasStatusChip(
+                  label: hasNewRequests
+                      ? '$newRequestCount New'
+                      : 'Inbox Clear',
+                  icon: hasNewRequests
+                      ? Icons.mark_email_unread_outlined
+                      : Icons.mark_email_read_outlined,
+                  accentColor: hasNewRequests
+                      ? AtlasColors.vaultGold
+                      : AtlasColors.success,
+                  size:
+                  AtlasStatusChipSize.compact,
                 ),
               ],
             ),

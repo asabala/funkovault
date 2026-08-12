@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../../../theme/atlas_colors.dart';
+import '../../../theme/atlas_spacing.dart';
+import '../../atlas/atlas_glass_card.dart';
+import '../../atlas/components/atlas_info_banner.dart';
+import '../../atlas/components/atlas_section_header.dart';
+import '../../premium/premium_badge.dart';
 import '../shared/academy_premium_insight_card.dart';
 
 class AcademyRoadmapTopicPreviewSheet extends StatelessWidget {
@@ -16,52 +22,56 @@ class AcademyRoadmapTopicPreviewSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final String cleanedTitle = title.trim();
+
+    final String cleanedSubtitle = subtitle.trim();
+
     return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              isPremium ? 'Premium Academy Topic' : 'Academy Roadmap Topic',
-              style: const TextStyle(
-                color: Color(0xFFD6B25E),
-                fontSize: 14,
-                fontWeight: FontWeight.w900,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(
+          AtlasSpacing.md,
+          AtlasSpacing.sm,
+          AtlasSpacing.md,
+          AtlasSpacing.xl,
+        ),
+        child: AtlasGlassCard(
+          accentColor: isPremium
+              ? AtlasColors.vaultGold
+              : AtlasColors.intelligenceBlue,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AtlasSectionHeader(
+                title: cleanedTitle.isEmpty
+                    ? 'Academy Roadmap Topic'
+                    : cleanedTitle,
+                subtitle: cleanedSubtitle.isEmpty
+                    ? 'More details for this Academy topic are coming soon.'
+                    : cleanedSubtitle,
+                icon: isPremium
+                    ? Icons.workspace_premium_rounded
+                    : Icons.route_rounded,
+                accentColor: isPremium
+                    ? AtlasColors.vaultGold
+                    : AtlasColors.intelligenceBlue,
+                badge: isPremium
+                    ? const PremiumBadge()
+                    : null,
               ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 24,
-                fontWeight: FontWeight.w900,
+              const SizedBox(
+                height: AtlasSpacing.lg,
               ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              subtitle,
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.72),
-                fontSize: 14,
-                height: 1.45,
-              ),
-            ),
-            const SizedBox(height: 18),
-            if (isPremium)
-              const AcademyPremiumInsightCard()
-            else
-              Text(
-                'This topic is planned for a future Atlas Academy lesson.',
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.65),
-                  fontSize: 13,
-                  height: 1.4,
+              if (isPremium)
+                const AcademyPremiumInsightCard()
+              else
+                const AtlasInfoBanner(
+                  icon: Icons.schedule_rounded,
+                  title: 'Roadmap Topic',
+                  message:
+                  'This topic is planned for a future Atlas Academy lesson.',
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );

@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 
 import '../../theme/atlas_colors.dart';
 import '../../theme/atlas_spacing.dart';
+import '../atlas/atlas_glass_card.dart';
+import '../atlas/components/atlas_action_row.dart';
+import '../atlas/components/atlas_empty_state.dart';
+import '../atlas/components/atlas_section_header.dart';
+import '../atlas/components/atlas_status_chip.dart';
 
 class VaultCleanupCard extends StatelessWidget {
   const VaultCleanupCard({
@@ -37,7 +42,8 @@ class VaultCleanupCard extends StatelessWidget {
         label: 'Needs Value',
         count: needsValueCount,
         icon: Icons.attach_money_rounded,
-        message: 'Add missing values so Atlas can calculate your vault better.',
+        message:
+        'Add missing values so Atlas can calculate your vault better.',
       ),
       _VaultCleanupItem(
         key: 'duplicates',
@@ -52,7 +58,8 @@ class VaultCleanupCard extends StatelessWidget {
         label: 'Wishlist Items',
         count: wishlistCount,
         icon: Icons.favorite_rounded,
-        message: 'Review wishlist items and decide what belongs in the vault.',
+        message:
+        'Review wishlist items and decide what belongs in the vault.',
       ),
       _VaultCleanupItem(
         key: 'variants',
@@ -67,21 +74,24 @@ class VaultCleanupCard extends StatelessWidget {
         label: 'Exclusives',
         count: exclusiveCount,
         icon: Icons.workspace_premium_rounded,
-        message: 'Check exclusives so stickers, retailers, and releases stay clean.',
+        message:
+        'Check exclusives so stickers, retailers, and releases stay clean.',
       ),
       _VaultCleanupItem(
         key: 'signed',
         label: 'Signed',
         count: signedCount,
         icon: Icons.edit_rounded,
-        message: 'Review signed Pops and keep signature details accurate.',
+        message:
+        'Review signed Pops and keep signature details accurate.',
       ),
       _VaultCleanupItem(
         key: 'limited',
         label: 'Limited',
         count: limitedCount,
         icon: Icons.confirmation_number_rounded,
-        message: 'Verify limited editions and numbered pieces.',
+        message:
+        'Verify limited editions and numbered pieces.',
       ),
       _VaultCleanupItem(
         key: 'stickers',
@@ -115,56 +125,22 @@ class VaultCleanupCard extends StatelessWidget {
     final visibleItems = activeItems.take(3).toList();
     final hasCleanupItems = visibleItems.isNotEmpty;
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(AtlasSpacing.lg),
-      decoration: BoxDecoration(
-        color: AtlasColors.card,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: AtlasColors.vaultGold.withValues(alpha: 0.18),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.18),
-            blurRadius: 18,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
+    return AtlasGlassCard(
+      accentColor: AtlasColors.vaultGold,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
-            children: [
-              Icon(
-                Icons.cleaning_services_rounded,
-                color: AtlasColors.vaultGold,
-              ),
-              SizedBox(width: AtlasSpacing.sm),
-              Expanded(
-                child: Text(
-                  'Vault Cleanup',
-                  style: TextStyle(
-                    color: AtlasColors.textPrimary,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AtlasSpacing.xs),
-          Text(
-            hasCleanupItems
+          AtlasSectionHeader(
+            title: 'Vault Cleanup',
+            subtitle: hasCleanupItems
                 ? 'Atlas found a few areas that need attention.'
                 : 'Your vault is looking clean right now.',
-            style: const TextStyle(
-              color: AtlasColors.textSecondary,
-              fontSize: 13,
-            ),
+            icon: Icons.cleaning_services_rounded,
+            accentColor: AtlasColors.vaultGold,
           ),
-          const SizedBox(height: AtlasSpacing.lg),
+          const SizedBox(
+            height: AtlasSpacing.lg,
+          ),
           if (hasCleanupItems)
             Column(
               children: visibleItems
@@ -184,15 +160,28 @@ class VaultCleanupCard extends StatelessWidget {
                   .toList(),
             )
           else
-            const _VaultCleanupEmptyState(),
+            const AtlasEmptyState(
+              eyebrow: 'Vault Cleanup',
+              title: 'Vault Looking Clean',
+              message:
+              'No cleanup items found. Atlas has a clean snapshot to work with.',
+              icon: Icons.verified_rounded,
+              compact: true,
+            ),
           if (onReviewVault != null) ...[
-            const SizedBox(height: AtlasSpacing.md),
+            const SizedBox(
+              height: AtlasSpacing.md,
+            ),
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
                 onPressed: onReviewVault,
-                icon: const Icon(Icons.visibility_rounded),
-                label: const Text('Review Entire Vault'),
+                icon: const Icon(
+                  Icons.visibility_rounded,
+                ),
+                label: const Text(
+                  'Review Entire Vault',
+                ),
               ),
             ),
           ],
@@ -236,124 +225,17 @@ class _VaultCleanupRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isTappable = onTap != null;
-
-    return InkWell(
-      borderRadius: BorderRadius.circular(18),
+    return AtlasActionRow(
+      title: item.label,
+      description: item.message,
+      icon: item.icon,
+      accentColor: AtlasColors.vaultGold,
+      badge: AtlasStatusChip(
+        label: item.count.toString(),
+        accentColor: AtlasColors.vaultGold,
+        size: AtlasStatusChipSize.compact,
+      ),
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(AtlasSpacing.md),
-        decoration: BoxDecoration(
-          color: AtlasColors.background.withValues(alpha: 0.72),
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: Colors.white.withValues(alpha: 0.08),
-          ),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: AtlasColors.vaultGold.withValues(alpha: 0.14),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                item.icon,
-                color: AtlasColors.vaultGold,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: AtlasSpacing.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item.label,
-                    style: const TextStyle(
-                      color: AtlasColors.textPrimary,
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    item.message,
-                    style: const TextStyle(
-                      color: AtlasColors.textSecondary,
-                      fontSize: 12,
-                      height: 1.35,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: AtlasSpacing.sm),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  item.count.toString(),
-                  style: const TextStyle(
-                    color: AtlasColors.vaultGold,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                if (isTappable) ...[
-                  const SizedBox(height: 4),
-                  const Icon(
-                    Icons.chevron_right_rounded,
-                    color: AtlasColors.vaultGold,
-                    size: 20,
-                  ),
-                ],
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _VaultCleanupEmptyState extends StatelessWidget {
-  const _VaultCleanupEmptyState();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(AtlasSpacing.md),
-      decoration: BoxDecoration(
-        color: AtlasColors.background.withValues(alpha: 0.72),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.08),
-        ),
-      ),
-      child: const Row(
-        children: [
-          Icon(
-            Icons.verified_rounded,
-            color: AtlasColors.vaultGold,
-          ),
-          SizedBox(width: AtlasSpacing.md),
-          Expanded(
-            child: Text(
-              'No cleanup items found. Atlas has a clean snapshot to work with.',
-              style: TextStyle(
-                color: AtlasColors.textSecondary,
-                fontSize: 13,
-                height: 1.35,
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

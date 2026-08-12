@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../academy/config/academy_admin_ui_config.dart';
 import '../../../academy/models/academy_request.dart';
+import '../../../theme/atlas_spacing.dart';
 import 'academy_admin_empty_inbox_state.dart';
 import 'academy_admin_more_requests_label.dart';
 import 'academy_admin_request_tile.dart';
@@ -22,11 +23,17 @@ class AcademyAdminRequestList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final visibleRequests = requests
-        .take(AcademyAdminUiConfig.maxVisibleInboxRequests)
-        .toList();
+    final List<AcademyRequest> visibleRequests =
+    requests
+        .take(
+      AcademyAdminUiConfig.maxVisibleInboxRequests,
+    )
+        .toList(
+      growable: false,
+    );
 
-    final hiddenRequestCount = requests.length - visibleRequests.length;
+    final int hiddenRequestCount =
+        requests.length - visibleRequests.length;
 
     if (visibleRequests.isEmpty) {
       return const AcademyAdminEmptyInboxState();
@@ -35,19 +42,41 @@ class AcademyAdminRequestList extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        for (final request in visibleRequests) ...[
+        for (
+        int index = 0;
+        index < visibleRequests.length;
+        index++
+        ) ...[
           AcademyAdminRequestTile(
-            request: request,
-            onReviewTap: () => onReviewTap(request),
-            onApproveTap: () => onApproveTap(request),
-            onDeclineTap: () => onDeclineTap(request),
+            request: visibleRequests[index],
+            onReviewTap: () {
+              onReviewTap(
+                visibleRequests[index],
+              );
+            },
+            onApproveTap: () {
+              onApproveTap(
+                visibleRequests[index],
+              );
+            },
+            onDeclineTap: () {
+              onDeclineTap(
+                visibleRequests[index],
+              );
+            },
           ),
-          const SizedBox(height: 10),
+          if (index != visibleRequests.length - 1)
+            const SizedBox(
+              height: AtlasSpacing.sm,
+            ),
         ],
         if (hiddenRequestCount > 0) ...[
-          const SizedBox(height: 4),
+          const SizedBox(
+            height: AtlasSpacing.md,
+          ),
           AcademyAdminMoreRequestsLabel(
-            hiddenRequestCount: hiddenRequestCount,
+            hiddenRequestCount:
+            hiddenRequestCount,
           ),
         ],
       ],

@@ -6,6 +6,7 @@ import '../../theme/atlas_typography.dart';
 import '../atlas/atlas_glass_card.dart';
 import '../atlas/atlas_glass_panel.dart';
 import '../atlas/atlas_stat_tile.dart';
+import '../atlas/components/atlas_status_chip.dart';
 
 class HeroCollectorCard extends StatelessWidget {
   const HeroCollectorCard({
@@ -44,9 +45,10 @@ class HeroCollectorCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const _HeroBanner(),
-
             Padding(
-              padding: const EdgeInsets.all(AtlasSpacing.lg),
+              padding: const EdgeInsets.all(
+                AtlasSpacing.lg,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -56,12 +58,17 @@ class HeroCollectorCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         const _CollectorAvatar(),
-                        const SizedBox(width: AtlasSpacing.md),
+                        const SizedBox(
+                          width: AtlasSpacing.md,
+                        ),
                         Expanded(
                           child: Padding(
-                            padding: const EdgeInsets.only(bottom: 6),
+                            padding: const EdgeInsets.only(
+                              bottom: 6,
+                            ),
                             child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                              crossAxisAlignment:
+                              CrossAxisAlignment.start,
                               children: [
                                 Text(
                                   collectorName,
@@ -69,12 +76,15 @@ class HeroCollectorCard extends StatelessWidget {
                                   overflow: TextOverflow.ellipsis,
                                   style: AtlasTypography.headingLarge,
                                 ),
-                                const SizedBox(height: AtlasSpacing.xs),
+                                const SizedBox(
+                                  height: AtlasSpacing.xs,
+                                ),
                                 Text(
                                   collectorTitle,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: AtlasTypography.bodySmall.copyWith(
+                                  style:
+                                  AtlasTypography.bodySmall.copyWith(
                                     color: AtlasColors.vaultGold,
                                   ),
                                 ),
@@ -83,7 +93,9 @@ class HeroCollectorCard extends StatelessWidget {
                           ),
                         ),
                         const Padding(
-                          padding: EdgeInsets.only(bottom: 8),
+                          padding: EdgeInsets.only(
+                            bottom: 8,
+                          ),
                           child: Icon(
                             Icons.verified,
                             color: AtlasColors.vaultGold,
@@ -92,7 +104,6 @@ class HeroCollectorCard extends StatelessWidget {
                       ],
                     ),
                   ),
-
                   Transform.translate(
                     offset: const Offset(0, -24),
                     child: Column(
@@ -102,21 +113,25 @@ class HeroCollectorCard extends StatelessWidget {
                           spacing: AtlasSpacing.sm,
                           runSpacing: AtlasSpacing.sm,
                           children: [
-                            const _HeroBadge(
-                              icon: Icons.shield,
+                            const AtlasStatusChip(
                               label: 'Atlas Core • Online',
+                              icon: Icons.shield,
+                              accentColor: AtlasColors.vaultGold,
+                              size: AtlasStatusChipSize.compact,
                             ),
-                            _HeroBadge(
-                              icon: isPremium
-                                  ? Icons.workspace_premium
-                                  : Icons.lock_open,
+                            AtlasStatusChip(
                               label: isPremium ? 'Premium' : 'Basic',
+                              icon: isPremium
+                                  ? Icons.workspace_premium_rounded
+                                  : Icons.lock_open_rounded,
+                              accentColor: AtlasColors.vaultGold,
+                              size: AtlasStatusChipSize.compact,
                             ),
                           ],
                         ),
-
-                        const SizedBox(height: AtlasSpacing.md),
-
+                        const SizedBox(
+                          height: AtlasSpacing.md,
+                        ),
                         Text(
                           collectorBio,
                           maxLines: 3,
@@ -126,34 +141,44 @@ class HeroCollectorCard extends StatelessWidget {
                             height: 1.4,
                           ),
                         ),
-
-                        const SizedBox(height: AtlasSpacing.md),
-
+                        const SizedBox(
+                          height: AtlasSpacing.md,
+                        ),
                         Wrap(
                           spacing: AtlasSpacing.sm,
                           runSpacing: AtlasSpacing.sm,
                           children: [
-                            _HeroBadge(
-                              icon: Icons.military_tech,
+                            AtlasStatusChip(
                               label: collectorLevel,
+                              icon: Icons.military_tech_rounded,
+                              accentColor: AtlasColors.vaultGold,
+                              size: AtlasStatusChipSize.compact,
                             ),
-                            _HeroBadge(
-                              icon: Icons.category,
+                            AtlasStatusChip(
                               label: favoriteCategory,
+                              icon: Icons.category_rounded,
+                              accentColor: AtlasColors.vaultGold,
+                              size: AtlasStatusChipSize.compact,
                             ),
                           ],
                         ),
-
-                        const SizedBox(height: AtlasSpacing.lg),
-
-                        FilledButton.icon(
-                          onPressed: onEditProfile,
-                          icon: const Icon(Icons.edit),
-                          label: const Text('Edit Profile'),
+                        if (onEditProfile != null) ...[
+                          const SizedBox(
+                            height: AtlasSpacing.lg,
+                          ),
+                          FilledButton.icon(
+                            onPressed: onEditProfile,
+                            icon: const Icon(
+                              Icons.edit_rounded,
+                            ),
+                            label: const Text(
+                              'Edit Profile',
+                            ),
+                          ),
+                        ],
+                        const SizedBox(
+                          height: AtlasSpacing.lg,
                         ),
-
-                        const SizedBox(height: AtlasSpacing.lg),
-
                         AtlasGlassPanel(
                           child: Row(
                             children: [
@@ -166,15 +191,18 @@ class HeroCollectorCard extends StatelessWidget {
                               ),
                               Expanded(
                                 child: AtlasStatTile(
-                                  icon: Icons.attach_money,
-                                  value: '\$${totalValue.toStringAsFixed(0)}',
+                                  icon: Icons.attach_money_rounded,
+                                  value:
+                                  '\$${totalValue.toStringAsFixed(0)}',
                                   label: 'Value',
                                 ),
                               ),
                               Expanded(
                                 child: AtlasStatTile(
-                                  icon: Icons.health_and_safety_outlined,
-                                  value: '${health.toStringAsFixed(0)}%',
+                                  icon:
+                                  Icons.health_and_safety_outlined,
+                                  value:
+                                  '${health.toStringAsFixed(0)}%',
                                   label: 'Health',
                                 ),
                               ),
@@ -216,30 +244,19 @@ class _HeroBanner extends StatelessWidget {
         children: [
           Positioned.fill(
             child: Container(
-              color: Colors.black.withValues(alpha: 0.18),
+              color: Colors.black.withValues(
+                alpha: 0.18,
+              ),
             ),
           ),
           Positioned(
             right: 18,
             top: 18,
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 6,
-              ),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.36),
-                borderRadius: BorderRadius.circular(30),
-                border: Border.all(
-                  color: AtlasColors.vaultGold.withValues(alpha: 0.22),
-                ),
-              ),
-              child: Text(
-                'Vault Identity',
-                style: AtlasTypography.bodySmall.copyWith(
-                  color: AtlasColors.vaultGold,
-                ),
-              ),
+            child: AtlasStatusChip(
+              label: 'Vault Identity',
+              icon: Icons.badge_outlined,
+              accentColor: AtlasColors.vaultGold,
+              size: AtlasStatusChipSize.compact,
             ),
           ),
         ],
@@ -260,14 +277,21 @@ class _CollectorAvatar extends StatelessWidget {
         shape: BoxShape.circle,
         color: Colors.grey.shade900,
         border: Border.all(
-          color: AtlasColors.vaultGold.withValues(alpha: 0.55),
+          color: AtlasColors.vaultGold.withValues(
+            alpha: 0.55,
+          ),
           width: 2,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.45),
+            color: Colors.black.withValues(
+              alpha: 0.45,
+            ),
             blurRadius: 18,
-            offset: const Offset(0, 8),
+            offset: const Offset(
+              0,
+              8,
+            ),
           ),
         ],
       ),
@@ -275,50 +299,6 @@ class _CollectorAvatar extends StatelessWidget {
         Icons.person,
         size: 44,
         color: AtlasColors.vaultGold,
-      ),
-    );
-  }
-}
-
-class _HeroBadge extends StatelessWidget {
-  const _HeroBadge({
-    required this.icon,
-    required this.label,
-  });
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 12,
-        vertical: 5,
-      ),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: .35),
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(
-          color: AtlasColors.vaultGold.withValues(alpha: .25),
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            size: 14,
-            color: AtlasColors.vaultGold,
-          ),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: AtlasTypography.bodySmall.copyWith(
-              color: AtlasColors.vaultGold,
-            ),
-          ),
-        ],
       ),
     );
   }

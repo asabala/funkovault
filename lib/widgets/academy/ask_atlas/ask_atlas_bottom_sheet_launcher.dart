@@ -8,75 +8,121 @@ import 'ask_atlas_answer_sheets.dart';
 class AskAtlasBottomSheetLauncher {
   const AskAtlasBottomSheetLauncher._();
 
-  static void show({
+  static Future<void> show({
     required BuildContext context,
     required String question,
     required AcademyRepository repository,
     required AcademyExplainerEngine explainerEngine,
     required ValueChanged<AcademyLesson> onOpenLesson,
-  }) {
-    final result = explainerEngine.explain(question);
+  }) async {
+    final String cleanedQuestion =
+    question.trim();
 
-    showModalBottomSheet(
+    if (cleanedQuestion.isEmpty) {
+      return;
+    }
+
+    final result =
+    explainerEngine.explain(
+      cleanedQuestion,
+    );
+
+    await showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF1A1A1A),
-      builder: (sheetContext) {
+      useSafeArea: true,
+      backgroundColor:
+      Theme.of(context).colorScheme.surface,
+      builder: (
+          BuildContext sheetContext,
+          ) {
         if (result == null) {
-          return AskAtlasEmptyAnswer(
-            question: question,
-            suggestions: repository.getLessons(),
-            onSuggestionTap: (lesson) {
-              Navigator.pop(sheetContext);
-
-              show(
-                context: context,
-                question: lesson.title,
-                repository: repository,
-                explainerEngine: explainerEngine,
-                onOpenLesson: onOpenLesson,
-              );
-            },
+          return _buildEmptyAnswer(
+            context: context,
+            sheetContext: sheetContext,
+            question: cleanedQuestion,
+            repository: repository,
+            explainerEngine: explainerEngine,
+            onOpenLesson: onOpenLesson,
           );
         }
 
         if (result.isRoadmapTopic) {
           return AskAtlasRoadmapAnswerSheet(
-            question: question,
+            question: cleanedQuestion,
             result: result,
           );
         }
 
-        final lesson = result.lesson;
+        final AcademyLesson? lesson =
+            result.lesson;
 
         if (lesson == null) {
-          return AskAtlasEmptyAnswer(
-            question: question,
-            suggestions: repository.getLessons(),
-            onSuggestionTap: (suggestedLesson) {
-              Navigator.pop(sheetContext);
-
-              show(
-                context: context,
-                question: suggestedLesson.title,
-                repository: repository,
-                explainerEngine: explainerEngine,
-                onOpenLesson: onOpenLesson,
-              );
-            },
+          return _buildEmptyAnswer(
+            context: context,
+            sheetContext: sheetContext,
+            question: cleanedQuestion,
+            repository: repository,
+            explainerEngine: explainerEngine,
+            onOpenLesson: onOpenLesson,
           );
         }
 
         return AskAtlasAnswerSheet(
-          question: question,
+          question: cleanedQuestion,
           lesson: lesson,
           answer: result.answer,
           atlasTip: result.atlasTip,
           onOpenLesson: () {
-            Navigator.pop(sheetContext);
-            onOpenLesson(lesson);
+            Navigator.pop(
+              sheetContext,
+            );
+
+            if (!context.mounted) {
+              return;
+            }
+
+            onOpenLesson(
+              lesson,
+            );
           },
+        );
+      },
+    );
+  }
+
+  static Widget _buildEmptyAnswer({
+    required BuildContext context,
+    required BuildContext sheetContext,
+    required String question,
+    required AcademyRepository repository,
+    required AcademyExplainerEngine explainerEngine,
+    required ValueChanged<AcademyLesson> onOpenLesson,
+  }) {
+    return AskAtlasEmptyAnswer(
+      question: question,
+      suggestions:
+      repository.getLessons(),
+      onSuggestionTap: (
+          AcademyLesson lesson,
+          ) {
+        Navigator.pop(
+          sheetContext,
+        );
+
+        if (!context.mounted) {
+          return;
+        }
+
+        show(
+          context: context,
+          question: lesson.title,
+          repository: repository,
+          explainerEngine:
+          explainerEngine,
+          onOpenLesson:
+          onOpenLesson,
         );
       },
     );

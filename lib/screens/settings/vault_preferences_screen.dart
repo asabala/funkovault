@@ -3,19 +3,33 @@ import 'package:flutter/material.dart';
 import '../../services/hive_service.dart';
 import '../../theme/atlas_colors.dart';
 import '../../theme/atlas_spacing.dart';
-import '../../theme/atlas_typography.dart';
 import '../../widgets/atlas/atlas_glass_card.dart';
-import '../../widgets/atlas/atlas_glass_panel.dart';
+import '../../widgets/atlas/components/atlas_action_row.dart';
+import '../../widgets/atlas/components/atlas_info_banner.dart';
+import '../../widgets/atlas/components/atlas_section_header.dart';
+import '../../widgets/atlas/components/atlas_status_chip.dart';
 
 class VaultPreferencesScreen extends StatefulWidget {
-  const VaultPreferencesScreen({super.key});
+  const VaultPreferencesScreen({
+    super.key,
+  });
 
   @override
-  State<VaultPreferencesScreen> createState() => _VaultPreferencesScreenState();
+  State<VaultPreferencesScreen> createState() {
+    return _VaultPreferencesScreenState();
+  }
 }
 
-class _VaultPreferencesScreenState extends State<VaultPreferencesScreen> {
-  static const String _preferencesStorageKey = 'entire_vault_preferences';
+class _VaultPreferencesScreenState
+    extends State<VaultPreferencesScreen> {
+  static const String _preferencesStorageKey =
+      'entire_vault_preferences';
+
+  static const Map<String, dynamic> _defaultPreferences = {
+    'filterMode': 'all',
+    'sortMode': 'nameAz',
+    'showImages': false,
+  };
 
   Map<String, dynamic> _preferences = const {
     'filterMode': 'all',
@@ -48,48 +62,65 @@ class _VaultPreferencesScreenState extends State<VaultPreferencesScreen> {
   }
 
   Future<void> _resetEntireVaultPreferences() async {
-    const defaultPreferences = {
-      'filterMode': 'all',
-      'sortMode': 'nameAz',
-      'showImages': false,
-    };
+    try {
+      await HiveService.saveData(
+        _preferencesStorageKey,
+        _defaultPreferences,
+      );
 
-    await HiveService.saveData(
-      _preferencesStorageKey,
-      defaultPreferences,
-    );
+      if (!mounted) {
+        return;
+      }
 
-    setState(() {
-      _preferences = defaultPreferences;
-    });
+      setState(() {
+        _preferences = Map<String, dynamic>.from(
+          _defaultPreferences,
+        );
+      });
 
-    if (!mounted) {
-      return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Entire Vault preferences reset.',
+          ),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Atlas could not reset Vault preferences. Please try again.',
+          ),
+        ),
+      );
     }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Entire Vault preferences reset.'),
-      ),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final filterLabel = _filterLabel(
+    final String filterLabel = _filterLabel(
       _preferences['filterMode'],
     );
 
-    final sortLabel = _sortLabel(
+    final String sortLabel = _sortLabel(
       _preferences['sortMode'],
     );
 
-    final showImages = _preferences['showImages'] == true;
-    final imageLabel = showImages ? 'On' : 'Off';
+    final bool showImages =
+        _preferences['showImages'] == true;
+
+    final String imageLabel =
+    showImages ? 'On' : 'Off';
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Vault Preferences'),
+        title: const Text(
+          'Vault Preferences',
+        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -100,118 +131,139 @@ class _VaultPreferencesScreenState extends State<VaultPreferencesScreen> {
             100,
           ),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+            crossAxisAlignment:
+            CrossAxisAlignment.stretch,
             children: [
-              AtlasGlassCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Vault Preferences',
-                      style: AtlasTypography.headingLarge,
-                    ),
-                    const SizedBox(height: AtlasSpacing.sm),
-                    Text(
-                      'Manage saved Vault behavior like filters, sorting, and image display.',
-                      style: AtlasTypography.bodyMedium.copyWith(
-                        color: AtlasColors.textSecondary,
-                      ),
-                    ),
-                  ],
+              const AtlasGlassCard(
+                accentColor: AtlasColors.vaultGold,
+                child: AtlasSectionHeader(
+                  title: 'Vault Preferences',
+                  subtitle:
+                  'Manage saved Vault behavior like filters, sorting, and image display.',
+                  icon: Icons.tune_rounded,
+                  accentColor:
+                  AtlasColors.vaultGold,
                 ),
               ),
-              const SizedBox(height: AtlasSpacing.lg),
+              const SizedBox(
+                height: AtlasSpacing.lg,
+              ),
               AtlasGlassCard(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment:
+                  CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    const AtlasSectionHeader(
+                      title:
                       'Entire Vault Saved View',
-                      style: AtlasTypography.headingSmall,
-                    ),
-                    const SizedBox(height: AtlasSpacing.sm),
-                    Text(
+                      subtitle:
                       'Entire Vault remembers filter, sort, and image settings. Search text and load count are not saved.',
-                      style: AtlasTypography.bodyMedium.copyWith(
-                        color: AtlasColors.textSecondary,
+                      icon: Icons
+                          .bookmark_added_outlined,
+                    ),
+                    const SizedBox(
+                      height: AtlasSpacing.lg,
+                    ),
+                    AtlasActionRow(
+                      title: 'Saved Filter',
+                      description:
+                      'Current default filter for Entire Vault.',
+                      icon:
+                      Icons.filter_list_rounded,
+                      showChevron: false,
+                      compact: true,
+                      badge: AtlasStatusChip(
+                        label: filterLabel,
+                        accentColor:
+                        AtlasColors.vaultGold,
+                        size: AtlasStatusChipSize
+                            .compact,
                       ),
                     ),
-                    const SizedBox(height: AtlasSpacing.lg),
-                    _PreferenceRow(
-                      icon: Icons.filter_list_rounded,
-                      label: 'Saved Filter',
-                      value: filterLabel,
+                    const SizedBox(
+                      height: AtlasSpacing.sm,
                     ),
-                    const SizedBox(height: AtlasSpacing.sm),
-                    _PreferenceRow(
+                    AtlasActionRow(
+                      title: 'Saved Sort',
+                      description:
+                      'Current default sorting for Entire Vault.',
                       icon: Icons.sort_rounded,
-                      label: 'Saved Sort',
-                      value: sortLabel,
+                      showChevron: false,
+                      compact: true,
+                      badge: AtlasStatusChip(
+                        label: sortLabel,
+                        accentColor:
+                        AtlasColors.vaultGold,
+                        size: AtlasStatusChipSize
+                            .compact,
+                      ),
                     ),
-                    const SizedBox(height: AtlasSpacing.sm),
-                    _PreferenceRow(
+                    const SizedBox(
+                      height: AtlasSpacing.sm,
+                    ),
+                    AtlasActionRow(
+                      title: 'Images',
+                      description: showImages
+                          ? 'Images are enabled by default in Entire Vault.'
+                          : 'Images are disabled by default for faster scrolling.',
                       icon: showImages
                           ? Icons.image_rounded
-                          : Icons.image_not_supported_outlined,
-                      label: 'Images',
-                      value: imageLabel,
+                          : Icons
+                          .image_not_supported_outlined,
+                      showChevron: false,
+                      compact: true,
+                      badge: AtlasStatusChip(
+                        label: imageLabel,
+                        accentColor:
+                        AtlasColors.vaultGold,
+                        size: AtlasStatusChipSize
+                            .compact,
+                      ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: AtlasSpacing.lg),
+              const SizedBox(
+                height: AtlasSpacing.lg,
+              ),
               AtlasGlassCard(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment:
+                  CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Reset Preferences',
-                      style: AtlasTypography.headingSmall,
-                    ),
-                    const SizedBox(height: AtlasSpacing.sm),
-                    Text(
+                    const AtlasSectionHeader(
+                      title: 'Reset Preferences',
+                      subtitle:
                       'Reset Entire Vault back to All, Name A-Z, and Images Off.',
-                      style: AtlasTypography.bodyMedium.copyWith(
-                        color: AtlasColors.textSecondary,
-                      ),
+                      icon:
+                      Icons.restart_alt_rounded,
                     ),
-                    const SizedBox(height: AtlasSpacing.lg),
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        onPressed: _resetEntireVaultPreferences,
-                        icon: const Icon(
-                          Icons.restart_alt_rounded,
-                        ),
-                        label: const Text(
-                          'Reset Entire Vault Preferences',
-                        ),
-                      ),
+                    const SizedBox(
+                      height: AtlasSpacing.lg,
+                    ),
+                    AtlasActionRow(
+                      title:
+                      'Reset Entire Vault Preferences',
+                      description:
+                      'Restore the default filter, sort order, and image visibility.',
+                      icon:
+                      Icons.restart_alt_rounded,
+                      accentColor:
+                      AtlasColors.warning,
+                      onTap:
+                      _resetEntireVaultPreferences,
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: AtlasSpacing.lg),
-              AtlasGlassPanel(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Icon(
-                      Icons.info_outline_rounded,
-                      color: AtlasColors.vaultGold,
-                    ),
-                    const SizedBox(width: AtlasSpacing.md),
-                    Expanded(
-                      child: Text(
-                        'Future saved views, premium layouts, and default room filters can live here without cluttering the Vault Dashboard.',
-                        style: AtlasTypography.bodySmall.copyWith(
-                          color: AtlasColors.textSecondary,
-                          height: 1.35,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+              const SizedBox(
+                height: AtlasSpacing.lg,
+              ),
+              const AtlasInfoBanner(
+                icon: Icons.info_outline_rounded,
+                title: 'Future Preferences',
+                message:
+                'Future saved views, Premium layouts, and default room filters can live here without cluttering the Vault Dashboard.',
               ),
             ],
           ),
@@ -220,88 +272,65 @@ class _VaultPreferencesScreenState extends State<VaultPreferencesScreen> {
     );
   }
 
-  String _filterLabel(dynamic value) {
+  String _filterLabel(
+      dynamic value,
+      ) {
     switch (value) {
       case 'owned':
         return 'Owned';
+
       case 'wishlist':
         return 'Wishlist';
+
       case 'needsValue':
         return 'Needs Value';
+
       case 'hasValue':
         return 'Has Value';
+
       case 'exclusives':
         return 'Exclusives';
+
       case 'signed':
         return 'Signed';
+
       case 'limited':
         return 'Limited';
+
       case 'variants':
         return 'Variants';
+
       case 'stickers':
         return 'Stickers';
+
+      case 'duplicates':
+        return 'Duplicates';
+
       case 'all':
       default:
         return 'All';
     }
   }
 
-  String _sortLabel(dynamic value) {
+  String _sortLabel(
+      dynamic value,
+      ) {
     switch (value) {
       case 'highestValue':
         return 'Highest Value';
+
       case 'needsValue':
         return 'Needs Value';
+
       case 'newestAdded':
         return 'Newest Added';
+
       case 'recentlyUpdated':
         return 'Recently Updated';
+
       case 'nameAz':
       default:
         return 'Name A-Z';
     }
-  }
-}
-
-class _PreferenceRow extends StatelessWidget {
-  const _PreferenceRow({
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
-
-  final IconData icon;
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return AtlasGlassPanel(
-      child: Row(
-        children: [
-          Icon(
-            icon,
-            color: AtlasColors.vaultGold,
-          ),
-          const SizedBox(width: AtlasSpacing.md),
-          Expanded(
-            child: Text(
-              label,
-              style: AtlasTypography.bodyMedium.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          const SizedBox(width: AtlasSpacing.sm),
-          Text(
-            value,
-            style: AtlasTypography.bodyMedium.copyWith(
-              color: AtlasColors.vaultGold,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }

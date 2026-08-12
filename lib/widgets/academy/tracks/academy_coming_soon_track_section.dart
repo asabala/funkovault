@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'academy_track_coming_soon_card.dart';
-import 'academy_track_selector_card.dart';
+import '../../../academy/models/academy_track_selector_item.dart';
 
 class AcademyComingSoonTrackSection extends StatelessWidget {
   const AcademyComingSoonTrackSection({
