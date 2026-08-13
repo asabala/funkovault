@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 
-import '../../../academy/models/academy_track_selector_item.dart';
+import '../../../academy/models/academy_track.dart';
 import '../../../theme/atlas_colors.dart';
 import '../../../theme/atlas_spacing.dart';
 import '../../../theme/atlas_typography.dart';
 import '../../atlas/atlas_glass_card.dart';
 import '../../atlas/components/atlas_section_header.dart';
 import '../../atlas/components/atlas_status_chip.dart';
+import 'academy_track_icon_mapper.dart';
 
 class AcademyTrackSelectorCard extends StatelessWidget {
   const AcademyTrackSelectorCard({
@@ -20,7 +21,7 @@ class AcademyTrackSelectorCard extends StatelessWidget {
 
   final String title;
   final String subtitle;
-  final List<AcademyTrackSelectorItem> tracks;
+  final List<AcademyTrack> tracks;
   final String selectedTrackId;
   final ValueChanged<String> onTrackSelected;
 
@@ -32,9 +33,7 @@ class AcademyTrackSelectorCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           AtlasSectionHeader(
-            title: title.trim().isEmpty
-                ? 'Choose Academy Track'
-                : title.trim(),
+            title: title.trim().isEmpty ? 'Choose Academy Track' : title.trim(),
             subtitle: subtitle.trim().isEmpty
                 ? 'Choose the collector path you want to explore.'
                 : subtitle.trim(),
@@ -42,32 +41,21 @@ class AcademyTrackSelectorCard extends StatelessWidget {
             accentColor: AtlasColors.intelligenceBlue,
           ),
           if (tracks.isNotEmpty) ...[
-            const SizedBox(
-              height: AtlasSpacing.lg,
-            ),
+            const SizedBox(height: AtlasSpacing.lg),
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
-                  for (
-                  int index = 0;
-                  index < tracks.length;
-                  index++
-                  ) ...[
+                  for (int index = 0; index < tracks.length; index++) ...[
                     _TrackChip(
                       track: tracks[index],
-                      isSelected:
-                      tracks[index].id == selectedTrackId,
+                      isSelected: tracks[index].id == selectedTrackId,
                       onTap: () {
-                        onTrackSelected(
-                          tracks[index].id,
-                        );
+                        onTrackSelected(tracks[index].id);
                       },
                     ),
                     if (index != tracks.length - 1)
-                      const SizedBox(
-                        width: AtlasSpacing.sm,
-                      ),
+                      const SizedBox(width: AtlasSpacing.sm),
                   ],
                 ],
               ),
@@ -86,7 +74,7 @@ class _TrackChip extends StatelessWidget {
     required this.onTap,
   });
 
-  final AcademyTrackSelectorItem track;
+  final AcademyTrack track;
   final bool isSelected;
   final VoidCallback onTap;
 
@@ -97,43 +85,26 @@ class _TrackChip extends StatelessWidget {
         : AtlasColors.textSecondary;
 
     return InkWell(
-      borderRadius: BorderRadius.circular(
-        22,
-      ),
+      borderRadius: BorderRadius.circular(22),
       onTap: onTap,
       child: AnimatedContainer(
-        duration: const Duration(
-          milliseconds: 180,
-        ),
+        duration: const Duration(milliseconds: 180),
         curve: Curves.easeOut,
         width: 200,
-        padding: const EdgeInsets.all(
-          AtlasSpacing.md,
-        ),
+        padding: const EdgeInsets.all(AtlasSpacing.md),
         decoration: BoxDecoration(
           color: isSelected
-              ? accentColor.withValues(
-            alpha: 0.16,
-          )
-              : AtlasColors.background.withValues(
-            alpha: 0.72,
-          ),
-          borderRadius: BorderRadius.circular(
-            22,
-          ),
+              ? accentColor.withValues(alpha: 0.16)
+              : AtlasColors.background.withValues(alpha: 0.72),
+          borderRadius: BorderRadius.circular(22),
           border: Border.all(
             color: isSelected
-                ? accentColor.withValues(
-              alpha: 0.70,
-            )
-                : Colors.white.withValues(
-              alpha: 0.08,
-            ),
+                ? accentColor.withValues(alpha: 0.70)
+                : Colors.white.withValues(alpha: 0.08),
           ),
         ),
         child: Column(
-          crossAxisAlignment:
-          CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
@@ -142,80 +113,57 @@ class _TrackChip extends StatelessWidget {
                   height: 38,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: accentColor.withValues(
-                      alpha: 0.14,
-                    ),
-                    borderRadius:
-                    BorderRadius.circular(
-                      13,
-                    ),
+                    color: accentColor.withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(13),
                   ),
                   child: Icon(
-                    track.icon,
+                    AcademyTrackIconMapper.iconFor(track.id),
                     size: 20,
                     color: accentColor,
                   ),
                 ),
                 const Spacer(),
-                if (track.badge != null &&
-                    track.badge!.trim().isNotEmpty)
+                if (track.status.trim().isNotEmpty)
                   AtlasStatusChip(
-                    label: track.badge!.trim(),
+                    label: track.status.trim(),
                     accentColor: track.isAvailable
                         ? AtlasColors.vaultGold
                         : AtlasColors.textSecondary,
-                    size:
-                    AtlasStatusChipSize.compact,
+                    size: AtlasStatusChipSize.compact,
                   ),
               ],
             ),
-            const SizedBox(
-              height: AtlasSpacing.md,
-            ),
+            const SizedBox(height: AtlasSpacing.md),
             Text(
               track.title,
               maxLines: 1,
-              overflow:
-              TextOverflow.ellipsis,
-              style:
-              AtlasTypography.headingSmall.copyWith(
+              overflow: TextOverflow.ellipsis,
+              style: AtlasTypography.headingSmall.copyWith(
                 color: isSelected
                     ? AtlasColors.textPrimary
                     : AtlasColors.textPrimary,
               ),
             ),
-            const SizedBox(
-              height: AtlasSpacing.xs,
-            ),
+            const SizedBox(height: AtlasSpacing.xs),
             Text(
               track.subtitle,
               maxLines: 3,
-              overflow:
-              TextOverflow.ellipsis,
-              style:
-              AtlasTypography.bodySmall.copyWith(
-                color:
-                AtlasColors.textSecondary,
+              overflow: TextOverflow.ellipsis,
+              style: AtlasTypography.bodySmall.copyWith(
+                color: AtlasColors.textSecondary,
                 height: 1.3,
               ),
             ),
-            const SizedBox(
-              height: AtlasSpacing.md,
-            ),
+            const SizedBox(height: AtlasSpacing.md),
             AtlasStatusChip(
-              label: track.isAvailable
-                  ? 'Available'
-                  : 'Coming Soon',
+              label: track.isAvailable ? 'Available' : 'Coming Soon',
               icon: track.isAvailable
-                  ? Icons
-                  .check_circle_outline_rounded
-                  : Icons
-                  .lock_clock_outlined,
+                  ? Icons.check_circle_outline_rounded
+                  : Icons.lock_clock_outlined,
               accentColor: track.isAvailable
                   ? AtlasColors.success
                   : AtlasColors.textSecondary,
-              size:
-              AtlasStatusChipSize.compact,
+              size: AtlasStatusChipSize.compact,
             ),
           ],
         ),

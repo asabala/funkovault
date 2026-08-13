@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../../academy/models/academy_track.dart';
 import 'academy_track_coming_soon_card.dart';
-import '../../../academy/models/academy_track_selector_item.dart';
+import 'academy_track_icon_mapper.dart';
 
 class AcademyComingSoonTrackSection extends StatelessWidget {
   const AcademyComingSoonTrackSection({
@@ -10,16 +11,16 @@ class AcademyComingSoonTrackSection extends StatelessWidget {
     required this.onNotifyTap,
   });
 
-  final AcademyTrackSelectorItem track;
+  final AcademyTrack track;
   final VoidCallback onNotifyTap;
 
   @override
   Widget build(BuildContext context) {
     return AcademyTrackComingSoonCard(
       title: '${track.title} Academy is coming soon',
-      subtitle:
-      '${track.title} lessons are planned for a future Atlas Academy expansion. This track will eventually include beginner terms, collector strategy, condition guidance, value education, and smarter vault decisions.',
-      icon: track.icon,
+      subtitle: track.description,
+      status: track.status,
+      icon: AcademyTrackIconMapper.iconFor(track.id),
       onNotifyTap: onNotifyTap,
     );
   }

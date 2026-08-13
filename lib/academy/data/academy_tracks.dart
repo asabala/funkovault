@@ -1,7 +1,8 @@
 import '../academy_ids.dart';
 import '../models/academy_track.dart';
 
-const academyTracks = [
+const List<AcademyTrack> academyTracks =
+<AcademyTrack>[
   AcademyTrack(
     id: AcademyTrackIds.funkoCollecting,
     title: AcademyTrackTitles.funkoCollecting,
