@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../academy/academy_ids.dart';
 import '../../../academy/models/academy_category.dart';
 import '../../../academy/models/academy_request_submission_result.dart';
 import '../../../academy/models/academy_topic.dart';
@@ -9,7 +8,6 @@ import '../../../theme/atlas_spacing.dart';
 import '../ask_atlas/ask_atlas_card.dart';
 import '../roadmap/funko_academy_roadmap_section.dart';
 import '../shared/academy_category_card.dart';
-import '../shared/academy_learning_path_card.dart';
 import '../shared/academy_topic_request_card.dart';
 import 'academy_track_banner.dart';
 
@@ -24,7 +22,6 @@ class FunkoAcademyTrackSection extends StatelessWidget {
     required this.onOpenCategory,
     required this.requestStorageBehavior,
     this.onTopicRequestSubmitted,
-    required this.collectorBasicsLessonCount,
   });
 
   final AcademyTrack track;
@@ -35,22 +32,9 @@ class FunkoAcademyTrackSection extends StatelessWidget {
   final ValueChanged<AcademyCategory> onOpenCategory;
   final AcademyRequestStorageBehavior requestStorageBehavior;
   final Future<bool> Function(String topic)? onTopicRequestSubmitted;
-  final int collectorBasicsLessonCount;
-
-  AcademyCategory? get _collectorBasicsCategory {
-    for (final AcademyCategory category in categories) {
-      if (category.id == AcademyCategoryIds.funkoCollectorBasics) {
-        return category;
-      }
-    }
-
-    return categories.isEmpty ? null : categories.first;
-  }
 
   @override
   Widget build(BuildContext context) {
-    final AcademyCategory? collectorBasicsCategory = _collectorBasicsCategory;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -63,21 +47,6 @@ class FunkoAcademyTrackSection extends StatelessWidget {
           emoji: track.emoji,
           title: 'First track: ${track.title}',
           subtitle: track.subtitle,
-        ),
-        const SizedBox(height: AtlasSpacing.lg),
-        AcademyLearningPathCard(
-          title: 'Collector Basics',
-          subtitle: 'Start here to learn the foundation terms collectors use.',
-          lessonCount: collectorBasicsLessonCount,
-          onTap: () {
-            final AcademyCategory? category = collectorBasicsCategory;
-
-            if (category == null) {
-              return;
-            }
-
-            onOpenCategory(category);
-          },
         ),
         const SizedBox(height: AtlasSpacing.lg),
         for (int index = 0; index < categories.length; index++) ...[

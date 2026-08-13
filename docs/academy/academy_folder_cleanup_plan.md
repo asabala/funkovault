@@ -1,5 +1,12 @@
 # Academy Folder Cleanup Plan
 
+> **Status: Completed historical migration plan.**
+>
+> The folder migration described below has been completed. Its phases and file
+> lists are retained as a historical record and do not represent the current
+> Academy widget inventory; individual widgets may since have been consolidated
+> or removed.
+
 ## Goal
 
 Clean up the Academy feature structure without breaking imports or changing app behavior.

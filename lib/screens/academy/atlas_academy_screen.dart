@@ -106,12 +106,6 @@ class _AtlasAcademyScreenState extends State<AtlasAcademyScreen> {
     );
   }
 
-  int get _collectorBasicsLessonCount {
-    return _repository
-        .getLessonsForCategory(AcademyCategoryIds.funkoCollectorBasics)
-        .length;
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -151,7 +145,6 @@ class _AtlasAcademyScreenState extends State<AtlasAcademyScreen> {
               onTopicRequestSubmitted: _requestRepository.canSubmitRequests
                   ? _handleTopicRequestSubmitted
                   : null,
-              collectorBasicsLessonCount: _collectorBasicsLessonCount,
             )
           else
             AcademyComingSoonTrackSection(

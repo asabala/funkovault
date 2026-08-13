@@ -128,16 +128,15 @@ class AcademyRepository {
   }
 
   List<AcademyCategory> getCategoriesForTrack(String trackId) {
-    final String normalizedTrackId = trackId.trim();
+    final AcademyTrack? track = getTrackById(trackId);
 
-    if (normalizedTrackId.isEmpty) {
+    if (track == null) {
       return const <AcademyCategory>[];
     }
 
-    return getCategories()
-        .where(
-          (AcademyCategory category) => category.trackId == normalizedTrackId,
-        )
+    return track.categoryIds
+        .map(getCategoryById)
+        .whereType<AcademyCategory>()
         .toList(growable: false);
   }
 

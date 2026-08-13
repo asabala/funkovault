@@ -87,14 +87,23 @@ void main() {
       }
     });
 
-    test('every category track ID resolves', () {
+    test('every category resolves to and is referenced by its track', () {
       for (final AcademyCategory category in repository.getCategories()) {
+        final AcademyTrack? track = repository.getTrackById(category.trackId);
+
         expect(
-          repository.getTrackById(category.trackId),
+          track,
           isNotNull,
           reason:
               'Category ${category.id} references missing track '
               '${category.trackId}.',
+        );
+        expect(
+          track?.categoryIds,
+          contains(category.id),
+          reason:
+              'Track ${category.trackId} does not reference category '
+              '${category.id}.',
         );
       }
     });

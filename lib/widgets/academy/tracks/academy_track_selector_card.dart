@@ -154,17 +154,6 @@ class _TrackChip extends StatelessWidget {
                 height: 1.3,
               ),
             ),
-            const SizedBox(height: AtlasSpacing.md),
-            AtlasStatusChip(
-              label: track.isAvailable ? 'Available' : 'Coming Soon',
-              icon: track.isAvailable
-                  ? Icons.check_circle_outline_rounded
-                  : Icons.lock_clock_outlined,
-              accentColor: track.isAvailable
-                  ? AtlasColors.success
-                  : AtlasColors.textSecondary,
-              size: AtlasStatusChipSize.compact,
-            ),
           ],
         ),
       ),
