@@ -6,10 +6,15 @@ import 'academy_request_storage_config.dart';
 class AcademyRequestRepositoryProvider {
   const AcademyRequestRepositoryProvider._();
 
-  static AcademyRequestRepositoryContract create() {
+  static AcademyRequestRepositoryContract create({
+    bool allowLocalSessionSubmissions =
+        AcademyRequestStorageConfig.allowLocalSessionSubmissions,
+  }) {
     switch (AcademyRequestStorageConfig.mode) {
       case AcademyRequestStorageMode.local:
-        return AcademyRequestRepository();
+        return AcademyRequestRepository(
+          submissionsEnabled: allowLocalSessionSubmissions,
+        );
       case AcademyRequestStorageMode.supabase:
         return const SupabaseAcademyRequestRepository();
     }

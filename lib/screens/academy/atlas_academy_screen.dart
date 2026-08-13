@@ -9,6 +9,7 @@ import '../../academy/helpers/ask_atlas_suggestions_builder.dart';
 import '../../academy/models/academy_category.dart';
 import '../../academy/models/academy_lesson.dart';
 import '../../academy/models/academy_request.dart';
+import '../../academy/models/academy_request_submission_result.dart';
 import '../../academy/models/academy_topic.dart';
 import '../../academy/models/academy_track.dart';
 import '../../academy/repository/academy_repository.dart';
@@ -25,7 +26,14 @@ import 'academy_category_screen.dart';
 import 'academy_lesson_screen.dart';
 
 class AtlasAcademyScreen extends StatefulWidget {
-  const AtlasAcademyScreen({super.key});
+  const AtlasAcademyScreen({
+    super.key,
+    this.requestRepository,
+    this.showLocalAdminTools,
+  });
+
+  final AcademyRequestRepositoryContract? requestRepository;
+  final bool? showLocalAdminTools;
 
   @override
   State<AtlasAcademyScreen> createState() {
@@ -39,8 +47,7 @@ class _AtlasAcademyScreenState extends State<AtlasAcademyScreen> {
   static const AcademyExplainerEngine _explainerEngine =
       AcademyExplainerEngine();
 
-  final AcademyRequestRepositoryContract _requestRepository =
-      AcademyRequestRepositoryProvider.create();
+  late final AcademyRequestRepositoryContract _requestRepository;
 
   String _selectedTrackId = AcademyTrackIds.funkoCollecting;
 
@@ -68,7 +75,18 @@ class _AtlasAcademyScreenState extends State<AtlasAcademyScreen> {
   }
 
   bool get _shouldShowLocalAdminTools {
-    return AcademyAdminConfig.showLocalAdminTools;
+    return AcademyAdminConfig.showLocalAdminTools &&
+        (widget.showLocalAdminTools ?? true) &&
+        _requestRepository.storageBehavior ==
+            AcademyRequestStorageBehavior.sessionOnly;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    _requestRepository =
+        widget.requestRepository ?? AcademyRequestRepositoryProvider.create();
   }
 
   List<AcademyCategory> get _funkoCategories {
@@ -129,13 +147,19 @@ class _AtlasAcademyScreenState extends State<AtlasAcademyScreen> {
               askAtlasSuggestions: _askAtlasSuggestions,
               onAskAtlasQuestion: _handleAskAtlasQuestion,
               onOpenCategory: _openCategory,
-              onTopicRequestSubmitted: _handleTopicRequestSubmitted,
+              requestStorageBehavior: _requestRepository.storageBehavior,
+              onTopicRequestSubmitted: _requestRepository.canSubmitRequests
+                  ? _handleTopicRequestSubmitted
+                  : null,
               collectorBasicsLessonCount: _collectorBasicsLessonCount,
             )
           else
             AcademyComingSoonTrackSection(
               track: _selectedTrack,
-              onNotifyTap: _handleTrackRequestSubmitted,
+              requestStorageBehavior: _requestRepository.storageBehavior,
+              onNotifyTap: _requestRepository.canSubmitRequests
+                  ? _handleTrackRequestSubmitted
+                  : null,
             ),
           if (_shouldShowLocalAdminTools) ...[
             const SizedBox(height: AtlasSpacing.lg),
@@ -200,81 +224,129 @@ class _AtlasAcademyScreenState extends State<AtlasAcademyScreen> {
     );
   }
 
-  void _handleTopicRequestSubmitted(String topic) {
+  Future<bool> _handleTopicRequestSubmitted(String topic) async {
     final String cleanedTopic = topic.trim();
 
     if (cleanedTopic.isEmpty) {
-      return;
+      return false;
     }
 
-    setState(() {
-      _requestRepository.addTopicRequest(
+    late final AcademyRequestSubmissionResult result;
+
+    try {
+      result = await _requestRepository.submitTopicRequest(
         topic: cleanedTopic,
         trackId: AcademyTrackIds.funkoCollecting,
       );
-    });
+    } catch (_) {
+      if (mounted) {
+        AcademySnackbars.showRequestSubmissionFailed(context: context);
+      }
 
-    AcademySnackbars.showTopicRequestReceived(
+      return false;
+    }
+
+    if (!mounted) {
+      return result.isSuccessful;
+    }
+
+    if (!result.isSuccessful) {
+      _showUnsuccessfulSubmission(result);
+      return false;
+    }
+
+    setState(() {});
+
+    AcademySnackbars.showTopicRequestSubmitted(
       context: context,
-      topic: cleanedTopic,
+      topic: result.request?.title ?? cleanedTopic,
       newRequestCount: _newAdminRequestCount,
+      storageBehavior: result.storageBehavior,
     );
+
+    return true;
   }
 
-  void _handleTrackRequestSubmitted() {
+  Future<void> _handleTrackRequestSubmitted() async {
     final AcademyTrack track = _selectedTrack;
 
-    late final String requestTitle;
+    late final AcademyRequestSubmissionResult result;
 
-    setState(() {
-      final AcademyRequest request = _requestRepository.addTrackRequest(
+    try {
+      result = await _requestRepository.submitTrackRequest(
         trackTitle: track.title,
         trackId: track.id,
       );
+    } catch (_) {
+      if (mounted) {
+        AcademySnackbars.showRequestSubmissionFailed(context: context);
+      }
 
-      requestTitle = request.title;
-    });
+      return;
+    }
 
-    AcademySnackbars.showTrackRequestReceived(
+    if (!mounted) {
+      return;
+    }
+
+    if (!result.isSuccessful) {
+      _showUnsuccessfulSubmission(result);
+      return;
+    }
+
+    setState(() {});
+
+    AcademySnackbars.showTrackRequestSubmitted(
       context: context,
-      trackTitle: requestTitle,
+      trackTitle: result.request?.title ?? track.title,
       newRequestCount: _newAdminRequestCount,
+      storageBehavior: result.storageBehavior,
     );
   }
 
   void _handleRequestReviewed(AcademyRequest request) {
     _handleAdminRequestAction(
-      action: () {
-        _requestRepository.markReviewed(request.id);
-      },
+      action: () => _requestRepository.markReviewed(request.id),
       message: AcademyRequestMessageBuilder.reviewed(request),
     );
   }
 
   void _handleRequestApproved(AcademyRequest request) {
     _handleAdminRequestAction(
-      action: () {
-        _requestRepository.approve(request.id);
-      },
+      action: () => _requestRepository.approve(request.id),
       message: AcademyRequestMessageBuilder.approved(request),
     );
   }
 
   void _handleRequestDeclined(AcademyRequest request) {
     _handleAdminRequestAction(
-      action: () {
-        _requestRepository.decline(request.id);
-      },
+      action: () => _requestRepository.decline(request.id),
       message: AcademyRequestMessageBuilder.declined(request),
     );
   }
 
   void _handleAdminRequestAction({
-    required VoidCallback action,
+    required bool Function() action,
     required String message,
   }) {
-    setState(action);
+    final bool changed = action();
+
+    if (!changed) {
+      AcademySnackbars.showAdminActionUnavailable(context: context);
+      return;
+    }
+
+    setState(() {});
 
     AcademySnackbars.showAdminAction(context: context, message: message);
+  }
+
+  void _showUnsuccessfulSubmission(AcademyRequestSubmissionResult result) {
+    if (result.isUnavailable) {
+      AcademySnackbars.showRequestSubmissionUnavailable(context: context);
+      return;
+    }
+
+    AcademySnackbars.showRequestSubmissionFailed(context: context);
   }
 }

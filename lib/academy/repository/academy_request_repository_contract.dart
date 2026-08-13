@@ -1,29 +1,32 @@
 import '../models/academy_request.dart';
+import '../models/academy_request_submission_result.dart';
 
 abstract class AcademyRequestRepositoryContract {
+  AcademyRequestStorageBehavior get storageBehavior;
+
+  bool get canSubmitRequests;
+
   List<AcademyRequest> getRequests();
 
   List<AcademyRequest> getNewRequests();
 
   int getNewRequestCount();
 
-  AcademyRequest addTopicRequest({
+  Future<AcademyRequestSubmissionResult> submitTopicRequest({
     required String topic,
     String? trackId,
     String? notes,
   });
 
-  AcademyRequest addTrackRequest({
+  Future<AcademyRequestSubmissionResult> submitTrackRequest({
     required String trackTitle,
     required String trackId,
     String? notes,
   });
 
-  void markReviewed(String requestId);
+  bool markReviewed(String requestId);
 
-  void approve(String requestId);
+  bool approve(String requestId);
 
-  void decline(String requestId);
-
-  void clearAll();
+  bool decline(String requestId);
 }

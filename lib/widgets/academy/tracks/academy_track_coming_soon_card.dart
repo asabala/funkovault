@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../academy/models/academy_request_submission_result.dart';
 import '../../../theme/atlas_colors.dart';
 import '../../../theme/atlas_spacing.dart';
 import '../../atlas/atlas_glass_card.dart';
@@ -15,14 +16,16 @@ class AcademyTrackComingSoonCard extends StatelessWidget {
     required this.subtitle,
     required this.status,
     required this.icon,
-    required this.onNotifyTap,
+    required this.requestStorageBehavior,
+    this.onNotifyTap,
   });
 
   final String title;
   final String subtitle;
   final String status;
   final IconData icon;
-  final VoidCallback onNotifyTap;
+  final AcademyRequestStorageBehavior requestStorageBehavior;
+  final VoidCallback? onNotifyTap;
 
   @override
   Widget build(BuildContext context) {
@@ -58,9 +61,24 @@ class AcademyTrackComingSoonCard extends StatelessWidget {
           ),
           const SizedBox(height: AtlasSpacing.lg),
           AtlasActionRow(
-            title: 'Request This Track',
-            description: 'Add this learning path to the Academy request queue.',
-            icon: Icons.notifications_active_rounded,
+            title:
+                requestStorageBehavior ==
+                    AcademyRequestStorageBehavior.unavailable
+                ? 'Requests Unavailable'
+                : 'Request This Track',
+            description: switch (requestStorageBehavior) {
+              AcademyRequestStorageBehavior.unavailable =>
+                'Track requests will be enabled when durable request storage is connected.',
+              AcademyRequestStorageBehavior.sessionOnly =>
+                'Save this request to the local developer queue for this debug session.',
+              AcademyRequestStorageBehavior.durable =>
+                'Add this learning path to the Academy request queue.',
+            },
+            icon:
+                requestStorageBehavior ==
+                    AcademyRequestStorageBehavior.unavailable
+                ? Icons.cloud_off_rounded
+                : Icons.notifications_active_rounded,
             accentColor: AtlasColors.vaultGold,
             onTap: onNotifyTap,
           ),

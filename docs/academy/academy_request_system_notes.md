@@ -1,8 +1,25 @@
 # Academy Request System Notes
 
-## Current storage mode
+## Current release behavior
 
-Academy requests currently use the local in-memory repository.
+Academy request submission is not currently available in profile or release
+builds. Atlas does not accept or confirm a production request until durable
+storage has reported a successful submission.
+
+Supabase request persistence is a future backend milestone.
+
+## Debug developer workflow
+
+Debug builds may use the local in-memory repository as a session-only developer
+workflow.
+
+Requests created in this mode:
+
+- Exist only in the current Academy screen session
+- Are lost after screen reconstruction, process termination, or app restart
+- Are not synchronized between accounts or devices
+- Are visible only in the debug-only local admin inbox
+- Must never be represented as durably received
 
 Config file:
 
@@ -12,7 +29,12 @@ Current mode:
 
 `AcademyRequestStorageMode.local`
 
-Future mode:
+Local submission policy:
+
+- Debug: session-only local submission is enabled
+- Profile/release: submission is unavailable
+
+Future durable mode:
 
 `AcademyRequestStorageMode.supabase`
 
@@ -27,7 +49,12 @@ which returns:
 
 `AcademyRequestRepositoryContract`
 
-The screen does not need to know whether the repository is local or Supabase later.
+The repository explicitly reports whether request storage is unavailable,
+session-only, or durable. Submission methods are asynchronous and return an
+`AcademyRequestSubmissionResult`.
+
+The UI clears request input and shows success only after the repository returns
+a successful result.
 
 ## Local repository
 
@@ -46,7 +73,9 @@ Responsibilities:
 - Mark reviewed
 - Approve
 - Decline
-- Clear all
+
+The persistent repository contract deliberately does not expose a destructive
+clear-all operation.
 
 ## Request model
 
@@ -73,6 +102,20 @@ Table constants:
 Repository placeholder:
 
 `lib/academy/repository/supabase_academy_request_repository.dart`
+
+The placeholder currently reports submission as unavailable. It does not write
+to Supabase and must not be treated as production persistence.
+
+## Deferred backend milestone
+
+Production request support requires:
+
+- A deployed Supabase schema
+- Authentication and request ownership rules
+- Row Level Security policies
+- Rate limiting and abuse handling
+- Authorized admin review tooling
+- Server-safe identifiers and idempotency decisions
 
 Storage config:
 

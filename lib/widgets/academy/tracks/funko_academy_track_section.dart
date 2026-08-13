@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../academy/academy_ids.dart';
 import '../../../academy/models/academy_category.dart';
+import '../../../academy/models/academy_request_submission_result.dart';
 import '../../../academy/models/academy_topic.dart';
 import '../../../academy/models/academy_track.dart';
 import '../../../theme/atlas_spacing.dart';
@@ -21,7 +22,8 @@ class FunkoAcademyTrackSection extends StatelessWidget {
     required this.askAtlasSuggestions,
     required this.onAskAtlasQuestion,
     required this.onOpenCategory,
-    required this.onTopicRequestSubmitted,
+    required this.requestStorageBehavior,
+    this.onTopicRequestSubmitted,
     required this.collectorBasicsLessonCount,
   });
 
@@ -31,7 +33,8 @@ class FunkoAcademyTrackSection extends StatelessWidget {
   final List<String> askAtlasSuggestions;
   final ValueChanged<String> onAskAtlasQuestion;
   final ValueChanged<AcademyCategory> onOpenCategory;
-  final ValueChanged<String> onTopicRequestSubmitted;
+  final AcademyRequestStorageBehavior requestStorageBehavior;
+  final Future<bool> Function(String topic)? onTopicRequestSubmitted;
   final int collectorBasicsLessonCount;
 
   AcademyCategory? get _collectorBasicsCategory {
@@ -92,7 +95,10 @@ class FunkoAcademyTrackSection extends StatelessWidget {
           FunkoAcademyRoadmapSection(topics: roadmapTopics),
         ],
         const SizedBox(height: AtlasSpacing.lg),
-        AcademyTopicRequestCard(onSubmit: onTopicRequestSubmitted),
+        AcademyTopicRequestCard(
+          storageBehavior: requestStorageBehavior,
+          onSubmit: onTopicRequestSubmitted,
+        ),
       ],
     );
   }

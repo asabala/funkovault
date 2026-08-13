@@ -1,9 +1,20 @@
 import '../models/academy_request.dart';
+import '../models/academy_request_submission_result.dart';
 import 'academy_request_repository_contract.dart';
 
 class SupabaseAcademyRequestRepository
     implements AcademyRequestRepositoryContract {
   const SupabaseAcademyRequestRepository();
+
+  @override
+  AcademyRequestStorageBehavior get storageBehavior {
+    return AcademyRequestStorageBehavior.unavailable;
+  }
+
+  @override
+  bool get canSubmitRequests {
+    return false;
+  }
 
   @override
   List<AcademyRequest> getRequests() {
@@ -27,50 +38,39 @@ class SupabaseAcademyRequestRepository
   }
 
   @override
-  AcademyRequest addTopicRequest({
+  Future<AcademyRequestSubmissionResult> submitTopicRequest({
     required String topic,
     String? trackId,
     String? notes,
-  }) {
-    throw UnimplementedError(
-      'Supabase Academy request storage is not connected yet.',
-    );
+  }) async {
+    return const AcademyRequestSubmissionResult.unavailable();
   }
 
   @override
-  AcademyRequest addTrackRequest({
+  Future<AcademyRequestSubmissionResult> submitTrackRequest({
     required String trackTitle,
     required String trackId,
     String? notes,
-  }) {
+  }) async {
+    return const AcademyRequestSubmissionResult.unavailable();
+  }
+
+  @override
+  bool markReviewed(String requestId) {
     throw UnimplementedError(
       'Supabase Academy request storage is not connected yet.',
     );
   }
 
   @override
-  void markReviewed(String requestId) {
+  bool approve(String requestId) {
     throw UnimplementedError(
       'Supabase Academy request storage is not connected yet.',
     );
   }
 
   @override
-  void approve(String requestId) {
-    throw UnimplementedError(
-      'Supabase Academy request storage is not connected yet.',
-    );
-  }
-
-  @override
-  void decline(String requestId) {
-    throw UnimplementedError(
-      'Supabase Academy request storage is not connected yet.',
-    );
-  }
-
-  @override
-  void clearAll() {
+  bool decline(String requestId) {
     throw UnimplementedError(
       'Supabase Academy request storage is not connected yet.',
     );
