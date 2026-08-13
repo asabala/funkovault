@@ -1,8 +1,8 @@
 class AcademyLesson {
   const AcademyLesson({
     required this.id,
-    required this.track,
-    required this.category,
+    required this.trackId,
+    required this.categoryId,
     required this.title,
     required this.subtitle,
     required this.readingTimeMinutes,
@@ -18,8 +18,8 @@ class AcademyLesson {
   });
 
   final String id;
-  final String track;
-  final String category;
+  final String trackId;
+  final String categoryId;
   final String title;
   final String subtitle;
   final int readingTimeMinutes;
@@ -52,10 +52,7 @@ class AcademyLesson {
 }
 
 class AcademyLessonSection {
-  const AcademyLessonSection({
-    required this.heading,
-    required this.body,
-  });
+  const AcademyLessonSection({required this.heading, required this.body});
 
   final String heading;
   final String body;

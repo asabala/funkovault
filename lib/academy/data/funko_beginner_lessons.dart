@@ -4,8 +4,8 @@ import '../models/academy_lesson.dart';
 const funkoBeginnerLessons = [
   AcademyLesson(
     id: AcademyLessonIds.funkoCommon,
-    track: AcademyTrackTitles.funkoCollecting,
-    category: 'Collector Basics',
+    trackId: AcademyTrackIds.funkoCollecting,
+    categoryId: AcademyCategoryIds.funkoCollectorBasics,
     title: 'Common',
     subtitle: 'The standard version of a collectible.',
     readingTimeMinutes: 2,
@@ -54,8 +54,8 @@ const funkoBeginnerLessons = [
   ),
   AcademyLesson(
     id: AcademyLessonIds.funkoChase,
-    track: AcademyTrackTitles.funkoCollecting,
-    category: 'Collector Basics',
+    trackId: AcademyTrackIds.funkoCollecting,
+    categoryId: AcademyCategoryIds.funkoCollectorBasics,
     title: 'Chase',
     subtitle: 'A rarer variant randomly packed with Common figures.',
     readingTimeMinutes: 3,
@@ -106,8 +106,8 @@ const funkoBeginnerLessons = [
   ),
   AcademyLesson(
     id: AcademyLessonIds.funkoGrail,
-    track: AcademyTrackTitles.funkoCollecting,
-    category: 'Collector Basics',
+    trackId: AcademyTrackIds.funkoCollecting,
+    categoryId: AcademyCategoryIds.funkoCollectorBasics,
     title: 'Grail',
     subtitle: 'A highly desired collectible that collectors hunt for.',
     readingTimeMinutes: 3,
@@ -158,8 +158,8 @@ const funkoBeginnerLessons = [
   ),
   AcademyLesson(
     id: AcademyLessonIds.funkoVaulted,
-    track: AcademyTrackTitles.funkoCollecting,
-    category: 'Collector Basics',
+    trackId: AcademyTrackIds.funkoCollecting,
+    categoryId: AcademyCategoryIds.funkoCollectorBasics,
     title: 'Vaulted',
     subtitle: 'A retired collectible that is no longer being produced.',
     readingTimeMinutes: 3,

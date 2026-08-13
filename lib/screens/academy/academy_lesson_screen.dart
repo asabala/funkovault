@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../academy/models/academy_category.dart';
 import '../../academy/models/academy_lesson.dart';
 import '../../academy/repository/academy_repository.dart';
 import '../../theme/atlas_colors.dart';
@@ -12,41 +13,37 @@ import '../../widgets/atlas/components/atlas_section_header.dart';
 import '../../widgets/atlas/components/atlas_status_chip.dart';
 
 class AcademyLessonScreen extends StatelessWidget {
-  const AcademyLessonScreen({
-    required this.lesson,
-    super.key,
-  });
+  const AcademyLessonScreen({required this.lesson, super.key});
 
   final AcademyLesson lesson;
 
-  static const AcademyRepository _repository =
-  AcademyRepository();
+  static const AcademyRepository _repository = AcademyRepository();
 
   @override
   Widget build(BuildContext context) {
+    final AcademyCategory? lessonCategory = _repository.getCategoryById(
+      lesson.categoryId,
+    );
+
+    final String lessonCategoryTitle =
+        lessonCategory == null || lessonCategory.title.trim().isEmpty
+        ? 'Academy'
+        : lessonCategory.title.trim();
+
     final String atlasTip = lesson.atlasTips.isEmpty
         ? 'Keep learning. Small details can make a big difference in collecting.'
         : lesson.atlasTips.first;
 
-    final List<AcademyLesson> relatedLessons =
-    lesson.relatedLessonIds
+    final List<AcademyLesson> relatedLessons = lesson.relatedLessonIds
         .map(_repository.getLessonById)
         .whereType<AcademyLesson>()
-        .where(
-          (AcademyLesson relatedLesson) {
-        return relatedLesson.id != lesson.id;
-      },
-    )
-        .toList(
-      growable: false,
-    );
+        .where((AcademyLesson relatedLesson) {
+          return relatedLesson.id != lesson.id;
+        })
+        .toList(growable: false);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          lesson.title,
-        ),
-      ),
+      appBar: AppBar(title: Text(lesson.title)),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(
           AtlasSpacing.md,
@@ -67,22 +64,19 @@ class AcademyLessonScreen extends StatelessWidget {
                   accentColor: AtlasColors.vaultGold,
                   titleStyle: AtlasTypography.headingLarge,
                 ),
-                const SizedBox(
-                  height: AtlasSpacing.lg,
-                ),
+                const SizedBox(height: AtlasSpacing.lg),
                 Wrap(
                   spacing: AtlasSpacing.sm,
                   runSpacing: AtlasSpacing.sm,
                   children: [
                     AtlasStatusChip(
-                      label: lesson.category,
+                      label: lessonCategoryTitle,
                       icon: Icons.category_outlined,
                       accentColor: AtlasColors.vaultGold,
                       size: AtlasStatusChipSize.compact,
                     ),
                     AtlasStatusChip(
-                      label:
-                      '${lesson.readingTimeMinutes} min',
+                      label: '${lesson.readingTimeMinutes} min',
                       icon: Icons.schedule_rounded,
                       accentColor: AtlasColors.vaultGold,
                       size: AtlasStatusChipSize.compact,
@@ -98,17 +92,13 @@ class AcademyLessonScreen extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(
-            height: AtlasSpacing.lg,
-          ),
+          const SizedBox(height: AtlasSpacing.lg),
           _LessonContentCard(
             title: 'Quick Answer',
             body: lesson.quickAnswer,
             icon: Icons.flash_on_rounded,
           ),
-          const SizedBox(
-            height: AtlasSpacing.md,
-          ),
+          const SizedBox(height: AtlasSpacing.md),
           _LessonContentCard(
             title: 'Atlas Explains',
             body: _combinedExplanation(
@@ -117,18 +107,14 @@ class AcademyLessonScreen extends StatelessWidget {
             ),
             icon: Icons.psychology_outlined,
           ),
-          const SizedBox(
-            height: AtlasSpacing.md,
-          ),
+          const SizedBox(height: AtlasSpacing.md),
           AtlasInfoBanner(
             icon: Icons.lightbulb_outline_rounded,
             title: 'Atlas Tip',
             message: atlasTip,
             accentColor: AtlasColors.vaultGold,
           ),
-          const SizedBox(
-            height: AtlasSpacing.md,
-          ),
+          const SizedBox(height: AtlasSpacing.md),
           _LessonContentCard(
             title: 'Collector Warning',
             body: lesson.collectorWarning,
@@ -136,98 +122,69 @@ class AcademyLessonScreen extends StatelessWidget {
             accentColor: AtlasColors.warning,
           ),
           if (lesson.sections.isNotEmpty) ...[
-            const SizedBox(
-              height: AtlasSpacing.lg,
-            ),
+            const SizedBox(height: AtlasSpacing.lg),
             AtlasGlassCard(
               child: Column(
-                crossAxisAlignment:
-                CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const AtlasSectionHeader(
                     title: 'Lesson Details',
                     subtitle:
-                    'Go deeper with the key collector concepts covered in this lesson.',
+                        'Go deeper with the key collector concepts covered in this lesson.',
                     icon: Icons.auto_stories_rounded,
                   ),
-                  const SizedBox(
-                    height: AtlasSpacing.lg,
-                  ),
+                  const SizedBox(height: AtlasSpacing.lg),
                   for (
-                  int index = 0;
-                  index < lesson.sections.length;
-                  index++
+                    int index = 0;
+                    index < lesson.sections.length;
+                    index++
                   ) ...[
                     _LessonContentPanel(
-                      title:
-                      lesson.sections[index].heading,
-                      body:
-                      lesson.sections[index].body,
+                      title: lesson.sections[index].heading,
+                      body: lesson.sections[index].body,
                     ),
-                    if (index !=
-                        lesson.sections.length - 1)
-                      const SizedBox(
-                        height: AtlasSpacing.sm,
-                      ),
+                    if (index != lesson.sections.length - 1)
+                      const SizedBox(height: AtlasSpacing.sm),
                   ],
                 ],
               ),
             ),
           ],
           if (relatedLessons.isNotEmpty) ...[
-            const SizedBox(
-              height: AtlasSpacing.lg,
-            ),
+            const SizedBox(height: AtlasSpacing.lg),
             AtlasGlassCard(
               child: Column(
-                crossAxisAlignment:
-                CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const AtlasSectionHeader(
                     title: 'Related Lessons',
-                    subtitle:
-                    'Keep learning with connected collector topics.',
+                    subtitle: 'Keep learning with connected collector topics.',
                     icon: Icons.link_rounded,
                   ),
-                  const SizedBox(
-                    height: AtlasSpacing.lg,
-                  ),
+                  const SizedBox(height: AtlasSpacing.lg),
                   for (
-                  int index = 0;
-                  index < relatedLessons.length;
-                  index++
+                    int index = 0;
+                    index < relatedLessons.length;
+                    index++
                   ) ...[
                     AtlasActionRow(
-                      title:
-                      relatedLessons[index].title,
-                      description:
-                      relatedLessons[index].subtitle,
-                      icon:
-                      Icons.menu_book_outlined,
-                      accentColor:
-                      AtlasColors.vaultGold,
+                      title: relatedLessons[index].title,
+                      description: relatedLessons[index].subtitle,
+                      icon: Icons.menu_book_outlined,
+                      accentColor: AtlasColors.vaultGold,
                       badge: AtlasStatusChip(
                         label:
-                        '${relatedLessons[index].readingTimeMinutes} min',
-                        icon:
-                        Icons.schedule_rounded,
-                        accentColor:
-                        AtlasColors.vaultGold,
-                        size:
-                        AtlasStatusChipSize.compact,
+                            '${relatedLessons[index].readingTimeMinutes} min',
+                        icon: Icons.schedule_rounded,
+                        accentColor: AtlasColors.vaultGold,
+                        size: AtlasStatusChipSize.compact,
                       ),
                       onTap: () {
-                        _openRelatedLesson(
-                          context,
-                          relatedLessons[index],
-                        );
+                        _openRelatedLesson(context, relatedLessons[index]);
                       },
                     ),
-                    if (index !=
-                        relatedLessons.length - 1)
-                      const SizedBox(
-                        height: AtlasSpacing.sm,
-                      ),
+                    if (index != relatedLessons.length - 1)
+                      const SizedBox(height: AtlasSpacing.sm),
                   ],
                 ],
               ),
@@ -242,11 +199,9 @@ class AcademyLessonScreen extends StatelessWidget {
     required String deepAnswer,
     required String analogy,
   }) {
-    final String cleanedDeepAnswer =
-    deepAnswer.trim();
+    final String cleanedDeepAnswer = deepAnswer.trim();
 
-    final String cleanedAnalogy =
-    analogy.trim();
+    final String cleanedAnalogy = analogy.trim();
 
     if (cleanedDeepAnswer.isEmpty) {
       return cleanedAnalogy;
@@ -259,16 +214,11 @@ class AcademyLessonScreen extends StatelessWidget {
     return '$cleanedDeepAnswer\n\n$cleanedAnalogy';
   }
 
-  void _openRelatedLesson(
-      BuildContext context,
-      AcademyLesson relatedLesson,
-      ) {
+  void _openRelatedLesson(BuildContext context, AcademyLesson relatedLesson) {
     Navigator.push<void>(
       context,
       MaterialPageRoute<void>(
-        builder: (_) => AcademyLessonScreen(
-          lesson: relatedLesson,
-        ),
+        builder: (_) => AcademyLessonScreen(lesson: relatedLesson),
       ),
     );
   }
@@ -289,8 +239,7 @@ class _LessonContentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color effectiveAccent =
-        accentColor ?? AtlasColors.vaultGold;
+    final Color effectiveAccent = accentColor ?? AtlasColors.vaultGold;
 
     return AtlasGlassCard(
       accentColor: effectiveAccent,
@@ -302,9 +251,7 @@ class _LessonContentCard extends StatelessWidget {
             icon: icon,
             accentColor: effectiveAccent,
           ),
-          const SizedBox(
-            height: AtlasSpacing.md,
-          ),
+          const SizedBox(height: AtlasSpacing.md),
           Text(
             _displayBody(body),
             style: AtlasTypography.bodyMedium.copyWith(
@@ -319,10 +266,7 @@ class _LessonContentCard extends StatelessWidget {
 }
 
 class _LessonContentPanel extends StatelessWidget {
-  const _LessonContentPanel({
-    required this.title,
-    required this.body,
-  });
+  const _LessonContentPanel({required this.title, required this.body});
 
   final String title;
   final String body;
@@ -334,16 +278,12 @@ class _LessonContentPanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            title.trim().isEmpty
-                ? 'Lesson Note'
-                : title.trim(),
+            title.trim().isEmpty ? 'Lesson Note' : title.trim(),
             style: AtlasTypography.headingSmall.copyWith(
               color: AtlasColors.vaultGold,
             ),
           ),
-          const SizedBox(
-            height: AtlasSpacing.sm,
-          ),
+          const SizedBox(height: AtlasSpacing.sm),
           Text(
             _displayBody(body),
             style: AtlasTypography.bodyMedium.copyWith(

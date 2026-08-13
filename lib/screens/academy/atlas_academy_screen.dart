@@ -72,9 +72,7 @@ class _AtlasAcademyScreenState extends State<AtlasAcademyScreen> {
   }
 
   List<AcademyCategory> get _funkoCategories {
-    return _repository.getCategoriesForTrack(
-      AcademyTrackTitles.funkoCollecting,
-    );
+    return _repository.getCategoriesForTrack(AcademyTrackIds.funkoCollecting);
   }
 
   List<AcademyTopic> get _funkoRoadmapTopics {

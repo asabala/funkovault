@@ -14,22 +14,6 @@ class AcademyTrackIds {
   static const premiumInsights = 'premium-insights';
 }
 
-class AcademyTrackTitles {
-  const AcademyTrackTitles._();
-
-  static const funkoCollecting = 'Funko Collecting';
-  static const pokemonCards = 'Pokémon Cards';
-  static const hotWheels = 'Hot Wheels';
-  static const sportsCards = 'Sports Cards';
-  static const comics = 'Comics';
-  static const coins = 'Coins';
-  static const autographs = 'Autographs';
-
-  static const smartCollecting = 'Smart Collecting';
-  static const exclusivesVariants = 'Exclusives & Variants';
-  static const premiumInsights = 'Premium Insights';
-}
-
 class AcademyCategoryIds {
   const AcademyCategoryIds._();
 

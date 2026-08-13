@@ -1,7 +1,7 @@
 class AcademyCategory {
   const AcademyCategory({
     required this.id,
-    required this.track,
+    required this.trackId,
     required this.title,
     required this.subtitle,
     required this.icon,
@@ -9,7 +9,7 @@ class AcademyCategory {
   });
 
   final String id;
-  final String track;
+  final String trackId;
   final String title;
   final String subtitle;
   final String icon;

@@ -11,45 +11,29 @@ class AcademyRepository {
   const AcademyRepository();
 
   List<AcademyTrack> getTracks() {
-    return List<AcademyTrack>.unmodifiable(
-      academyTracks,
-    );
+    return List<AcademyTrack>.unmodifiable(academyTracks);
   }
 
   List<AcademyTrack> getAvailableTracks() {
     return getTracks()
-        .where(
-          (AcademyTrack track) =>
-      track.isAvailable,
-    )
-        .toList(
-      growable: false,
-    );
+        .where((AcademyTrack track) => track.isAvailable)
+        .toList(growable: false);
   }
 
   List<AcademyTrack> getComingSoonTracks() {
     return getTracks()
-        .where(
-          (AcademyTrack track) =>
-      !track.isAvailable,
-    )
-        .toList(
-      growable: false,
-    );
+        .where((AcademyTrack track) => !track.isAvailable)
+        .toList(growable: false);
   }
 
-  AcademyTrack? getTrackById(
-      String id,
-      ) {
-    final String normalizedId =
-    id.trim();
+  AcademyTrack? getTrackById(String id) {
+    final String normalizedId = id.trim();
 
     if (normalizedId.isEmpty) {
       return null;
     }
 
-    for (final AcademyTrack track
-    in getTracks()) {
+    for (final AcademyTrack track in getTracks()) {
       if (track.id == normalizedId) {
         return track;
       }
@@ -58,132 +42,54 @@ class AcademyRepository {
     return null;
   }
 
-  AcademyTrack? getTrackByTitle(
-      String title,
-      ) {
-    final String normalizedTitle =
-    title.trim().toLowerCase();
-
-    if (normalizedTitle.isEmpty) {
-      return null;
-    }
-
-    for (final AcademyTrack track
-    in getTracks()) {
-      if (track.title
-          .trim()
-          .toLowerCase() ==
-          normalizedTitle) {
-        return track;
-      }
-    }
-
-    return null;
-  }
-
   List<AcademyTopic> getTopics() {
-    return List<AcademyTopic>.unmodifiable(
-      funkoAcademyTopics,
-    );
+    return List<AcademyTopic>.unmodifiable(funkoAcademyTopics);
   }
 
-  List<AcademyTopic> getTopicsForTrack(
-      String trackId,
-      ) {
-    final String normalizedTrackId =
-    trackId.trim();
+  List<AcademyTopic> getTopicsForTrack(String trackId) {
+    final String normalizedTrackId = trackId.trim();
 
     if (normalizedTrackId.isEmpty) {
       return const <AcademyTopic>[];
     }
 
     return getTopics()
-        .where(
-          (AcademyTopic topic) =>
-      topic.trackId ==
-          normalizedTrackId,
-    )
-        .toList(
-      growable: false,
-    );
+        .where((AcademyTopic topic) => topic.trackId == normalizedTrackId)
+        .toList(growable: false);
   }
 
-  List<AcademyTopic>
-  getAvailableTopicsForTrack(
-      String trackId,
-      ) {
+  List<AcademyTopic> getAvailableTopicsForTrack(String trackId) {
     return getTopicsForTrack(
       trackId,
-    )
-        .where(
-          (AcademyTopic topic) =>
-      topic.isAvailable,
-    )
-        .toList(
-      growable: false,
-    );
+    ).where((AcademyTopic topic) => topic.isAvailable).toList(growable: false);
   }
 
-  List<AcademyTopic>
-  getRoadmapTopicsForTrack(
-      String trackId,
-      ) {
+  List<AcademyTopic> getRoadmapTopicsForTrack(String trackId) {
     return getTopicsForTrack(
       trackId,
-    )
-        .where(
-          (AcademyTopic topic) =>
-      !topic.isAvailable,
-    )
-        .toList(
-      growable: false,
-    );
+    ).where((AcademyTopic topic) => !topic.isAvailable).toList(growable: false);
   }
 
-  List<AcademyTopic>
-  getPremiumTopicsForTrack(
-      String trackId,
-      ) {
+  List<AcademyTopic> getPremiumTopicsForTrack(String trackId) {
     return getTopicsForTrack(
       trackId,
-    )
-        .where(
-          (AcademyTopic topic) =>
-      topic.isPremium,
-    )
-        .toList(
-      growable: false,
-    );
+    ).where((AcademyTopic topic) => topic.isPremium).toList(growable: false);
   }
 
-  List<AcademyTopic>
-  getFreeTopicsForTrack(
-      String trackId,
-      ) {
+  List<AcademyTopic> getFreeTopicsForTrack(String trackId) {
     return getTopicsForTrack(
       trackId,
-    )
-        .where(
-          (AcademyTopic topic) =>
-      !topic.isPremium,
-    )
-        .toList(
-      growable: false,
-    );
+    ).where((AcademyTopic topic) => !topic.isPremium).toList(growable: false);
   }
 
-  AcademyTopic? getTopicById(
-      String id,
-      ) {
-    final String normalizedId =
-    id.trim();
+  AcademyTopic? getTopicById(String id) {
+    final String normalizedId = id.trim();
 
     if (normalizedId.isEmpty) {
       return null;
     }
 
-    for (final AcademyTopic topic
-    in getTopics()) {
+    for (final AcademyTopic topic in getTopics()) {
       if (topic.id == normalizedId) {
         return topic;
       }
@@ -192,128 +98,82 @@ class AcademyRepository {
     return null;
   }
 
-  List<AcademyTopic> searchTopics(
-      String query,
-      ) {
-    final String normalizedQuery =
-    query.trim().toLowerCase();
+  List<AcademyTopic> searchTopics(String query) {
+    final String normalizedQuery = query.trim().toLowerCase();
 
     if (normalizedQuery.isEmpty) {
       return const <AcademyTopic>[];
     }
 
     return getTopics()
-        .where(
-          (AcademyTopic topic) {
-        final String searchableText =
-        <String>[
-          topic.title,
-          topic.subtitle,
-          topic.category,
-          ...topic.searchKeywords,
-        ].join(' ').toLowerCase();
+        .where((AcademyTopic topic) {
+          final String searchableText = <String>[
+            topic.title,
+            topic.subtitle,
+            topic.category,
+            ...topic.searchKeywords,
+          ].join(' ').toLowerCase();
 
-        return searchableText.contains(
-          normalizedQuery,
-        );
-      },
-    )
-        .toList(
-      growable: false,
-    );
+          return searchableText.contains(normalizedQuery);
+        })
+        .toList(growable: false);
   }
 
   List<AcademyCategory> getCategories() {
-    return List<AcademyCategory>.unmodifiable(
-      funkoAcademyCategories,
-    );
+    return List<AcademyCategory>.unmodifiable(funkoAcademyCategories);
   }
 
   List<AcademyLesson> getLessons() {
-    return List<AcademyLesson>.unmodifiable(
-      funkoBeginnerLessons,
-    );
+    return List<AcademyLesson>.unmodifiable(funkoBeginnerLessons);
   }
 
-  List<AcademyCategory>
-  getCategoriesForTrack(
-      String track,
-      ) {
-    final String normalizedTrack =
-    track.trim();
+  List<AcademyCategory> getCategoriesForTrack(String trackId) {
+    final String normalizedTrackId = trackId.trim();
 
-    if (normalizedTrack.isEmpty) {
+    if (normalizedTrackId.isEmpty) {
       return const <AcademyCategory>[];
     }
 
     return getCategories()
         .where(
-          (AcademyCategory category) =>
-      category.track ==
-          normalizedTrack,
-    )
-        .toList(
-      growable: false,
-    );
+          (AcademyCategory category) => category.trackId == normalizedTrackId,
+        )
+        .toList(growable: false);
   }
 
-  List<AcademyLesson>
-  getLessonsForTrack(
-      String track,
-      ) {
-    final String normalizedTrack =
-    track.trim();
+  List<AcademyLesson> getLessonsForTrack(String trackId) {
+    final String normalizedTrackId = trackId.trim();
 
-    if (normalizedTrack.isEmpty) {
+    if (normalizedTrackId.isEmpty) {
       return const <AcademyLesson>[];
     }
 
     return getLessons()
-        .where(
-          (AcademyLesson lesson) =>
-      lesson.track ==
-          normalizedTrack,
-    )
-        .toList(
-      growable: false,
-    );
+        .where((AcademyLesson lesson) => lesson.trackId == normalizedTrackId)
+        .toList(growable: false);
   }
 
-  List<AcademyLesson>
-  getLessonsForCategory(
-      String categoryId,
-      ) {
-    final AcademyCategory? category =
-    getCategoryById(
-      categoryId,
-    );
+  List<AcademyLesson> getLessonsForCategory(String categoryId) {
+    final AcademyCategory? category = getCategoryById(categoryId);
 
     if (category == null) {
       return const <AcademyLesson>[];
     }
 
     return category.lessonIds
-        .map(
-      getLessonById,
-    )
+        .map(getLessonById)
         .whereType<AcademyLesson>()
-        .toList(
-      growable: false,
-    );
+        .toList(growable: false);
   }
 
-  AcademyCategory? getCategoryById(
-      String id,
-      ) {
-    final String normalizedId =
-    id.trim();
+  AcademyCategory? getCategoryById(String id) {
+    final String normalizedId = id.trim();
 
     if (normalizedId.isEmpty) {
       return null;
     }
 
-    for (final AcademyCategory category
-    in getCategories()) {
+    for (final AcademyCategory category in getCategories()) {
       if (category.id == normalizedId) {
         return category;
       }
@@ -322,18 +182,14 @@ class AcademyRepository {
     return null;
   }
 
-  AcademyLesson? getLessonById(
-      String id,
-      ) {
-    final String normalizedId =
-    id.trim();
+  AcademyLesson? getLessonById(String id) {
+    final String normalizedId = id.trim();
 
     if (normalizedId.isEmpty) {
       return null;
     }
 
-    for (final AcademyLesson lesson
-    in getLessons()) {
+    for (final AcademyLesson lesson in getLessons()) {
       if (lesson.id == normalizedId) {
         return lesson;
       }
@@ -342,40 +198,33 @@ class AcademyRepository {
     return null;
   }
 
-  List<AcademyLesson> searchLessons(
-      String query,
-      ) {
-    final String normalizedQuery =
-    query.trim().toLowerCase();
+  List<AcademyLesson> searchLessons(String query) {
+    final String normalizedQuery = query.trim().toLowerCase();
 
     if (normalizedQuery.isEmpty) {
       return const <AcademyLesson>[];
     }
 
     return getLessons()
-        .where(
-          (AcademyLesson lesson) {
-        final String searchableText =
-        <String>[
-          lesson.title,
-          lesson.subtitle,
-          lesson.category,
-          lesson.track,
-          lesson.quickAnswer,
-          lesson.deepAnswer,
-          lesson.analogy,
-          lesson.collectorWarning,
-          ...lesson.atlasTips,
-          ...lesson.searchKeywords,
-        ].join(' ').toLowerCase();
+        .where((AcademyLesson lesson) {
+          final AcademyTrack? track = getTrackById(lesson.trackId);
+          final AcademyCategory? category = getCategoryById(lesson.categoryId);
 
-        return searchableText.contains(
-          normalizedQuery,
-        );
-      },
-    )
-        .toList(
-      growable: false,
-    );
+          final String searchableText = <String>[
+            lesson.title,
+            lesson.subtitle,
+            category?.title ?? '',
+            track?.title ?? '',
+            lesson.quickAnswer,
+            lesson.deepAnswer,
+            lesson.analogy,
+            lesson.collectorWarning,
+            ...lesson.atlasTips,
+            ...lesson.searchKeywords,
+          ].join(' ').toLowerCase();
+
+          return searchableText.contains(normalizedQuery);
+        })
+        .toList(growable: false);
   }
 }

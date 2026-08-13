@@ -4,7 +4,7 @@ import '../models/academy_category.dart';
 const funkoAcademyCategories = [
   AcademyCategory(
     id: AcademyCategoryIds.funkoCollectorBasics,
-    track: AcademyTrackTitles.funkoCollecting,
+    trackId: AcademyTrackIds.funkoCollecting,
     title: 'Collector Basics',
     subtitle: 'Learn the core terms every Funko collector should know.',
     icon: '🎓',
@@ -17,7 +17,7 @@ const funkoAcademyCategories = [
   ),
   AcademyCategory(
     id: AcademyCategoryIds.funkoVariants,
-    track: AcademyTrackTitles.funkoCollecting,
+    trackId: AcademyTrackIds.funkoCollecting,
     title: 'Variants',
     subtitle: 'Understand Chase, Glow, Flocked, Metallic, and more.',
     icon: '✨',
@@ -25,7 +25,7 @@ const funkoAcademyCategories = [
   ),
   AcademyCategory(
     id: AcademyCategoryIds.funkoStickers,
-    track: AcademyTrackTitles.funkoCollecting,
+    trackId: AcademyTrackIds.funkoCollecting,
     title: 'Stickers & Exclusives',
     subtitle: 'Learn why stickers can change identity, rarity, and value.',
     icon: '🏷️',
@@ -33,9 +33,10 @@ const funkoAcademyCategories = [
   ),
   AcademyCategory(
     id: AcademyCategoryIds.funkoFormats,
-    track: AcademyTrackTitles.funkoCollecting,
+    trackId: AcademyTrackIds.funkoCollecting,
     title: 'Figure Types',
-    subtitle: 'Explore different product formats like Rides, Moments, and Jumbo.',
+    subtitle:
+        'Explore different product formats like Rides, Moments, and Jumbo.',
     icon: '📦',
     lessonIds: [],
   ),
