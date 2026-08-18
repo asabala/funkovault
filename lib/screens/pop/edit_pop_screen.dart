@@ -18,6 +18,7 @@ import '../../widgets/atlas/components/atlas_form_field.dart';
 import '../../widgets/atlas/components/atlas_product_image.dart';
 import '../../widgets/atlas/components/atlas_section_header.dart';
 import '../../widgets/pop/labeled_dropdown.dart';
+import '../../widgets/pop/pop_form.dart';
 import '../../widgets/vault/vault_scroll_view.dart';
 
 class EditPopScreen extends StatefulWidget {
@@ -47,6 +48,9 @@ class _EditPopScreenState extends State<EditPopScreen> {
   late TextEditingController _valueController;
   late TextEditingController _pricePaidController;
   late TextEditingController _quantityController;
+  late TextEditingController _itemConditionController;
+  late TextEditingController _boxConditionController;
+  late TextEditingController _imageUrlController;
   late TextEditingController _customVariantController;
   late TextEditingController _customRetailExclusiveController;
   late TextEditingController _customEventStickerController;
@@ -60,7 +64,7 @@ class _EditPopScreenState extends State<EditPopScreen> {
   late String _limitedEdition;
   late String _signature;
 
-  final List<String> _ownerOptions = const [
+  static const List<String> _defaultOwnerOptions = [
     'Arthur',
     'Natacia',
     'Amerika',
@@ -69,17 +73,13 @@ class _EditPopScreenState extends State<EditPopScreen> {
     'Shared',
   ];
 
-  String _safeOption(
-      String value,
-      List<String> options,
-      String fallback,
-      ) {
+  late List<String> _ownerOptions;
+
+  String _safeOption(String value, List<String> options, String fallback) {
     return options.contains(value) ? value : fallback;
   }
-  bool _isCustomValue(
-      String value,
-      List<String> options,
-      ) {
+
+  bool _isCustomValue(String value, List<String> options) {
     final cleaned = value.trim();
 
     return cleaned.isNotEmpty && !options.contains(cleaned);
@@ -98,6 +98,7 @@ class _EditPopScreenState extends State<EditPopScreen> {
 
     return customValue.isEmpty ? fallback : customValue;
   }
+
   String _formatCategory(String value) {
     if (value.isEmpty) {
       return '';
@@ -122,9 +123,9 @@ class _EditPopScreenState extends State<EditPopScreen> {
         .split(' ')
         .map(
           (word) => word.isEmpty
-          ? word
-          : word[0].toUpperCase() + word.substring(1).toLowerCase(),
-    )
+              ? word
+              : word[0].toUpperCase() + word.substring(1).toLowerCase(),
+        )
         .join(' ');
   }
 
@@ -137,120 +138,133 @@ class _EditPopScreenState extends State<EditPopScreen> {
     _categoryController = TextEditingController(text: widget.pop.category);
     _seriesController = TextEditingController(text: widget.pop.series);
     _valueController = TextEditingController(text: widget.pop.value.toString());
-    _pricePaidController =
-        TextEditingController(text: widget.pop.pricePaid.toString());
-    _quantityController =
-        TextEditingController(text: widget.pop.quantity.toString());
-
-    _owner = _safeOption(
-      widget.pop.owner,
-      _ownerOptions,
-      'Shared',
+    _pricePaidController = TextEditingController(
+      text: widget.pop.pricePaid.toString(),
     );
+    _quantityController = TextEditingController(
+      text: widget.pop.quantity.toString(),
+    );
+    _itemConditionController = TextEditingController(
+      text: widget.pop.itemCondition,
+    );
+    _boxConditionController = TextEditingController(
+      text: widget.pop.boxCondition,
+    );
+    _imageUrlController = TextEditingController(text: widget.pop.imageUrl);
+
+    _owner = widget.pop.owner.trim().isEmpty
+        ? 'Shared'
+        : widget.pop.owner.trim();
+    _ownerOptions = <String>[
+      ..._defaultOwnerOptions,
+      if (!_defaultOwnerOptions.contains(_owner)) _owner,
+    ];
 
     final savedVariant = widget.pop.variant.trim().isNotEmpty
         ? widget.pop.variant.trim()
         : widget.pop.edition.trim();
 
     _customVariantController = TextEditingController(
-      text: _isCustomValue(
-        savedVariant,
-        CollectorIdentityOptions.variants,
-      )
+      text: _isCustomValue(savedVariant, CollectorIdentityOptions.variants)
           ? savedVariant
           : '',
     );
 
-    _variant = _isCustomValue(
-      savedVariant,
-      CollectorIdentityOptions.variants,
-    )
+    _variant = _isCustomValue(savedVariant, CollectorIdentityOptions.variants)
         ? 'Other'
         : _safeOption(
-      savedVariant,
-      CollectorIdentityOptions.variants,
-      'Common',
-    );
+            savedVariant,
+            CollectorIdentityOptions.variants,
+            'Common',
+          );
 
     _customRetailExclusiveController = TextEditingController(
-      text: _isCustomValue(
-        widget.pop.retailExclusive,
-        CollectorIdentityOptions.retailExclusives,
-      )
+      text:
+          _isCustomValue(
+            widget.pop.retailExclusive,
+            CollectorIdentityOptions.retailExclusives,
+          )
           ? widget.pop.retailExclusive
           : '',
     );
 
-    _retailExclusive = _isCustomValue(
-      widget.pop.retailExclusive,
-      CollectorIdentityOptions.retailExclusives,
-    )
+    _retailExclusive =
+        _isCustomValue(
+          widget.pop.retailExclusive,
+          CollectorIdentityOptions.retailExclusives,
+        )
         ? 'Other'
         : _safeOption(
-      widget.pop.retailExclusive,
-      CollectorIdentityOptions.retailExclusives,
-      'None',
-    );
+            widget.pop.retailExclusive,
+            CollectorIdentityOptions.retailExclusives,
+            'None',
+          );
 
     _customEventStickerController = TextEditingController(
-      text: _isCustomValue(
-        widget.pop.eventSticker,
-        CollectorIdentityOptions.eventStickers,
-      )
+      text:
+          _isCustomValue(
+            widget.pop.eventSticker,
+            CollectorIdentityOptions.eventStickers,
+          )
           ? widget.pop.eventSticker
           : '',
     );
 
-    _eventSticker = _isCustomValue(
-      widget.pop.eventSticker,
-      CollectorIdentityOptions.eventStickers,
-    )
+    _eventSticker =
+        _isCustomValue(
+          widget.pop.eventSticker,
+          CollectorIdentityOptions.eventStickers,
+        )
         ? 'Other'
         : _safeOption(
-      widget.pop.eventSticker,
-      CollectorIdentityOptions.eventStickers,
-      'None',
-    );
+            widget.pop.eventSticker,
+            CollectorIdentityOptions.eventStickers,
+            'None',
+          );
 
     _customLimitedEditionController = TextEditingController(
-      text: _isCustomValue(
-        widget.pop.limitedEdition,
-        CollectorIdentityOptions.limitedEditions,
-      )
+      text:
+          _isCustomValue(
+            widget.pop.limitedEdition,
+            CollectorIdentityOptions.limitedEditions,
+          )
           ? widget.pop.limitedEdition
           : '',
     );
 
-    _limitedEdition = _isCustomValue(
-      widget.pop.limitedEdition,
-      CollectorIdentityOptions.limitedEditions,
-    )
+    _limitedEdition =
+        _isCustomValue(
+          widget.pop.limitedEdition,
+          CollectorIdentityOptions.limitedEditions,
+        )
         ? 'Other'
         : _safeOption(
-      widget.pop.limitedEdition,
-      CollectorIdentityOptions.limitedEditions,
-      'None',
-    );
+            widget.pop.limitedEdition,
+            CollectorIdentityOptions.limitedEditions,
+            'None',
+          );
 
     _customSignatureController = TextEditingController(
-      text: _isCustomValue(
-        widget.pop.signature,
-        CollectorIdentityOptions.signatures,
-      )
+      text:
+          _isCustomValue(
+            widget.pop.signature,
+            CollectorIdentityOptions.signatures,
+          )
           ? widget.pop.signature
           : '',
     );
 
-    _signature = _isCustomValue(
-      widget.pop.signature,
-      CollectorIdentityOptions.signatures,
-    )
+    _signature =
+        _isCustomValue(
+          widget.pop.signature,
+          CollectorIdentityOptions.signatures,
+        )
         ? 'Other'
         : _safeOption(
-      widget.pop.signature,
-      CollectorIdentityOptions.signatures,
-      'Unsigned',
-    );
+            widget.pop.signature,
+            CollectorIdentityOptions.signatures,
+            'Unsigned',
+          );
 
     if (widget.focusValueField) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -296,6 +310,9 @@ class _EditPopScreenState extends State<EditPopScreen> {
     _valueController.dispose();
     _pricePaidController.dispose();
     _quantityController.dispose();
+    _itemConditionController.dispose();
+    _boxConditionController.dispose();
+    _imageUrlController.dispose();
     _scrollController.dispose();
     _valueFocusNode.dispose();
     _customVariantController.dispose();
@@ -307,6 +324,10 @@ class _EditPopScreenState extends State<EditPopScreen> {
   }
 
   Future<void> _saveChanges() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
     final resolvedVariant = _resolvedIdentityValue(
       selectedValue: _variant,
       customController: _customVariantController,
@@ -337,54 +358,61 @@ class _EditPopScreenState extends State<EditPopScreen> {
       fallback: 'Unsigned',
     );
 
-    final updatedPop = Pop(
-      id: widget.pop.id,
+    final updatedPop = widget.pop.copyWith(
       name: _nameController.text.trim(),
       number: _numberController.text.trim(),
-      category: _formatCategory(
-        _categoryController.text.trim(),
-      ),
+      category: _formatCategory(_categoryController.text.trim()),
       series: _seriesController.text.trim(),
-      edition: resolvedVariant,
       variant: resolvedVariant,
       retailExclusive: resolvedRetailExclusive,
       eventSticker: resolvedEventSticker,
       limitedEdition: resolvedLimitedEdition,
       signature: resolvedSignature,
-      value: double.tryParse(_valueController.text) ?? 0,
-      pricePaid: double.tryParse(_pricePaidController.text) ?? 0,
-      quantity: int.tryParse(_quantityController.text) ?? 1,
-      itemCondition: widget.pop.itemCondition,
-      boxCondition: widget.pop.boxCondition,
-      imageUrl: widget.pop.imageUrl,
+      value: PopFormValues.parseOptionalMoney(_valueController.text),
+      pricePaid: PopFormValues.parseOptionalMoney(_pricePaidController.text),
+      quantity: PopFormValues.parseQuantity(_quantityController.text),
+      itemCondition: _itemConditionController.text.trim(),
+      boxCondition: _boxConditionController.text.trim(),
+      imageUrl: _imageUrlController.text.trim(),
       owner: _owner,
-      isWishlist: widget.pop.isWishlist,
-      dateAdded: widget.pop.dateAdded,
-      lastUpdated: DateTime.now().toIso8601String(),
     );
 
     final appState = context.read<AppState>();
     final valueChanged = updatedPop.value != widget.pop.value;
 
-    await appState.updatePop(updatedPop);
+    final persistedPop = await appState.updatePop(updatedPop);
+
+    if (persistedPop == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'This Pop could not be found. No changes were saved.',
+            ),
+          ),
+        );
+      }
+
+      return;
+    }
 
     await appState.addActivity(
       Activity(
         id: DateTime.now().microsecondsSinceEpoch.toString(),
-        popId: updatedPop.id,
+        popId: persistedPop.id,
         action: valueChanged ? 'value_updated' : 'pop_updated',
-        popName: updatedPop.name,
-        popNumber: updatedPop.number,
-        owner: updatedPop.owner,
-        actor: updatedPop.owner,
+        popName: persistedPop.name,
+        popNumber: persistedPop.number,
+        owner: persistedPop.owner,
+        actor: persistedPop.owner,
         details: valueChanged
             ? _valueUpdateDetails(
-          pop: updatedPop,
-          previousValue: widget.pop.value,
-        )
-            : updatedPop.number.trim().isEmpty
-            ? '${updatedPop.name} was updated'
-            : '${updatedPop.name} #${updatedPop.number} was updated',
+                pop: persistedPop,
+                previousValue: widget.pop.value,
+              )
+            : persistedPop.number.trim().isEmpty
+            ? '${persistedPop.name} was updated'
+            : '${persistedPop.name} #${persistedPop.number} was updated',
         timestamp: DateTime.now(),
       ),
     );
@@ -393,23 +421,23 @@ class _EditPopScreenState extends State<EditPopScreen> {
       return;
     }
 
-    Navigator.pop(context, updatedPop);
+    Navigator.pop(context, persistedPop);
   }
 
-String _valueUpdateDetails({
-required Pop pop,
-required double previousValue,
-}) {
-final previousLabel = previousValue <= 0
-? 'not entered'
-: '\$${previousValue.toStringAsFixed(2)}';
+  String _valueUpdateDetails({
+    required Pop pop,
+    required double previousValue,
+  }) {
+    final previousLabel = previousValue <= 0
+        ? 'not entered'
+        : '\$${previousValue.toStringAsFixed(2)}';
 
-final updatedLabel = pop.value <= 0
-? 'not entered'
-: '\$${pop.value.toStringAsFixed(2)}';
+    final updatedLabel = pop.value <= 0
+        ? 'not entered'
+        : '\$${pop.value.toStringAsFixed(2)}';
 
-return '${pop.name} value changed from $previousLabel to $updatedLabel';
-}
+    return '${pop.name} value changed from $previousLabel to $updatedLabel';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -425,22 +453,20 @@ return '${pop.name} value changed from $previousLabel to $updatedLabel';
 
     const recommendationEngine = AtlasRecommendationEngine();
 
-    final collectorRecommendation =
-    recommendationEngine.buildCollectorIdentityRecommendation(
-      variant: _variant,
-      retailExclusive: _retailExclusive,
-      eventSticker: _eventSticker,
-      limitedEdition: _limitedEdition,
-      signature: _signature,
-      value: double.tryParse(_valueController.text) ?? 0,
-      pricePaid: double.tryParse(_pricePaidController.text) ?? 0,
-    );
+    final collectorRecommendation = recommendationEngine
+        .buildCollectorIdentityRecommendation(
+          variant: _variant,
+          retailExclusive: _retailExclusive,
+          eventSticker: _eventSticker,
+          limitedEdition: _limitedEdition,
+          signature: _signature,
+          value: double.tryParse(_valueController.text) ?? 0,
+          pricePaid: double.tryParse(_pricePaidController.text) ?? 0,
+        );
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      appBar: AppBar(
-        title: const Text('Edit Pop'),
-      ),
+      appBar: AppBar(title: const Text('Edit Pop')),
       body: Form(
         key: _formKey,
         child: VaultScrollView(
@@ -450,10 +476,7 @@ return '${pop.name} value changed from $previousLabel to $updatedLabel';
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Edit Pop',
-                    style: AtlasTypography.headingLarge,
-                  ),
+                  Text('Edit Pop', style: AtlasTypography.headingLarge),
                   const SizedBox(height: AtlasSpacing.sm),
                   Text(
                     'Update the Pop details, collector identity, ownership, and value information.',
@@ -466,7 +489,7 @@ return '${pop.name} value changed from $previousLabel to $updatedLabel';
                     child: Row(
                       children: [
                         AtlasProductImage(
-                          imageUrl: widget.pop.imageUrl,
+                          imageUrl: _imageUrlController.text,
                           width: 76,
                           height: 96,
                           borderRadius: AtlasSpacing.md,
@@ -523,6 +546,7 @@ return '${pop.name} value changed from $previousLabel to $updatedLabel';
                     controller: _nameController,
                     label: 'Pop Name',
                     icon: Icons.badge_outlined,
+                    validator: PopFormValues.validateName,
                   ),
                   const SizedBox(height: AtlasSpacing.md),
                   AtlasFormField(
@@ -553,7 +577,7 @@ return '${pop.name} value changed from $previousLabel to $updatedLabel';
                   const AtlasSectionHeader(
                     title: 'Collector Identity',
                     subtitle:
-                    'Update variants, exclusives, stickers, limited editions, and signatures.',
+                        'Update variants, exclusives, stickers, limited editions, and signatures.',
                     icon: Icons.verified_rounded,
                     accentColor: AtlasColors.vaultGold,
                   ),
@@ -708,6 +732,43 @@ return '${pop.name} value changed from $previousLabel to $updatedLabel';
                     label: 'Quantity',
                     icon: Icons.format_list_numbered_rounded,
                     keyboardType: TextInputType.number,
+                    validator: PopFormValues.validateQuantity,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AtlasSpacing.lg),
+            AtlasGlassCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const AtlasSectionHeader(
+                    title: 'Condition & Image',
+                    subtitle: 'Record the collectible, box, and display image.',
+                    icon: Icons.photo_camera_back_outlined,
+                    accentColor: AtlasColors.vaultGold,
+                  ),
+                  const SizedBox(height: AtlasSpacing.md),
+                  AtlasFormField(
+                    controller: _itemConditionController,
+                    label: 'Item Condition',
+                    icon: Icons.auto_awesome_outlined,
+                  ),
+                  const SizedBox(height: AtlasSpacing.md),
+                  AtlasFormField(
+                    controller: _boxConditionController,
+                    label: 'Box Condition',
+                    icon: Icons.inventory_2_outlined,
+                  ),
+                  const SizedBox(height: AtlasSpacing.md),
+                  AtlasFormField(
+                    controller: _imageUrlController,
+                    label: 'Image URL',
+                    icon: Icons.link_rounded,
+                    keyboardType: TextInputType.url,
+                    onChanged: (_) {
+                      setState(() {});
+                    },
                   ),
                 ],
               ),
@@ -720,7 +781,8 @@ return '${pop.name} value changed from $previousLabel to $updatedLabel';
                 children: [
                   const AtlasSectionHeader(
                     title: 'Value',
-                    subtitle: 'Update estimated market value and what you paid.',
+                    subtitle:
+                        'Update estimated market value and what you paid.',
                     icon: Icons.attach_money_rounded,
                     accentColor: AtlasColors.vaultGold,
                   ),
@@ -733,6 +795,10 @@ return '${pop.name} value changed from $previousLabel to $updatedLabel';
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
                     ),
+                    validator: (value) => PopFormValues.validateOptionalMoney(
+                      value,
+                      fieldLabel: 'Estimated value',
+                    ),
                     onChanged: (_) {
                       setState(() {});
                     },
@@ -744,6 +810,10 @@ return '${pop.name} value changed from $previousLabel to $updatedLabel';
                     icon: Icons.payments_outlined,
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
+                    ),
+                    validator: (value) => PopFormValues.validateOptionalMoney(
+                      value,
+                      fieldLabel: 'Price paid',
                     ),
                     onChanged: (_) {
                       setState(() {});

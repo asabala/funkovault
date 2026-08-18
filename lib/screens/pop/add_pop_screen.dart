@@ -19,13 +19,11 @@ import '../../widgets/atlas/components/atlas_form_field.dart';
 import '../../widgets/atlas/components/atlas_product_image.dart';
 import '../../widgets/atlas/components/atlas_section_header.dart';
 import '../../widgets/pop/labeled_dropdown.dart';
+import '../../widgets/pop/pop_form.dart';
 import '../../widgets/vault/vault_scroll_view.dart';
 
 class AddPopScreen extends StatefulWidget {
-  const AddPopScreen({
-    super.key,
-    this.atlasProduct,
-  });
+  const AddPopScreen({super.key, this.atlasProduct});
 
   final AtlasCatalogProduct? atlasProduct;
 
@@ -43,6 +41,9 @@ class _AddPopScreenState extends State<AddPopScreen> {
   final _valueController = TextEditingController();
   final _pricePaidController = TextEditingController();
   final _quantityController = TextEditingController(text: '1');
+  final _itemConditionController = TextEditingController();
+  final _boxConditionController = TextEditingController();
+  final _imageUrlController = TextEditingController();
   final _customVariantController = TextEditingController();
   final _customRetailExclusiveController = TextEditingController();
   final _customEventStickerController = TextEditingController();
@@ -54,13 +55,6 @@ class _AddPopScreenState extends State<AddPopScreen> {
   String _eventSticker = 'None';
   String _limitedEdition = 'None';
   String _signature = 'Unsigned';
-
-  String get _catalogImageUrl {
-    final Object? value =
-    widget.atlasProduct?.attributes['imageUrl'];
-
-    return value?.toString().trim() ?? '';
-  }
 
   bool get _hasCatalogProduct {
     return widget.atlasProduct != null;
@@ -90,79 +84,87 @@ class _AddPopScreenState extends State<AddPopScreen> {
         .split(' ')
         .map(
           (word) => word.isEmpty
-          ? word
-          : word[0].toUpperCase() + word.substring(1).toLowerCase(),
-    )
+              ? word
+              : word[0].toUpperCase() + word.substring(1).toLowerCase(),
+        )
         .join(' ');
   }
 
-  void _applyCatalogVariant(
-      String value,
-      ) {
+  String _catalogIdentitySelection({
+    required String value,
+    required List<String> options,
+    required String fallback,
+    required TextEditingController customController,
+  }) {
     final String normalized = value.trim();
 
-    if (normalized.isEmpty ||
-        normalized.toLowerCase() == 'common') {
-      _variant = 'Common';
-      return;
+    if (normalized.isEmpty) {
+      return fallback;
     }
 
-    if (CollectorIdentityOptions.variants.contains(normalized)) {
-      _variant = normalized;
-      return;
+    if (options.contains(normalized)) {
+      return normalized;
     }
 
-    _variant = 'Other';
-    _customVariantController.text = normalized;
+    customController.text = normalized;
+
+    return 'Other';
   }
 
   @override
   void initState() {
     super.initState();
 
-    final AtlasCatalogProduct? product =
-        widget.atlasProduct;
+    final AtlasCatalogProduct? product = widget.atlasProduct;
 
     if (product == null) {
       return;
     }
 
-    final catalogPop =
-    AtlasPopFactory.createFromCatalog(
-      product: product,
-    );
+    final catalogPop = AtlasPopFactory.createFromCatalog(product: product);
 
     _nameController.text = catalogPop.name;
     _numberController.text = catalogPop.number;
-    _categoryController.text = _formatCategory(
-      catalogPop.category,
-    );
+    _categoryController.text = _formatCategory(catalogPop.category);
     _seriesController.text = catalogPop.series;
+    _itemConditionController.text = catalogPop.itemCondition;
+    _boxConditionController.text = catalogPop.boxCondition;
+    _imageUrlController.text = catalogPop.imageUrl;
 
     if (catalogPop.value > 0) {
-      _valueController.text =
-          catalogPop.value.toStringAsFixed(2);
+      _valueController.text = catalogPop.value.toStringAsFixed(2);
     }
 
-    _applyCatalogVariant(
-      catalogPop.variant,
+    _variant = _catalogIdentitySelection(
+      value: catalogPop.variant,
+      options: CollectorIdentityOptions.variants,
+      fallback: 'Common',
+      customController: _customVariantController,
     );
-
-    final String catalogLimitedEdition =
-    catalogPop.limitedEdition.trim();
-
-    if (catalogLimitedEdition.isNotEmpty &&
-        catalogLimitedEdition.toLowerCase() != 'none') {
-      if (CollectorIdentityOptions.limitedEditions.contains(
-        catalogLimitedEdition,
-      )) {
-        _limitedEdition = catalogLimitedEdition;
-      } else {
-        _limitedEdition = 'Other';
-        _customLimitedEditionController.text =
-            catalogLimitedEdition;
-      }
-    }
+    _retailExclusive = _catalogIdentitySelection(
+      value: catalogPop.retailExclusive,
+      options: CollectorIdentityOptions.retailExclusives,
+      fallback: 'None',
+      customController: _customRetailExclusiveController,
+    );
+    _eventSticker = _catalogIdentitySelection(
+      value: catalogPop.eventSticker,
+      options: CollectorIdentityOptions.eventStickers,
+      fallback: 'None',
+      customController: _customEventStickerController,
+    );
+    _limitedEdition = _catalogIdentitySelection(
+      value: catalogPop.limitedEdition,
+      options: CollectorIdentityOptions.limitedEditions,
+      fallback: 'None',
+      customController: _customLimitedEditionController,
+    );
+    _signature = _catalogIdentitySelection(
+      value: catalogPop.signature,
+      options: CollectorIdentityOptions.signatures,
+      fallback: 'Unsigned',
+      customController: _customSignatureController,
+    );
   }
 
   @override
@@ -174,6 +176,9 @@ class _AddPopScreenState extends State<AddPopScreen> {
     _valueController.dispose();
     _pricePaidController.dispose();
     _quantityController.dispose();
+    _itemConditionController.dispose();
+    _boxConditionController.dispose();
+    _imageUrlController.dispose();
     _customVariantController.dispose();
     _customRetailExclusiveController.dispose();
     _customEventStickerController.dispose();
@@ -231,69 +236,64 @@ class _AddPopScreenState extends State<AddPopScreen> {
       fallback: 'Unsigned',
     );
 
-    final double value = double.tryParse(
-      _valueController.text.trim(),
-    ) ??
-        0;
+    final double value = PopFormValues.parseOptionalMoney(
+      _valueController.text,
+    );
 
-    final double pricePaid = double.tryParse(
-      _pricePaidController.text.trim(),
-    ) ??
-        0;
+    final double pricePaid = PopFormValues.parseOptionalMoney(
+      _pricePaidController.text,
+    );
 
-    final int quantity = int.tryParse(
-      _quantityController.text.trim(),
-    ) ??
-        1;
+    final int quantity = PopFormValues.parseQuantity(_quantityController.text);
 
-    final AtlasCatalogProduct? product =
-        widget.atlasProduct;
+    final AtlasCatalogProduct? product = widget.atlasProduct;
 
     final pop = product == null
         ? AtlasPopFactory.createManual(
-      name: _nameController.text,
-      number: _numberController.text,
-      category: _formatCategory(
-        _categoryController.text.trim(),
-      ),
-      series: _seriesController.text,
-      variant: resolvedVariant,
-      retailExclusive: resolvedRetailExclusive,
-      eventSticker: resolvedEventSticker,
-      limitedEdition: resolvedLimitedEdition,
-      signature: resolvedSignature,
-      value: value,
-      pricePaid: pricePaid,
-      quantity: quantity,
-      owner: 'Shared',
-      isWishlist: false,
-    )
+            name: _nameController.text,
+            number: _numberController.text,
+            category: _formatCategory(_categoryController.text.trim()),
+            series: _seriesController.text,
+            variant: resolvedVariant,
+            retailExclusive: resolvedRetailExclusive,
+            eventSticker: resolvedEventSticker,
+            limitedEdition: resolvedLimitedEdition,
+            signature: resolvedSignature,
+            value: value,
+            pricePaid: pricePaid,
+            quantity: quantity,
+            itemCondition: _itemConditionController.text,
+            boxCondition: _boxConditionController.text,
+            imageUrl: _imageUrlController.text,
+            owner: 'Shared',
+            isWishlist: false,
+          )
         : AtlasPopFactory.createFromCatalog(
-      product: product,
-      name: _nameController.text,
-      number: _numberController.text,
-      category: _formatCategory(
-        _categoryController.text.trim(),
-      ),
-      series: _seriesController.text,
-      variant: resolvedVariant,
-      retailExclusive: resolvedRetailExclusive,
-      eventSticker: resolvedEventSticker,
-      limitedEdition: resolvedLimitedEdition,
-      signature: resolvedSignature,
-      value: value,
-      pricePaid: pricePaid,
-      quantity: quantity,
-      owner: 'Shared',
-      isWishlist: false,
-    );
+            product: product,
+            name: _nameController.text,
+            number: _numberController.text,
+            category: _formatCategory(_categoryController.text.trim()),
+            series: _seriesController.text,
+            variant: resolvedVariant,
+            retailExclusive: resolvedRetailExclusive,
+            eventSticker: resolvedEventSticker,
+            limitedEdition: resolvedLimitedEdition,
+            signature: resolvedSignature,
+            value: value,
+            pricePaid: pricePaid,
+            quantity: quantity,
+            itemCondition: _itemConditionController.text,
+            boxCondition: _boxConditionController.text,
+            imageUrl: _imageUrlController.text,
+            owner: 'Shared',
+            isWishlist: false,
+          );
 
     await context.read<AppState>().addPop(pop);
 
     AtlasActivityService.record(
       title: 'Pop Added',
-      description:
-      '${pop.name} #${pop.number} was added to the Vault.',
+      description: '${pop.name} #${pop.number} was added to the Vault.',
       type: 'pop_added',
     );
 
@@ -318,22 +318,20 @@ class _AddPopScreenState extends State<AddPopScreen> {
 
     const recommendationEngine = AtlasRecommendationEngine();
 
-    final collectorRecommendation =
-    recommendationEngine.buildCollectorIdentityRecommendation(
-      variant: _variant,
-      retailExclusive: _retailExclusive,
-      eventSticker: _eventSticker,
-      limitedEdition: _limitedEdition,
-      signature: _signature,
-      value: double.tryParse(_valueController.text) ?? 0,
-      pricePaid: double.tryParse(_pricePaidController.text) ?? 0,
-    );
+    final collectorRecommendation = recommendationEngine
+        .buildCollectorIdentityRecommendation(
+          variant: _variant,
+          retailExclusive: _retailExclusive,
+          eventSticker: _eventSticker,
+          limitedEdition: _limitedEdition,
+          signature: _signature,
+          value: double.tryParse(_valueController.text) ?? 0,
+          pricePaid: double.tryParse(_pricePaidController.text) ?? 0,
+        );
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      appBar: AppBar(
-        title: const Text('Add Funko Pop'),
-      ),
+      appBar: AppBar(title: const Text('Add Funko Pop')),
       body: Form(
         key: _formKey,
         child: VaultScrollView(
@@ -342,10 +340,7 @@ class _AddPopScreenState extends State<AddPopScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Add Pop',
-                    style: AtlasTypography.headingLarge,
-                  ),
+                  Text('Add Pop', style: AtlasTypography.headingLarge),
                   const SizedBox(height: AtlasSpacing.sm),
                   Text(
                     'Add a new Pop to your current vault. Atlas will save the added date and updated date automatically.',
@@ -359,7 +354,7 @@ class _AddPopScreenState extends State<AddPopScreen> {
                       child: Row(
                         children: [
                           AtlasProductImage(
-                            imageUrl: _catalogImageUrl,
+                            imageUrl: _imageUrlController.text,
                             width: 76,
                             height: 96,
                             borderRadius: AtlasSpacing.md,
@@ -407,6 +402,7 @@ class _AddPopScreenState extends State<AddPopScreen> {
                     controller: _nameController,
                     label: 'Pop Name',
                     icon: Icons.badge_outlined,
+                    validator: PopFormValues.validateName,
                   ),
                   const SizedBox(height: AtlasSpacing.md),
                   AtlasFormField(
@@ -438,7 +434,7 @@ class _AddPopScreenState extends State<AddPopScreen> {
                   const AtlasSectionHeader(
                     title: 'Collector Identity',
                     subtitle:
-                    'Capture variants, exclusives, stickers, limited editions, and signatures.',
+                        'Capture variants, exclusives, stickers, limited editions, and signatures.',
                     icon: Icons.verified_rounded,
                     accentColor: AtlasColors.vaultGold,
                   ),
@@ -587,7 +583,13 @@ class _AddPopScreenState extends State<AddPopScreen> {
                     controller: _valueController,
                     label: 'Estimated Value (\$)',
                     icon: Icons.trending_up_rounded,
-                    keyboardType: TextInputType.number,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    validator: (value) => PopFormValues.validateOptionalMoney(
+                      value,
+                      fieldLabel: 'Estimated value',
+                    ),
                     onChanged: (_) {
                       setState(() {});
                     },
@@ -597,7 +599,13 @@ class _AddPopScreenState extends State<AddPopScreen> {
                     controller: _pricePaidController,
                     label: 'Price Paid (\$)',
                     icon: Icons.payments_outlined,
-                    keyboardType: TextInputType.number,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    validator: (value) => PopFormValues.validateOptionalMoney(
+                      value,
+                      fieldLabel: 'Price paid',
+                    ),
                     onChanged: (_) {
                       setState(() {});
                     },
@@ -612,7 +620,8 @@ class _AddPopScreenState extends State<AddPopScreen> {
                 children: [
                   const AtlasSectionHeader(
                     title: 'Ownership',
-                    subtitle: 'Record how many identical physical copies you own.',
+                    subtitle:
+                        'Record how many identical physical copies you own.',
                     icon: Icons.inventory_2_rounded,
                     accentColor: AtlasColors.vaultGold,
                   ),
@@ -622,6 +631,7 @@ class _AddPopScreenState extends State<AddPopScreen> {
                     label: 'Quantity',
                     icon: Icons.format_list_numbered_rounded,
                     keyboardType: TextInputType.number,
+                    validator: PopFormValues.validateQuantity,
                   ),
                   const SizedBox(height: AtlasSpacing.md),
                   AtlasGlassPanel(
@@ -631,6 +641,42 @@ class _AddPopScreenState extends State<AddPopScreen> {
                         color: AtlasColors.textSecondary,
                       ),
                     ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AtlasSpacing.lg),
+            AtlasGlassCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const AtlasSectionHeader(
+                    title: 'Condition & Image',
+                    subtitle: 'Record the collectible, box, and display image.',
+                    icon: Icons.photo_camera_back_outlined,
+                    accentColor: AtlasColors.vaultGold,
+                  ),
+                  const SizedBox(height: AtlasSpacing.md),
+                  AtlasFormField(
+                    controller: _itemConditionController,
+                    label: 'Item Condition',
+                    icon: Icons.auto_awesome_outlined,
+                  ),
+                  const SizedBox(height: AtlasSpacing.md),
+                  AtlasFormField(
+                    controller: _boxConditionController,
+                    label: 'Box Condition',
+                    icon: Icons.inventory_2_outlined,
+                  ),
+                  const SizedBox(height: AtlasSpacing.md),
+                  AtlasFormField(
+                    controller: _imageUrlController,
+                    label: 'Image URL',
+                    icon: Icons.link_rounded,
+                    keyboardType: TextInputType.url,
+                    onChanged: (_) {
+                      setState(() {});
+                    },
                   ),
                 ],
               ),

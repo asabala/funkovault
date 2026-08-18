@@ -31,16 +31,11 @@ abstract final class AtlasPopFactory {
     bool isWishlist = false,
     DateTime? timestamp,
   }) {
-    final DateTime resolvedTimestamp =
-        timestamp ?? DateTime.now();
+    final DateTime resolvedTimestamp = timestamp ?? DateTime.now();
 
-    final String now =
-    resolvedTimestamp.toIso8601String();
+    final String now = resolvedTimestamp.toIso8601String();
 
-    final String resolvedVariant = _defaultText(
-      variant,
-      fallback: 'Common',
-    );
+    final String resolvedVariant = _defaultText(variant, fallback: 'Common');
 
     return Pop(
       id: resolvedTimestamp.microsecondsSinceEpoch.toString(),
@@ -50,22 +45,10 @@ abstract final class AtlasPopFactory {
       series: series.trim(),
       edition: resolvedVariant,
       variant: resolvedVariant,
-      retailExclusive: _defaultText(
-        retailExclusive,
-        fallback: 'None',
-      ),
-      eventSticker: _defaultText(
-        eventSticker,
-        fallback: 'None',
-      ),
-      limitedEdition: _defaultText(
-        limitedEdition,
-        fallback: 'None',
-      ),
-      signature: _defaultText(
-        signature,
-        fallback: 'Unsigned',
-      ),
+      retailExclusive: _defaultText(retailExclusive, fallback: 'None'),
+      eventSticker: _defaultText(eventSticker, fallback: 'None'),
+      limitedEdition: _defaultText(limitedEdition, fallback: 'None'),
+      signature: _defaultText(signature, fallback: 'Unsigned'),
       sourceCatalogId: '',
       sourceCollectibleId: '',
       sourceUpc: '',
@@ -79,10 +62,7 @@ abstract final class AtlasPopFactory {
       itemCondition: itemCondition.trim(),
       boxCondition: boxCondition.trim(),
       imageUrl: imageUrl.trim(),
-      owner: _defaultText(
-        owner,
-        fallback: 'Shared',
-      ),
+      owner: _defaultText(owner, fallback: 'Shared'),
       isWishlist: isWishlist,
       dateAdded: now,
       lastUpdated: now,
@@ -101,21 +81,21 @@ abstract final class AtlasPopFactory {
     String? category,
     String? series,
     String? variant,
-    String retailExclusive = 'None',
-    String eventSticker = 'None',
+    String? retailExclusive,
+    String? eventSticker,
     String limitedEdition = 'None',
-    String signature = 'Unsigned',
+    String? signature,
     double? value,
     double pricePaid = 0,
     int quantity = 1,
     String itemCondition = '',
     String boxCondition = '',
+    String? imageUrl,
     String owner = 'Shared',
     bool isWishlist = false,
     DateTime? timestamp,
   }) {
-    final Pop catalogPop =
-    AtlasCatalogConverter.toPop(
+    final Pop catalogPop = AtlasCatalogConverter.toPop(
       product,
       owner: owner,
       isWishlist: isWishlist,
@@ -138,23 +118,20 @@ abstract final class AtlasPopFactory {
       series: series?.trim() ?? catalogPop.series,
       edition: resolvedVariant,
       variant: resolvedVariant,
-      retailExclusive: _defaultText(
-        retailExclusive,
-        fallback: 'None',
-      ),
-      eventSticker: _defaultText(
-        eventSticker,
-        fallback: 'None',
-      ),
+      retailExclusive: retailExclusive == null
+          ? catalogPop.retailExclusive
+          : _defaultText(retailExclusive, fallback: 'None'),
+      eventSticker: eventSticker == null
+          ? catalogPop.eventSticker
+          : _defaultText(eventSticker, fallback: 'None'),
       limitedEdition: _resolveCatalogIdentity(
         selectedValue: limitedEdition,
         catalogValue: catalogPop.limitedEdition,
         fallback: 'None',
       ),
-      signature: _defaultText(
-        signature,
-        fallback: 'Unsigned',
-      ),
+      signature: signature == null
+          ? catalogPop.signature
+          : _defaultText(signature, fallback: 'Unsigned'),
       value: value == null
           ? catalogPop.value
           : value < 0
@@ -164,10 +141,8 @@ abstract final class AtlasPopFactory {
       quantity: quantity < 1 ? 1 : quantity,
       itemCondition: itemCondition.trim(),
       boxCondition: boxCondition.trim(),
-      owner: _defaultText(
-        owner,
-        fallback: 'Shared',
-      ),
+      imageUrl: imageUrl?.trim() ?? catalogPop.imageUrl,
+      owner: _defaultText(owner, fallback: 'Shared'),
       isWishlist: isWishlist,
     );
   }
@@ -202,10 +177,7 @@ abstract final class AtlasPopFactory {
     );
   }
 
-  static String _defaultText(
-      String value, {
-        required String fallback,
-      }) {
+  static String _defaultText(String value, {required String fallback}) {
     final String normalized = value.trim();
 
     if (normalized.isEmpty) {
@@ -220,19 +192,17 @@ abstract final class AtlasPopFactory {
     required String catalogValue,
     required String fallback,
   }) {
-    final String normalizedSelection =
-    selectedValue.trim();
+    final String normalizedSelection = selectedValue.trim();
 
     final bool selectionIsDefault =
         normalizedSelection.isEmpty ||
-            normalizedSelection.toLowerCase() == 'none';
+        normalizedSelection.toLowerCase() == 'none';
 
     if (!selectionIsDefault) {
       return normalizedSelection;
     }
 
-    final String normalizedCatalogValue =
-    catalogValue.trim();
+    final String normalizedCatalogValue = catalogValue.trim();
 
     if (normalizedCatalogValue.isNotEmpty &&
         normalizedCatalogValue.toLowerCase() != 'none') {
