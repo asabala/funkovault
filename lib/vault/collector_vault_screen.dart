@@ -5,6 +5,7 @@ import '../atlas/core/atlas_intelligence.dart';
 import '../atlas/repositories/vault_repository.dart';
 import '../screens/pop/add_pop_screen.dart';
 import '../screens/vault/atlas_room_screen.dart';
+import '../screens/vault/collections_screen.dart';
 import '../screens/profile/edit_collector_profile_screen.dart';
 import '../screens/catalog/funko_catalog_screen.dart';
 import '../screens/scanner/scan_screen.dart';
@@ -35,45 +36,29 @@ class CollectorVaultScreen extends StatelessWidget {
     const intelligence = AtlasIntelligence();
     const vaultHealthEngine = VaultHealthEngine();
 
-
     final allPops = repository.allPops(appState);
     final vaultHealth = vaultHealthEngine.calculate(allPops);
 
-    final recommendation =
-    intelligence.getRecommendation(allPops);
-    final mission =
-    intelligence.getTodayMission(allPops);
-    final confidence =
-    intelligence.getCollectorConfidence(allPops);
-    final collectorType =
-    intelligence.getCollectorType(allPops);
-    final favoriteCategory =
-    intelligence.getFavoriteCategory(allPops);
+    final recommendation = intelligence.getRecommendation(allPops);
+    final mission = intelligence.getTodayMission(allPops);
+    final confidence = intelligence.getCollectorConfidence(allPops);
+    final collectorType = intelligence.getCollectorType(allPops);
+    final favoriteCategory = intelligence.getFavoriteCategory(allPops);
 
     final totalValue = vaultHealth.totalValue;
-    final missingValueCount =
-        vaultHealth.needsValueCount;
-    final duplicateGroupCount =
-        vaultHealth.duplicateGroupCount;
-    final health =
-        vaultHealth.healthScore;
-    final healthPriority =
-        vaultHealth.priority;
+    final missingValueCount = vaultHealth.needsValueCount;
+    final duplicateGroupCount = vaultHealth.duplicateGroupCount;
+    final health = vaultHealth.healthScore;
+    final healthPriority = vaultHealth.priority;
 
     final profile = appState.collectorProfile;
 
-    final profileInitial = profile.displayName
-        .trim()
-        .isEmpty
+    final profileInitial = profile.displayName.trim().isEmpty
         ? 'A'
         : profile.displayName.trim()[0].toUpperCase();
 
-    final ownedCount = allPops
-        .where((pop) => !pop.isWishlist)
-        .length;
-    final wishlistCount = allPops
-        .where((pop) => pop.isWishlist)
-        .length;
+    final ownedCount = allPops.where((pop) => !pop.isWishlist).length;
+    final wishlistCount = allPops.where((pop) => pop.isWishlist).length;
     final exclusiveCount = allPops
         .where((pop) => _hasMeaningfulValue(pop.retailExclusive))
         .length;
@@ -95,6 +80,18 @@ class CollectorVaultScreen extends StatelessWidget {
         title: const Text("Collector's Vault"),
         actions: [
           IconButton(
+            tooltip: 'Manage Collections',
+            onPressed: () {
+              Navigator.push<void>(
+                context,
+                MaterialPageRoute<void>(
+                  builder: (_) => const CollectionsScreen(),
+                ),
+              );
+            },
+            icon: const Icon(Icons.folder_copy_outlined),
+          ),
+          IconButton(
             tooltip: 'Search',
             onPressed: () => _openCatalog(context),
             icon: const Icon(Icons.search),
@@ -106,11 +103,10 @@ class CollectorVaultScreen extends StatelessWidget {
           ),
           IconButton(
             tooltip: 'Notifications',
-            onPressed: () =>
-                _showComingSoonMessage(
-                  context,
-                  'Notifications are coming soon.',
-                ),
+            onPressed: () => _showComingSoonMessage(
+              context,
+              'Notifications are coming soon.',
+            ),
             icon: const Icon(Icons.notifications_none),
           ),
           Padding(
@@ -181,9 +177,7 @@ class CollectorVaultScreen extends StatelessWidget {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (_) => const EntireVaultScreen(),
-                ),
+                MaterialPageRoute(builder: (_) => const EntireVaultScreen()),
               );
             },
           ),
@@ -202,18 +196,14 @@ class CollectorVaultScreen extends StatelessWidget {
                 context,
                 MaterialPageRoute(
                   builder: (_) =>
-                      EntireVaultScreen(
-                        initialFilterKey: filterKey,
-                      ),
+                      EntireVaultScreen(initialFilterKey: filterKey),
                 ),
               );
             },
             onReviewVault: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (_) => const EntireVaultScreen(),
-                ),
+                MaterialPageRoute(builder: (_) => const EntireVaultScreen()),
               );
             },
           ),
@@ -230,49 +220,40 @@ class CollectorVaultScreen extends StatelessWidget {
             mission: mission,
             collectorType: collectorType,
             confidence: confidence.round(),
-            onContinue: () =>
-                _openCatalogWithMessage(
-                  context,
-                  'Opening the catalog so you can keep building your vault.',
-                ),
+            onContinue: () => _openCatalogWithMessage(
+              context,
+              'Opening the catalog so you can keep building your vault.',
+            ),
           ),
           const SizedBox(height: AtlasSpacing.lg),
           CollectorToolsCard(
             onAddPop: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (_) => const AddPopScreen(),
-                ),
+                MaterialPageRoute(builder: (_) => const AddPopScreen()),
               );
             },
             onScan: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (_) => const ScanScreen(),
-                ),
+                MaterialPageRoute(builder: (_) => const ScanScreen()),
               );
             },
             onWishlist: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (_) => const WishlistScreen(),
-                ),
+                MaterialPageRoute(builder: (_) => const WishlistScreen()),
               );
             },
             onSearch: () => _openCatalog(context),
-            onValueLookup: () =>
-                _openCatalogWithMessage(
-                  context,
-                  'Value lookup will use the catalog for now.',
-                ),
-            onAtlasAi: () =>
-                _openCatalogWithMessage(
-                  context,
-                  'Atlas AI insights are coming soon. Opening catalog for now.',
-                ),
+            onValueLookup: () => _openCatalogWithMessage(
+              context,
+              'Value lookup will use the catalog for now.',
+            ),
+            onAtlasAi: () => _openCatalogWithMessage(
+              context,
+              'Atlas AI insights are coming soon. Opening catalog for now.',
+            ),
           ),
           const SizedBox(height: AtlasSpacing.lg),
           CollectionRoomsCard(
@@ -280,73 +261,63 @@ class CollectorVaultScreen extends StatelessWidget {
             onEntireVault: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (_) => const EntireVaultScreen(),
-                ),
+                MaterialPageRoute(builder: (_) => const EntireVaultScreen()),
               );
             },
             onWishlist: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (_) => const WishlistScreen(),
-                ),
+                MaterialPageRoute(builder: (_) => const WishlistScreen()),
               );
             },
-            onAnime: () =>
-                _openRoom(
-                  context,
-                  roomName: 'Anime Room',
-                  categoryName: 'Anime',
-                  description:
+            onAnime: () => _openRoom(
+              context,
+              roomName: 'Anime Room',
+              categoryName: 'Anime',
+              description:
                   'Explore anime Pops in your vault, future wishlist targets, grails, and Atlas recommendations.',
-                  icon: Icons.auto_awesome_rounded,
-                ),
-            onMarvel: () =>
-                _openRoom(
-                  context,
-                  roomName: 'Marvel Room',
-                  categoryName: 'Marvel',
-                  description:
+              icon: Icons.auto_awesome_rounded,
+            ),
+            onMarvel: () => _openRoom(
+              context,
+              roomName: 'Marvel Room',
+              categoryName: 'Marvel',
+              description:
                   'Track Marvel Pops, value trends, missing heroes, variants, and future vault opportunities.',
-                  icon: Icons.bolt_rounded,
-                ),
-            onDc: () =>
-                _openRoom(
-                  context,
-                  roomName: 'DC Room',
-                  categoryName: 'DC',
-                  description:
+              icon: Icons.bolt_rounded,
+            ),
+            onDc: () => _openRoom(
+              context,
+              roomName: 'DC Room',
+              categoryName: 'DC',
+              description:
                   'Review DC Pops, villains, heroes, exclusives, and collection opportunities.',
-                  icon: Icons.shield_rounded,
-                ),
-            onStarWars: () =>
-                _openRoom(
-                  context,
-                  roomName: 'Star Wars Room',
-                  categoryName: 'Star Wars',
-                  description:
+              icon: Icons.shield_rounded,
+            ),
+            onStarWars: () => _openRoom(
+              context,
+              roomName: 'Star Wars Room',
+              categoryName: 'Star Wars',
+              description:
                   'Explore Star Wars Pops, sagas, exclusives, character groups, and collecting opportunities.',
-                  icon: Icons.public_rounded,
-                ),
-            onMoviesTv: () =>
-                _openRoom(
-                  context,
-                  roomName: 'Movies & TV Room',
-                  categoryName: 'Movies & TV',
-                  description:
+              icon: Icons.public_rounded,
+            ),
+            onMoviesTv: () => _openRoom(
+              context,
+              roomName: 'Movies & TV Room',
+              categoryName: 'Movies & TV',
+              description:
                   'Review movie and TV Pops across your vault, future targets, and recommendation paths.',
-                  icon: Icons.movie_filter_rounded,
-                ),
-            onGaming: () =>
-                _openRoom(
-                  context,
-                  roomName: 'Gaming Room',
-                  categoryName: 'Gaming',
-                  description:
+              icon: Icons.movie_filter_rounded,
+            ),
+            onGaming: () => _openRoom(
+              context,
+              roomName: 'Gaming Room',
+              categoryName: 'Gaming',
+              description:
                   'Explore gaming Pops, franchises, vault gaps, wishlist targets, and collector insights.',
-                  icon: Icons.sports_esports_rounded,
-                ),
+              icon: Icons.sports_esports_rounded,
+            ),
           ),
           const SizedBox(height: AtlasSpacing.lg),
           AtlasRecommendationCard(
@@ -354,11 +325,10 @@ class CollectorVaultScreen extends StatelessWidget {
             confidence: confidence.round(),
             estimatedCost: favoriteCategory,
             difficulty: collectorType,
-            onViewDetails: () =>
-                _openCatalogWithMessage(
-                  context,
-                  'Opening catalog details for now.',
-                ),
+            onViewDetails: () => _openCatalogWithMessage(
+              context,
+              'Opening catalog details for now.',
+            ),
           ),
         ],
       ),
@@ -368,37 +338,31 @@ class CollectorVaultScreen extends StatelessWidget {
   static void _openEditProfile(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => const EditCollectorProfileScreen(),
-      ),
+      MaterialPageRoute(builder: (_) => const EditCollectorProfileScreen()),
     );
   }
 
   static void _openCatalog(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => const FunkoCatalogScreen(),
-      ),
+      MaterialPageRoute(builder: (_) => const FunkoCatalogScreen()),
     );
   }
 
   static void _openVaultHealth(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => const VaultHealthScreen(),
-      ),
+      MaterialPageRoute(builder: (_) => const VaultHealthScreen()),
     );
   }
 
-  static void _openCatalogWithMessage(BuildContext context,
-      String message,) {
+  static void _openCatalogWithMessage(BuildContext context, String message) {
     _showComingSoonMessage(context, message);
     _openCatalog(context);
   }
 
-  static void _openRoom(BuildContext context, {
+  static void _openRoom(
+    BuildContext context, {
     required String roomName,
     required String description,
     required IconData icon,
@@ -407,24 +371,20 @@ class CollectorVaultScreen extends StatelessWidget {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) =>
-            AtlasRoomScreen(
-              roomName: roomName,
-              description: description,
-              icon: icon,
-              categoryName: categoryName,
-            ),
+        builder: (_) => AtlasRoomScreen(
+          roomName: roomName,
+          description: description,
+          icon: icon,
+          categoryName: categoryName,
+        ),
       ),
     );
   }
 
-  static void _showComingSoonMessage(BuildContext context,
-      String message,) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-      ),
-    );
+  static void _showComingSoonMessage(BuildContext context, String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   bool _hasMeaningfulValue(String value) {

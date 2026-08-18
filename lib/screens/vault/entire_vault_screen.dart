@@ -34,6 +34,7 @@ class EntireVaultScreen extends StatefulWidget {
     this.initialMinimumValue,
     this.initialMaximumValue,
     this.initialSortKey,
+    this.collectionName,
   });
 
   final String? initialFilterKey;
@@ -41,6 +42,7 @@ class EntireVaultScreen extends StatefulWidget {
   final double? initialMinimumValue;
   final double? initialMaximumValue;
   final String? initialSortKey;
+  final String? collectionName;
 
   @override
   State<EntireVaultScreen> createState() => _EntireVaultScreenState();
@@ -86,29 +88,21 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
   }
 
   void _loadVaultPreferences() {
-    final data = HiveService.loadData(
-      _preferencesStorageKey,
-    );
+    final data = HiveService.loadData(_preferencesStorageKey);
 
     if (data == null) {
       return;
     }
 
-    _filterMode = _filterModeFromStorage(
-      data['filterMode'],
-    );
+    _filterMode = _filterModeFromStorage(data['filterMode']);
 
-    _sortMode = _sortModeFromStorage(
-      data['sortMode'],
-    );
+    _sortMode = _sortModeFromStorage(data['sortMode']);
 
     _showImages = data['showImages'] == true;
   }
 
   void _applyInitialFilter() {
-    final initialFilter = _filterModeFromStorage(
-      widget.initialFilterKey,
-    );
+    final initialFilter = _filterModeFromStorage(widget.initialFilterKey);
 
     if (initialFilter == _VaultFilterMode.all) {
       return;
@@ -118,6 +112,7 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
     _isCleanupFocusActive = true;
     _resetVisibleLimit();
   }
+
   void _applyInitialSearch() {
     final initialSearch = widget.initialSearchQuery?.trim() ?? '';
 
@@ -133,6 +128,7 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
     _searchQuery = initialSearch;
     _resetVisibleLimit();
   }
+
   void _applyInitialValueRange() {
     _minimumValue = widget.initialMinimumValue;
     _maximumValue = widget.initialMaximumValue;
@@ -153,15 +149,13 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
     _sortMode = _sortModeFromStorage(initialSort);
     _resetVisibleLimit();
   }
+
   Future<void> _saveVaultPreferences() async {
-    await HiveService.saveData(
-      _preferencesStorageKey,
-      {
-        'filterMode': _filterMode.name,
-        'sortMode': _sortMode.name,
-        'showImages': _showImages,
-      },
-    );
+    await HiveService.saveData(_preferencesStorageKey, {
+      'filterMode': _filterMode.name,
+      'sortMode': _sortMode.name,
+      'showImages': _showImages,
+    });
   }
 
   _VaultFilterMode _filterModeFromStorage(dynamic value) {
@@ -201,15 +195,12 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
       });
     }
   }
-  Future<void> _openDuplicateReviewGroup(
-      DuplicateReviewGroup group,
-      ) async {
+
+  Future<void> _openDuplicateReviewGroup(DuplicateReviewGroup group) async {
     await Navigator.push<void>(
       context,
       MaterialPageRoute(
-        builder: (_) => DuplicateGroupReviewScreen(
-          groupKey: group.key,
-        ),
+        builder: (_) => DuplicateGroupReviewScreen(groupKey: group.key),
       ),
     );
   }
@@ -218,13 +209,11 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
     await Navigator.push<Pop>(
       context,
       MaterialPageRoute(
-        builder: (_) => EditPopScreen(
-          pop: pop,
-          focusValueField: true,
-        ),
+        builder: (_) => EditPopScreen(pop: pop, focusValueField: true),
       ),
     );
   }
+
   void _scrollToTop() {
     if (!_scrollController.hasClients) {
       return;
@@ -244,10 +233,7 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
   void _loadMoreResults(int totalResults) {
     setState(() {
       _visibleLimit = (_visibleLimit + _pageSize)
-          .clamp(
-        0,
-        totalResults,
-      )
+          .clamp(0, totalResults)
           .toInt();
     });
   }
@@ -338,60 +324,45 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
     const repository = VaultRepository();
     const duplicateReviewEngine = DuplicateReviewEngine();
 
-    final pops = repository.allPops(appState);
+    final pops = repository.pops(
+      appState,
+      collectionName: widget.collectionName,
+    );
     final searchedPops = _filterBySearch(pops);
     final valueFilteredPops = _filterByValueRange(searchedPops);
 
-    final filteredPops = _sortPops(
-      _filterByMode(
-        valueFilteredPops,
-      ),
-    );
+    final filteredPops = _sortPops(_filterByMode(valueFilteredPops));
 
-    final duplicateReviewGroups =
-    _filterMode == _VaultFilterMode.duplicates
+    final duplicateReviewGroups = _filterMode == _VaultFilterMode.duplicates
         ? duplicateReviewEngine.buildGroups(filteredPops)
         : <DuplicateReviewGroup>[];
 
-    final visibleDuplicateReviewGroups =
-    duplicateReviewEngine.takeVisibleGroups(
-      duplicateReviewGroups,
-      _visibleLimit,
-    );
+    final visibleDuplicateReviewGroups = duplicateReviewEngine
+        .takeVisibleGroups(duplicateReviewGroups, _visibleLimit);
 
-    final visiblePops =
-    _filterMode == _VaultFilterMode.duplicates
-        ? visibleDuplicateReviewGroups
-        .expand(
-          (group) => group.pops,
-    )
-        .toList()
+    final visiblePops = _filterMode == _VaultFilterMode.duplicates
+        ? visibleDuplicateReviewGroups.expand((group) => group.pops).toList()
         : filteredPops.take(_visibleLimit).toList();
 
     final hasMoreResults = visiblePops.length < filteredPops.length;
 
-    final totalValue = pops.fold<double>(
-      0,
-          (total, pop) => total + pop.value,
-    );
+    final totalValue = pops.fold<double>(0, (total, pop) => total + pop.value);
 
     final currentViewValue = filteredPops.fold<double>(
       0,
-          (total, pop) => total + pop.value,
+      (total, pop) => total + pop.value,
     );
 
     final currentViewMissingValueCount = filteredPops
-        .where(
-          (pop) => pop.value <= 0,
-    )
+        .where((pop) => pop.value <= 0)
         .length;
 
-    final currentViewDuplicateGroupCount =
-    duplicateReviewEngine.countGroups(
+    final currentViewDuplicateGroupCount = duplicateReviewEngine.countGroups(
       searchedPops,
     );
 
-    final hasActiveReviewControls = _searchQuery.trim().isNotEmpty ||
+    final hasActiveReviewControls =
+        _searchQuery.trim().isNotEmpty ||
         _minimumValue != null ||
         _maximumValue != null ||
         _filterMode != _VaultFilterMode.all ||
@@ -420,30 +391,33 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Entire Vault'),
+        title: Text(
+          widget.collectionName == null
+              ? 'Entire Vault'
+              : '${widget.collectionName} • Entire Vault',
+        ),
         actions: [
-          IconButton(
-            tooltip: 'Review Multiple Copies',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const MultipleCopiesScreen(),
-                ),
-              );
-            },
-            icon: const Icon(
-              Icons.layers_rounded,
+          if (widget.collectionName == null)
+            IconButton(
+              tooltip: 'Review Multiple Copies',
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const MultipleCopiesScreen(),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.layers_rounded),
             ),
-          ),
         ],
       ),
       floatingActionButton: _showBackToTop
           ? FloatingActionButton.extended(
-        onPressed: _scrollToTop,
-        icon: const Icon(Icons.keyboard_arrow_up_rounded),
-        label: const Text('Top'),
-      )
+              onPressed: _scrollToTop,
+              icon: const Icon(Icons.keyboard_arrow_up_rounded),
+              label: const Text('Top'),
+            )
           : null,
       body: SafeArea(
         child: SingleChildScrollView(
@@ -462,10 +436,11 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const AtlasSectionHeader(
-                      title: 'Entire Vault',
-                      subtitle:
-                      'Review every Pop currently saved in your collection.',
+                    AtlasSectionHeader(
+                      title: widget.collectionName ?? 'Entire Vault',
+                      subtitle: widget.collectionName == null
+                          ? 'Review every Pop currently saved across your collections.'
+                          : 'Review only the Pops saved in this collection.',
                       icon: Icons.inventory_2_rounded,
                       titleStyle: AtlasTypography.headingLarge,
                     ),
@@ -515,7 +490,7 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
                   icon: Icons.attach_money_rounded,
                   title: 'Value Cleanup',
                   message:
-                  'These Pops are missing values. Add trusted values when available so Atlas can calculate vault health and collection strength more accurately.',
+                      'These Pops are missing values. Add trusted values when available so Atlas can calculate vault health and collection strength more accurately.',
                 ),
               ],
 
@@ -525,7 +500,7 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
                   icon: Icons.info_outline_rounded,
                   title: 'Duplicate Review',
                   message:
-                  'These are possible duplicate or variant review groups. Check Chase, stickers, exclusives, signed, limited edition, and variant details before making changes.',
+                      'These are possible duplicate or variant review groups. Check Chase, stickers, exclusives, signed, limited edition, and variant details before making changes.',
                 ),
               ],
 
@@ -604,24 +579,25 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
                 currentValue: currentViewValue,
                 missingValueCount: currentViewMissingValueCount,
                 duplicateGroupCount: currentViewDuplicateGroupCount,
-                showDuplicateGroups:
-                _filterMode == _VaultFilterMode.duplicates,
+                showDuplicateGroups: _filterMode == _VaultFilterMode.duplicates,
                 cleanupFocusTitle: _cleanupFocusTitle,
                 cleanupFocusMessage: _cleanupFocusMessage,
                 onClearCleanupFocus:
-                _cleanupFocusTitle != null &&
-                    _cleanupFocusMessage != null
+                    _cleanupFocusTitle != null && _cleanupFocusMessage != null
                     ? _clearCleanupFocus
                     : null,
               ),
 
               const SizedBox(height: AtlasSpacing.lg),
               if (pops.isEmpty)
-                const AtlasEmptyState(
+                AtlasEmptyState(
                   icon: Icons.inventory_2_outlined,
-                  title: 'Your Vault Is Empty',
-                  message:
-                  'Your vault is ready. Add your first Pop to begin building your collection.',
+                  title: widget.collectionName == null
+                      ? 'Your Vault Is Empty'
+                      : 'This Collection Is Empty',
+                  message: widget.collectionName == null
+                      ? 'Your vault is ready. Add your first Pop to begin building your collection.'
+                      : 'No Pops are currently saved in ${widget.collectionName}.',
                 )
               else if (filteredPops.isEmpty)
                 AtlasEmptyState(
@@ -633,39 +609,34 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
                   ),
                 )
               else if (_filterMode == _VaultFilterMode.duplicates)
-                  DuplicateReviewSection(
-                    groups: visibleDuplicateReviewGroups,
-                    totalGroupCount: duplicateReviewGroups.length,
-                    totalPopCount: filteredPops.length,
-                    visiblePopCount: visiblePops.length,
-                    hasMoreResults: hasMoreResults,
-                    sortLabel: _sortMode.label,
-                    showImages: _showImages,
-                    onReviewGroup: _openDuplicateReviewGroup,
-                    onLoadMore: () {
-                      _loadMoreResults(
-                        filteredPops.length,
-                      );
-                    },
-                  )
-                else
-                  VaultListSection(
-                    pops: visiblePops,
-                    totalResultCount: filteredPops.length,
-                    hasMoreResults: hasMoreResults,
-                    filterLabel: _filterMode.label,
-                    sortLabel: _sortMode.label,
-                    showImages: _showImages,
-                    onAddValue:
-                    _filterMode == _VaultFilterMode.needsValue
-                        ? _openValueEditor
-                        : null,
-                    onLoadMore: () {
-                      _loadMoreResults(
-                        filteredPops.length,
-                      );
-                    },
-                  ),
+                DuplicateReviewSection(
+                  groups: visibleDuplicateReviewGroups,
+                  totalGroupCount: duplicateReviewGroups.length,
+                  totalPopCount: filteredPops.length,
+                  visiblePopCount: visiblePops.length,
+                  hasMoreResults: hasMoreResults,
+                  sortLabel: _sortMode.label,
+                  showImages: _showImages,
+                  onReviewGroup: _openDuplicateReviewGroup,
+                  onLoadMore: () {
+                    _loadMoreResults(filteredPops.length);
+                  },
+                )
+              else
+                VaultListSection(
+                  pops: visiblePops,
+                  totalResultCount: filteredPops.length,
+                  hasMoreResults: hasMoreResults,
+                  filterLabel: _filterMode.label,
+                  sortLabel: _sortMode.label,
+                  showImages: _showImages,
+                  onAddValue: _filterMode == _VaultFilterMode.needsValue
+                      ? _openValueEditor
+                      : null,
+                  onLoadMore: () {
+                    _loadMoreResults(filteredPops.length);
+                  },
+                ),
             ],
           ),
         ),
@@ -765,66 +736,40 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
         return pops;
 
       case _VaultFilterMode.owned:
-        return pops
-            .where(
-              (pop) => !pop.isWishlist,
-        )
-            .toList();
+        return pops.where((pop) => !pop.isWishlist).toList();
 
       case _VaultFilterMode.wishlist:
-        return pops
-            .where(
-              (pop) => pop.isWishlist,
-        )
-            .toList();
+        return pops.where((pop) => pop.isWishlist).toList();
 
       case _VaultFilterMode.needsValue:
-        return pops
-            .where(
-              (pop) => pop.value <= 0,
-        )
-            .toList();
+        return pops.where((pop) => pop.value <= 0).toList();
 
       case _VaultFilterMode.hasValue:
-        return pops
-            .where(
-              (pop) => pop.value > 0,
-        )
-            .toList();
+        return pops.where((pop) => pop.value > 0).toList();
 
       case _VaultFilterMode.exclusives:
         return pops
-            .where(
-              (pop) => hasMeaningfulVaultValue(pop.retailExclusive),
-        )
+            .where((pop) => hasMeaningfulVaultValue(pop.retailExclusive))
             .toList();
 
       case _VaultFilterMode.signed:
         return pops
-            .where(
-              (pop) => hasMeaningfulVaultValue(pop.signature),
-        )
+            .where((pop) => hasMeaningfulVaultValue(pop.signature))
             .toList();
 
       case _VaultFilterMode.limited:
         return pops
-            .where(
-              (pop) => hasMeaningfulVaultValue(pop.limitedEdition),
-        )
+            .where((pop) => hasMeaningfulVaultValue(pop.limitedEdition))
             .toList();
 
       case _VaultFilterMode.variants:
         return pops
-            .where(
-              (pop) => hasMeaningfulVaultValue(pop.variant),
-        )
+            .where((pop) => hasMeaningfulVaultValue(pop.variant))
             .toList();
 
       case _VaultFilterMode.stickers:
         return pops
-            .where(
-              (pop) => hasMeaningfulVaultValue(pop.eventSticker),
-        )
+            .where((pop) => hasMeaningfulVaultValue(pop.eventSticker))
             .toList();
 
       case _VaultFilterMode.duplicates:
@@ -838,16 +783,12 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
     switch (_sortMode) {
       case _VaultSortMode.nameAz:
         sorted.sort(
-              (a, b) => a.name.toLowerCase().compareTo(
-            b.name.toLowerCase(),
-          ),
+          (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
         );
         break;
 
       case _VaultSortMode.highestValue:
-        sorted.sort(
-              (a, b) => b.value.compareTo(a.value),
-        );
+        sorted.sort((a, b) => b.value.compareTo(a.value));
         break;
 
       case _VaultSortMode.needsValue:
@@ -863,25 +804,20 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
             return 1;
           }
 
-          return a.name.toLowerCase().compareTo(
-            b.name.toLowerCase(),
-          );
+          return a.name.toLowerCase().compareTo(b.name.toLowerCase());
         });
         break;
 
       case _VaultSortMode.newestAdded:
         sorted.sort(
-              (a, b) => _dateScore(b.dateAdded).compareTo(
-            _dateScore(a.dateAdded),
-          ),
+          (a, b) => _dateScore(b.dateAdded).compareTo(_dateScore(a.dateAdded)),
         );
         break;
 
       case _VaultSortMode.recentlyUpdated:
         sorted.sort(
-              (a, b) => _dateScore(b.lastUpdated).compareTo(
-            _dateScore(a.lastUpdated),
-          ),
+          (a, b) =>
+              _dateScore(b.lastUpdated).compareTo(_dateScore(a.lastUpdated)),
         );
         break;
     }

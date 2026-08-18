@@ -6,11 +6,29 @@ class VaultRepository {
   const VaultRepository();
 
   static const DuplicateReviewEngine _duplicateReviewEngine =
-  DuplicateReviewEngine();
+      DuplicateReviewEngine();
 
-  int totalPops(AppState appState) => appState.totalPops;
+  List<Pop> pops(AppState appState, {String? collectionName}) {
+    if (collectionName == null) {
+      return allPops(appState);
+    }
 
-  double totalValue(AppState appState) => appState.totalValue;
+    return List<Pop>.from(appState.popsForCollection(collectionName));
+  }
+
+  int totalPops(AppState appState, {String? collectionName}) =>
+      pops(appState, collectionName: collectionName).length;
+
+  double totalValue(AppState appState, {String? collectionName}) {
+    if (collectionName == null) {
+      return appState.totalValue;
+    }
+
+    return pops(
+      appState,
+      collectionName: collectionName,
+    ).fold<double>(0, (total, pop) => total + pop.value);
+  }
 
   List<Pop> allPops(AppState appState) {
     return appState.collections.values
@@ -18,20 +36,20 @@ class VaultRepository {
         .toList();
   }
 
-  Map<String, int> ownerCounts(AppState appState) {
+  Map<String, int> ownerCounts(AppState appState, {String? collectionName}) {
     final counts = <String, int>{};
 
-    for (final pop in allPops(appState)) {
+    for (final pop in pops(appState, collectionName: collectionName)) {
       counts[pop.owner] = (counts[pop.owner] ?? 0) + 1;
     }
 
     return counts;
   }
 
-  Map<String, double> ownerValues(AppState appState) {
+  Map<String, double> ownerValues(AppState appState, {String? collectionName}) {
     final values = <String, double>{};
 
-    for (final pop in allPops(appState)) {
+    for (final pop in pops(appState, collectionName: collectionName)) {
       values[pop.owner] = (values[pop.owner] ?? 0) + pop.value;
     }
 
@@ -39,23 +57,24 @@ class VaultRepository {
   }
 
   List<MapEntry<String, double>> ownerLeaderboard(
-      AppState appState,
-      ) {
-    final leaderboard = ownerValues(appState).entries.toList();
+    AppState appState, {
+    String? collectionName,
+  }) {
+    final leaderboard = ownerValues(
+      appState,
+      collectionName: collectionName,
+    ).entries.toList();
 
-    leaderboard.sort(
-          (a, b) => b.value.compareTo(a.value),
-    );
+    leaderboard.sort((a, b) => b.value.compareTo(a.value));
 
     return leaderboard;
   }
 
-  Map<String, int> categoryCounts(AppState appState) {
+  Map<String, int> categoryCounts(AppState appState, {String? collectionName}) {
     final categories = <String, int>{};
 
-    for (final pop in allPops(appState)) {
-      final category =
-      pop.category.isEmpty ? 'Uncategorized' : pop.category;
+    for (final pop in pops(appState, collectionName: collectionName)) {
+      final category = pop.category.isEmpty ? 'Uncategorized' : pop.category;
 
       categories[category] = (categories[category] ?? 0) + 1;
     }
@@ -64,13 +83,13 @@ class VaultRepository {
   }
 
   Map<String, double> categoryValues(
-      AppState appState,
-      ) {
+    AppState appState, {
+    String? collectionName,
+  }) {
     final values = <String, double>{};
 
-    for (final pop in allPops(appState)) {
-      final category =
-      pop.category.isEmpty ? 'Uncategorized' : pop.category;
+    for (final pop in pops(appState, collectionName: collectionName)) {
+      final category = pop.category.isEmpty ? 'Uncategorized' : pop.category;
 
       values[category] = (values[category] ?? 0) + pop.value;
     }
@@ -78,39 +97,36 @@ class VaultRepository {
     return values;
   }
 
-  List<Pop> mostValuablePops(
-      AppState appState,
-      ) {
-    final pops = allPops(appState);
+  List<Pop> mostValuablePops(AppState appState, {String? collectionName}) {
+    final scopedPops = pops(appState, collectionName: collectionName);
 
-    pops.sort(
-          (a, b) => b.value.compareTo(a.value),
-    );
+    scopedPops.sort((a, b) => b.value.compareTo(a.value));
 
-    return pops;
+    return scopedPops;
   }
 
   List<DuplicateReviewGroup> duplicateReviewGroups(
-      AppState appState,
-      ) {
+    AppState appState, {
+    String? collectionName,
+  }) {
     return _duplicateReviewEngine.buildGroups(
-      allPops(appState),
+      pops(appState, collectionName: collectionName),
     );
   }
 
-  int duplicateReviewGroupCount(
-      AppState appState,
-      ) {
+  int duplicateReviewGroupCount(AppState appState, {String? collectionName}) {
     return _duplicateReviewEngine.countGroups(
-      allPops(appState),
+      pops(appState, collectionName: collectionName),
     );
   }
 
   List<List<Pop>> duplicatePopGroups(
-      AppState appState,
-      ) {
-    return duplicateReviewGroups(appState)
-        .map((group) => group.pops)
-        .toList();
+    AppState appState, {
+    String? collectionName,
+  }) {
+    return duplicateReviewGroups(
+      appState,
+      collectionName: collectionName,
+    ).map((group) => group.pops).toList();
   }
 }

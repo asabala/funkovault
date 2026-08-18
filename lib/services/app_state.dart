@@ -20,6 +20,15 @@ class PopImportResult {
   final int skipped;
 }
 
+enum CollectionOperationResult {
+  success,
+  invalidName,
+  duplicateName,
+  notFound,
+  lastCollection,
+  persistenceFailure,
+}
+
 class AppState extends ChangeNotifier {
   String _selectedCollection = 'Entire Family Collection';
   final List<Activity> _activities = [];
@@ -69,6 +78,58 @@ class AppState extends ChangeNotifier {
   Map<String, List<Pop>> get collections => _collections;
 
   List<String> get collectionNames => _collections.keys.toList();
+
+  bool hasCollection(String collectionName) {
+    return _matchingCollectionName(collectionName) != null;
+  }
+
+  List<Pop> popsForCollection(String collectionName) {
+    final matchingName = _matchingCollectionName(collectionName);
+
+    if (matchingName == null) {
+      return const <Pop>[];
+    }
+
+    return List<Pop>.unmodifiable(_collections[matchingName]!);
+  }
+
+  List<String> collectionNamesContainingPopId(String popId) {
+    final normalizedId = popId.trim();
+
+    if (normalizedId.isEmpty) {
+      return const <String>[];
+    }
+
+    return List<String>.unmodifiable(
+      _collections.entries
+          .where(
+            (entry) => entry.value.any((pop) => pop.id.trim() == normalizedId),
+          )
+          .map((entry) => entry.key),
+    );
+  }
+
+  List<String> collectionNamesContainingPop(Pop pop) {
+    final normalizedId = pop.id.trim();
+
+    if (normalizedId.isEmpty) {
+      return const <String>[];
+    }
+
+    final recordKey = pop.collectionRecordKey;
+
+    return List<String>.unmodifiable(
+      _collections.entries
+          .where(
+            (entry) => entry.value.any(
+              (storedPop) =>
+                  storedPop.id.trim() == normalizedId &&
+                  storedPop.collectionRecordKey == recordKey,
+            ),
+          )
+          .map((entry) => entry.key),
+    );
+  }
 
   List<Pop> get selectedCollectionPops =>
       _collections[_selectedCollection] ?? [];
@@ -215,15 +276,23 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> _saveData() async {
+  Future<void> _saveData({
+    String? selectedCollection,
+    Map<String, List<Pop>>? collections,
+    Map<String, Set<String>>? ownedWishlistIdentityKeysByCollection,
+  }) async {
+    final collectionsToSave = collections ?? _collections;
+    final wishlistKeysToSave =
+        ownedWishlistIdentityKeysByCollection ??
+        _ownedWishlistIdentityKeysByCollection;
     final collectionsJson = <String, dynamic>{};
 
-    _collections.forEach((key, value) {
+    collectionsToSave.forEach((key, value) {
       collectionsJson[key] = value.map((pop) => pop.toJson()).toList();
     });
     final Map<String, dynamic> ownedWishlistIdentityJson = <String, dynamic>{};
 
-    _ownedWishlistIdentityKeysByCollection.forEach((
+    wishlistKeysToSave.forEach((
       String collectionName,
       Set<String> identityKeys,
     ) {
@@ -232,7 +301,7 @@ class AppState extends ChangeNotifier {
       );
     });
     await HiveService.saveData('vault_data', {
-      'selectedCollection': _selectedCollection,
+      'selectedCollection': selectedCollection ?? _selectedCollection,
       'collections': collectionsJson,
       'activities': _activities.map((activity) => activity.toJson()).toList(),
       'collectorProfile': _collectorProfile.toJson(),
@@ -240,46 +309,197 @@ class AppState extends ChangeNotifier {
     });
   }
 
-  Future<void> setSelectedCollection(String value) async {
-    _selectedCollection = value;
+  Future<CollectionOperationResult> setSelectedCollection(String value) async {
+    final matchingName = _matchingCollectionName(value);
 
-    await _saveData();
+    if (matchingName == null) {
+      return CollectionOperationResult.notFound;
+    }
 
+    if (_selectedCollection == matchingName) {
+      return CollectionOperationResult.success;
+    }
+
+    try {
+      await _saveData(selectedCollection: matchingName);
+    } catch (_) {
+      return CollectionOperationResult.persistenceFailure;
+    }
+
+    _selectedCollection = matchingName;
     notifyListeners();
+
+    return CollectionOperationResult.success;
   }
 
-  Future<void> addCollection(String name) async {
-    if (name.trim().isEmpty) {
-      return;
+  Future<CollectionOperationResult> addCollection(String name) async {
+    final trimmedName = name.trim();
+
+    if (trimmedName.isEmpty) {
+      return CollectionOperationResult.invalidName;
     }
 
-    if (!_collections.containsKey(name)) {
-      _collections[name] = [];
-
-      _ownedWishlistIdentityKeysByCollection[name] = <String>{};
-
-      await _saveData();
-
-      notifyListeners();
+    if (_matchingCollectionName(trimmedName) != null) {
+      return CollectionOperationResult.duplicateName;
     }
+
+    final updatedCollections = Map<String, List<Pop>>.from(_collections)
+      ..[trimmedName] = <Pop>[];
+    final updatedWishlistKeys = _copyWishlistKeys()..[trimmedName] = <String>{};
+
+    try {
+      await _saveData(
+        collections: updatedCollections,
+        ownedWishlistIdentityKeysByCollection: updatedWishlistKeys,
+      );
+    } catch (_) {
+      return CollectionOperationResult.persistenceFailure;
+    }
+
+    _replaceCollections(updatedCollections);
+    _replaceWishlistKeys(updatedWishlistKeys);
+    notifyListeners();
+
+    return CollectionOperationResult.success;
   }
 
-  Future<void> deleteCollection(String name) async {
+  Future<CollectionOperationResult> renameCollection(
+    String currentName,
+    String newName,
+  ) async {
+    final existingName = _matchingCollectionName(currentName);
+    final trimmedNewName = newName.trim();
+
+    if (existingName == null) {
+      return CollectionOperationResult.notFound;
+    }
+
+    if (trimmedNewName.isEmpty) {
+      return CollectionOperationResult.invalidName;
+    }
+
+    final duplicateName = _matchingCollectionName(trimmedNewName);
+
+    if (duplicateName != null && duplicateName != existingName) {
+      return CollectionOperationResult.duplicateName;
+    }
+
+    if (trimmedNewName == existingName) {
+      return CollectionOperationResult.success;
+    }
+
+    final updatedCollections = <String, List<Pop>>{};
+
+    for (final entry in _collections.entries) {
+      updatedCollections[entry.key == existingName
+              ? trimmedNewName
+              : entry.key] =
+          entry.value;
+    }
+
+    final updatedWishlistKeys = <String, Set<String>>{};
+
+    for (final entry in _ownedWishlistIdentityKeysByCollection.entries) {
+      updatedWishlistKeys[entry.key == existingName
+          ? trimmedNewName
+          : entry.key] = Set<String>.from(
+        entry.value,
+      );
+    }
+
+    updatedWishlistKeys.putIfAbsent(trimmedNewName, () => <String>{});
+
+    final updatedSelection = _selectedCollection == existingName
+        ? trimmedNewName
+        : _selectedCollection;
+
+    try {
+      await _saveData(
+        selectedCollection: updatedSelection,
+        collections: updatedCollections,
+        ownedWishlistIdentityKeysByCollection: updatedWishlistKeys,
+      );
+    } catch (_) {
+      return CollectionOperationResult.persistenceFailure;
+    }
+
+    _replaceCollections(updatedCollections);
+    _replaceWishlistKeys(updatedWishlistKeys);
+    _selectedCollection = updatedSelection;
+    notifyListeners();
+
+    return CollectionOperationResult.success;
+  }
+
+  Future<CollectionOperationResult> deleteCollection(String name) async {
+    final matchingName = _matchingCollectionName(name);
+
+    if (matchingName == null) {
+      return CollectionOperationResult.notFound;
+    }
+
     if (_collections.length <= 1) {
-      return;
+      return CollectionOperationResult.lastCollection;
     }
 
-    _collections.remove(name);
+    final updatedCollections = Map<String, List<Pop>>.from(_collections)
+      ..remove(matchingName);
+    final updatedWishlistKeys = _copyWishlistKeys()..remove(matchingName);
+    final updatedSelection = _selectedCollection == matchingName
+        ? updatedCollections.keys.first
+        : _selectedCollection;
 
-    _ownedWishlistIdentityKeysByCollection.remove(name);
-
-    if (_selectedCollection == name) {
-      _selectedCollection = _collections.keys.first;
+    try {
+      await _saveData(
+        selectedCollection: updatedSelection,
+        collections: updatedCollections,
+        ownedWishlistIdentityKeysByCollection: updatedWishlistKeys,
+      );
+    } catch (_) {
+      return CollectionOperationResult.persistenceFailure;
     }
 
-    await _saveData();
-
+    _replaceCollections(updatedCollections);
+    _replaceWishlistKeys(updatedWishlistKeys);
+    _selectedCollection = updatedSelection;
     notifyListeners();
+
+    return CollectionOperationResult.success;
+  }
+
+  String? _matchingCollectionName(String value) {
+    final normalizedName = value.trim().toLowerCase();
+
+    if (normalizedName.isEmpty) {
+      return null;
+    }
+
+    for (final collectionName in _collections.keys) {
+      if (collectionName.trim().toLowerCase() == normalizedName) {
+        return collectionName;
+      }
+    }
+
+    return null;
+  }
+
+  Map<String, Set<String>> _copyWishlistKeys() {
+    return _ownedWishlistIdentityKeysByCollection.map(
+      (collectionName, identityKeys) =>
+          MapEntry(collectionName, Set<String>.from(identityKeys)),
+    );
+  }
+
+  void _replaceCollections(Map<String, List<Pop>> collections) {
+    _collections
+      ..clear()
+      ..addAll(collections);
+  }
+
+  void _replaceWishlistKeys(Map<String, Set<String>> wishlistKeys) {
+    _ownedWishlistIdentityKeysByCollection
+      ..clear()
+      ..addAll(wishlistKeys);
   }
 
   Set<String> get selectedOwnedWishlistIdentityKeys {
