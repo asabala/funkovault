@@ -15,12 +15,12 @@ jobs:
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
           echo "Pinging FunkoVault project..."
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X GET "https://qzwvzkzryzzlolcqkrfq.supabase.co/rest/v1/" \
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X GET "https://qzwvzkzryzzlolcqkrfq.supabase.co/rest/v1/profiles?select=id&limit=1" \
             -H "apikey: $SUPABASE_ANON_KEY" \
             -H "Authorization: Bearer $SUPABASE_ANON_KEY")
           
           echo "HTTP Response Status: $STATUS"
-          if [ "$STATUS" -eq 200 ] || [ "$STATUS" -eq 204 ]; then
+          if [ "$STATUS" -ge 200 ] && [ "$STATUS" -lt 300 ]; then
             echo "Successfully pinged Supabase!"
           else
             echo "Failed to ping Supabase! Returned status $STATUS"
