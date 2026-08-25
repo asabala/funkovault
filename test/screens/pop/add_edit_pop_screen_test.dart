@@ -14,15 +14,29 @@ import 'package:provider/provider.dart';
 class _TestAppState extends AppState {
   Pop? addedPop;
   Pop? updatedPop;
+  String? addedCollectionName;
+  String? updatedCollectionName;
+  String? updatedExistingRecordKey;
+  bool addResult = true;
 
   @override
-  Future<void> addPop(Pop pop) async {
+  Future<bool> addPop(Pop pop, {String? collectionName}) async {
     addedPop = pop;
+    addedCollectionName = collectionName;
+
+    return addResult;
   }
 
   @override
-  Future<Pop?> updatePop(Pop pop) async {
+  Future<Pop?> updatePop(
+    Pop pop, {
+    String? collectionName,
+    String? existingRecordKey,
+  }) async {
     updatedPop = pop.copyWith(lastUpdated: '2026-08-18T12:00:00.000Z');
+    updatedCollectionName = collectionName;
+    updatedExistingRecordKey = existingRecordKey;
+
     return updatedPop;
   }
 
@@ -145,7 +159,10 @@ void main() {
                   result = await Navigator.push<Pop>(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => EditPopScreen(pop: original),
+                      builder: (_) => EditPopScreen(
+                        pop: original,
+                        collectionName: 'Arthur Collection',
+                      ),
                     ),
                   );
                 },
@@ -204,6 +221,8 @@ void main() {
     expect(result!.authenticationProvider, original.authenticationProvider);
     expect(result!.isWishlist, isTrue);
     expect(result!.dateAdded, original.dateAdded);
+    expect(state.updatedCollectionName, 'Arthur Collection');
+    expect(state.updatedExistingRecordKey, original.collectionRecordKey);
   });
 
   testWidgets('catalog Add preserves converted metadata and image', (
@@ -230,7 +249,12 @@ void main() {
     await tester.pumpWidget(
       ChangeNotifierProvider<AppState>.value(
         value: state,
-        child: MaterialApp(home: AddPopScreen(atlasProduct: product)),
+        child: MaterialApp(
+          home: AddPopScreen(
+            atlasProduct: product,
+            collectionName: 'Arthur Collection',
+          ),
+        ),
       ),
     );
     await tester.pump();
@@ -244,5 +268,33 @@ void main() {
     expect(saved.sourceCollectibleId, 'source-1');
     expect(saved.sourceUpc, '889698000001');
     expect(saved.productionStatus, 'Vaulted');
+    expect(state.addedCollectionName, 'Arthur Collection');
+  });
+
+  testWidgets('Add keeps the form open when the target collection is missing', (
+    tester,
+  ) async {
+    useLargeTestSurface(tester);
+    final state = _TestAppState()..addResult = false;
+
+    await tester.pumpWidget(
+      ChangeNotifierProvider<AppState>.value(
+        value: state,
+        child: const MaterialApp(
+          home: AddPopScreen(collectionName: 'Missing Collection'),
+        ),
+      ),
+    );
+
+    await enterField(tester, 'Pop Name', 'Batman');
+    await tapSave(tester, 'Save Pop');
+
+    expect(state.addedPop, isNotNull);
+    expect(state.addedCollectionName, 'Missing Collection');
+    expect(
+      find.text('This collection could not be found. The Pop was not added.'),
+      findsOneWidget,
+    );
+    expect(find.byType(AddPopScreen), findsOneWidget);
   });
 }

@@ -15,52 +15,47 @@ class VaultPopTile extends StatelessWidget {
     super.key,
     required this.pop,
     required this.showImage,
+    this.collectionName,
     this.onAddValue,
   });
 
   final Pop pop;
   final bool showImage;
+  final String? collectionName;
   final VoidCallback? onAddValue;
 
   void _openDetails(BuildContext context) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => PopDetailsScreen(
-          pop: pop,
-        ),
+        builder: (_) =>
+            PopDetailsScreen(pop: pop, collectionName: collectionName),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final numberLabel =
-    pop.number.trim().isEmpty ? 'No #' : '#${pop.number}';
+    final numberLabel = pop.number.trim().isEmpty ? 'No #' : '#${pop.number}';
 
     final categoryLabel = pop.category.trim().isEmpty
         ? 'No category'
         : pop.category.trim();
 
-    final seriesLabel =
-    pop.series.trim().isEmpty ? 'No series' : pop.series.trim();
+    final seriesLabel = pop.series.trim().isEmpty
+        ? 'No series'
+        : pop.series.trim();
 
     final valueLabel = pop.value <= 0
         ? 'Value needed'
         : '\$${pop.value.toStringAsFixed(0)}';
 
-    final addedLabel = formatVaultDateLabel(
-      pop.dateAdded,
-    );
+    final addedLabel = formatVaultDateLabel(pop.dateAdded);
 
-    final updatedLabel = formatVaultDateLabel(
-      pop.lastUpdated,
-    );
+    final updatedLabel = formatVaultDateLabel(pop.lastUpdated);
 
     return InkWell(
-      borderRadius: BorderRadius.circular(
-        AtlasSpacing.md,
-      ),
+      borderRadius: BorderRadius.circular(AtlasSpacing.md),
       onTap: () => _openDetails(context),
       child: AtlasGlassPanel(
         child: Column(
@@ -77,9 +72,7 @@ class VaultPopTile extends StatelessWidget {
                   errorIcon: Icons.broken_image_rounded,
                 ),
               ),
-              const SizedBox(
-                height: AtlasSpacing.md,
-              ),
+              const SizedBox(height: AtlasSpacing.md),
             ],
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -89,84 +82,58 @@ class VaultPopTile extends StatelessWidget {
                     Icons.inventory_2_outlined,
                     color: AtlasColors.vaultGold,
                   ),
-                  const SizedBox(
-                    width: AtlasSpacing.md,
-                  ),
+                  const SizedBox(width: AtlasSpacing.md),
                 ],
                 Expanded(
                   child: Column(
-                    crossAxisAlignment:
-                    CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         pop.name,
-                        style:
-                        AtlasTypography.bodyMedium.copyWith(
+                        style: AtlasTypography.bodyMedium.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const SizedBox(
-                        height: AtlasSpacing.xs,
-                      ),
+                      const SizedBox(height: AtlasSpacing.xs),
                       Text(
                         '$numberLabel • $categoryLabel',
-                        style:
-                        AtlasTypography.bodySmall.copyWith(
-                          color:
-                          AtlasColors.textSecondary,
+                        style: AtlasTypography.bodySmall.copyWith(
+                          color: AtlasColors.textSecondary,
                         ),
                       ),
-                      const SizedBox(
-                        height: AtlasSpacing.xs,
-                      ),
+                      const SizedBox(height: AtlasSpacing.xs),
                       Text(
                         seriesLabel,
-                        style:
-                        AtlasTypography.bodySmall.copyWith(
-                          color:
-                          AtlasColors.textSecondary,
+                        style: AtlasTypography.bodySmall.copyWith(
+                          color: AtlasColors.textSecondary,
                         ),
                       ),
-                      const SizedBox(
-                        height: AtlasSpacing.xs,
-                      ),
-                      VaultPopBadges(
-                        pop: pop,
-                      ),
-                      const SizedBox(
-                        height: AtlasSpacing.xs,
-                      ),
+                      const SizedBox(height: AtlasSpacing.xs),
+                      VaultPopBadges(pop: pop),
+                      const SizedBox(height: AtlasSpacing.xs),
                       Text(
                         'Added: $addedLabel • Updated: $updatedLabel',
-                        style:
-                        AtlasTypography.bodySmall.copyWith(
-                          color:
-                          AtlasColors.textSecondary,
+                        style: AtlasTypography.bodySmall.copyWith(
+                          color: AtlasColors.textSecondary,
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(
-                  width: AtlasSpacing.md,
-                ),
+                const SizedBox(width: AtlasSpacing.md),
                 Column(
-                  crossAxisAlignment:
-                  CrossAxisAlignment.end,
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
                       valueLabel,
-                      style:
-                      AtlasTypography.bodySmall.copyWith(
+                      style: AtlasTypography.bodySmall.copyWith(
                         color: pop.value <= 0
                             ? AtlasColors.textSecondary
                             : AtlasColors.vaultGold,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(
-                      height: AtlasSpacing.xs,
-                    ),
+                    const SizedBox(height: AtlasSpacing.xs),
                     const Icon(
                       Icons.chevron_right_rounded,
                       color: AtlasColors.textSecondary,
@@ -176,19 +143,13 @@ class VaultPopTile extends StatelessWidget {
               ],
             ),
             if (pop.value <= 0 && onAddValue != null) ...[
-              const SizedBox(
-                height: AtlasSpacing.md,
-              ),
+              const SizedBox(height: AtlasSpacing.md),
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
                   onPressed: onAddValue,
-                  icon: const Icon(
-                    Icons.attach_money_rounded,
-                  ),
-                  label: const Text(
-                    'Add Value',
-                  ),
+                  icon: const Icon(Icons.attach_money_rounded),
+                  label: const Text('Add Value'),
                 ),
               ),
             ],
@@ -200,10 +161,7 @@ class VaultPopTile extends StatelessWidget {
 }
 
 class VaultPopBadges extends StatelessWidget {
-  const VaultPopBadges({
-    super.key,
-    required this.pop,
-  });
+  const VaultPopBadges({super.key, required this.pop});
 
   final Pop pop;
 
@@ -219,12 +177,7 @@ class VaultPopBadges extends StatelessWidget {
       spacing: AtlasSpacing.xs,
       runSpacing: AtlasSpacing.xs,
       children: badges
-          .map(
-            (badge) => AtlasChip(
-          label: badge,
-          size: AtlasChipSize.compact,
-        ),
-      )
+          .map((badge) => AtlasChip(label: badge, size: AtlasChipSize.compact))
           .toList(),
     );
   }
@@ -241,32 +194,22 @@ class VaultPopBadges extends StatelessWidget {
     }
 
     if (hasMeaningfulVaultValue(pop.variant)) {
-      badges.add(
-        _cleanBadgeLabel(pop.variant),
-      );
+      badges.add(_cleanBadgeLabel(pop.variant));
     }
 
-    if (hasMeaningfulVaultValue(
-      pop.retailExclusive,
-    )) {
+    if (hasMeaningfulVaultValue(pop.retailExclusive)) {
       badges.add('Exclusive');
     }
 
-    if (hasMeaningfulVaultValue(
-      pop.eventSticker,
-    )) {
+    if (hasMeaningfulVaultValue(pop.eventSticker)) {
       badges.add('Sticker');
     }
 
-    if (hasMeaningfulVaultValue(
-      pop.limitedEdition,
-    )) {
+    if (hasMeaningfulVaultValue(pop.limitedEdition)) {
       badges.add('Limited');
     }
 
-    if (hasMeaningfulVaultValue(
-      pop.signature,
-    )) {
+    if (hasMeaningfulVaultValue(pop.signature)) {
       badges.add('Signed');
     }
 

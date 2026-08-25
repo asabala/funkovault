@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:funkovault2/models/pop.dart';
+import 'package:funkovault2/screens/pop/edit_pop_screen.dart';
+import 'package:funkovault2/screens/pop/pop_details_screen.dart';
 import 'package:funkovault2/screens/vault/entire_vault_screen.dart';
 import 'package:funkovault2/services/app_state.dart';
 import 'package:funkovault2/services/hive_service.dart';
@@ -197,5 +199,59 @@ void main() {
     expect(find.text('Family Low'), findsOneWidget);
     expect(find.text('Family High'), findsNothing);
     expect(find.text('Arthur Only'), findsNothing);
+  });
+
+  testWidgets('scoped Vault tile forwards collection context to Pop Details', (
+    tester,
+  ) async {
+    final state = populatedState();
+
+    await pumpVault(
+      tester,
+      state,
+      const EntireVaultScreen(collectionName: 'Arthur Collection'),
+    );
+
+    await tester.tap(find.text('Arthur Only'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.byType(PopDetailsScreen), findsOneWidget);
+
+    final details = tester.widget<PopDetailsScreen>(
+      find.byType(PopDetailsScreen),
+    );
+
+    expect(details.collectionName, 'Arthur Collection');
+  });
+
+  testWidgets('scoped Needs Value editor forwards collection context', (
+    tester,
+  ) async {
+    final state = populatedState();
+
+    await pumpVault(
+      tester,
+      state,
+      const EntireVaultScreen(
+        collectionName: 'Entire Family Collection',
+        initialFilterKey: 'needsValue',
+      ),
+    );
+
+    final addValueButton = find.text('Add Value');
+
+    expect(addValueButton, findsOneWidget);
+
+    await tester.tap(addValueButton);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.byType(EditPopScreen), findsOneWidget);
+
+    final editor = tester.widget<EditPopScreen>(find.byType(EditPopScreen));
+
+    expect(editor.collectionName, 'Entire Family Collection');
+    expect(editor.pop.id, 'family-low');
   });
 }

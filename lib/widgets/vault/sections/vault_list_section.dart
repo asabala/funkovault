@@ -16,12 +16,14 @@ class VaultListSection extends StatelessWidget {
     required this.sortLabel,
     required this.showImages,
     required this.onLoadMore,
+    this.collectionName,
     this.onAddValue,
   });
 
   final List<Pop> pops;
   final int totalResultCount;
   final bool hasMoreResults;
+  final String? collectionName;
   final String filterLabel;
   final String sortLabel;
   final bool showImages;
@@ -37,7 +39,7 @@ class VaultListSection extends StatelessWidget {
           AtlasSectionHeader(
             title: 'Vault List',
             subtitle:
-            'Showing ${pops.length} of $totalResultCount '
+                'Showing ${pops.length} of $totalResultCount '
                 'result${totalResultCount == 1 ? '' : 's'} • '
                 'Filtered by $filterLabel • '
                 'Sorted by $sortLabel. '
@@ -46,18 +48,17 @@ class VaultListSection extends StatelessWidget {
           ),
           const SizedBox(height: AtlasSpacing.md),
           ...pops.map(
-                (pop) => Padding(
-              padding: const EdgeInsets.only(
-                bottom: AtlasSpacing.sm,
-              ),
+            (pop) => Padding(
+              padding: const EdgeInsets.only(bottom: AtlasSpacing.sm),
               child: VaultPopTile(
                 pop: pop,
                 showImage: showImages,
+                collectionName: collectionName,
                 onAddValue: onAddValue == null
                     ? null
                     : () {
-                  onAddValue!(pop);
-                },
+                        onAddValue!(pop);
+                      },
               ),
             ),
           ),
@@ -67,12 +68,8 @@ class VaultListSection extends StatelessWidget {
               width: double.infinity,
               child: OutlinedButton.icon(
                 onPressed: onLoadMore,
-                icon: const Icon(
-                  Icons.expand_more_rounded,
-                ),
-                label: const Text(
-                  'Load More Pops',
-                ),
+                icon: const Icon(Icons.expand_more_rounded),
+                label: const Text('Load More Pops'),
               ),
             ),
           ],

@@ -25,10 +25,12 @@ class EditPopScreen extends StatefulWidget {
   const EditPopScreen({
     super.key,
     required this.pop,
+    this.collectionName,
     this.focusValueField = false,
   });
 
   final Pop pop;
+  final String? collectionName;
   final bool focusValueField;
 
   @override
@@ -380,7 +382,11 @@ class _EditPopScreenState extends State<EditPopScreen> {
     final appState = context.read<AppState>();
     final valueChanged = updatedPop.value != widget.pop.value;
 
-    final persistedPop = await appState.updatePop(updatedPop);
+    final persistedPop = await appState.updatePop(
+      updatedPop,
+      collectionName: widget.collectionName,
+      existingRecordKey: widget.pop.collectionRecordKey,
+    );
 
     if (persistedPop == null) {
       if (mounted) {

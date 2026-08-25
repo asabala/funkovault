@@ -260,4 +260,141 @@ void main() {
       'Arthur Collection',
     ]);
   });
+
+  test('scoped add targets only the requested collection', () async {
+    final state = AppState();
+
+    expect(
+      await state.addPop(
+        pop(id: 'scoped-add'),
+        collectionName: ' arthur collection ',
+      ),
+      isTrue,
+    );
+    expect(state.popsForCollection('Arthur Collection').single.id, 'scoped-add');
+    expect(state.popsForCollection('Entire Family Collection'), isEmpty);
+  });
+
+  test('explicit missing add target fails without fallback', () async {
+    final state = AppState();
+
+    expect(
+      await state.addPop(pop(id: 'missing-add'), collectionName: 'Missing'),
+      isFalse,
+    );
+    expect(state.totalPops, 0);
+  });
+
+  test('scoped update changes only the requested collection', () async {
+    final state = AppState();
+    final familyPop = pop(id: 'shared-id');
+    final arthurPop = pop(id: 'shared-id', variant: 'Chase');
+    await state.addPop(familyPop);
+    await state.addPop(arthurPop, collectionName: 'Arthur Collection');
+
+    final persisted = await state.updatePop(
+      arthurPop.copyWith(name: 'Updated Chase'),
+      collectionName: 'Arthur Collection',
+      existingRecordKey: arthurPop.collectionRecordKey,
+    );
+
+    expect(persisted?.name, 'Updated Chase');
+    expect(state.popsForCollection('Arthur Collection').single.name, 'Updated Chase');
+    expect(state.popsForCollection('Entire Family Collection').single.name, 'Batman');
+  });
+
+  test('identity-changing update uses the original record key', () async {
+    final state = AppState();
+    final original = pop(id: 'identity-edit');
+    await state.addPop(original, collectionName: 'Arthur Collection');
+
+    final persisted = await state.updatePop(
+      original.copyWith(variant: 'Metallic Chase'),
+      collectionName: 'Arthur Collection',
+      existingRecordKey: original.collectionRecordKey,
+    );
+
+    expect(persisted?.variant, 'Metallic Chase');
+    expect(state.popsForCollection('Arthur Collection'), hasLength(1));
+  });
+
+  test('unscoped unique update succeeds', () async {
+    final state = AppState();
+    final original = pop(id: 'unique-update');
+    await state.addPop(original, collectionName: 'Arthur Collection');
+
+    final persisted = await state.updatePop(
+      original.copyWith(quantity: 2),
+      existingRecordKey: original.collectionRecordKey,
+    );
+
+    expect(persisted?.quantity, 2);
+  });
+
+  test('ambiguous and wrong-collection updates are blocked', () async {
+    final state = AppState();
+    final repeated = pop(id: 'ambiguous-update');
+    await state.addPop(repeated);
+    await state.addPop(repeated, collectionName: 'Arthur Collection');
+
+    expect(
+      await state.updatePop(
+        repeated.copyWith(quantity: 2),
+        existingRecordKey: repeated.collectionRecordKey,
+      ),
+      isNull,
+    );
+    expect(
+      await state.updatePop(
+        repeated.copyWith(quantity: 2),
+        collectionName: 'Missing',
+        existingRecordKey: repeated.collectionRecordKey,
+      ),
+      isNull,
+    );
+    expect(state.collections.values.expand((items) => items).every((item) => item.quantity == 1), isTrue);
+  });
+
+  test('scoped delete removes exactly one repeated ID record', () async {
+    final state = AppState();
+    final common = pop(id: 'repeated-delete');
+    final chase = pop(id: 'repeated-delete', variant: 'Chase');
+    state.collections['Arthur Collection']!.addAll([common, chase]);
+
+    expect(
+      await state.deletePop(
+        common.id,
+        collectionName: 'Arthur Collection',
+        recordKey: common.collectionRecordKey,
+      ),
+      isTrue,
+    );
+    expect(state.popsForCollection('Arthur Collection'), hasLength(1));
+    expect(state.popsForCollection('Arthur Collection').single.variant, 'Chase');
+  });
+
+  test('wrong, missing, and globally ambiguous deletes are blocked', () async {
+    final state = AppState();
+    final repeated = pop(id: 'ambiguous-delete');
+    await state.addPop(repeated);
+    await state.addPop(repeated, collectionName: 'Arthur Collection');
+
+    expect(
+      await state.deletePop(
+        repeated.id,
+        collectionName: 'Missing',
+        recordKey: repeated.collectionRecordKey,
+      ),
+      isFalse,
+    );
+    expect(await state.deletePop('missing-id'), isFalse);
+    expect(
+      await state.deletePop(
+        repeated.id,
+        recordKey: repeated.collectionRecordKey,
+      ),
+      isFalse,
+    );
+    expect(state.totalPops, 2);
+  });
 }

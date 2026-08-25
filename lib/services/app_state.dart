@@ -29,6 +29,12 @@ enum CollectionOperationResult {
   persistenceFailure,
 }
 
+typedef _StoredPopLocation = ({
+  String collectionName,
+  List<Pop> pops,
+  int index,
+});
+
 class AppState extends ChangeNotifier {
   String _selectedCollection = 'Entire Family Collection';
   final List<Activity> _activities = [];
@@ -627,11 +633,16 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> addPop(Pop pop) async {
-    final pops = _collections[_selectedCollection];
+  Future<bool> addPop(Pop pop, {String? collectionName}) async {
+    final targetCollectionName = collectionName == null
+        ? _selectedCollection
+        : _matchingCollectionName(collectionName);
+    final pops = targetCollectionName == null
+        ? null
+        : _collections[targetCollectionName];
 
     if (pops == null) {
-      return;
+      return false;
     }
 
     final now = DateTime.now().toIso8601String();
@@ -719,6 +730,8 @@ class AppState extends ChangeNotifier {
     await _saveData();
 
     notifyListeners();
+
+    return true;
   }
 
   Future<void> importPops(List<Pop> pops) async {
@@ -818,14 +831,22 @@ class AppState extends ChangeNotifier {
     );
   }
 
-  Future<void> deletePop(String popId) async {
-    final pops = _collections[_selectedCollection];
+  Future<bool> deletePop(
+    String popId, {
+    String? collectionName,
+    String? recordKey,
+  }) async {
+    final location = _resolveStoredPop(
+      popId: popId,
+      collectionName: collectionName,
+      recordKey: recordKey,
+    );
 
-    if (pops == null) {
-      return;
+    if (location == null) {
+      return false;
     }
 
-    final pop = pops.firstWhere((p) => p.id == popId);
+    final pop = location.pops[location.index];
 
     await addActivity(
       Activity(
@@ -841,11 +862,13 @@ class AppState extends ChangeNotifier {
       ),
     );
 
-    pops.removeWhere((p) => p.id == popId);
+    location.pops.removeAt(location.index);
 
     await _saveData();
 
     notifyListeners();
+
+    return true;
   }
 
   Future<void> updateOwnerForPops(List<String> popIds, String owner) async {
@@ -884,25 +907,22 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<Pop?> updatePop(Pop updatedPop) async {
-    List<Pop>? matchingCollection;
-    var matchingIndex = -1;
+  Future<Pop?> updatePop(
+    Pop updatedPop, {
+    String? collectionName,
+    String? existingRecordKey,
+  }) async {
+    final location = _resolveStoredPop(
+      popId: updatedPop.id,
+      collectionName: collectionName,
+      recordKey: existingRecordKey,
+    );
 
-    for (final collection in _collections.values) {
-      final index = collection.indexWhere((pop) => pop.id == updatedPop.id);
-
-      if (index != -1) {
-        matchingCollection = collection;
-        matchingIndex = index;
-        break;
-      }
-    }
-
-    if (matchingCollection == null || matchingIndex == -1) {
+    if (location == null) {
       return null;
     }
 
-    final existingPop = matchingCollection[matchingIndex];
+    final existingPop = location.pops[location.index];
     final now = DateTime.now();
     final nowIso = now.toIso8601String();
 
@@ -935,13 +955,69 @@ class AppState extends ChangeNotifier {
       timeline: sortedTimeline,
     );
 
-    matchingCollection[matchingIndex] = persistedPop;
+    location.pops[location.index] = persistedPop;
 
     await _saveData();
 
     notifyListeners();
 
     return persistedPop;
+  }
+
+  _StoredPopLocation? _resolveStoredPop({
+    required String popId,
+    String? collectionName,
+    String? recordKey,
+  }) {
+    final normalizedId = popId.trim();
+
+    if (normalizedId.isEmpty) {
+      return null;
+    }
+
+    final Iterable<MapEntry<String, List<Pop>>> collectionsToSearch;
+
+    if (collectionName != null) {
+      final matchingName = _matchingCollectionName(collectionName);
+
+      if (matchingName == null) {
+        return null;
+      }
+
+      collectionsToSearch = <MapEntry<String, List<Pop>>>[
+        MapEntry(matchingName, _collections[matchingName]!),
+      ];
+    } else {
+      collectionsToSearch = _collections.entries;
+    }
+
+    final matches = <_StoredPopLocation>[];
+
+    for (final collection in collectionsToSearch) {
+      for (var index = 0; index < collection.value.length; index++) {
+        final storedPop = collection.value[index];
+
+        if (storedPop.id.trim() != normalizedId) {
+          continue;
+        }
+
+        if (recordKey != null && storedPop.collectionRecordKey != recordKey) {
+          continue;
+        }
+
+        matches.add((
+          collectionName: collection.key,
+          pops: collection.value,
+          index: index,
+        ));
+
+        if (matches.length > 1) {
+          return null;
+        }
+      }
+    }
+
+    return matches.singleOrNull;
   }
 
   List<ValueHistoryEntry> _updatedValueHistory({

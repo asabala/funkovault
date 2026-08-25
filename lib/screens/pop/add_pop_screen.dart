@@ -23,9 +23,10 @@ import '../../widgets/pop/pop_form.dart';
 import '../../widgets/vault/vault_scroll_view.dart';
 
 class AddPopScreen extends StatefulWidget {
-  const AddPopScreen({super.key, this.atlasProduct});
+  const AddPopScreen({super.key, this.atlasProduct, this.collectionName});
 
   final AtlasCatalogProduct? atlasProduct;
+  final String? collectionName;
 
   @override
   State<AddPopScreen> createState() => _AddPopScreenState();
@@ -289,7 +290,24 @@ class _AddPopScreenState extends State<AddPopScreen> {
             isWishlist: false,
           );
 
-    await context.read<AppState>().addPop(pop);
+    final added = await context.read<AppState>().addPop(
+      pop,
+      collectionName: widget.collectionName,
+    );
+
+    if (!added) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'This collection could not be found. The Pop was not added.',
+            ),
+          ),
+        );
+      }
+
+      return;
+    }
 
     AtlasActivityService.record(
       title: 'Pop Added',

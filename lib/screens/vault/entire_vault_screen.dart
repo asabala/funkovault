@@ -206,10 +206,56 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
   }
 
   Future<void> _openValueEditor(Pop pop) async {
+    final appState = context.read<AppState>();
+
+    String? collectionName = widget.collectionName;
+
+    if (collectionName == null) {
+      final matchingCollections = appState.collectionNamesContainingPop(pop);
+
+      if (matchingCollections.length != 1) {
+        if (!mounted) {
+          return;
+        }
+
+        final message = matchingCollections.isEmpty
+            ? 'This Pop could not be matched to a saved collection.'
+            : 'This Pop exists in more than one collection. Open the specific collection before editing its value.';
+
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(message)));
+
+        return;
+      }
+
+      collectionName = matchingCollections.single;
+    }
+
+    if (!appState.hasCollection(collectionName)) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'This collection could not be found. No changes were made.',
+          ),
+        ),
+      );
+
+      return;
+    }
+
     await Navigator.push<Pop>(
       context,
       MaterialPageRoute(
-        builder: (_) => EditPopScreen(pop: pop, focusValueField: true),
+        builder: (_) => EditPopScreen(
+          pop: pop,
+          collectionName: collectionName,
+          focusValueField: true,
+        ),
       ),
     );
   }
@@ -630,6 +676,7 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
                   filterLabel: _filterMode.label,
                   sortLabel: _sortMode.label,
                   showImages: _showImages,
+                  collectionName: widget.collectionName,
                   onAddValue: _filterMode == _VaultFilterMode.needsValue
                       ? _openValueEditor
                       : null,

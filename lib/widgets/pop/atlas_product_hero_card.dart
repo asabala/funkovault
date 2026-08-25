@@ -49,25 +49,14 @@ class AtlasProductHeroCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _HeroTopRow(
-            pop: pop,
-          ),
+          _HeroTopRow(pop: pop),
           const SizedBox(height: AtlasSpacing.lg),
-          Center(
-            child: AtlasProductImage(
-              imageUrl: pop.imageUrl,
-            ),
-          ),
+          Center(child: AtlasProductImage(imageUrl: pop.imageUrl)),
           const SizedBox(height: AtlasSpacing.lg),
-          Text(
-            pop.name,
-            style: AtlasTypography.headingLarge,
-          ),
+          Text(pop.name, style: AtlasTypography.headingLarge),
           const SizedBox(height: AtlasSpacing.xs),
           Text(
-            seriesLabel.isEmpty
-                ? numberLabel
-                : '$numberLabel • $seriesLabel',
+            seriesLabel.isEmpty ? numberLabel : '$numberLabel • $seriesLabel',
             style: AtlasTypography.bodyMedium.copyWith(
               color: AtlasColors.textSecondary,
             ),
@@ -97,16 +86,13 @@ class AtlasProductHeroCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: AtlasSpacing.sm),
-          PopIdentityBadges(
-            pop: pop,
-            showStandardBadge: true,
-          ),
+          PopIdentityBadges(pop: pop, showStandardBadge: true),
           if (completionPrompt != null) ...[
             const SizedBox(height: AtlasSpacing.lg),
             AtlasActionRow(
               title: 'Complete Listing',
               description:
-              '${completionPrompt.actionLabel}. ${completionPrompt.supportingText}',
+                  '${completionPrompt.actionLabel}. ${completionPrompt.supportingText}',
               icon: Icons.lightbulb_outline_rounded,
               accentColor: AtlasColors.vaultGold,
               onTap: onCompleteListing,
@@ -119,9 +105,7 @@ class AtlasProductHeroCard extends StatelessWidget {
 }
 
 class _HeroTopRow extends StatelessWidget {
-  const _HeroTopRow({
-    required this.pop,
-  });
+  const _HeroTopRow({required this.pop});
 
   final Pop pop;
 
@@ -139,9 +123,7 @@ class _HeroTopRow extends StatelessWidget {
         ),
         const SizedBox(width: AtlasSpacing.sm),
         AtlasChip(
-          label: pop.isWishlist
-              ? 'Wishlist'
-              : 'Owned: ${pop.quantity}',
+          label: pop.isWishlist ? 'Wishlist' : 'Owned: ${pop.quantity}',
           icon: pop.isWishlist
               ? Icons.favorite_rounded
               : Icons.inventory_2_rounded,
@@ -171,19 +153,12 @@ class _HeroMarketStats extends StatelessWidget {
     final bool hasValue = value > 0;
 
     return LayoutBuilder(
-      builder: (
-          BuildContext context,
-          BoxConstraints constraints,
-          ) {
-        final bool useVerticalLayout =
-            constraints.maxWidth < 330;
+      builder: (BuildContext context, BoxConstraints constraints) {
+        final bool useVerticalLayout = constraints.maxWidth < 330;
 
-        final AtlasMetricPanel valuePanel =
-        AtlasMetricPanel(
+        final AtlasMetricPanel valuePanel = AtlasMetricPanel(
           label: 'Current Value',
-          value: hasValue
-              ? '\$${value.toStringAsFixed(2)}'
-              : 'Value needed',
+          value: hasValue ? '\$${value.toStringAsFixed(2)}' : 'Value needed',
           supportingText: _trendLabel(
             trendPercent: trendPercent,
             timeframe: trendTimeframe,
@@ -191,8 +166,7 @@ class _HeroMarketStats extends StatelessWidget {
           icon: Icons.attach_money_rounded,
         );
 
-        final AtlasMetricPanel scorePanel =
-        AtlasMetricPanel(
+        final AtlasMetricPanel scorePanel = AtlasMetricPanel(
           label: 'Collector Score',
           value: '$score / 100',
           supportingText: classification,
@@ -203,27 +177,18 @@ class _HeroMarketStats extends StatelessWidget {
           return Column(
             children: [
               valuePanel,
-              const SizedBox(
-                height: AtlasSpacing.md,
-              ),
+              const SizedBox(height: AtlasSpacing.md),
               scorePanel,
             ],
           );
         }
 
         return Row(
-          crossAxisAlignment:
-          CrossAxisAlignment.stretch,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: valuePanel,
-            ),
-            const SizedBox(
-              width: AtlasSpacing.md,
-            ),
-            Expanded(
-              child: scorePanel,
-            ),
+            Expanded(child: valuePanel),
+            const SizedBox(width: AtlasSpacing.md),
+            Expanded(child: scorePanel),
           ],
         );
       },
@@ -240,8 +205,7 @@ class _HeroMarketStats extends StatelessWidget {
       return 'No trend yet';
     }
 
-    final String direction =
-    trend > 0 ? '+' : '';
+    final String direction = trend > 0 ? '+' : '';
 
     return '$direction${trend.toStringAsFixed(1)}% ($timeframe)';
   }
@@ -254,12 +218,7 @@ List<Widget> _buildPrimaryIdentityChips(Pop pop) {
     final cleaned = value.trim();
 
     if (_isMeaningfulIdentityValue(cleaned)) {
-      chips.add(
-        AtlasChip(
-          label: cleaned,
-          icon: icon,
-        ),
-      );
+      chips.add(AtlasChip(label: cleaned, icon: icon));
     }
   }
 
@@ -270,10 +229,7 @@ List<Widget> _buildPrimaryIdentityChips(Pop pop) {
 
   if (_isMeaningfulSignature(pop.signature)) {
     chips.add(
-      AtlasChip(
-        label: pop.signature.trim(),
-        icon: Icons.draw_outlined,
-      ),
+      AtlasChip(label: pop.signature.trim(), icon: Icons.draw_outlined),
     );
   }
 
