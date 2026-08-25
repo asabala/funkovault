@@ -94,7 +94,9 @@ Widget build(BuildContext context) {
 final appState = context.watch<AppState>();
 
 final List<Pop> allPops =
-appState.selectedCollectionPops;
+appState.popsForCollection(
+  widget.collectionName,
+);
 
 final List<Pop> filteredPops =
 allPops.where((pop) {
@@ -192,14 +194,24 @@ return Scaffold(
           Icons.merge_type,
         ),
         tooltip: 'Merge Duplicates',
-        onPressed: () {
-          appState.mergeDuplicates();
+        onPressed: () async {
+          final bool merged =
+          await appState.mergeDuplicates(
+            collectionName:
+            widget.collectionName,
+          );
+
+          if (!context.mounted) {
+            return;
+          }
 
           ScaffoldMessenger.of(context)
               .showSnackBar(
-            const SnackBar(
+            SnackBar(
               content: Text(
-                'Duplicates merged',
+                merged
+                    ? 'Duplicates merged'
+                    : 'Could not merge duplicates because this collection no longer exists.',
               ),
             ),
           );

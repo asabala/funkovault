@@ -1320,12 +1320,18 @@ class AppState extends ChangeNotifier {
     return earliestValue;
   }
 
-  Future<void> mergeDuplicates() async {
-    final pops = _collections[_selectedCollection];
+  Future<bool> mergeDuplicates({String? collectionName}) async {
+    final String targetCollection = collectionName ?? _selectedCollection;
 
-    if (pops == null) {
-      return;
+    final String? matchingCollection = _matchingCollectionName(
+      targetCollection,
+    );
+
+    if (matchingCollection == null) {
+      return false;
     }
+
+    final List<Pop> pops = _collections[matchingCollection]!;
 
     final now = DateTime.now().toIso8601String();
     final merged = <String, Pop>{};
@@ -1350,11 +1356,13 @@ class AppState extends ChangeNotifier {
       }
     }
 
-    _collections[_selectedCollection] = merged.values.toList();
+    _collections[matchingCollection] = merged.values.toList();
 
     await _saveData();
 
     notifyListeners();
+
+    return true;
   }
 
   Future<void> addActivity(Activity activity) async {

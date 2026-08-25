@@ -512,4 +512,72 @@ void main() {
       expect(state.popsForCollection('Arthur Collection'), hasLength(2));
     },
   );
+  test('scoped merge duplicates changes only requested collection', () async {
+    final state = AppState();
+
+    final arthurFirst = pop(id: 'arthur-merge-a').copyWith(number: '77');
+
+    final arthurSecond = pop(id: 'arthur-merge-b').copyWith(number: '77');
+
+    final familyFirst = pop(id: 'family-merge-a').copyWith(number: '88');
+
+    final familySecond = pop(id: 'family-merge-b').copyWith(number: '88');
+
+    state.collections['Arthur Collection']!.addAll([arthurFirst, arthurSecond]);
+
+    state.collections['Entire Family Collection']!.addAll([
+      familyFirst,
+      familySecond,
+    ]);
+
+    final bool merged = await state.mergeDuplicates(
+      collectionName: 'Arthur Collection',
+    );
+
+    expect(merged, isTrue);
+
+    expect(state.popsForCollection('Arthur Collection'), hasLength(1));
+
+    expect(state.popsForCollection('Arthur Collection').single.quantity, 2);
+
+    expect(state.popsForCollection('Entire Family Collection'), hasLength(2));
+  });
+
+  test('explicit missing merge target fails without fallback', () async {
+    final state = AppState();
+
+    final first = pop(id: 'missing-merge-a').copyWith(number: '99');
+
+    final second = pop(id: 'missing-merge-b').copyWith(number: '99');
+
+    state.collections['Arthur Collection']!.addAll([first, second]);
+
+    final bool merged = await state.mergeDuplicates(
+      collectionName: 'Missing Collection',
+    );
+
+    expect(merged, isFalse);
+
+    expect(state.popsForCollection('Arthur Collection'), hasLength(2));
+  });
+
+  test('unscoped merge preserves selected collection behavior', () async {
+    final state = AppState();
+
+    final first = pop(id: 'legacy-merge-a').copyWith(number: '44');
+
+    final second = pop(id: 'legacy-merge-b').copyWith(number: '44');
+
+    state.collections['Arthur Collection']!.addAll([first, second]);
+
+    await state.setSelectedCollection('Arthur Collection');
+
+    final bool merged = await state.mergeDuplicates();
+
+    expect(merged, isTrue);
+
+    expect(state.popsForCollection('Arthur Collection'), hasLength(1));
+
+    expect(state.popsForCollection('Arthur Collection').single.quantity, 2);
+  });
 }
