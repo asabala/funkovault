@@ -54,12 +54,12 @@ Future<void> _openManualAdd(BuildContext context, String collectionName) {
   );
 }
 
-Future<void> _openCatalogSearch(BuildContext context) {
+Future<void> _openCatalogSearch(BuildContext context, String collectionName) {
   return Navigator.push<void>(
     context,
     MaterialPageRoute<void>(
       builder: (_) {
-        return const FunkoCatalogScreen();
+        return FunkoCatalogScreen(collectionName: collectionName);
       },
     ),
   );
@@ -483,7 +483,7 @@ class _CatalogResolutionCard extends StatelessWidget {
           actions: [
             FilledButton.icon(
               onPressed: () {
-                _openCatalogSearch(context);
+                _openCatalogSearch(context, collectionName);
               },
               icon: const Icon(Icons.search_rounded),
               label: const Text('🔎 Search Catalog'),
