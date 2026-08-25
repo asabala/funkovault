@@ -5,21 +5,20 @@ import '../services/atlas_catalog_bootstrap_service.dart';
 import '../services/atlas_catalog_sync_service.dart';
 
 final class AtlasCatalogMaintenanceController {
-  AtlasCatalogMaintenanceController({
-    AtlasCatalogSyncRepository? repository,
-  }) : _repository =
-      repository ?? SupabaseAtlasCatalogSyncRepository();
+  AtlasCatalogMaintenanceController({this.repository});
 
-  final AtlasCatalogSyncRepository _repository;
+  final AtlasCatalogSyncRepository? repository;
 
   Future<AtlasCatalogSyncResult> syncCatalog() async {
-    final AtlasCatalogSyncService syncService =
-    AtlasCatalogSyncService(_repository);
+    final AtlasCatalogSyncRepository syncRepository =
+        repository ?? SupabaseAtlasCatalogSyncRepository();
+
+    final AtlasCatalogSyncService syncService = AtlasCatalogSyncService(
+      syncRepository,
+    );
 
     final AtlasCatalogBootstrapService bootstrapService =
-    AtlasCatalogBootstrapService(
-      syncService: syncService,
-    );
+        AtlasCatalogBootstrapService(syncService: syncService);
 
     return bootstrapService.syncBundledPopVinylCatalog();
   }

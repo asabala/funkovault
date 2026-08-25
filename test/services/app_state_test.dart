@@ -206,4 +206,259 @@ void main() {
     expect(persisted, isNull);
     expect(state.selectedCollectionPops.single, same(original));
   });
+
+  Pop importedPop({required String id, String name = 'Imported Pop'}) {
+    return Pop(
+      id: id,
+      name: name,
+      number: id,
+      category: 'Heroes',
+      series: 'Import Test',
+      edition: 'Common',
+      variant: 'Common',
+      retailExclusive: 'None',
+      eventSticker: 'None',
+      limitedEdition: 'None',
+      signature: 'Unsigned',
+      sourceCatalogId: 'catalog-$id',
+      sourceCollectibleId: 'collectible-$id',
+      sourceUpc: '',
+      productionStatus: '',
+      releaseDate: '',
+      gradingCompany: '',
+      authenticityNumber: '',
+      value: 20,
+      pricePaid: 10,
+      quantity: 1,
+      itemCondition: 'Mint',
+      boxCondition: 'Mint',
+      imageUrl: '',
+      owner: 'Imported Owner',
+      isWishlist: false,
+    );
+  }
+
+  test(
+    'explicit import targets requested collection instead of selected collection',
+    () async {
+      final state = AppState();
+
+      expect(
+        await state.addCollection('Import Target'),
+        CollectionOperationResult.success,
+      );
+
+      expect(
+        await state.addCollection('Other Collection'),
+        CollectionOperationResult.success,
+      );
+
+      expect(
+        await state.setSelectedCollection('Other Collection'),
+        CollectionOperationResult.success,
+      );
+
+      final result = await state.importPopsSafely(<Pop>[
+        importedPop(id: 'explicit-import'),
+      ], collectionName: 'Import Target');
+
+      expect(result.attempted, 1);
+      expect(result.added, 1);
+      expect(result.skipped, 0);
+
+      expect(state.popsForCollection('Import Target'), hasLength(1));
+
+      expect(
+        state.popsForCollection('Import Target').single.id,
+        'explicit-import',
+      );
+
+      expect(state.popsForCollection('Other Collection'), isEmpty);
+
+      expect(state.selectedCollection, 'Other Collection');
+    },
+  );
+
+  test(
+    'changing selected collection does not redirect explicit import',
+    () async {
+      final state = AppState();
+
+      expect(
+        await state.addCollection('Captured Import'),
+        CollectionOperationResult.success,
+      );
+
+      expect(
+        await state.addCollection('Later Selection'),
+        CollectionOperationResult.success,
+      );
+
+      final String capturedCollection = 'Captured Import';
+
+      expect(
+        await state.setSelectedCollection('Later Selection'),
+        CollectionOperationResult.success,
+      );
+
+      final result = await state.importPopsSafely(<Pop>[
+        importedPop(id: 'captured-import'),
+      ], collectionName: capturedCollection);
+
+      expect(result.added, 1);
+
+      expect(state.popsForCollection('Captured Import'), hasLength(1));
+
+      expect(state.popsForCollection('Later Selection'), isEmpty);
+    },
+  );
+
+  test(
+    'missing explicit import collection fails safely without fallback',
+    () async {
+      final state = AppState();
+
+      final String selectedBefore = state.selectedCollection;
+
+      final int selectedCountBefore = state
+          .popsForCollection(selectedBefore)
+          .length;
+
+      final result = await state.importPopsSafely(<Pop>[
+        importedPop(id: 'missing-target'),
+      ], collectionName: 'Missing Collection');
+
+      expect(result.attempted, 1);
+      expect(result.added, 0);
+      expect(result.skipped, 1);
+
+      expect(state.selectedCollection, selectedBefore);
+
+      expect(
+        state.popsForCollection(selectedBefore),
+        hasLength(selectedCountBefore),
+      );
+    },
+  );
+
+  test(
+    'null import collection preserves selected-collection behavior',
+    () async {
+      final state = AppState();
+
+      expect(
+        await state.addCollection('Legacy Import'),
+        CollectionOperationResult.success,
+      );
+
+      expect(
+        await state.setSelectedCollection('Legacy Import'),
+        CollectionOperationResult.success,
+      );
+
+      final result = await state.importPopsSafely(<Pop>[
+        importedPop(id: 'legacy-import'),
+      ]);
+
+      expect(result.added, 1);
+
+      expect(state.popsForCollection('Legacy Import'), hasLength(1));
+
+      expect(
+        state.popsForCollection('Legacy Import').single.id,
+        'legacy-import',
+      );
+    },
+  );
+
+  test('clearCollection clears only requested collection', () async {
+    final state = AppState();
+
+    expect(
+      await state.addCollection('Clear Target'),
+      CollectionOperationResult.success,
+    );
+
+    expect(
+      await state.addCollection('Keep Collection'),
+      CollectionOperationResult.success,
+    );
+
+    state.collections['Clear Target']!.add(importedPop(id: 'remove-me'));
+
+    state.collections['Keep Collection']!.add(importedPop(id: 'keep-me'));
+
+    expect(
+      await state.setSelectedCollection('Keep Collection'),
+      CollectionOperationResult.success,
+    );
+
+    final bool cleared = await state.clearCollection('Clear Target');
+
+    expect(cleared, isTrue);
+
+    expect(state.popsForCollection('Clear Target'), isEmpty);
+
+    expect(state.popsForCollection('Keep Collection'), hasLength(1));
+
+    expect(state.popsForCollection('Keep Collection').single.id, 'keep-me');
+
+    expect(state.selectedCollection, 'Keep Collection');
+  });
+
+  test(
+    'clearCollection missing target returns false and changes nothing',
+    () async {
+      final state = AppState();
+
+      expect(
+        await state.addCollection('Safe Collection'),
+        CollectionOperationResult.success,
+      );
+
+      state.collections['Safe Collection']!.add(importedPop(id: 'stay-safe'));
+
+      final bool cleared = await state.clearCollection('Missing Collection');
+
+      expect(cleared, isFalse);
+
+      expect(state.popsForCollection('Safe Collection'), hasLength(1));
+
+      expect(state.popsForCollection('Safe Collection').single.id, 'stay-safe');
+    },
+  );
+
+  test(
+    'clearSelectedCollection preserves legacy selected-collection behavior',
+    () async {
+      final state = AppState();
+
+      expect(
+        await state.addCollection('Legacy Clear'),
+        CollectionOperationResult.success,
+      );
+
+      expect(
+        await state.addCollection('Untouched Collection'),
+        CollectionOperationResult.success,
+      );
+
+      state.collections['Legacy Clear']!.add(importedPop(id: 'legacy-clear'));
+
+      state.collections['Untouched Collection']!.add(
+        importedPop(id: 'untouched'),
+      );
+
+      expect(
+        await state.setSelectedCollection('Legacy Clear'),
+        CollectionOperationResult.success,
+      );
+
+      await state.clearSelectedCollection();
+
+      expect(state.popsForCollection('Legacy Clear'), isEmpty);
+
+      expect(state.popsForCollection('Untouched Collection'), hasLength(1));
+    },
+  );
 }

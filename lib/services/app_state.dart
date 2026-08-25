@@ -781,20 +781,29 @@ class AppState extends ChangeNotifier {
     return true;
   }
 
-  Future<void> importPops(List<Pop> pops) async {
-    await importPopsSafely(pops);
+  Future<void> importPops(List<Pop> pops, {String? collectionName}) async {
+    await importPopsSafely(pops, collectionName: collectionName);
   }
 
-  Future<PopImportResult> importPopsSafely(List<Pop> importedPops) async {
-    final currentPops = _collections[_selectedCollection];
+  Future<PopImportResult> importPopsSafely(
+    List<Pop> importedPops, {
+    String? collectionName,
+  }) async {
+    final String targetCollection = collectionName ?? _selectedCollection;
 
-    if (currentPops == null) {
+    final String? matchingCollection = _matchingCollectionName(
+      targetCollection,
+    );
+
+    if (matchingCollection == null) {
       return PopImportResult(
         attempted: importedPops.length,
         added: 0,
         skipped: importedPops.length,
       );
     }
+
+    final List<Pop> currentPops = _collections[matchingCollection]!;
 
     final indexesByRecordKey = <String, int>{};
 
@@ -858,7 +867,7 @@ class AppState extends ChangeNotifier {
         action: 'csv_import',
         popName: 'CSV Import',
         popNumber: '',
-        owner: _selectedCollection,
+        owner: matchingCollection,
         actor: _collectorProfile.displayName,
         details:
             'CSV import complete: $added records added, '
@@ -1106,14 +1115,16 @@ class AppState extends ChangeNotifier {
     return List<ValueHistoryEntry>.unmodifiable(entries);
   }
 
-  Future<void> clearSelectedCollection() async {
-    final pops = _collections[_selectedCollection];
+  Future<bool> clearCollection(String collectionName) async {
+    final String? matchingCollection = _matchingCollectionName(collectionName);
 
-    if (pops == null) {
-      return;
+    if (matchingCollection == null) {
+      return false;
     }
 
-    final removedCount = pops.length;
+    final List<Pop> pops = _collections[matchingCollection]!;
+
+    final int removedCount = pops.length;
 
     pops.clear();
 
@@ -1123,9 +1134,9 @@ class AppState extends ChangeNotifier {
         action: 'collection_cleared',
         popName: 'Collection Cleared',
         popNumber: '',
-        owner: _selectedCollection,
+        owner: matchingCollection,
         actor: _collectorProfile.displayName,
-        details: 'Cleared $removedCount Pops from $_selectedCollection',
+        details: 'Cleared $removedCount Pops from $matchingCollection',
         timestamp: DateTime.now(),
       ),
     );
@@ -1133,6 +1144,12 @@ class AppState extends ChangeNotifier {
     await _saveData();
 
     notifyListeners();
+
+    return true;
+  }
+
+  Future<void> clearSelectedCollection() async {
+    await clearCollection(_selectedCollection);
   }
 
   Future<bool> consolidateDuplicateGroup(List<String> popIds) async {

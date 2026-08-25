@@ -140,7 +140,7 @@ class _VaultMaintenanceScreenState
         appState.selectedCollection;
 
     final int popCount =
-        appState.selectedCollectionPops.length;
+        appState.popsForCollection(collectionName).length;
 
     final bool? confirmed =
     await showDialog<bool>(
@@ -189,9 +189,24 @@ class _VaultMaintenanceScreenState
       return;
     }
 
-    await appState.clearSelectedCollection();
+    final bool cleared =
+    await appState.clearCollection(
+      collectionName,
+    );
 
     if (!context.mounted) {
+      return;
+    }
+
+    if (!cleared) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Could not clear "$collectionName" because that collection no longer exists.',
+          ),
+        ),
+      );
+
       return;
     }
 

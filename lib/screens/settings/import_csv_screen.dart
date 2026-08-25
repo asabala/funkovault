@@ -15,7 +15,10 @@ import '../../widgets/vault/vault_scroll_view.dart';
 class ImportCsvScreen extends StatefulWidget {
   const ImportCsvScreen({
     super.key,
+    this.collectionName,
   });
+
+  final String? collectionName;
 
   @override
   State<ImportCsvScreen> createState() {
@@ -33,6 +36,16 @@ class _ImportCsvScreenState extends State<ImportCsvScreen> {
   bool _isImporting = false;
   String? _selectedFileName;
   String? _operationError;
+  String? _capturedCollectionName;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    _capturedCollectionName ??=
+        widget.collectionName ??
+            context.read<AppState>().selectedCollection;
+  }
 
   @override
   void dispose() {
@@ -183,6 +196,7 @@ class _ImportCsvScreenState extends State<ImportCsvScreen> {
           .read<AppState>()
           .importPopsSafely(
         parseResult.pops,
+        collectionName: _capturedCollectionName,
       );
 
       if (!mounted) {
