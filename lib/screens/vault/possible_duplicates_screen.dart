@@ -19,7 +19,12 @@ import '../../widgets/atlas/components/atlas_section_header.dart';
 import '../../widgets/atlas/components/atlas_status_chip.dart';
 
 class PossibleDuplicatesScreen extends StatefulWidget {
-  const PossibleDuplicatesScreen({super.key});
+  const PossibleDuplicatesScreen({
+    super.key,
+    required this.collectionName,
+  });
+
+  final String collectionName;
 
   @override
   State<PossibleDuplicatesScreen> createState() =>
@@ -71,7 +76,9 @@ class _PossibleDuplicatesScreenState extends State<PossibleDuplicatesScreen> {
   @override
   Widget build(BuildContext context) {
     final appState = context.watch<AppState>();
-    final pops = appState.selectedCollectionPops;
+    final pops = appState.popsForCollection(
+      widget.collectionName,
+    );
 
     final duplicateReport = const DuplicateReviewService().buildReport(pops);
     final sameIdentityGroups = duplicateReport.sameIdentityGroups;
@@ -180,6 +187,7 @@ class _PossibleDuplicatesScreenState extends State<PossibleDuplicatesScreen> {
               if (showSameIdentity) ...[
                 const SizedBox(height: AtlasSpacing.lg),
                 _DuplicateSection(
+                  collectionName: widget.collectionName,
                   title: 'Exact Duplicate Groups',
                   subtitle:
                   'These records share the same Atlas release fingerprint. Review them before consolidating quantities or correcting collection data.',
@@ -193,6 +201,7 @@ class _PossibleDuplicatesScreenState extends State<PossibleDuplicatesScreen> {
               if (showPossibleVariants) ...[
                 const SizedBox(height: AtlasSpacing.lg),
                 _DuplicateSection(
+                  collectionName: widget.collectionName,
                   title: 'Related Release Groups',
                   subtitle:
                   'These collectibles share a broad identity but contain meaningful differences. Atlas classifies the strongest known difference and explains why the group needs review.',
@@ -306,6 +315,7 @@ class _FilterChipButton extends StatelessWidget {
 
 class _DuplicateSection extends StatelessWidget {
   const _DuplicateSection({
+    required this.collectionName,
     required this.title,
     required this.subtitle,
     required this.emptyMessage,
@@ -315,6 +325,7 @@ class _DuplicateSection extends StatelessWidget {
     required this.showImages,
   });
 
+  final String collectionName;
   final String title;
   final String subtitle;
   final String emptyMessage;
@@ -348,6 +359,7 @@ class _DuplicateSection extends StatelessWidget {
                   (group) => Padding(
                 padding: const EdgeInsets.only(bottom: AtlasSpacing.md),
                 child: _DuplicateGroupCard(
+                  collectionName: collectionName,
                   group: group,
                   badgeText: badgeText,
                   badgeColor: badgeColor,
@@ -363,12 +375,14 @@ class _DuplicateSection extends StatelessWidget {
 
 class _DuplicateGroupCard extends StatelessWidget {
   const _DuplicateGroupCard({
+    required this.collectionName,
     required this.group,
     required this.badgeText,
     required this.badgeColor,
     required this.showImages,
   });
 
+  final String collectionName;
   final DuplicateReviewGroup group;
   final String badgeText;
   final Color badgeColor;
@@ -425,6 +439,7 @@ class _DuplicateGroupCard extends StatelessWidget {
               child: _DuplicatePopTile(
                 pop: pop,
                 showImages: showImages,
+                collectionName: collectionName,
               ),
             ),
           ),
@@ -668,16 +683,21 @@ class _DuplicatePopTile extends StatelessWidget {
   const _DuplicatePopTile({
     required this.pop,
     required this.showImages,
+    required this.collectionName,
   });
 
   final Pop pop;
   final bool showImages;
+  final String collectionName;
 
   void _openDetails(BuildContext context) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => PopDetailsScreen(pop: pop),
+        builder: (_) => PopDetailsScreen(
+          pop: pop,
+          collectionName: collectionName,
+        ),
       ),
     );
   }

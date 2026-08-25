@@ -495,7 +495,9 @@ class _VaultMaintenanceScreenState
                       context,
                       MaterialPageRoute<void>(
                         builder: (_) =>
-                        const PossibleDuplicatesScreen(),
+                            PossibleDuplicatesScreen(
+                              collectionName: collectionName,
+                            ),
                       ),
                     );
                   },
