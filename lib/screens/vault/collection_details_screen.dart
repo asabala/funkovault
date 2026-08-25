@@ -531,6 +531,8 @@ Colors.white,
     if (result == true) {
       await appState.deletePop(
         pop.id,
+        collectionName: widget.collectionName,
+        recordKey: pop.collectionRecordKey,
       );
 
       if (!context.mounted) {
@@ -662,8 +664,9 @@ context,
 MaterialPageRoute(
 builder: (_) =>
 PopDetailsScreen(
-pop: pop,
-),
+  pop: pop,
+  collectionName: widget.collectionName,
+  ),
 ),
 );
 },
@@ -684,7 +687,9 @@ Navigator.push(
 context,
 MaterialPageRoute(
 builder: (_) =>
-const AddPopScreen(),
+AddPopScreen(
+  collectionName: widget.collectionName,
+),
 ),
 );
 },
