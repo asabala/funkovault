@@ -1152,27 +1152,59 @@ class AppState extends ChangeNotifier {
     await clearCollection(_selectedCollection);
   }
 
-  Future<bool> consolidateDuplicateGroup(List<String> popIds) async {
+  Future<bool> consolidateDuplicateGroup(
+    List<String> popIds, {
+    String? collectionName,
+  }) async {
     if (popIds.length < 2) {
       return false;
     }
 
     List<Pop>? matchingCollection;
-    final matchingPops = <Pop>[];
+    List<Pop>? matchingPops;
 
-    for (final collection in _collections.values) {
-      final foundPops = collection
+    if (collectionName != null) {
+      final String? matchingName = _matchingCollectionName(collectionName);
+
+      if (matchingName == null) {
+        return false;
+      }
+
+      final List<Pop> collection = _collections[matchingName]!;
+
+      final List<Pop> foundPops = collection
           .where((pop) => popIds.contains(pop.id))
           .toList();
 
-      if (foundPops.length == popIds.length) {
-        matchingCollection = collection;
-        matchingPops.addAll(foundPops);
-        break;
+      if (foundPops.length != popIds.length) {
+        return false;
       }
+
+      matchingCollection = collection;
+      matchingPops = foundPops;
+    } else {
+      final matchingLocations = <({List<Pop> collection, List<Pop> pops})>[];
+
+      for (final collection in _collections.values) {
+        final foundPops = collection
+            .where((pop) => popIds.contains(pop.id))
+            .toList();
+
+        if (foundPops.length == popIds.length) {
+          matchingLocations.add((collection: collection, pops: foundPops));
+        }
+      }
+
+      if (matchingLocations.length != 1) {
+        return false;
+      }
+
+      matchingCollection = matchingLocations.single.collection;
+
+      matchingPops = matchingLocations.single.pops;
     }
 
-    if (matchingCollection == null || matchingPops.length < 2) {
+    if (matchingPops.length < 2) {
       return false;
     }
 
@@ -1186,6 +1218,7 @@ class AppState extends ChangeNotifier {
     }
 
     final now = DateTime.now().toIso8601String();
+
     final primaryPop = matchingPops.first;
 
     final totalQuantity = matchingPops.fold<int>(

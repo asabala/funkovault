@@ -271,7 +271,10 @@ void main() {
       ),
       isTrue,
     );
-    expect(state.popsForCollection('Arthur Collection').single.id, 'scoped-add');
+    expect(
+      state.popsForCollection('Arthur Collection').single.id,
+      'scoped-add',
+    );
     expect(state.popsForCollection('Entire Family Collection'), isEmpty);
   });
 
@@ -299,8 +302,14 @@ void main() {
     );
 
     expect(persisted?.name, 'Updated Chase');
-    expect(state.popsForCollection('Arthur Collection').single.name, 'Updated Chase');
-    expect(state.popsForCollection('Entire Family Collection').single.name, 'Batman');
+    expect(
+      state.popsForCollection('Arthur Collection').single.name,
+      'Updated Chase',
+    );
+    expect(
+      state.popsForCollection('Entire Family Collection').single.name,
+      'Batman',
+    );
   });
 
   test('identity-changing update uses the original record key', () async {
@@ -352,7 +361,12 @@ void main() {
       ),
       isNull,
     );
-    expect(state.collections.values.expand((items) => items).every((item) => item.quantity == 1), isTrue);
+    expect(
+      state.collections.values
+          .expand((items) => items)
+          .every((item) => item.quantity == 1),
+      isTrue,
+    );
   });
 
   test('scoped delete removes exactly one repeated ID record', () async {
@@ -370,7 +384,10 @@ void main() {
       isTrue,
     );
     expect(state.popsForCollection('Arthur Collection'), hasLength(1));
-    expect(state.popsForCollection('Arthur Collection').single.variant, 'Chase');
+    expect(
+      state.popsForCollection('Arthur Collection').single.variant,
+      'Chase',
+    );
   });
 
   test('wrong, missing, and globally ambiguous deletes are blocked', () async {
@@ -397,4 +414,102 @@ void main() {
     );
     expect(state.totalPops, 2);
   });
+  test(
+    'scoped duplicate consolidation changes only requested collection',
+    () async {
+      final state = AppState();
+
+      final first = pop(id: 'duplicate-a');
+
+      final second = pop(id: 'duplicate-b');
+
+      state.collections['Arthur Collection']!.addAll([first, second]);
+
+      final unrelated = pop(id: 'unrelated');
+
+      state.collections['Entire Family Collection']!.add(unrelated);
+
+      final bool succeeded = await state.consolidateDuplicateGroup(<String>[
+        first.id,
+        second.id,
+      ], collectionName: 'Arthur Collection');
+
+      expect(succeeded, isTrue);
+
+      expect(state.popsForCollection('Arthur Collection'), hasLength(1));
+
+      expect(state.popsForCollection('Arthur Collection').single.quantity, 2);
+
+      expect(state.popsForCollection('Entire Family Collection'), hasLength(1));
+
+      expect(
+        state.popsForCollection('Entire Family Collection').single.id,
+        'unrelated',
+      );
+    },
+  );
+
+  test('duplicate consolidation rejects wrong explicit collection', () async {
+    final state = AppState();
+
+    final first = pop(id: 'wrong-scope-a');
+
+    final second = pop(id: 'wrong-scope-b');
+
+    state.collections['Arthur Collection']!.addAll([first, second]);
+
+    final bool succeeded = await state.consolidateDuplicateGroup(<String>[
+      first.id,
+      second.id,
+    ], collectionName: 'Entire Family Collection');
+
+    expect(succeeded, isFalse);
+
+    expect(state.popsForCollection('Arthur Collection'), hasLength(2));
+  });
+
+  test('unscoped ambiguous duplicate consolidation is blocked', () async {
+    final state = AppState();
+
+    final first = pop(id: 'ambiguous-a');
+
+    final second = pop(id: 'ambiguous-b');
+
+    state.collections['Entire Family Collection']!.addAll([first, second]);
+
+    state.collections['Arthur Collection']!.addAll([first, second]);
+
+    final bool succeeded = await state.consolidateDuplicateGroup(<String>[
+      first.id,
+      second.id,
+    ]);
+
+    expect(succeeded, isFalse);
+
+    expect(state.popsForCollection('Entire Family Collection'), hasLength(2));
+
+    expect(state.popsForCollection('Arthur Collection'), hasLength(2));
+  });
+
+  test(
+    'duplicate consolidation rejects different collectible identities',
+    () async {
+      final state = AppState();
+
+      final common = pop(id: 'identity-common');
+
+      final chase = pop(id: 'identity-chase', variant: 'Chase');
+
+      state.collections['Arthur Collection']!.addAll([common, chase]);
+
+      final bool succeeded = await state.consolidateDuplicateGroup(<String>[
+        common.id,
+        chase.id,
+      ], collectionName: 'Arthur Collection');
+
+      expect(succeeded, isFalse);
+
+      expect(state.popsForCollection('Arthur Collection'), hasLength(2));
+    },
+  );
 }

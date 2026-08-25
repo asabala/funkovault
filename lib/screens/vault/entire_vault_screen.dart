@@ -200,7 +200,10 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
     await Navigator.push<void>(
       context,
       MaterialPageRoute(
-        builder: (_) => DuplicateGroupReviewScreen(groupKey: group.key),
+        builder: (_) => DuplicateGroupReviewScreen(
+          groupKey: group.key,
+          collectionName: widget.collectionName,
+        ),
       ),
     );
   }

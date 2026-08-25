@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:funkovault2/models/pop.dart';
 import 'package:funkovault2/screens/pop/edit_pop_screen.dart';
 import 'package:funkovault2/screens/pop/pop_details_screen.dart';
+import 'package:funkovault2/screens/vault/duplicate_group_review_screen.dart';
 import 'package:funkovault2/screens/vault/entire_vault_screen.dart';
 import 'package:funkovault2/services/app_state.dart';
 import 'package:funkovault2/services/hive_service.dart';
@@ -253,5 +254,49 @@ void main() {
 
     expect(editor.collectionName, 'Entire Family Collection');
     expect(editor.pop.id, 'family-low');
+  });
+  testWidgets('scoped duplicate review forwards collection context', (
+    tester,
+  ) async {
+    final state = AppState();
+
+    final first = pop(
+      id: 'duplicate-a',
+      name: 'Scoped Duplicate',
+      value: 25,
+    ).copyWith(number: '77');
+
+    final second = pop(
+      id: 'duplicate-b',
+      name: 'Scoped Duplicate',
+      value: 25,
+    ).copyWith(number: '77');
+
+    state.collections['Arthur Collection']!.addAll([first, second]);
+
+    await pumpVault(
+      tester,
+      state,
+      const EntireVaultScreen(
+        collectionName: 'Arthur Collection',
+        initialFilterKey: 'duplicates',
+      ),
+    );
+
+    final reviewAction = find.text('Scoped Duplicate #77');
+
+    expect(reviewAction, findsOneWidget);
+
+    await tester.tap(reviewAction);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.byType(DuplicateGroupReviewScreen), findsOneWidget);
+
+    final reviewScreen = tester.widget<DuplicateGroupReviewScreen>(
+      find.byType(DuplicateGroupReviewScreen),
+    );
+
+    expect(reviewScreen.collectionName, 'Arthur Collection');
   });
 }
