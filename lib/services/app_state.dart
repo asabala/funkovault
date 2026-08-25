@@ -515,6 +515,18 @@ class AppState extends ChangeNotifier {
     );
   }
 
+  Set<String> ownedWishlistIdentityKeysForCollection(String collectionName) {
+    final String? matchingName = _matchingCollectionName(collectionName);
+
+    if (matchingName == null) {
+      return const <String>{};
+    }
+
+    return Set<String>.unmodifiable(
+      _ownedWishlistIdentityKeysByCollection[matchingName] ?? const <String>{},
+    );
+  }
+
   Set<String> get allOwnedWishlistIdentityKeys {
     final Set<String> identityKeys = <String>{};
 
@@ -526,32 +538,48 @@ class AppState extends ChangeNotifier {
     return Set<String>.unmodifiable(identityKeys);
   }
 
-  bool isOwnedPopWishlisted(Pop pop) {
+  bool isOwnedPopWishlisted(Pop pop, {String? collectionName}) {
     final String identityKey = pop.collectibleIdentityKey.trim();
 
     if (identityKey.isEmpty) {
       return false;
     }
 
+    final String? targetCollectionName = collectionName == null
+        ? _selectedCollection
+        : _matchingCollectionName(collectionName);
+
+    if (targetCollectionName == null) {
+      return false;
+    }
+
     final Set<String> identityKeys =
-        _ownedWishlistIdentityKeysByCollection[_selectedCollection] ??
+        _ownedWishlistIdentityKeysByCollection[targetCollectionName] ??
         const <String>{};
 
     return identityKeys.contains(identityKey);
   }
 
-  bool isCollectibleWishlisted(Pop pop) {
+  bool isCollectibleWishlisted(Pop pop, {String? collectionName}) {
     final String identityKey = pop.collectibleIdentityKey.trim();
 
     if (identityKey.isEmpty) {
       return false;
     }
 
-    if (isOwnedPopWishlisted(pop)) {
+    final String? targetCollectionName = collectionName == null
+        ? _selectedCollection
+        : _matchingCollectionName(collectionName);
+
+    if (targetCollectionName == null) {
+      return false;
+    }
+
+    if (isOwnedPopWishlisted(pop, collectionName: targetCollectionName)) {
       return true;
     }
 
-    final List<Pop> pops = _collections[_selectedCollection] ?? const <Pop>[];
+    final List<Pop> pops = _collections[targetCollectionName] ?? const <Pop>[];
 
     return pops.any((Pop existingPop) {
       return existingPop.isWishlist &&
@@ -559,15 +587,23 @@ class AppState extends ChangeNotifier {
     });
   }
 
-  Future<void> addOwnedPopToWishlist(Pop pop) async {
+  Future<void> addOwnedPopToWishlist(Pop pop, {String? collectionName}) async {
     final String identityKey = pop.collectibleIdentityKey.trim();
 
     if (identityKey.isEmpty) {
       return;
     }
 
+    final String? targetCollectionName = collectionName == null
+        ? _selectedCollection
+        : _matchingCollectionName(collectionName);
+
+    if (targetCollectionName == null) {
+      return;
+    }
+
     final Set<String> identityKeys = _ownedWishlistIdentityKeysByCollection
-        .putIfAbsent(_selectedCollection, () => <String>{});
+        .putIfAbsent(targetCollectionName, () => <String>{});
 
     if (!identityKeys.add(identityKey)) {
       return;
@@ -596,15 +632,26 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> removeOwnedPopFromWishlist(Pop pop) async {
+  Future<void> removeOwnedPopFromWishlist(
+    Pop pop, {
+    String? collectionName,
+  }) async {
     final String identityKey = pop.collectibleIdentityKey.trim();
 
     if (identityKey.isEmpty) {
       return;
     }
 
+    final String? targetCollectionName = collectionName == null
+        ? _selectedCollection
+        : _matchingCollectionName(collectionName);
+
+    if (targetCollectionName == null) {
+      return;
+    }
+
     final Set<String>? identityKeys =
-        _ownedWishlistIdentityKeysByCollection[_selectedCollection];
+        _ownedWishlistIdentityKeysByCollection[targetCollectionName];
 
     if (identityKeys == null || !identityKeys.remove(identityKey)) {
       return;
