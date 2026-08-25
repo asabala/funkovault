@@ -85,18 +85,104 @@ class DuplicateGroupReviewScreen extends StatelessWidget {
     return null;
   }
 
-  Future<void> _openEditor(BuildContext context, Pop pop) async {
-    await Navigator.push<Pop>(
-      context,
-      MaterialPageRoute(builder: (_) => EditPopScreen(pop: pop)),
+  String? _resolveCollectionName(
+      BuildContext context,
+      Pop pop,
+      ) {
+    final appState = context.read<AppState>();
+
+    final explicitCollectionName =
+        collectionName;
+
+    if (explicitCollectionName != null) {
+      if (!appState.hasCollection(
+        explicitCollectionName,
+      )) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Could not edit this Pop because its collection no longer exists.',
+            ),
+          ),
+        );
+
+        return null;
+      }
+
+      return explicitCollectionName;
+    }
+
+    final collectionNames =
+    appState.collectionNamesContainingPop(
+      pop,
     );
+
+    if (collectionNames.length != 1) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Could not edit this Pop because its collection could not be resolved safely.',
+          ),
+        ),
+      );
+
+      return null;
+    }
+
+    return collectionNames.single;
   }
 
-  Future<void> _openValueEditor(BuildContext context, Pop pop) async {
+  Future<void> _openEditor(
+      BuildContext context,
+      Pop pop,
+      ) async {
+    final targetCollectionName =
+    _resolveCollectionName(
+      context,
+      pop,
+    );
+
+    if (targetCollectionName == null) {
+      return;
+    }
+
     await Navigator.push<Pop>(
       context,
       MaterialPageRoute(
-        builder: (_) => EditPopScreen(pop: pop, focusValueField: true),
+        builder: (_) => EditPopScreen(
+          pop: pop,
+          collectionName:
+          targetCollectionName,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openValueEditor(
+      BuildContext context,
+      Pop pop,
+      ) async {
+    final targetCollectionName =
+    _resolveCollectionName(
+      context,
+      pop,
+    );
+
+    if (targetCollectionName == null) {
+      return;
+    }
+
+    await Navigator.push<Pop>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => EditPopScreen(
+          pop: pop,
+          collectionName:
+          targetCollectionName,
+          focusValueField: true,
+        ),
       ),
     );
   }

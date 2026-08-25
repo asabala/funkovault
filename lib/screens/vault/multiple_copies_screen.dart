@@ -21,7 +21,10 @@ import '../pop/edit_pop_screen.dart';
 class MultipleCopiesScreen extends StatelessWidget {
   const MultipleCopiesScreen({
     super.key,
+    this.collectionName,
   });
+
+  final String? collectionName;
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +33,10 @@ class MultipleCopiesScreen extends StatelessWidget {
     const repository = VaultRepository();
 
     final multipleCopyPops = repository
-        .allPops(appState)
+        .pops(
+      appState,
+      collectionName: collectionName,
+    )
         .where(
           (pop) => pop.quantity > 1,
     )
@@ -149,11 +155,56 @@ class MultipleCopiesScreen extends StatelessWidget {
       BuildContext context,
       Pop pop,
       ) async {
+    final appState = context.read<AppState>();
+
+    String? targetCollectionName =
+        collectionName;
+
+    if (targetCollectionName == null) {
+      final collectionNames =
+      appState.collectionNamesContainingPop(
+        pop,
+      );
+
+      if (collectionNames.length != 1) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Could not edit this Pop because its collection could not be resolved safely.',
+            ),
+          ),
+        );
+
+        return;
+      }
+
+      targetCollectionName =
+          collectionNames.single;
+    }
+
+    if (!appState.hasCollection(
+      targetCollectionName,
+    )) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Could not edit this Pop because its collection no longer exists.',
+          ),
+        ),
+      );
+
+      return;
+    }
+
     await Navigator.push<Pop>(
       context,
       MaterialPageRoute(
         builder: (_) => EditPopScreen(
           pop: pop,
+          collectionName:
+          targetCollectionName,
         ),
       ),
     );

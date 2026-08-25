@@ -7,6 +7,7 @@ import 'package:funkovault2/screens/pop/edit_pop_screen.dart';
 import 'package:funkovault2/screens/pop/pop_details_screen.dart';
 import 'package:funkovault2/screens/vault/duplicate_group_review_screen.dart';
 import 'package:funkovault2/screens/vault/entire_vault_screen.dart';
+import 'package:funkovault2/screens/vault/multiple_copies_screen.dart';
 import 'package:funkovault2/services/app_state.dart';
 import 'package:funkovault2/services/hive_service.dart';
 import 'package:funkovault2/widgets/atlas/atlas_stat_tile.dart';
@@ -298,5 +299,46 @@ void main() {
     );
 
     expect(reviewScreen.collectionName, 'Arthur Collection');
+  });
+
+  testWidgets('scoped multiple copies review forwards collection context', (
+      tester,
+      ) async {
+    final state = AppState();
+
+    state.collections['Arthur Collection']!.add(
+      pop(
+        id: 'multiple-copy',
+        name: 'Multiple Copy Pop',
+        value: 25,
+      ).copyWith(quantity: 2),
+    );
+
+    await pumpVault(
+      tester,
+      state,
+      const EntireVaultScreen(
+        collectionName: 'Arthur Collection',
+      ),
+    );
+
+    final reviewButton = find.byTooltip('Review Multiple Copies');
+
+    expect(reviewButton, findsOneWidget);
+
+    await tester.tap(reviewButton);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.byType(MultipleCopiesScreen), findsOneWidget);
+
+    final multipleCopiesScreen = tester.widget<MultipleCopiesScreen>(
+      find.byType(MultipleCopiesScreen),
+    );
+
+    expect(
+      multipleCopiesScreen.collectionName,
+      'Arthur Collection',
+    );
   });
 }

@@ -446,19 +446,20 @@ class _EntireVaultScreenState extends State<EntireVaultScreen> {
               : '${widget.collectionName} • Entire Vault',
         ),
         actions: [
-          if (widget.collectionName == null)
-            IconButton(
-              tooltip: 'Review Multiple Copies',
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const MultipleCopiesScreen(),
+          IconButton(
+            tooltip: 'Review Multiple Copies',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => MultipleCopiesScreen(
+                    collectionName: widget.collectionName,
                   ),
-                );
-              },
-              icon: const Icon(Icons.layers_rounded),
-            ),
+                ),
+              );
+            },
+            icon: const Icon(Icons.layers_rounded),
+          ),
         ],
       ),
       floatingActionButton: _showBackToTop
