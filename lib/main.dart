@@ -8,6 +8,7 @@ import 'config/atlas_config.dart';
 import 'security/auth_provider.dart';
 import 'services/app_state.dart';
 import 'services/hive_service.dart';
+import 'subscriptions/revenuecat_subscription_service.dart';
 import 'theme/atlas_theme.dart';
 
 Future<void> main() async {
@@ -22,9 +23,16 @@ Future<void> main() async {
     publishableKey: AtlasConfig.supabasePublishableKey,
   );
 
+  await Supabase.initialize(
+    url: AtlasConfig.supabaseUrl,
+    publishableKey: AtlasConfig.supabasePublishableKey,
+  );
+
   final appState = AppState();
 
   await appState.loadData();
+
+  await RevenueCatSubscriptionService.initialize();
 
   runApp(
     MultiProvider(
