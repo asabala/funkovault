@@ -23,19 +23,24 @@ class AtlasRoomScreen extends StatelessWidget {
     required this.description,
     required this.icon,
     this.categoryName,
+    this.collectionName,
   });
 
   final String roomName;
   final String description;
   final IconData icon;
   final String? categoryName;
+  final String? collectionName;
 
   @override
   Widget build(BuildContext context) {
     final appState = context.watch<AppState>();
     const repository = VaultRepository();
 
-    final allPops = repository.allPops(appState);
+    final allPops = collectionName == null
+        ? repository.allPops(appState)
+        : appState.popsForCollection(collectionName!);
+
     final roomPops = _roomPops(allPops);
 
     final roomValue = roomPops.fold<double>(
@@ -106,7 +111,9 @@ class AtlasRoomScreen extends StatelessWidget {
                         context,
                         MaterialPageRoute(
                           builder: (_) =>
-                          const FunkoCatalogScreen(),
+                              FunkoCatalogScreen(
+                                collectionName: collectionName,
+                              ),
                         ),
                       );
                     },
