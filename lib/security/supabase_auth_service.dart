@@ -88,6 +88,7 @@ class SupabaseAuthService implements AuthService {
 
     return AuthState(
       status: AuthStatus.authenticated,
+      userId: user.id,
       email: user.email,
       displayName: user.userMetadata?['display_name'] as String?,
       isPremium: isPremium,

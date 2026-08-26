@@ -10,9 +10,11 @@ class AuthState {
     required this.displayName,
     required this.isPremium,
     required this.emailVerified,
+    this.userId,
   });
 
   final AuthStatus status;
+  final String? userId;
   final String? email;
   final String? displayName;
   final bool isPremium;
@@ -23,6 +25,7 @@ class AuthState {
 
   AuthState copyWith({
     AuthStatus? status,
+    String? userId,
     String? email,
     String? displayName,
     bool? isPremium,
@@ -30,6 +33,7 @@ class AuthState {
   }) {
     return AuthState(
       status: status ?? this.status,
+      userId: userId ?? this.userId,
       email: email ?? this.email,
       displayName: displayName ?? this.displayName,
       isPremium: isPremium ?? this.isPremium,
@@ -41,6 +45,7 @@ class AuthState {
   factory AuthState.guest() {
     return const AuthState(
       status: AuthStatus.guest,
+      userId: null,
       email: null,
       displayName: null,
       isPremium: false,
