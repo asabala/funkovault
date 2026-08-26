@@ -414,6 +414,61 @@ void main() {
     );
     expect(state.totalPops, 2);
   });
+  test('scoped owner assignment changes only requested collection', () async {
+    final state = AppState();
+
+    expect(
+      state.selectedCollection,
+      'Entire Family Collection',
+    );
+
+    final familyPop = pop(
+      id: 'shared-owner-id',
+    );
+
+    final arthurPop = pop(
+      id: 'shared-owner-id',
+      variant: 'Chase',
+    );
+
+    await state.addPop(
+      familyPop,
+    );
+
+    await state.addPop(
+      arthurPop,
+      collectionName: 'Arthur Collection',
+    );
+
+    await state.updateOwnerForPops(
+      <String>[
+        arthurPop.id,
+      ],
+      'Arthur',
+      collectionName: 'Arthur Collection',
+    );
+
+    expect(
+      state.selectedCollection,
+      'Entire Family Collection',
+    );
+
+    expect(
+      state
+          .popsForCollection('Arthur Collection')
+          .single
+          .owner,
+      'Arthur',
+    );
+
+    expect(
+      state
+          .popsForCollection('Entire Family Collection')
+          .single
+          .owner,
+      familyPop.owner,
+    );
+  });
   test(
     'scoped duplicate consolidation changes only requested collection',
     () async {

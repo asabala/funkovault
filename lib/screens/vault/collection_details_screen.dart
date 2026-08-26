@@ -63,6 +63,7 @@ void _showAssignOwnerDialog(
                 await appState.updateOwnerForPops(
                   selectedIds,
                   owner,
+                  collectionName: widget.collectionName,
                 );
 
                 if (!mounted) return;
