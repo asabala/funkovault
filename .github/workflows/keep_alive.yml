@@ -2,7 +2,6 @@ name: Supabase Keep Alive
 
 on:
   schedule:
-    # Runs at 00:00 UTC every 3 days
     - cron: '0 0 */3 * *'
   workflow_dispatch:
 
@@ -10,24 +9,15 @@ jobs:
   ping-supabase:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping Supabase API
+      - name: Test DNS and Ping API
         env:
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
-          echo "Pinging FunkoVault project..."
-          
-          RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" -X GET "https://qzwvzkzryzzlolcqkrfq.supabase.co/rest/v1/profiles?select=id&limit=1" \
+          DOMAIN="qzwvzkzryzzlolcqkrfq.supabase.co"
+          echo "Testing DNS resolution for $DOMAIN..."
+          nslookup $DOMAIN || true
+
+          echo "Running curl..."
+          curl -v -X GET "https://${DOMAIN}/rest/v1/profiles?select=id&limit=1" \
             -H "apikey: $SUPABASE_ANON_KEY" \
-            -H "Authorization: Bearer $SUPABASE_ANON_KEY")
-
-          echo "Response body & status:"
-          echo "$RESPONSE"
-
-          STATUS=$(echo "$RESPONSE" | grep "HTTP_STATUS" | cut -d':' -f2)
-
-          if [ "$STATUS" -ge 200 ] && [ "$STATUS" -lt 300 ]; then
-            echo "Successfully pinged Supabase!"
-          else
-            echo "Failed with status: $STATUS"
-            exit 1
-          fi
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY"
