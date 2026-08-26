@@ -10,10 +10,13 @@ import 'subscription_tier.dart';
 class RevenueCatSubscriptionService implements SubscriptionService {
   const RevenueCatSubscriptionService();
 
+  static bool _isConfigured = false;
+
   static Future<void> initialize() async {
     final apiKey = _apiKeyForPlatform();
 
     if (apiKey.isEmpty) {
+      _isConfigured = false;
       return;
     }
 
@@ -22,6 +25,30 @@ class RevenueCatSubscriptionService implements SubscriptionService {
         apiKey,
       ),
     );
+
+    _isConfigured = true;
+  }
+
+  static Future<void> logIn(
+      String userId,
+      ) async {
+    final cleanedUserId = userId.trim();
+
+    if (!_isConfigured || cleanedUserId.isEmpty) {
+      return;
+    }
+
+    await Purchases.logIn(
+      cleanedUserId,
+    );
+  }
+
+  static Future<void> logOut() async {
+    if (!_isConfigured) {
+      return;
+    }
+
+    await Purchases.logOut();
   }
 
   static String _apiKeyForPlatform() {
@@ -46,6 +73,10 @@ class RevenueCatSubscriptionService implements SubscriptionService {
 
   @override
   Future<SubscriptionState> currentSubscription() async {
+    if (!_isConfigured) {
+      return SubscriptionState.basic();
+    }
+
     final customerInfo = await Purchases.getCustomerInfo();
 
     return _mapCustomerInfo(customerInfo);
@@ -53,6 +84,10 @@ class RevenueCatSubscriptionService implements SubscriptionService {
 
   @override
   Future<SubscriptionState> refreshSubscription() async {
+    if (!_isConfigured) {
+      return SubscriptionState.basic();
+    }
+
     final customerInfo = await Purchases.getCustomerInfo();
 
     return _mapCustomerInfo(customerInfo);

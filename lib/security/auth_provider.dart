@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'auth_controller.dart';
+import '../subscriptions/revenuecat_subscription_service.dart';
 import 'supabase_auth_service.dart';
 
 class AuthProvider extends ChangeNotifier {
@@ -20,6 +21,14 @@ class AuthProvider extends ChangeNotifier {
   Future<void> initialize() async {
     await _controller.loadCurrentUser();
 
+    final userId = _controller.state.userId;
+
+    if (_controller.isLoggedIn && userId != null) {
+      await RevenueCatSubscriptionService.logIn(
+        userId,
+      );
+    }
+
     notifyListeners();
   }
 
@@ -31,6 +40,14 @@ class AuthProvider extends ChangeNotifier {
       email: email,
       password: password,
     );
+
+    final userId = _controller.state.userId;
+
+    if (_controller.isLoggedIn && userId != null) {
+      await RevenueCatSubscriptionService.logIn(
+        userId,
+      );
+    }
 
     notifyListeners();
   }
@@ -50,6 +67,8 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> signOut() async {
+    await RevenueCatSubscriptionService.logOut();
+
     await _controller.signOut();
 
     notifyListeners();
