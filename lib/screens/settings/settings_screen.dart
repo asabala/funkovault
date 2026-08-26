@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:provider/provider.dart';
 import '../../theme/atlas_colors.dart';
 import '../../theme/atlas_spacing.dart';
 import '../../widgets/atlas/atlas_glass_card.dart';
@@ -14,6 +15,8 @@ import 'security_settings_screen.dart';
 import 'vault_preferences_screen.dart';
 import '../atlas/ads/atlas_design_system_showcase_screen.dart';
 import '../profile/edit_collector_profile_screen.dart';
+import '../../screens/auth/login_screen.dart';
+import '../../security/auth_provider.dart';
 import '../vault/vault_health_screen.dart';
 import '../vault/vault_maintenance_screen.dart';
 
@@ -24,6 +27,8 @@ class SettingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = context.watch<AuthProvider>();
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -89,6 +94,61 @@ class SettingsScreen extends StatelessWidget {
                     );
                   },
                 ),
+                AtlasActionRow(
+                  title: 'Premium',
+                  description:
+                  'Manage Premium features, upgrades, and advanced tools.',
+                  icon: Icons.workspace_premium_outlined,
+                  accentColor: AtlasColors.vaultGold,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) =>
+                        const PremiumSettingsScreen(),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(
+                  height: AtlasSpacing.sm,
+                ),
+                if (authProvider.isLoggedIn)
+                  AtlasActionRow(
+                    title: 'Sign Out',
+                    description:
+                    'Sign out of your Atlas account on this device.',
+                    icon: Icons.logout_rounded,
+                    onTap: () async {
+                      await authProvider.signOut();
+
+                      if (!context.mounted) {
+                        return;
+                      }
+
+                      Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const LoginScreen(),
+                        ),
+                            (route) => false,
+                      );
+                    },
+                  )
+                else
+                  AtlasActionRow(
+                    title: 'Sign In',
+                    description:
+                    'Sign in to your Atlas account to restore account features.',
+                    icon: Icons.login_rounded,
+                    onTap: () {
+                      Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const LoginScreen(),
+                        ),
+                            (route) => false,
+                      );
+                    },
+                  ),
               ],
             ),
           ),
