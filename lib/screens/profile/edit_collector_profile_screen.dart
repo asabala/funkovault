@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -14,7 +13,6 @@ import '../../widgets/atlas/atlas_glass_card.dart';
 import '../../widgets/atlas/components/atlas_form_field.dart';
 import '../../widgets/atlas/components/atlas_info_banner.dart';
 import '../../widgets/atlas/components/atlas_section_header.dart';
-import '../../widgets/atlas/components/atlas_status_chip.dart';
 import '../../widgets/profile/country/country_dropdown.dart';
 import '../../widgets/vault/vault_scroll_view.dart';
 
@@ -41,7 +39,6 @@ class _EditCollectorProfileScreenState
   late final TextEditingController _collectorLevelController;
 
   late CountryOption _selectedCountry;
-  late bool _isPremium;
 
   bool _isSaving = false;
 
@@ -91,8 +88,6 @@ class _EditCollectorProfileScreenState
     _selectedCountry = CountryRegistry.findByCode(
       profile.countryCode,
     );
-
-    _isPremium = profile.isPremium;
 
     _nameController.addListener(
       _refreshPreview,
@@ -190,7 +185,7 @@ class _EditCollectorProfileScreenState
             .text
             .trim(),
         joinYear: current.joinYear,
-        isPremium: _isPremium,
+        isPremium: current.isPremium,
       );
 
       await appState.updateCollectorProfile(
@@ -394,73 +389,7 @@ class _EditCollectorProfileScreenState
               ),
             ],
           ),
-          if (kDebugMode) ...[
-            const SizedBox(
-              height: AtlasSpacing.lg,
-            ),
-            AtlasGlassCard(
-              child: Column(
-                crossAxisAlignment:
-                CrossAxisAlignment.start,
-                children: [
-                  const AtlasSectionHeader(
-                    title:
-                    'Developer Testing',
-                    subtitle:
-                    'Temporary controls used while Premium account infrastructure is still under development.',
-                    icon:
-                    Icons.developer_mode_rounded,
-                    accentColor:
-                    AtlasColors.warning,
-                  ),
-                  const SizedBox(
-                    height: AtlasSpacing.md,
-                  ),
-                  SwitchListTile(
-                    contentPadding:
-                    EdgeInsets.zero,
-                    value: _isPremium,
-                    onChanged: (value) {
-                      setState(() {
-                        _isPremium = value;
-                      });
-                    },
-                    title: const Text(
-                      'Premium Member',
-                    ),
-                    subtitle: const Text(
-                      'Debug-only Premium test toggle.',
-                    ),
-                    secondary:
-                    const Icon(
-                      Icons
-                          .workspace_premium_rounded,
-                      color: AtlasColors
-                          .vaultGold,
-                    ),
-                  ),
-                  const SizedBox(
-                    height: AtlasSpacing.sm,
-                  ),
-                  AtlasStatusChip(
-                    label: _isPremium
-                        ? 'Premium Test Active'
-                        : 'Basic Test Active',
-                    icon: _isPremium
-                        ? Icons
-                        .workspace_premium_rounded
-                        : Icons
-                        .lock_open_rounded,
-                    accentColor:
-                    AtlasColors.warning,
-                    size:
-                    AtlasStatusChipSize
-                        .compact,
-                  ),
-                ],
-              ),
-            ),
-          ],
+
           const SizedBox(
             height: AtlasSpacing.lg,
           ),
