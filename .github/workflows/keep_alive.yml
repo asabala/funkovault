@@ -13,7 +13,7 @@ jobs:
         env:
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
-          DOMAIN="qzwvzkzryzzlolcqkrfq.supabase.co"
+          DOMAIN="https://qzwvzkzryzzlolcqkrfq.supabase.co"
           echo "Testing DNS resolution for $DOMAIN..."
           nslookup $DOMAIN || true
 
