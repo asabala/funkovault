@@ -199,6 +199,15 @@ class AtlasRoomScreen extends StatelessWidget {
   }
 
   String _roomStatusText(int roomPopCount) {
+    if (collectionName != null) {
+      if (roomPopCount == 0) {
+        return 'This collection is ready for its first Pop.';
+      }
+
+      return 'Atlas found $roomPopCount '
+          'Pop${roomPopCount == 1 ? '' : 's'} in this collection.';
+    }
+
     if (categoryName == null ||
         categoryName!.trim().isEmpty) {
       return 'Room filters are coming soon.';
@@ -213,6 +222,17 @@ class AtlasRoomScreen extends StatelessWidget {
   }
 
   String _roomDescriptionText(int roomPopCount) {
+    if (collectionName != null) {
+      if (roomPopCount == 0) {
+        return 'Add Pops to this collection to build its stats, value '
+            'insights, wishlist tracking, and Atlas recommendations.';
+      }
+
+      return 'This collection room is connected to your collection data. '
+          'Use it to review stats, value insights, wishlist targets, '
+          'and your current Pop preview.';
+    }
+
     if (categoryName == null ||
         categoryName!.trim().isEmpty) {
       return 'This room will eventually show matching Pops from your '
