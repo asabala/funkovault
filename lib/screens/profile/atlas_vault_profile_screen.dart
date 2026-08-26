@@ -3,8 +3,12 @@ import 'package:provider/provider.dart';
 
 import '../../atlas/coordinator/atlas_dashboard.dart';
 import '../../atlas/coordinator/atlas_dashboard_model.dart';
+import '../../security/auth_provider.dart';
 import '../../services/app_state.dart';
+import '../../theme/atlas_colors.dart';
 import '../../theme/atlas_spacing.dart';
+import '../../theme/atlas_typography.dart';
+import '../../widgets/atlas/atlas_glass_card.dart';
 import '../../widgets/profile/achievements/achievement_preview_card.dart';
 import '../../widgets/profile/confidence/atlas_confidence_card.dart';
 import '../../widgets/profile/details/collector_details_card.dart';
@@ -24,7 +28,10 @@ class AtlasVaultProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appState = context.watch<AppState>();
+    final authProvider = context.watch<AuthProvider>();
+
     final profile = appState.collectorProfile;
+    final authState = authProvider.controller.state;
 
     const dashboardBuilder = AtlasDashboard();
 
@@ -43,10 +50,17 @@ class AtlasVaultProfileScreen extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => const EditCollectorProfileScreen(),
+                  builder: (_) =>
+                  const EditCollectorProfileScreen(),
                 ),
               );
             },
+          ),
+          const SizedBox(height: AtlasSpacing.lg),
+          _AccountIdentityCard(
+            isLoggedIn: authProvider.isLoggedIn,
+            email: authState.email,
+            emailVerified: authState.emailVerified,
           ),
           const SizedBox(height: AtlasSpacing.lg),
           CollectorScoreCard(
@@ -103,12 +117,80 @@ class AtlasVaultProfileScreen extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => const EditCollectorProfileScreen(),
+                  builder: (_) =>
+                  const EditCollectorProfileScreen(),
                 ),
               );
             },
             icon: const Icon(Icons.edit_outlined),
             label: const Text('Customize Vault Profile'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AccountIdentityCard extends StatelessWidget {
+  const _AccountIdentityCard({
+    required this.isLoggedIn,
+    required this.email,
+    required this.emailVerified,
+  });
+
+  final bool isLoggedIn;
+  final String? email;
+  final bool emailVerified;
+
+  @override
+  Widget build(BuildContext context) {
+    final String accountEmail =
+    email?.trim().isNotEmpty == true
+        ? email!.trim()
+        : 'No account connected';
+
+    return AtlasGlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.account_circle_outlined,
+                color: AtlasColors.vaultGold,
+              ),
+              const SizedBox(
+                width: AtlasSpacing.sm,
+              ),
+              Expanded(
+                child: Text(
+                  'Atlas Account',
+                  style: AtlasTypography.headingSmall,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(
+            height: AtlasSpacing.md,
+          ),
+          Text(
+            isLoggedIn
+                ? accountEmail
+                : 'Using Atlas as Guest',
+            style: AtlasTypography.bodyMedium,
+          ),
+          const SizedBox(
+            height: AtlasSpacing.xs,
+          ),
+          Text(
+            isLoggedIn
+                ? emailVerified
+                ? 'Email verified'
+                : 'Email verification pending'
+                : 'Sign in to connect this collector profile to an Atlas account.',
+            style: AtlasTypography.bodySmall.copyWith(
+              color: AtlasColors.textSecondary,
+            ),
           ),
         ],
       ),
