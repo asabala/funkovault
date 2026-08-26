@@ -5,6 +5,7 @@ import 'entire_vault_screen.dart';
 import '../../atlas/repositories/vault_repository.dart';
 import '../../security/auth_provider.dart';
 import '../../services/app_state.dart';
+import '../settings/premium_settings_screen.dart';
 import '../../theme/atlas_colors.dart';
 import '../../theme/atlas_spacing.dart';
 import '../../theme/atlas_typography.dart';
@@ -191,9 +192,10 @@ class VaultHealthScreen extends StatelessWidget {
               AdvancedVaultHealthPreview(
                 isPremium: authProvider.isPremium,
                 onUpgrade: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Premium upgrade flow is coming soon.'),
+                  Navigator.push<void>(
+                    context,
+                    MaterialPageRoute<void>(
+                      builder: (_) => const PremiumSettingsScreen(),
                     ),
                   );
                 },
