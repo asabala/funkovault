@@ -40,7 +40,11 @@ class SupabaseAuthService implements AuthService {
       },
     );
 
-    return _mapUserToAuthState(response.user);
+    if (response.session != null) {
+      await Supabase.instance.client.auth.signOut();
+    }
+
+    return AuthState.guest();
   }
 
   @override
