@@ -4,15 +4,24 @@ import 'package:funkovault2/security/auth_service.dart';
 import 'package:funkovault2/security/auth_state.dart';
 
 class _FakeAuthService implements AuthService {
+  AuthState currentUserResult = AuthState.guest();
+  AuthState signInResult = AuthState.guest();
   AuthState registerResult = AuthState.guest();
+
+  String? signedInEmail;
+  String? signedInPassword;
 
   String? registeredDisplayName;
   String? registeredEmail;
   String? registeredPassword;
 
+  String? passwordResetEmail;
+
+  bool signOutCalled = false;
+
   @override
   Future<AuthState> currentUser() async {
-    return AuthState.guest();
+    return currentUserResult;
   }
 
   @override
@@ -20,7 +29,10 @@ class _FakeAuthService implements AuthService {
     required String email,
     required String password,
   }) async {
-    return AuthState.guest();
+    signedInEmail = email;
+    signedInPassword = password;
+
+    return signInResult;
   }
 
   @override
@@ -37,12 +49,16 @@ class _FakeAuthService implements AuthService {
   }
 
   @override
-  Future<void> signOut() async {}
+  Future<void> signOut() async {
+    signOutCalled = true;
+  }
 
   @override
   Future<void> sendPasswordResetEmail(
       String email,
-      ) async {}
+      ) async {
+    passwordResetEmail = email;
+  }
 
   @override
   Future<void> resendVerificationEmail() async {}
@@ -92,6 +108,141 @@ void main() {
       expect(
         controller.isLoggedIn,
         isFalse,
+      );
+
+      controller.dispose();
+    },
+  );
+  test(
+    'loadCurrentUser restores authenticated session',
+        () async {
+      final authService = _FakeAuthService()
+        ..currentUserResult = const AuthState(
+          status: AuthStatus.authenticated,
+          email: 'arthur@example.com',
+          displayName: 'Arthur',
+          isPremium: false,
+          emailVerified: true,
+        );
+
+      final controller = AuthController(
+        authService: authService,
+      );
+
+      await controller.loadCurrentUser();
+
+      expect(
+        controller.isLoggedIn,
+        isTrue,
+      );
+
+      expect(
+        controller.state.email,
+        'arthur@example.com',
+      );
+
+      controller.dispose();
+    },
+  );
+
+  test(
+    'signIn updates controller to authenticated state',
+        () async {
+      final authService = _FakeAuthService()
+        ..signInResult = const AuthState(
+          status: AuthStatus.authenticated,
+          email: 'arthur@example.com',
+          displayName: 'Arthur',
+          isPremium: false,
+          emailVerified: true,
+        );
+
+      final controller = AuthController(
+        authService: authService,
+      );
+
+      await controller.signIn(
+        email: 'arthur@example.com',
+        password: 'password123',
+      );
+
+      expect(
+        authService.signedInEmail,
+        'arthur@example.com',
+      );
+
+      expect(
+        controller.isLoggedIn,
+        isTrue,
+      );
+
+      controller.dispose();
+    },
+  );
+
+  test(
+    'signOut resets controller to guest',
+        () async {
+      final authService = _FakeAuthService()
+        ..signInResult = const AuthState(
+          status: AuthStatus.authenticated,
+          email: 'arthur@example.com',
+          displayName: 'Arthur',
+          isPremium: false,
+          emailVerified: true,
+        );
+
+      final controller = AuthController(
+        authService: authService,
+      );
+
+      await controller.signIn(
+        email: 'arthur@example.com',
+        password: 'password123',
+      );
+
+      expect(
+        controller.isLoggedIn,
+        isTrue,
+      );
+
+      await controller.signOut();
+
+      expect(
+        authService.signOutCalled,
+        isTrue,
+      );
+
+      expect(
+        controller.state.status,
+        AuthStatus.guest,
+      );
+
+      expect(
+        controller.isLoggedIn,
+        isFalse,
+      );
+
+      controller.dispose();
+    },
+  );
+
+  test(
+    'password reset is forwarded to auth service',
+        () async {
+      final authService = _FakeAuthService();
+
+      final controller = AuthController(
+        authService: authService,
+      );
+
+      await controller.sendPasswordResetEmail(
+        'arthur@example.com',
+      );
+
+      expect(
+        authService.passwordResetEmail,
+        'arthur@example.com',
       );
 
       controller.dispose();
