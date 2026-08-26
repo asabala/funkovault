@@ -297,105 +297,59 @@ class CollectionsScreen extends StatelessWidget {
                 'Opening a collection shows only that collection. The main Vault and Entire Vault continue to include every collection.',
           ),
           const SizedBox(height: AtlasSpacing.lg),
-          ...appState.collectionNames.map((collectionName) {
-            final popCount = appState.collectionPopCount(collectionName);
-            final collectionValue = appState.collectionValue(collectionName);
-            final isActive = collectionName == appState.selectedCollection;
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isWide = constraints.maxWidth >= 900;
+              final crossAxisCount = isWide ? 3 : 2;
 
-            return Padding(
-              padding: const EdgeInsets.only(bottom: AtlasSpacing.md),
-              child: AtlasGlassCard(
-                accentColor: isActive
-                    ? AtlasColors.success
-                    : AtlasColors.vaultGold,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Icon(
-                          Icons.folder_outlined,
-                          color: AtlasColors.vaultGold,
-                        ),
-                        const SizedBox(width: AtlasSpacing.md),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                collectionName,
-                                style: AtlasTypography.bodyMedium.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: AtlasSpacing.xs),
-                              Text(
-                                '$popCount ${popCount == 1 ? 'Pop' : 'Pops'} • '
-                                '\$${collectionValue.toStringAsFixed(2)}',
-                                style: AtlasTypography.bodySmall.copyWith(
-                                  color: AtlasColors.textSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        if (isActive)
-                          const AtlasStatusChip(
-                            label: 'Active',
-                            icon: Icons.check_circle_outline_rounded,
-                            accentColor: AtlasColors.success,
-                            size: AtlasStatusChipSize.compact,
-                          ),
-                        PopupMenuButton<_CollectionAction>(
-                          key: ValueKey('actions-$collectionName'),
-                          tooltip: 'Collection actions',
-                          onSelected: (action) {
-                            switch (action) {
-                              case _CollectionAction.rename:
-                                _showRenameCollectionDialog(
-                                  context,
-                                  appState,
-                                  collectionName,
-                                );
-                              case _CollectionAction.delete:
-                                _showDeleteCollectionDialog(
-                                  context,
-                                  appState,
-                                  collectionName,
-                                );
-                            }
-                          },
-                          itemBuilder: (_) => [
-                            const PopupMenuItem(
-                              value: _CollectionAction.rename,
-                              child: Text('Rename'),
-                            ),
-                            const PopupMenuItem(
-                              value: _CollectionAction.delete,
-                              child: Text('Delete'),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AtlasSpacing.md),
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        key: ValueKey('open-$collectionName'),
-                        onPressed: () {
-                          _openCollection(context, appState, collectionName);
-                        },
-                        icon: const Icon(Icons.visibility_outlined),
-                        label: const Text('Open Collection'),
-                      ),
-                    ),
-                  ],
+              return GridView.builder(
+                key: const ValueKey('collections-grid'),
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: appState.collectionNames.length,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: crossAxisCount,
+                  crossAxisSpacing: AtlasSpacing.md,
+                  mainAxisSpacing: AtlasSpacing.md,
+                  childAspectRatio: isWide ? 1.15 : 0.80,
                 ),
-              ),
-            );
-          }),
+                itemBuilder: (context, index) {
+                  final collectionName = appState.collectionNames[index];
+                  final popCount = appState.collectionPopCount(collectionName);
+                  final collectionValue = appState.collectionValue(collectionName);
+                  final isActive = collectionName == appState.selectedCollection;
+
+                  return _CollectionGridCard(
+                    collectionName: collectionName,
+                    popCount: popCount,
+                    collectionValue: collectionValue,
+                    isActive: isActive,
+                    onOpen: () {
+                      _openCollection(
+                        context,
+                        appState,
+                        collectionName,
+                      );
+                    },
+                    onRename: () {
+                      _showRenameCollectionDialog(
+                        context,
+                        appState,
+                        collectionName,
+                      );
+                    },
+                    onDelete: () {
+                      _showDeleteCollectionDialog(
+                        context,
+                        appState,
+                        collectionName,
+                      );
+                    },
+                  );
+                },
+              );
+            },
+          ),
           const SizedBox(height: AtlasSpacing.sm),
           FilledButton.icon(
             onPressed: () {
@@ -403,6 +357,118 @@ class CollectionsScreen extends StatelessWidget {
             },
             icon: const Icon(Icons.create_new_folder_outlined),
             label: const Text('Create Collection'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CollectionGridCard extends StatelessWidget {
+  const _CollectionGridCard({
+    required this.collectionName,
+    required this.popCount,
+    required this.collectionValue,
+    required this.isActive,
+    required this.onOpen,
+    required this.onRename,
+    required this.onDelete,
+  });
+
+  final String collectionName;
+  final int popCount;
+  final double collectionValue;
+  final bool isActive;
+  final VoidCallback onOpen;
+  final VoidCallback onRename;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    final accentColor =
+    isActive ? AtlasColors.success : AtlasColors.vaultGold;
+
+    return AtlasGlassCard(
+      onTap: onOpen,
+      accentColor: accentColor,
+      borderRadius: 22,
+      padding: const EdgeInsets.all(AtlasSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                Icons.folder_outlined,
+                color: accentColor,
+                size: 30,
+              ),
+              const Spacer(),
+              if (isActive)
+                const AtlasStatusChip(
+                  label: 'Active',
+                  icon: Icons.check_circle_outline_rounded,
+                  accentColor: AtlasColors.success,
+                  size: AtlasStatusChipSize.compact,
+                ),
+              PopupMenuButton<_CollectionAction>(
+                key: ValueKey('actions-$collectionName'),
+                tooltip: 'Collection actions',
+                onSelected: (action) {
+                  switch (action) {
+                    case _CollectionAction.rename:
+                      onRename();
+                    case _CollectionAction.delete:
+                      onDelete();
+                  }
+                },
+                itemBuilder: (_) => const [
+                  PopupMenuItem(
+                    value: _CollectionAction.rename,
+                    child: Text('Rename'),
+                  ),
+                  PopupMenuItem(
+                    value: _CollectionAction.delete,
+                    child: Text('Delete'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: AtlasSpacing.md),
+          Text(
+            collectionName,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: AtlasTypography.bodyMedium.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: AtlasSpacing.xs),
+          Text(
+            '$popCount ${popCount == 1 ? 'Pop' : 'Pops'}',
+            style: AtlasTypography.bodySmall.copyWith(
+              color: AtlasColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: AtlasSpacing.xs),
+          Text(
+            '\$${collectionValue.toStringAsFixed(2)}',
+            style: AtlasTypography.bodyMedium.copyWith(
+              color: accentColor,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const Spacer(),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              key: ValueKey('open-$collectionName'),
+              onPressed: onOpen,
+              icon: const Icon(Icons.visibility_outlined),
+              label: const Text('Open Collection'),
+            ),
           ),
         ],
       ),

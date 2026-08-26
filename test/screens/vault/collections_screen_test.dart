@@ -129,6 +129,30 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
+  testWidgets('collections render in a grid', (tester) async {
+    final state = _TestAppState();
+    await pumpScreen(tester, state);
+
+    expect(
+      find.byKey(const ValueKey('collections-grid')),
+      findsOneWidget,
+    );
+
+    expect(find.byType(GridView), findsOneWidget);
+
+    expect(
+      find.byKey(const ValueKey('open-Entire Family Collection')),
+      findsOneWidget,
+    );
+
+    expect(
+      find.byKey(const ValueKey('open-Arthur Collection')),
+      findsOneWidget,
+    );
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
   testWidgets('create collection succeeds', (tester) async {
     final state = _TestAppState();
     await pumpScreen(tester, state);
