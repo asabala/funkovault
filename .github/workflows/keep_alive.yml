@@ -16,12 +16,11 @@ jobs:
         run: |
           echo "Pinging FunkoVault project..."
           
-          # Perform the request and capture both body and status code
-          RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" -X GET "https://qzwvzkryzzlolcqkrfq.supabase.co/rest/v1/profiles?select=id&limit=1" \
+          RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" -X GET "https://qzwvzkzryzzlolcqkrfq.supabase.co/rest/v1/profiles?select=id&limit=1" \
             -H "apikey: $SUPABASE_ANON_KEY" \
             -H "Authorization: Bearer $SUPABASE_ANON_KEY")
 
-          echo "Response output:"
+          echo "Response body & status:"
           echo "$RESPONSE"
 
           STATUS=$(echo "$RESPONSE" | grep "HTTP_STATUS" | cut -d':' -f2)
