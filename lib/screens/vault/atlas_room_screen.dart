@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'entire_vault_screen.dart';
 import '../../atlas/repositories/vault_repository.dart';
 import '../../models/pop.dart';
 import '../../services/app_state.dart';
@@ -125,6 +126,33 @@ class AtlasRoomScreen extends StatelessWidget {
                     ),
                   ),
                 ),
+                if (collectionName != null) ...[
+                  const SizedBox(
+                    height: AtlasSpacing.sm,
+                  ),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      key: const ValueKey('open-full-collection'),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute<void>(
+                            builder: (_) => EntireVaultScreen(
+                              collectionName: collectionName,
+                            ),
+                          ),
+                        );
+                      },
+                      icon: const Icon(
+                        Icons.inventory_2_outlined,
+                      ),
+                      label: const Text(
+                        'Open Full Collection',
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

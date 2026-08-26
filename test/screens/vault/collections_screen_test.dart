@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:funkovault2/models/pop.dart';
 import 'package:funkovault2/screens/vault/collections_screen.dart';
-import 'package:funkovault2/screens/vault/entire_vault_screen.dart';
+import 'package:funkovault2/screens/vault/atlas_room_screen.dart';
 import 'package:funkovault2/services/app_state.dart';
 import 'package:funkovault2/vault/collector_vault_screen.dart';
 import 'package:provider/provider.dart';
@@ -204,26 +204,61 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
-  testWidgets('opening a collection uses scoped Entire Vault', (tester) async {
+  testWidgets('opening a collection uses scoped Atlas room', (tester) async {
     final state = _TestAppState();
     final navigatorObserver = _RecordingNavigatorObserver();
-    await pumpScreen(tester, state, navigatorObserver: navigatorObserver);
+
+    await pumpScreen(
+      tester,
+      state,
+      navigatorObserver: navigatorObserver,
+    );
 
     final openButton = tester.widget<OutlinedButton>(
-      find.byKey(const ValueKey('open-Arthur Collection')),
+      find.byKey(
+        const ValueKey('open-Arthur Collection'),
+      ),
     );
+
     openButton.onPressed!();
+
     await tester.idle();
 
-    expect(state.requestedSelect, 'Arthur Collection');
-    final route = navigatorObserver.lastPushedRoute as MaterialPageRoute<void>;
-    final screen = route.builder(
-      tester.element(find.byType(CollectionsScreen)),
+    expect(
+      state.requestedSelect,
+      'Arthur Collection',
     );
-    expect(screen, isA<EntireVaultScreen>());
-    expect((screen as EntireVaultScreen).collectionName, 'Arthur Collection');
 
-    await tester.pumpWidget(const SizedBox.shrink());
+    final route =
+    navigatorObserver.lastPushedRoute
+    as MaterialPageRoute<void>;
+
+    final screen = route.builder(
+      tester.element(
+        find.byType(CollectionsScreen),
+      ),
+    );
+
+    expect(
+      screen,
+      isA<AtlasRoomScreen>(),
+    );
+
+    final room = screen as AtlasRoomScreen;
+
+    expect(
+      room.collectionName,
+      'Arthur Collection',
+    );
+
+    expect(
+      room.roomName,
+      'Arthur Collection',
+    );
+
+    await tester.pumpWidget(
+      const SizedBox.shrink(),
+    );
   });
 
   testWidgets('rename collection request is forwarded', (tester) async {

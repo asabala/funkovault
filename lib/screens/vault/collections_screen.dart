@@ -10,7 +10,7 @@ import '../../widgets/atlas/components/atlas_info_banner.dart';
 import '../../widgets/atlas/components/atlas_section_header.dart';
 import '../../widgets/atlas/components/atlas_status_chip.dart';
 import '../../widgets/vault/vault_scroll_view.dart';
-import 'entire_vault_screen.dart';
+import 'atlas_room_screen.dart';
 
 class CollectionsScreen extends StatelessWidget {
   const CollectionsScreen({super.key});
@@ -195,10 +195,10 @@ class CollectionsScreen extends StatelessWidget {
   }
 
   Future<void> _openCollection(
-    BuildContext context,
-    AppState appState,
-    String collectionName,
-  ) async {
+      BuildContext context,
+      AppState appState,
+      String collectionName,
+      ) async {
     final result = await appState.setSelectedCollection(collectionName);
 
     if (!context.mounted) {
@@ -213,7 +213,13 @@ class CollectionsScreen extends StatelessWidget {
     await Navigator.push<void>(
       context,
       MaterialPageRoute<void>(
-        builder: (_) => EntireVaultScreen(collectionName: collectionName),
+        builder: (_) => AtlasRoomScreen(
+          roomName: collectionName,
+          description:
+          'Your collection room for stats, insights, previews, and collection tools.',
+          icon: Icons.folder_outlined,
+          collectionName: collectionName,
+        ),
       ),
     );
   }
