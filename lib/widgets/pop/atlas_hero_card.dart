@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../atlas/hero/models/atlas_hero_summary.dart';
+import '../../../atlas/hero/models/atlas_hero_summary.dart';
 
 class AtlasHeroCard extends StatelessWidget {
   const AtlasHeroCard({

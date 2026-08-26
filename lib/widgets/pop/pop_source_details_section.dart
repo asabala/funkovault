@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../models/pop.dart';
-import '../../theme/atlas_spacing.dart';
-import '../../theme/atlas_typography.dart';
+import '../../../models/pop.dart';
+import '../../../theme/atlas_spacing.dart';
+import '../../../theme/atlas_typography.dart';
 import '../atlas/atlas_expandable_section.dart';
 import '../atlas/atlas_glass_panel.dart';
 

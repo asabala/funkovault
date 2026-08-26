@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-import '../../atlas/hero/models/atlas_hero_summary.dart';
-import '../../models/pop.dart';
-import '../../theme/atlas_colors.dart';
-import '../../theme/atlas_spacing.dart';
-import '../../theme/atlas_typography.dart';
+import '../../../atlas/hero/models/atlas_hero_summary.dart';
+import '../../../models/pop.dart';
+import '../../../theme/atlas_colors.dart';
+import '../../../theme/atlas_spacing.dart';
+import '../../../theme/atlas_typography.dart';
 import '../atlas/atlas_glass_card.dart';
 import '../atlas/components/atlas_action_row.dart';
 import '../atlas/components/atlas_chip.dart';

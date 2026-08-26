@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../atlas/identity/pop/pop_identity_engine.dart';
-import '../../models/pop.dart';
-import '../../theme/atlas_spacing.dart';
+import '../../../atlas/identity/pop/pop_identity_engine.dart';
+import '../../../models/pop.dart';
+import '../../../theme/atlas_spacing.dart';
 import '../atlas/components/atlas_chip.dart';
 
 class PopIdentityBadges extends StatelessWidget {

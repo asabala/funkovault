@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../../atlas/engines/context/pop_context_explainer_engine.dart';
-import '../../models/activity.dart';
-import '../../models/pop.dart';
-import '../../theme/atlas_colors.dart';
-import '../../theme/atlas_spacing.dart';
-import '../../theme/atlas_typography.dart';
+import '../../../atlas/engines/context/pop_context_explainer_engine.dart';
+import '../../../models/activity.dart';
+import '../../../models/pop.dart';
+import '../../../theme/atlas_colors.dart';
+import '../../../theme/atlas_spacing.dart';
+import '../../../theme/atlas_typography.dart';
 import '../atlas/atlas_glass_panel.dart';
 
 class PopAskAtlasBottomSheet {
