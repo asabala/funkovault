@@ -69,7 +69,7 @@ class AtlasVaultProfileScreen extends StatelessWidget {
           ),
           const SizedBox(height: AtlasSpacing.lg),
           VaultStatusCard(
-            isPremium: profile.isPremium,
+            isPremium: authProvider.isPremium,
           ),
           const SizedBox(height: AtlasSpacing.lg),
           ProfileStatsCard(

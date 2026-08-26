@@ -10,6 +10,7 @@ import '../screens/profile/edit_collector_profile_screen.dart';
 import '../screens/catalog/funko_catalog_screen.dart';
 import '../screens/scanner/scan_screen.dart';
 import '../screens/vault/wishlist_screen.dart';
+import '../security/auth_provider.dart';
 import '../services/app_state.dart';
 import '../theme/atlas_colors.dart';
 import '../theme/atlas_spacing.dart';
@@ -32,6 +33,8 @@ class CollectorVaultScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appState = context.watch<AppState>();
+    final authProvider = context.watch<AuthProvider>();
+
     const repository = VaultRepository();
     const intelligence = AtlasIntelligence();
     const vaultHealthEngine = VaultHealthEngine();
@@ -158,7 +161,7 @@ class CollectorVaultScreen extends StatelessWidget {
             collectorBio: profile.bio,
             favoriteCategory: profile.favoriteCategory,
             collectorLevel: profile.collectorLevel,
-            isPremium: profile.isPremium,
+            isPremium: authProvider.isPremium,
             totalPops: allPops.length,
             totalValue: totalValue,
             health: health,

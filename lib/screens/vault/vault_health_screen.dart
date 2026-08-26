@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import 'entire_vault_screen.dart';
 import '../../atlas/repositories/vault_repository.dart';
+import '../../security/auth_provider.dart';
 import '../../services/app_state.dart';
 import '../../theme/atlas_colors.dart';
 import '../../theme/atlas_spacing.dart';
@@ -22,13 +23,14 @@ class VaultHealthScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appState = context.watch<AppState>();
+    final authProvider = context.watch<AuthProvider>();
+
     const repository = VaultRepository();
     const vaultHealthEngine = VaultHealthEngine();
 
     final pops = repository.allPops(appState);
     final vaultHealth = vaultHealthEngine.calculate(pops);
 
-    final profile = appState.collectorProfile;
     final totalValue = vaultHealth.totalValue;
     final duplicateGroupCount =
         vaultHealth.duplicateGroupCount;
@@ -187,7 +189,7 @@ class VaultHealthScreen extends StatelessWidget {
               ),
               const SizedBox(height: AtlasSpacing.lg),
               AdvancedVaultHealthPreview(
-                isPremium: profile.isPremium,
+                isPremium: authProvider.isPremium,
                 onUpgrade: () {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(

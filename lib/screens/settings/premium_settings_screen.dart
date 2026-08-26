@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../services/app_state.dart';
+import '../../security/auth_provider.dart';
 import '../../theme/atlas_colors.dart';
 import '../../theme/atlas_spacing.dart';
 import '../../widgets/atlas/atlas_glass_card.dart';
@@ -17,9 +17,8 @@ class PremiumSettingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final appState = context.watch<AppState>();
-    final profile = appState.collectorProfile;
-    final bool isPremium = profile.isPremium;
+    final authProvider = context.watch<AuthProvider>();
+    final bool isPremium = authProvider.isPremium;
 
     return Scaffold(
       appBar: AppBar(
@@ -69,7 +68,7 @@ class PremiumSettingsScreen extends StatelessWidget {
                           ? 'Premium Plan'
                           : 'Basic Plan',
                       message: isPremium
-                          ? 'Premium tools are enabled for this collector profile.'
+                          ? 'Premium tools are enabled for your Atlas account.'
                           : 'Core collecting stays free. Premium adds advanced tools on top.',
                     ),
                   ],
