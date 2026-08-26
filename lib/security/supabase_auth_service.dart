@@ -80,11 +80,17 @@ class SupabaseAuthService implements AuthService {
       return AuthState.guest();
     }
 
+    final appMetadata = user.appMetadata;
+
+    final bool isPremium =
+        appMetadata['is_premium'] == true ||
+            appMetadata['tier'] == 'premium';
+
     return AuthState(
       status: AuthStatus.authenticated,
       email: user.email,
       displayName: user.userMetadata?['display_name'] as String?,
-      isPremium: false,
+      isPremium: isPremium,
       emailVerified: user.emailConfirmedAt != null,
     );
   }
