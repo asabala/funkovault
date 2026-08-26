@@ -6,6 +6,7 @@ import '../../atlas/coordinator/atlas_dashboard_model.dart';
 import '../../atlas/engines/context/vault_context_explainer_engine.dart';
 import '../../atlas/screens/atlas_timeline_screen.dart';
 import '../../navigation/atlas_navigation_controller.dart';
+import '../../security/auth_provider.dart';
 import '../../services/app_state.dart';
 import '../../theme/atlas_colors.dart';
 import '../../theme/atlas_icons.dart';
@@ -33,8 +34,22 @@ class AtlasHomeScreen extends StatelessWidget {
     final AppState appState =
     context.watch<AppState>();
 
+    final AuthProvider authProvider =
+    context.watch<AuthProvider>();
+
     final profile =
         appState.collectorProfile;
+
+    final bool isLoggedIn =
+        authProvider.isLoggedIn;
+
+    final String accountDisplayName =
+    authProvider.controller.state.displayName
+        ?.trim()
+        .isNotEmpty ==
+        true
+        ? authProvider.controller.state.displayName!.trim()
+        : profile.displayName;
 
     const AtlasDashboard dashboardBuilder =
     AtlasDashboard();
@@ -54,8 +69,9 @@ class AtlasHomeScreen extends StatelessWidget {
         ),
         actions: [
           IconButton(
-            tooltip:
-            'Signed in as ${profile.displayName}',
+            tooltip: isLoggedIn
+                ? 'Signed in as $accountDisplayName'
+                : 'Guest collector',
             onPressed: () {
               _openVault(
                 context,
@@ -113,8 +129,10 @@ class AtlasHomeScreen extends StatelessWidget {
             height: AtlasSpacing.lg,
           ),
           _HomeAccountStatusCard(
+            isLoggedIn:
+            isLoggedIn,
             displayName:
-            profile.displayName,
+            accountDisplayName,
             collectorTitle:
             profile.collectorTitle,
             totalPops:
@@ -451,6 +469,7 @@ class _HomeAvatar extends StatelessWidget {
 class _HomeAccountStatusCard
     extends StatelessWidget {
   const _HomeAccountStatusCard({
+    required this.isLoggedIn,
     required this.displayName,
     required this.collectorTitle,
     required this.totalPops,
@@ -458,6 +477,7 @@ class _HomeAccountStatusCard
     required this.onOpenVault,
   });
 
+  final bool isLoggedIn;
   final String displayName;
   final String collectorTitle;
   final int totalPops;
@@ -484,7 +504,9 @@ class _HomeAccountStatusCard
               CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Signed in as $displayName',
+                  isLoggedIn
+                      ? 'Signed in as $displayName'
+                      : 'Using Atlas as Guest',
                   style: AtlasTypography
                       .headingSmall,
                 ),
@@ -493,7 +515,9 @@ class _HomeAccountStatusCard
                   AtlasSpacing.xs,
                 ),
                 Text(
-                  collectorTitle,
+                  isLoggedIn
+                      ? collectorTitle
+                      : 'Sign in to connect your Atlas account.',
                   style: AtlasTypography
                       .bodySmall
                       .copyWith(
