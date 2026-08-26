@@ -15,7 +15,7 @@ jobs:
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
           echo "Pinging FunkoVault project..."
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X GET "https://qzwvzkzryzzlolcqkrfq.supabase.co/rest/v1/profiles?select=id&limit=1" \
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X GET "https://qzwvzkryzzlolcqkrfq.supabase.co/rest/v1/profiles?select=id&limit=1" \
             -H "apikey: $SUPABASE_ANON_KEY" \
             -H "Authorization: Bearer $SUPABASE_ANON_KEY")
           
