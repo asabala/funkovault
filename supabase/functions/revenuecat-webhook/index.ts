@@ -15,6 +15,18 @@ type EntitlementUpdate = {
   willCancelAtPeriodEnd: boolean;
 };
 
+const entitlementStateEventTypes = [
+  "INITIAL_PURCHASE",
+  "RENEWAL",
+  "UNCANCELLATION",
+  "SUBSCRIPTION_EXTENDED",
+  "TEMPORARY_ENTITLEMENT_GRANT",
+  "CANCELLATION",
+  "BILLING_ISSUE",
+  "EXPIRATION",
+  "SUBSCRIPTION_PAUSED",
+];
+
 serve(async (request: Request): Promise<Response> => {
   if (request.method !== "POST") {
     return jsonResponse(
@@ -96,41 +108,33 @@ serve(async (request: Request): Promise<Response> => {
     );
   }
 
+  const eventId =
+    readString(event, "id");
+
   const eventType =
     readString(event, "type");
 
   const appUserId =
     readString(event, "app_user_id");
 
-  if (!eventType || !appUserId) {
+  const eventTimestampMs =
+    readNumber(
+      event,
+      "event_timestamp_ms",
+    );
+
+  if (
+    !eventId ||
+    !eventType ||
+    !appUserId ||
+    eventTimestampMs == null
+  ) {
     return jsonResponse(
       {
         error: "RevenueCat event is missing required fields",
       },
       400,
     );
-  }
-
-  const update =
-    entitlementUpdateForEvent(
-      eventType,
-      event,
-    );
-
-  if (!update) {
-    console.log(
-      JSON.stringify({
-        source: "revenuecat",
-        eventType,
-        appUserId,
-        action: "ignored",
-      }),
-    );
-
-    return jsonResponse({
-      received: true,
-      processed: false,
-    });
   }
 
   const supabase = createClient(
@@ -144,8 +148,183 @@ serve(async (request: Request): Promise<Response> => {
     },
   );
 
+  // ----------------------------------------------------------
+  // Duplicate delivery protection
+  // ----------------------------------------------------------
+
+  const {
+    data: existingEvent,
+    error: existingEventError,
+  } =
+    await supabase
+      .from("revenuecat_webhook_events")
+      .select("event_id")
+      .eq("event_id", eventId)
+      .maybeSingle();
+
+  if (existingEventError) {
+    console.error(
+      "Failed to check RevenueCat webhook event history.",
+      existingEventError,
+    );
+
+    return jsonResponse(
+      {
+        error: "Webhook synchronization failed",
+      },
+      500,
+    );
+  }
+
+  if (existingEvent) {
+    console.log(
+      JSON.stringify({
+        source: "revenuecat",
+        eventId,
+        eventType,
+        appUserId,
+        action: "duplicate_ignored",
+      }),
+    );
+
+    return jsonResponse({
+      received: true,
+      processed: false,
+      duplicate: true,
+    });
+  }
+
+  const update =
+    entitlementUpdateForEvent(
+      eventType,
+      event,
+    );
+
+  // Events that do not change Atlas entitlement state are
+  // acknowledged without modifying subscription state.
+  if (!update) {
+    console.log(
+      JSON.stringify({
+        source: "revenuecat",
+        eventId,
+        eventType,
+        appUserId,
+        action: "ignored",
+      }),
+    );
+
+    return jsonResponse({
+      received: true,
+      processed: false,
+    });
+  }
+
+  // ----------------------------------------------------------
+  // Out-of-order delivery protection
+  // ----------------------------------------------------------
+  //
+  // Only entitlement-changing events participate in ordering.
+  // Informational/ignored RevenueCat events must not block a
+  // later subscription state update.
+
+  const {
+    data: latestEvents,
+    error: latestEventError,
+  } =
+    await supabase
+      .from("revenuecat_webhook_events")
+      .select(
+        "event_id,event_type,event_timestamp_ms",
+      )
+      .eq("app_user_id", appUserId)
+      .in(
+        "event_type",
+        entitlementStateEventTypes,
+      )
+      .order(
+        "event_timestamp_ms",
+        {
+          ascending: false,
+        },
+      )
+      .limit(1);
+
+  if (latestEventError) {
+    console.error(
+      "Failed to read RevenueCat webhook ordering state.",
+      latestEventError,
+    );
+
+    return jsonResponse(
+      {
+        error: "Webhook synchronization failed",
+      },
+      500,
+    );
+  }
+
+  const latestEvent =
+    latestEvents?.[0] ?? null;
+
+  const latestTimestampMs =
+    latestEvent == null
+      ? null
+      : readDatabaseNumber(
+          latestEvent.event_timestamp_ms,
+        );
+
+  if (
+    latestTimestampMs != null &&
+    eventTimestampMs < latestTimestampMs
+  ) {
+    const recorded =
+      await recordWebhookEvent(
+        supabase,
+        {
+          eventId,
+          eventType,
+          appUserId,
+          eventTimestampMs,
+        },
+      );
+
+    if (!recorded) {
+      return jsonResponse(
+        {
+          error: "Webhook synchronization failed",
+        },
+        500,
+      );
+    }
+
+    console.log(
+      JSON.stringify({
+        source: "revenuecat",
+        eventId,
+        eventType,
+        appUserId,
+        action: "stale_event_ignored",
+        eventTimestampMs,
+        latestTimestampMs,
+      }),
+    );
+
+    return jsonResponse({
+      received: true,
+      processed: false,
+      stale: true,
+    });
+  }
+
+  // ----------------------------------------------------------
+  // Subscription entitlement synchronization
+  // ----------------------------------------------------------
+
   const expirationAtMs =
-    readNumber(event, "expiration_at_ms");
+    readNumber(
+      event,
+      "expiration_at_ms",
+    );
 
   const currentPeriodEnd =
     expirationAtMs == null
@@ -155,7 +334,10 @@ serve(async (request: Request): Promise<Response> => {
         ).toISOString();
 
   const periodType =
-    readString(event, "period_type");
+    readString(
+      event,
+      "period_type",
+    );
 
   const billingPeriod =
     billingPeriodForEvent(event);
@@ -169,22 +351,27 @@ serve(async (request: Request): Promise<Response> => {
       "original_app_user_id",
     ) ?? appUserId;
 
-  const { error: entitlementError } =
+  const subscriptionStatus =
+    periodType === "TRIAL" &&
+    update.isPremium
+      ? "trialing"
+      : update.status;
+
+  const {
+    error: entitlementError,
+  } =
     await supabase
       .from("subscription_entitlements")
       .upsert(
         {
           profile_id: appUserId,
           tier: update.tier,
-          status:
-            periodType === "TRIAL" &&
-            update.isPremium
-              ? "trialing"
-              : update.status,
+          status: subscriptionStatus,
           provider,
           provider_customer_id:
             providerCustomerId,
-          billing_period: billingPeriod,
+          billing_period:
+            billingPeriod,
           current_period_end:
             currentPeriodEnd,
           will_cancel_at_period_end:
@@ -211,12 +398,22 @@ serve(async (request: Request): Promise<Response> => {
     );
   }
 
-  const { data: userResult, error: userError } =
+  // ----------------------------------------------------------
+  // Supabase auth metadata synchronization
+  // ----------------------------------------------------------
+
+  const {
+    data: userResult,
+    error: userError,
+  } =
     await supabase.auth.admin.getUserById(
       appUserId,
     );
 
-  if (userError || !userResult.user) {
+  if (
+    userError ||
+    !userResult.user
+  ) {
     console.error(
       "Failed to load Supabase user.",
       userError,
@@ -242,7 +439,8 @@ serve(async (request: Request): Promise<Response> => {
         app_metadata: {
           ...existingAppMetadata,
           tier: update.tier,
-          is_premium: update.isPremium,
+          is_premium:
+            update.isPremium,
         },
       },
     );
@@ -261,14 +459,43 @@ serve(async (request: Request): Promise<Response> => {
     );
   }
 
+  // ----------------------------------------------------------
+  // Record successful processing
+  // ----------------------------------------------------------
+
+  const recorded =
+    await recordWebhookEvent(
+      supabase,
+      {
+        eventId,
+        eventType,
+        appUserId,
+        eventTimestampMs,
+      },
+    );
+
+  if (!recorded) {
+    // Returning 500 asks RevenueCat to retry. The subscription
+    // writes above are idempotent, so repeating them is safe.
+    return jsonResponse(
+      {
+        error: "Webhook event recording failed",
+      },
+      500,
+    );
+  }
+
   console.log(
     JSON.stringify({
       source: "revenuecat",
+      eventId,
       eventType,
       appUserId,
       tier: update.tier,
-      status: update.status,
-      isPremium: update.isPremium,
+      status: subscriptionStatus,
+      isPremium:
+        update.isPremium,
+      action: "processed",
     }),
   );
 
@@ -277,6 +504,56 @@ serve(async (request: Request): Promise<Response> => {
     processed: true,
   });
 });
+
+async function recordWebhookEvent(
+  supabase: ReturnType<
+    typeof createClient
+  >,
+  {
+    eventId,
+    eventType,
+    appUserId,
+    eventTimestampMs,
+  }: {
+    eventId: string;
+    eventType: string;
+    appUserId: string;
+    eventTimestampMs: number;
+  },
+): Promise<boolean> {
+  const {
+    error,
+  } =
+    await supabase
+      .from(
+        "revenuecat_webhook_events",
+      )
+      .insert({
+        event_id: eventId,
+        event_type: eventType,
+        app_user_id: appUserId,
+        event_timestamp_ms:
+          eventTimestampMs,
+      });
+
+  if (!error) {
+    return true;
+  }
+
+  // PostgreSQL unique_violation. A concurrent retry may have
+  // recorded the same RevenueCat event while this request was
+  // processing. That still counts as successfully recorded.
+  if (error.code === "23505") {
+    return true;
+  }
+
+  console.error(
+    "Failed to record RevenueCat webhook event.",
+    error,
+  );
+
+  return false;
+}
 
 function entitlementUpdateForEvent(
   eventType: string,
@@ -328,20 +605,10 @@ function entitlementUpdateForEvent(
       };
 
     case "PRODUCT_CHANGE":
-      return null;
-
     case "NON_RENEWING_PURCHASE":
-      return null;
-
     case "TRANSFER":
-      return null;
-
     case "REFUND_REVERSED":
-      return null;
-
     case "INVOICE_ISSUANCE":
-      return null;
-
     case "TEST":
       return null;
 
@@ -350,7 +617,8 @@ function entitlementUpdateForEvent(
         JSON.stringify({
           source: "revenuecat",
           eventType,
-          action: "unrecognized_event",
+          action:
+            "unrecognized_event",
           eventId:
             readString(
               event,
@@ -375,7 +643,12 @@ function readEvent(
   }
 
   const event =
-    (payload as Record<string, unknown>).event;
+    (
+      payload as Record<
+        string,
+        unknown
+      >
+    ).event;
 
   if (
     typeof event !== "object" ||
@@ -407,6 +680,29 @@ function readNumber(
   return typeof value === "number"
     ? value
     : null;
+}
+
+function readDatabaseNumber(
+  value: unknown,
+): number | null {
+  if (
+    typeof value === "number"
+  ) {
+    return value;
+  }
+
+  if (
+    typeof value === "string"
+  ) {
+    const parsed =
+      Number(value);
+
+    return Number.isFinite(parsed)
+      ? parsed
+      : null;
+  }
+
+  return null;
 }
 
 function billingPeriodForEvent(
@@ -472,7 +768,8 @@ function jsonResponse(
     {
       status,
       headers: {
-        "Content-Type": "application/json",
+        "Content-Type":
+          "application/json",
       },
     },
   );
