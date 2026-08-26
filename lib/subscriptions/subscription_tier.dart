@@ -1,0 +1,4 @@
+enum SubscriptionTier {
+  basic,
+  premium,
+}
