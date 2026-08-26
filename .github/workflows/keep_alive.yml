@@ -1,16 +1,28 @@
-name: Keep Supabase Awake
+name: Supabase Keep Alive
 
 on:
   schedule:
-    - cron: '0 9 * * 2,5'
-  workflow_dispatch:
+    # Runs at 00:00 UTC every 3 days
+    - cron: '0 0 */3 * *'
+  workflow_dispatch: # Allows manual trigger from the Actions tab
 
 jobs:
-  ping:
+  ping-supabase:
     runs-on: ubuntu-latest
     steps:
       - name: Ping Supabase API
+        env:
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
-          curl -i -f -X GET "https://qzwvzkzryzzlolcqkrfq.supabase.co/rest/v1/profiles?select=*&limit=1" \
-            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
-            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}"
+          echo "Pinging FunkoVault project..."
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X GET "https://qzwvzkryzzlolcqkrfq.supabase.co/rest/v1/profiles?select=id&limit=1" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY")
+          
+          echo "HTTP Response Status: $STATUS"
+          if [ "$STATUS" -ge 200 ] && [ "$STATUS" -lt 300 ]; then
+            echo "Successfully pinged Supabase!"
+          else
+            echo "Failed to ping Supabase! Returned status $STATUS"
+            exit 1
+          fi
