@@ -21,16 +21,25 @@ import '../../widgets/pop/labeled_dropdown.dart';
 import '../../widgets/pop/pop_form.dart';
 import '../../widgets/vault/vault_scroll_view.dart';
 
+enum EditPopInitialSection { none, collectorIdentity, condition, value }
+
 class EditPopScreen extends StatefulWidget {
   const EditPopScreen({
     super.key,
     required this.pop,
     this.collectionName,
+    this.initialSection = EditPopInitialSection.none,
     this.focusValueField = false,
   });
 
   final Pop pop;
   final String? collectionName;
+
+  /// Opens Edit Pop at a specific section.
+  final EditPopInitialSection initialSection;
+
+  /// Preserved for existing callers that specifically want the
+  /// Estimated Value field selected and focused.
   final bool focusValueField;
 
   @override
@@ -40,8 +49,13 @@ class EditPopScreen extends StatefulWidget {
 class _EditPopScreenState extends State<EditPopScreen> {
   final _formKey = GlobalKey<FormState>();
   final ScrollController _scrollController = ScrollController();
-  final FocusNode _valueFocusNode = FocusNode();
+
+  final GlobalKey _collectorIdentitySectionKey = GlobalKey();
+  final GlobalKey _conditionSectionKey = GlobalKey();
   final GlobalKey _valueSectionKey = GlobalKey();
+
+  final FocusNode _itemConditionFocusNode = FocusNode();
+  final FocusNode _valueFocusNode = FocusNode();
 
   late TextEditingController _nameController;
   late TextEditingController _numberController;
@@ -268,28 +282,65 @@ class _EditPopScreenState extends State<EditPopScreen> {
             'Unsigned',
           );
 
-    if (widget.focusValueField) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.focusValueField) {
         _focusValueSection();
-      });
+        return;
+      }
+
+      _focusInitialSection();
+    });
+  }
+
+  Future<void> _focusInitialSection() async {
+    switch (widget.initialSection) {
+      case EditPopInitialSection.none:
+        return;
+
+      case EditPopInitialSection.collectorIdentity:
+        await _scrollToSection(_collectorIdentitySectionKey);
+        return;
+
+      case EditPopInitialSection.condition:
+        await _scrollToSection(_conditionSectionKey);
+
+        if (!mounted) {
+          return;
+        }
+
+        _itemConditionFocusNode.requestFocus();
+        return;
+
+      case EditPopInitialSection.value:
+        await _focusValueSection();
+        return;
     }
   }
 
-  Future<void> _focusValueSection() async {
+  Future<void> _scrollToSection(
+    GlobalKey sectionKey, {
+    double alignment = 0.12,
+  }) async {
     if (!mounted) {
       return;
     }
 
-    final valueSectionContext = _valueSectionKey.currentContext;
+    final BuildContext? sectionContext = sectionKey.currentContext;
 
-    if (valueSectionContext != null) {
-      await Scrollable.ensureVisible(
-        valueSectionContext,
-        duration: const Duration(milliseconds: 450),
-        curve: Curves.easeOutCubic,
-        alignment: 0.15,
-      );
+    if (sectionContext == null) {
+      return;
     }
+
+    await Scrollable.ensureVisible(
+      sectionContext,
+      duration: const Duration(milliseconds: 450),
+      curve: Curves.easeOutCubic,
+      alignment: alignment,
+    );
+  }
+
+  Future<void> _focusValueSection() async {
+    await _scrollToSection(_valueSectionKey, alignment: 0.15);
 
     if (!mounted) {
       return;
@@ -316,6 +367,7 @@ class _EditPopScreenState extends State<EditPopScreen> {
     _boxConditionController.dispose();
     _imageUrlController.dispose();
     _scrollController.dispose();
+    _itemConditionFocusNode.dispose();
     _valueFocusNode.dispose();
     _customVariantController.dispose();
     _customRetailExclusiveController.dispose();
@@ -577,6 +629,7 @@ class _EditPopScreenState extends State<EditPopScreen> {
             ),
             const SizedBox(height: AtlasSpacing.lg),
             AtlasGlassCard(
+              key: _collectorIdentitySectionKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -745,6 +798,7 @@ class _EditPopScreenState extends State<EditPopScreen> {
             ),
             const SizedBox(height: AtlasSpacing.lg),
             AtlasGlassCard(
+              key: _conditionSectionKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -757,6 +811,7 @@ class _EditPopScreenState extends State<EditPopScreen> {
                   const SizedBox(height: AtlasSpacing.md),
                   AtlasFormField(
                     controller: _itemConditionController,
+                    focusNode: _itemConditionFocusNode,
                     label: 'Item Condition',
                     icon: Icons.auto_awesome_outlined,
                   ),
