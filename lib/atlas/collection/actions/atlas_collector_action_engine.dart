@@ -19,7 +19,9 @@ class AtlasCollectorActionContext {
 class AtlasCollectorActionEngine {
   const AtlasCollectorActionEngine();
 
-  List<AtlasCollectorAction> buildActions(AtlasCollectorActionContext context) {
+  List<AtlasCollectorAction> buildActions(
+      AtlasCollectorActionContext context,
+      ) {
     final List<AtlasCollectorAction> actions = <AtlasCollectorAction>[];
 
     if (context.isOwned && context.canViewExistingItem) {
@@ -41,6 +43,24 @@ class AtlasCollectorActionEngine {
           priority: 20,
         ),
       );
+
+      actions.add(
+        const AtlasCollectorAction(
+          type: AtlasCollectorActionType.reviewVariantSticker,
+          label: 'Review Variant / Sticker',
+          icon: Icons.verified_outlined,
+          priority: 30,
+        ),
+      );
+
+      actions.add(
+        const AtlasCollectorAction(
+          type: AtlasCollectorActionType.updateCondition,
+          label: 'Update Condition',
+          icon: Icons.inventory_2_outlined,
+          priority: 40,
+        ),
+      );
     } else {
       actions.add(
         const AtlasCollectorAction(
@@ -59,7 +79,7 @@ class AtlasCollectorActionEngine {
           type: AtlasCollectorActionType.removeFromWishlist,
           label: 'Remove from Wishlist',
           icon: Icons.heart_broken_rounded,
-          priority: 30,
+          priority: 50,
         ),
       );
     } else {
@@ -68,7 +88,7 @@ class AtlasCollectorActionEngine {
           type: AtlasCollectorActionType.addToWishlist,
           label: 'Add to Wishlist',
           icon: Icons.favorite_border_rounded,
-          priority: 30,
+          priority: 50,
         ),
       );
     }
@@ -84,9 +104,14 @@ class AtlasCollectorActionEngine {
       );
     }
 
-    actions.sort((AtlasCollectorAction first, AtlasCollectorAction second) {
-      return first.priority.compareTo(second.priority);
-    });
+    actions.sort(
+          (
+          AtlasCollectorAction first,
+          AtlasCollectorAction second,
+          ) {
+        return first.priority.compareTo(second.priority);
+      },
+    );
 
     return List<AtlasCollectorAction>.unmodifiable(actions);
   }

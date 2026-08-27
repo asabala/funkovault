@@ -4,6 +4,8 @@ enum AtlasCollectorActionType {
   viewExistingItem,
   addToVault,
   addAnotherCopy,
+  reviewVariantSticker,
+  updateCondition,
   addToWishlist,
   removeFromWishlist,
   scanAnother,
@@ -55,6 +57,12 @@ class AtlasCollectorAction {
 
   @override
   int get hashCode {
-    return Object.hash(type, label, icon, priority, isPrimary);
+    return Object.hash(
+      type,
+      label,
+      icon,
+      priority,
+      isPrimary,
+    );
   }
 }

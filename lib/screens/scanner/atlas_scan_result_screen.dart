@@ -18,6 +18,7 @@ import 'package:funkovault2/atlas/scan/workflow/identity_resolution_status.dart'
 import 'package:funkovault2/models/pop.dart';
 import 'package:funkovault2/screens/catalog/funko_catalog_screen.dart';
 import 'package:funkovault2/screens/pop/add_pop_screen.dart';
+import 'package:funkovault2/screens/pop/edit_pop_screen.dart';
 import 'package:funkovault2/screens/pop/pop_details_screen.dart';
 import 'package:funkovault2/services/app_state.dart';
 import 'package:funkovault2/widgets/scanner/atlas_collector_action_bar.dart';
@@ -49,6 +50,26 @@ Future<void> _openManualAdd(BuildContext context, String collectionName) {
     MaterialPageRoute<void>(
       builder: (_) {
         return AddPopScreen(collectionName: collectionName);
+      },
+    ),
+  );
+}
+
+Future<void> _openExistingPopEditor(
+  BuildContext context, {
+  required Pop pop,
+  required String collectionName,
+  required EditPopInitialSection initialSection,
+}) async {
+  await Navigator.push<Pop>(
+    context,
+    MaterialPageRoute<Pop>(
+      builder: (_) {
+        return EditPopScreen(
+          pop: pop,
+          collectionName: collectionName,
+          initialSection: initialSection,
+        );
       },
     ),
   );
@@ -643,6 +664,8 @@ class _VaultBarcodeMatchCard extends StatelessWidget {
         .where((AtlasCollectorAction action) {
           switch (action.type) {
             case AtlasCollectorActionType.viewExistingItem:
+            case AtlasCollectorActionType.reviewVariantSticker:
+            case AtlasCollectorActionType.updateCondition:
             case AtlasCollectorActionType.addToWishlist:
             case AtlasCollectorActionType.removeFromWishlist:
             case AtlasCollectorActionType.scanAnother:
@@ -682,6 +705,36 @@ class _VaultBarcodeMatchCard extends StatelessWidget {
                       );
                     },
                   ),
+                );
+
+              case AtlasCollectorActionType.reviewVariantSticker:
+                final Pop? existingPop =
+                    collectorInsight.state.primaryOwnedMatch;
+
+                if (existingPop == null) {
+                  return;
+                }
+
+                await _openExistingPopEditor(
+                  context,
+                  pop: existingPop,
+                  collectionName: collectionName,
+                  initialSection: EditPopInitialSection.collectorIdentity,
+                );
+
+              case AtlasCollectorActionType.updateCondition:
+                final Pop? existingPop =
+                    collectorInsight.state.primaryOwnedMatch;
+
+                if (existingPop == null) {
+                  return;
+                }
+
+                await _openExistingPopEditor(
+                  context,
+                  pop: existingPop,
+                  collectionName: collectionName,
+                  initialSection: EditPopInitialSection.condition,
                 );
 
               case AtlasCollectorActionType.addToVault:
@@ -794,6 +847,36 @@ class _CatalogProductCard extends StatelessWidget {
                       );
                     },
                   ),
+                );
+
+              case AtlasCollectorActionType.reviewVariantSticker:
+                final Pop? existingPop =
+                    collectorInsight.state.primaryOwnedMatch;
+
+                if (existingPop == null) {
+                  return;
+                }
+
+                await _openExistingPopEditor(
+                  context,
+                  pop: existingPop,
+                  collectionName: collectionName,
+                  initialSection: EditPopInitialSection.collectorIdentity,
+                );
+
+              case AtlasCollectorActionType.updateCondition:
+                final Pop? existingPop =
+                    collectorInsight.state.primaryOwnedMatch;
+
+                if (existingPop == null) {
+                  return;
+                }
+
+                await _openExistingPopEditor(
+                  context,
+                  pop: existingPop,
+                  collectionName: collectionName,
+                  initialSection: EditPopInitialSection.condition,
                 );
 
               case AtlasCollectorActionType.addToVault:
