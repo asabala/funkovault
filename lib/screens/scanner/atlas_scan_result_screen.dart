@@ -21,6 +21,11 @@ import 'package:funkovault2/screens/pop/add_pop_screen.dart';
 import 'package:funkovault2/screens/pop/edit_pop_screen.dart';
 import 'package:funkovault2/screens/pop/pop_details_screen.dart';
 import 'package:funkovault2/services/app_state.dart';
+import 'package:funkovault2/theme/atlas_colors.dart';
+import 'package:funkovault2/theme/atlas_spacing.dart';
+import 'package:funkovault2/widgets/atlas/components/atlas_empty_state.dart';
+import 'package:funkovault2/widgets/atlas/components/atlas_insight_panel.dart';
+import 'package:funkovault2/widgets/atlas/components/atlas_status_chip.dart';
 import 'package:funkovault2/widgets/scanner/atlas_collector_action_bar.dart';
 import 'package:funkovault2/widgets/scanner/atlas_collector_summary_card.dart';
 import 'package:funkovault2/widgets/scanner/atlas_scan_briefing_card.dart';
@@ -106,7 +111,7 @@ class AtlasScanResultScreen extends StatelessWidget {
       appBar: AppBar(title: const Text('Scan Result')),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AtlasSpacing.md),
           child: primaryCode == null
               ? const _NoBarcodeView()
               : _BarcodeResultView(
@@ -136,35 +141,17 @@ class _NoBarcodeView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: SingleChildScrollView(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.search_off_rounded, size: 72),
-            const SizedBox(height: 20),
-            Text(
-              'No Barcode Detected',
-              style: Theme.of(
-                context,
-              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 12),
-            const Text(
+        child: AtlasEmptyState(
+          icon: Icons.search_off_rounded,
+          eyebrow: 'Scanner',
+          title: 'No Barcode Detected',
+          message:
               'Atlas could not find usable barcode evidence in this scan session.',
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                icon: const Icon(Icons.qr_code_scanner),
-                label: const Text('Scan Again'),
-              ),
-            ),
-          ],
+          tone: AtlasEmptyStateTone.intelligence,
+          actionLabel: 'Scan Again',
+          onAction: () {
+            Navigator.pop(context);
+          },
         ),
       ),
     );
@@ -224,7 +211,7 @@ class _BarcodeResultView extends StatelessWidget {
               resolution: catalogResolution,
               hasVaultBarcodeMatch: hasVaultBarcodeMatch,
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: AtlasSpacing.lg),
           ],
           _CatalogResolutionCard(
             session: session,
@@ -232,14 +219,14 @@ class _BarcodeResultView extends StatelessWidget {
             intelligence: intelligence,
             collectionName: collectionName,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AtlasSpacing.md),
           AtlasScanBriefingCard(briefing: briefing),
-          const SizedBox(height: 16),
+          const SizedBox(height: AtlasSpacing.md),
           AtlasScanIntelligenceCard(intelligence: intelligence),
-          const SizedBox(height: 16),
+          const SizedBox(height: AtlasSpacing.md),
           _ScanDiagnosticsCard(session: session, code: code),
           if (!hasSuccessfulCollectorResult) ...[
-            const SizedBox(height: 24),
+            const SizedBox(height: AtlasSpacing.lg),
             OutlinedButton.icon(
               onPressed: () {
                 Navigator.pop(context);
@@ -307,20 +294,20 @@ class _ResultHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final _ResultHeaderState headerState = _buildHeaderState();
 
-    return Column(
-      children: [
-        Icon(headerState.icon, size: 72),
-        const SizedBox(height: 16),
-        Text(
-          headerState.title,
-          style: Theme.of(
-            context,
-          ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 8),
-        Text(headerState.message, textAlign: TextAlign.center),
-      ],
+    return AtlasInsightPanel(
+      eyebrow: headerState.eyebrow,
+      title: headerState.title,
+      message: headerState.message,
+      icon: headerState.icon,
+      tone: headerState.tone,
+      badge: headerState.badgeLabel == null
+          ? null
+          : AtlasStatusChip(
+              label: headerState.badgeLabel!,
+              icon: headerState.badgeIcon,
+              accentColor: headerState.accentColor,
+              size: AtlasStatusChipSize.compact,
+            ),
     );
   }
 
@@ -328,58 +315,93 @@ class _ResultHeader extends StatelessWidget {
     switch (session.resolutionStatus) {
       case IdentityResolutionStatus.failed:
         return const _ResultHeaderState(
+          eyebrow: 'Scanner Status',
           title: 'Resolution Failed',
           message:
               'Atlas could not confidently identify this collectible. Review the scan evidence or try scanning again.',
           icon: Icons.error_outline_rounded,
+          tone: AtlasInsightPanelTone.danger,
+          badgeLabel: 'Failed',
+          badgeIcon: Icons.error_outline_rounded,
+          accentColor: AtlasColors.danger,
         );
 
       case IdentityResolutionStatus.ambiguous:
         return const _ResultHeaderState(
+          eyebrow: 'Scanner Status',
           title: 'Review Required',
           message:
               'Atlas found multiple possible identities. Review the available matches before continuing.',
           icon: Icons.warning_amber_rounded,
+          tone: AtlasInsightPanelTone.warning,
+          badgeLabel: 'Ambiguous',
+          badgeIcon: Icons.rule_rounded,
+          accentColor: AtlasColors.warning,
         );
 
       case IdentityResolutionStatus.unresolved:
         return const _ResultHeaderState(
+          eyebrow: 'Scanner Status',
           title: 'Identity Not Resolved',
           message:
               'Atlas could not determine a confirmed product identity from the available evidence.',
           icon: Icons.help_outline_rounded,
+          tone: AtlasInsightPanelTone.neutral,
+          badgeLabel: 'Unresolved',
+          badgeIcon: Icons.help_outline_rounded,
+          accentColor: AtlasColors.textSecondary,
         );
 
       case IdentityResolutionStatus.pendingSync:
         return const _ResultHeaderState(
+          eyebrow: 'Scanner Status',
           title: 'Sync Pending',
           message:
               'Atlas resolved this product locally. Additional cloud intelligence will be synchronized when available.',
           icon: Icons.cloud_sync_outlined,
+          tone: AtlasInsightPanelTone.intelligence,
+          badgeLabel: 'Pending Sync',
+          badgeIcon: Icons.cloud_sync_outlined,
+          accentColor: AtlasColors.intelligenceBlue,
         );
 
       case IdentityResolutionStatus.resolvedLocal:
         return const _ResultHeaderState(
+          eyebrow: 'Scanner Status',
           title: 'Product Resolved',
           message:
               'Atlas successfully identified this collectible using local intelligence.',
           icon: Icons.check_circle_outline_rounded,
+          tone: AtlasInsightPanelTone.success,
+          badgeLabel: 'Resolved',
+          badgeIcon: Icons.check_rounded,
+          accentColor: AtlasColors.success,
         );
 
       case IdentityResolutionStatus.resolvedRemote:
         return const _ResultHeaderState(
+          eyebrow: 'Scanner Status',
           title: 'Product Resolved',
           message:
               'Atlas successfully identified this collectible using connected catalog intelligence.',
           icon: Icons.check_circle_outline_rounded,
+          tone: AtlasInsightPanelTone.success,
+          badgeLabel: 'Resolved',
+          badgeIcon: Icons.cloud_done_outlined,
+          accentColor: AtlasColors.success,
         );
 
       case IdentityResolutionStatus.resolving:
         return const _ResultHeaderState(
+          eyebrow: 'Scanner Status',
           title: 'Resolving Product',
           message:
               'Atlas is processing the available evidence and attempting to identify this collectible.',
           icon: Icons.manage_search_rounded,
+          tone: AtlasInsightPanelTone.intelligence,
+          badgeLabel: 'Analyzing',
+          badgeIcon: Icons.manage_search_rounded,
+          accentColor: AtlasColors.intelligenceBlue,
         );
 
       case IdentityResolutionStatus.notStarted:
@@ -390,42 +412,68 @@ class _ResultHeader extends StatelessWidget {
   _ResultHeaderState _catalogFallbackState() {
     if (hasVaultBarcodeMatch) {
       return const _ResultHeaderState(
+        eyebrow: 'Collection Match',
         title: '📦 Found in Your Vault',
         message: 'Atlas found this barcode in your selected collection.',
         icon: Icons.inventory_2_rounded,
+        tone: AtlasInsightPanelTone.success,
+        badgeLabel: 'Owned',
+        badgeIcon: Icons.check_circle_outline_rounded,
+        accentColor: AtlasColors.success,
       );
     }
+
     switch (resolution.status) {
       case AtlasBarcodeResolutionStatus.invalidBarcode:
         return _ResultHeaderState(
+          eyebrow: 'Catalog Lookup',
           title: 'Barcode Detected',
           message: code.isProductBarcode
               ? 'Atlas detected the code, but it could not be used for a catalog lookup.'
               : 'Atlas detected a code, but it is not a supported product barcode.',
           icon: Icons.warning_amber_rounded,
+          tone: AtlasInsightPanelTone.warning,
+          badgeLabel: 'Unsupported',
+          badgeIcon: Icons.warning_amber_rounded,
+          accentColor: AtlasColors.warning,
         );
 
       case AtlasBarcodeResolutionStatus.noMatch:
         return const _ResultHeaderState(
+          eyebrow: 'Catalog Lookup',
           title: 'No Catalog Match',
           message:
               'The barcode was valid, but Atlas did not find a matching catalog product.',
           icon: Icons.search_off_rounded,
+          tone: AtlasInsightPanelTone.neutral,
+          badgeLabel: 'No Match',
+          badgeIcon: Icons.search_off_rounded,
+          accentColor: AtlasColors.textSecondary,
         );
 
       case AtlasBarcodeResolutionStatus.singleMatch:
         return const _ResultHeaderState(
+          eyebrow: 'Catalog Lookup',
           title: 'Product Found',
           message: 'Atlas found one catalog product matching this barcode.',
           icon: Icons.check_circle_outline_rounded,
+          tone: AtlasInsightPanelTone.success,
+          badgeLabel: 'Matched',
+          badgeIcon: Icons.check_rounded,
+          accentColor: AtlasColors.success,
         );
 
       case AtlasBarcodeResolutionStatus.multipleMatches:
         return const _ResultHeaderState(
+          eyebrow: 'Catalog Lookup',
           title: 'Possible Matches Found',
           message:
               'Atlas found more than one catalog product. Review the choices before continuing.',
           icon: Icons.content_copy_rounded,
+          tone: AtlasInsightPanelTone.warning,
+          badgeLabel: 'Review',
+          badgeIcon: Icons.rule_rounded,
+          accentColor: AtlasColors.warning,
         );
     }
   }
@@ -433,14 +481,24 @@ class _ResultHeader extends StatelessWidget {
 
 class _ResultHeaderState {
   const _ResultHeaderState({
+    required this.eyebrow,
     required this.title,
     required this.message,
     required this.icon,
+    required this.tone,
+    required this.accentColor,
+    this.badgeLabel,
+    this.badgeIcon,
   });
 
+  final String eyebrow;
   final String title;
   final String message;
   final IconData icon;
+  final AtlasInsightPanelTone tone;
+  final Color accentColor;
+  final String? badgeLabel;
+  final IconData? badgeIcon;
 }
 
 class _CatalogResolutionCard extends StatelessWidget {
@@ -605,7 +663,7 @@ class _MultipleCatalogMatchesCard extends StatelessWidget {
             const Text(
               'Atlas will not automatically choose between products that share a barcode. Review each product and select the correct match.',
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AtlasSpacing.md),
             for (int index = 0; index < products.length; index++) ...[
               _CatalogProductSummary(product: products[index]),
               const SizedBox(height: 12),
@@ -682,7 +740,7 @@ class _VaultBarcodeMatchCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         AtlasCollectorSummaryCard(summary: collectorInsight.summary),
-        const SizedBox(height: 16),
+        const SizedBox(height: AtlasSpacing.md),
         AtlasCollectorActionBar(
           actions: safeActions,
           onActionPressed: (AtlasCollectorActionType actionType) async {
@@ -824,7 +882,7 @@ class _CatalogProductCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         AtlasCollectorSummaryCard(summary: collectorInsight.summary),
-        const SizedBox(height: 16),
+        const SizedBox(height: AtlasSpacing.md),
         AtlasCollectorActionBar(
           actions: collectorInsight.actions,
           onActionPressed: (AtlasCollectorActionType actionType) async {
