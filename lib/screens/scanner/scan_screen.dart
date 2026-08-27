@@ -205,8 +205,8 @@ class _ScanScreenState extends State<ScanScreen> {
       appBar: AppBar(title: const Text('Scan Pop')),
       body: Column(
         children: [
-          Expanded(
-            flex: 5,
+          SizedBox(
+            height: 260,
             child: Stack(
               fit: StackFit.expand,
               children: [
@@ -228,12 +228,11 @@ class _ScanScreenState extends State<ScanScreen> {
               ],
             ),
           ),
-          SafeArea(
-            top: false,
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
+          Expanded(
+            child: SafeArea(
+              top: false,
+              child: ListView(
+                padding: const EdgeInsets.all(12),
                 children: [
                   AtlasHaulSessionPanel(
                     entries: _coordinator.ledger.entries,

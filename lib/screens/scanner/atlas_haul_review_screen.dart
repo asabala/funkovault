@@ -114,6 +114,109 @@ class _AtlasHaulReviewScreenState extends State<AtlasHaulReviewScreen> {
     );
   }
 
+  Future<void> _linkExistingVaultItem({
+    required AtlasScanLedgerEntry entry,
+    required List<Pop> collectionPops,
+  }) async {
+    if (_savingTrackIds.contains(entry.trackId)) {
+      return;
+    }
+
+    final Pop? selected = await showModalBottomSheet<Pop>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) {
+        return _VaultItemPickerSheet(
+          collectionName: widget.collectionName,
+          collectionPops: collectionPops,
+          scannedBarcode: entry.stableCode.normalizedValue,
+        );
+      },
+    );
+
+    if (!mounted || selected == null) {
+      return;
+    }
+
+    final String scannedBarcode = entry.stableCode.normalizedValue.trim();
+    final String existingBarcode = selected.sourceUpc.trim();
+
+    if (existingBarcode.isNotEmpty && existingBarcode != scannedBarcode) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(
+              '${selected.name} already has barcode $existingBarcode. Atlas did not overwrite it.',
+            ),
+          ),
+        );
+      return;
+    }
+
+    setState(() {
+      _savingTrackIds.add(entry.trackId);
+    });
+
+    try {
+      final AppState appState = context.read<AppState>();
+      final Pop linkedPop = existingBarcode == scannedBarcode
+          ? selected
+          : selected.copyWith(sourceUpc: scannedBarcode);
+
+      final Pop? persisted = await appState.updatePop(
+        linkedPop,
+        collectionName: widget.collectionName,
+        existingRecordKey: selected.collectionRecordKey,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      if (persisted == null) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Atlas could not safely link that Vault item. Nothing was changed.',
+              ),
+            ),
+          );
+        return;
+      }
+
+      final bool committed = widget.coordinator.markCommitted(
+        trackId: entry.trackId,
+      );
+
+      if (!committed) {
+        return;
+      }
+
+      setState(() {});
+
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(
+              'Linked barcode $scannedBarcode to ${persisted.name} and committed this haul item.',
+            ),
+          ),
+        );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _savingTrackIds.remove(entry.trackId);
+        });
+      } else {
+        _savingTrackIds.remove(entry.trackId);
+      }
+    }
+  }
+
   Future<void> _reviewCatalogMatches({
     required AtlasScanLedgerEntry entry,
     required AtlasContinuousScanResult result,
@@ -286,6 +389,17 @@ class _AtlasHaulReviewScreenState extends State<AtlasHaulReviewScreen> {
                             entry: entry,
                             result: result,
                           ),
+                    onFindExisting:
+                        entry.needsReview &&
+                            resolvedProduct == null &&
+                            !hasMultipleMatches
+                        ? () => _linkExistingVaultItem(
+                            entry: entry,
+                            collectionPops: appState.popsForCollection(
+                              widget.collectionName,
+                            ),
+                          )
+                        : null,
                     onManualAdd:
                         entry.needsReview &&
                             resolvedProduct == null &&
@@ -313,6 +427,7 @@ class _HaulReviewItemCard extends StatelessWidget {
     required this.onRetry,
     required this.onAdd,
     required this.onReviewMatches,
+    required this.onFindExisting,
     required this.onManualAdd,
   });
 
@@ -325,6 +440,7 @@ class _HaulReviewItemCard extends StatelessWidget {
   final VoidCallback? onRetry;
   final VoidCallback? onAdd;
   final VoidCallback? onReviewMatches;
+  final VoidCallback? onFindExisting;
   final VoidCallback? onManualAdd;
 
   @override
@@ -480,12 +596,19 @@ class _HaulReviewItemCard extends StatelessWidget {
               icon: const Icon(Icons.content_copy_rounded),
               label: Text('🔎 Review $matchCount Matches'),
             )
-          else if (entry.needsReview)
+          else if (entry.needsReview) ...[
             FilledButton.icon(
+              onPressed: isSaving ? null : onFindExisting,
+              icon: const Icon(Icons.link_rounded),
+              label: const Text('🔗 Find Existing in Vault'),
+            ),
+            const SizedBox(height: AtlasSpacing.sm),
+            OutlinedButton.icon(
               onPressed: isSaving ? null : onManualAdd,
               icon: const Icon(Icons.edit_note_rounded),
               label: const Text('➕ Add Manually'),
             ),
+          ],
         ],
       ),
     );
@@ -544,5 +667,239 @@ class _HaulReviewItemCard extends StatelessWidget {
       AtlasScanLedgerStatus.failed => AtlasColors.danger,
       AtlasScanLedgerStatus.committed => AtlasColors.success,
     };
+  }
+}
+
+class _VaultItemPickerSheet extends StatefulWidget {
+  const _VaultItemPickerSheet({
+    required this.collectionName,
+    required this.collectionPops,
+    required this.scannedBarcode,
+  });
+
+  final String collectionName;
+  final List<Pop> collectionPops;
+  final String scannedBarcode;
+
+  @override
+  State<_VaultItemPickerSheet> createState() => _VaultItemPickerSheetState();
+}
+
+class _VaultItemPickerSheetState extends State<_VaultItemPickerSheet> {
+  final TextEditingController _searchController = TextEditingController();
+  String _query = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  List<Pop> get _matches {
+    final String query = _query.trim().toLowerCase();
+
+    final List<Pop> pops = widget.collectionPops
+        .where((Pop pop) {
+          if (query.isEmpty) {
+            return true;
+          }
+
+          final List<String> values = <String>[
+            pop.name,
+            pop.number,
+            pop.series,
+            pop.variant,
+            pop.retailExclusive,
+            pop.eventSticker,
+            pop.limitedEdition,
+            pop.signature,
+            pop.sourceUpc,
+          ];
+
+          return values.any(
+            (String value) => value.toLowerCase().contains(query),
+          );
+        })
+        .toList(growable: false);
+
+    pops.sort((Pop a, Pop b) {
+      final int nameCompare = a.name.toLowerCase().compareTo(
+        b.name.toLowerCase(),
+      );
+      if (nameCompare != 0) {
+        return nameCompare;
+      }
+      return a.number.toLowerCase().compareTo(b.number.toLowerCase());
+    });
+
+    return pops;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final List<Pop> matches = _matches;
+
+    return SafeArea(
+      child: FractionallySizedBox(
+        heightFactor: 0.84,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AtlasSpacing.lg,
+                AtlasSpacing.lg,
+                AtlasSpacing.lg,
+                AtlasSpacing.md,
+              ),
+              child: AtlasSectionHeader(
+                title: '🔗 Find Existing in Vault',
+                subtitle:
+                    'Select the existing collectible that belongs to barcode ${widget.scannedBarcode}.',
+                icon: Icons.link_rounded,
+                accentColor: AtlasColors.intelligenceBlue,
+                trailing: AtlasStatusChip(
+                  label: widget.collectionName,
+                  icon: Icons.inventory_2_outlined,
+                  accentColor: AtlasColors.intelligenceBlue,
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AtlasSpacing.lg),
+              child: TextField(
+                controller: _searchController,
+                autofocus: true,
+                decoration: const InputDecoration(
+                  prefixIcon: Icon(Icons.search_rounded),
+                  hintText: 'Search name, number, variant, sticker...',
+                  border: OutlineInputBorder(),
+                ),
+                onChanged: (String value) {
+                  setState(() {
+                    _query = value;
+                  });
+                },
+              ),
+            ),
+            const SizedBox(height: AtlasSpacing.md),
+            Expanded(
+              child: matches.isEmpty
+                  ? const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(AtlasSpacing.lg),
+                        child: Text(
+                          'No matching Vault items. Try a different search or use Add Manually.',
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    )
+                  : ListView.separated(
+                      keyboardDismissBehavior:
+                          ScrollViewKeyboardDismissBehavior.onDrag,
+                      padding: const EdgeInsets.fromLTRB(
+                        AtlasSpacing.lg,
+                        0,
+                        AtlasSpacing.lg,
+                        AtlasSpacing.lg,
+                      ),
+                      itemCount: matches.length,
+                      separatorBuilder: (_, _) =>
+                          const SizedBox(height: AtlasSpacing.sm),
+                      itemBuilder: (BuildContext context, int index) {
+                        final Pop pop = matches[index];
+                        final String barcode = pop.sourceUpc.trim();
+                        final bool hasDifferentBarcode =
+                            barcode.isNotEmpty &&
+                            barcode != widget.scannedBarcode;
+
+                        final List<String> details = <String>[
+                          if (pop.number.trim().isNotEmpty)
+                            '#${pop.number.trim()}',
+                          if (pop.variant.trim().isNotEmpty &&
+                              pop.variant.trim().toLowerCase() != 'common')
+                            pop.variant.trim(),
+                          if (pop.retailExclusive.trim().isNotEmpty &&
+                              pop.retailExclusive.trim().toLowerCase() !=
+                                  'none')
+                            pop.retailExclusive.trim(),
+                          if (pop.eventSticker.trim().isNotEmpty &&
+                              pop.eventSticker.trim().toLowerCase() != 'none')
+                            pop.eventSticker.trim(),
+                          'Qty ${pop.quantity}',
+                        ];
+
+                        return AtlasGlassCard(
+                          accentColor: hasDifferentBarcode
+                              ? AtlasColors.warning
+                              : AtlasColors.intelligenceBlue,
+                          onTap: hasDifferentBarcode
+                              ? null
+                              : () {
+                                  Navigator.pop(context, pop);
+                                },
+                          child: Row(
+                            children: [
+                              Icon(
+                                hasDifferentBarcode
+                                    ? Icons.warning_amber_rounded
+                                    : Icons.inventory_2_outlined,
+                                color: hasDifferentBarcode
+                                    ? AtlasColors.warning
+                                    : AtlasColors.intelligenceBlue,
+                              ),
+                              const SizedBox(width: AtlasSpacing.md),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      pop.name,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleSmall
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                    ),
+                                    if (details.isNotEmpty) ...[
+                                      const SizedBox(height: AtlasSpacing.xs),
+                                      Text(
+                                        details.join(' • '),
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall
+                                            ?.copyWith(
+                                              color: AtlasColors.textSecondary,
+                                            ),
+                                      ),
+                                    ],
+                                    if (hasDifferentBarcode) ...[
+                                      const SizedBox(height: AtlasSpacing.xs),
+                                      Text(
+                                        'Already linked to $barcode',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall
+                                            ?.copyWith(
+                                              color: AtlasColors.warning,
+                                            ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                              if (!hasDifferentBarcode)
+                                const Icon(Icons.chevron_right_rounded),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

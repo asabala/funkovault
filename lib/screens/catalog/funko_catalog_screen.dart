@@ -310,7 +310,9 @@ class _FunkoCatalogScreenState extends State<FunkoCatalogScreen> {
 
           Expanded(
             child: _results.isEmpty
-                ? Padding(
+                ? SingleChildScrollView(
+                    keyboardDismissBehavior:
+                        ScrollViewKeyboardDismissBehavior.onDrag,
                     padding: const EdgeInsets.all(AtlasSpacing.md),
                     child: AtlasEmptyState(
                       eyebrow: 'Funko Catalog',
@@ -323,6 +325,8 @@ class _FunkoCatalogScreenState extends State<FunkoCatalogScreen> {
                     ),
                   )
                 : ListView.builder(
+                    keyboardDismissBehavior:
+                        ScrollViewKeyboardDismissBehavior.onDrag,
                     padding: const EdgeInsets.fromLTRB(
                       AtlasSpacing.md,
                       0,
