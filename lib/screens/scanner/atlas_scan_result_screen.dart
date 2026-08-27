@@ -655,18 +655,10 @@ class _VaultBarcodeMatchCard extends StatelessWidget {
         })
         .toList(growable: false);
 
-    final Pop displayPop =
-        collectorInsight.state.primaryOwnedMatch ??
-        collectorInsight.state.primaryWishlistMatch ??
-        primaryPop;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        AtlasCollectorSummaryCard(
-          summary: collectorInsight.summary,
-          imageUrl: displayPop.imageUrl,
-        ),
+        AtlasCollectorSummaryCard(summary: collectorInsight.summary),
         const SizedBox(height: 16),
         AtlasCollectorActionBar(
           actions: safeActions,
@@ -778,10 +770,7 @@ class _CatalogProductCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        AtlasCollectorSummaryCard(
-          summary: collectorInsight.summary,
-          imageUrl: scannedPop.imageUrl,
-        ),
+        AtlasCollectorSummaryCard(summary: collectorInsight.summary),
         const SizedBox(height: 16),
         AtlasCollectorActionBar(
           actions: collectorInsight.actions,
