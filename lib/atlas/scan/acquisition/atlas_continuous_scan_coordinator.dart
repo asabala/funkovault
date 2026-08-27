@@ -152,27 +152,49 @@ class AtlasContinuousScanCoordinator {
 
     _notifyChanged();
 
-    final String jobId = _createJobId(
+    _enqueueResolution(
       trackId: normalizedTrackId,
+      stableCode: stableCode,
       createdAt: now,
     );
 
-    unawaited(
-      resolutionQueue
-          .enqueue(
-            AtlasResolutionJob(
-              jobId: jobId,
-              trackId: normalizedTrackId,
-              createdAt: now,
-              execute: () => _resolveTrack(
-                trackId: normalizedTrackId,
-                stableCode: stableCode,
-              ),
-            ),
-          )
-          .catchError((Object error, StackTrace stackTrace) {
-            _handleQueueFailure(trackId: normalizedTrackId, error: error);
-          }),
+    return true;
+  }
+
+  /// Explicitly retries a failed physical track.
+  ///
+  /// Retry never creates a second ledger entry and never auto-commits. The
+  /// original stable barcode evidence is reused for a new resolution attempt.
+  bool retryFailedTrack({required String trackId}) {
+    if (_isDisposed) {
+      return false;
+    }
+
+    final String normalizedTrackId = trackId.trim();
+
+    if (normalizedTrackId.isEmpty ||
+        resolutionQueue.containsTrack(normalizedTrackId)) {
+      return false;
+    }
+
+    final AtlasScanLedgerEntry? entry = ledger.entryForTrack(normalizedTrackId);
+
+    if (entry == null || !entry.hasFailed) {
+      return false;
+    }
+
+    final DateTime now = DateTime.now().toUtc();
+
+    ledger.markQueued(trackId: normalizedTrackId, at: now, allowRetry: true);
+
+    _resultsByTrack.remove(normalizedTrackId);
+
+    _notifyChanged();
+
+    _enqueueResolution(
+      trackId: normalizedTrackId,
+      stableCode: entry.stableCode,
+      createdAt: now,
     );
 
     return true;
@@ -210,6 +232,30 @@ class AtlasContinuousScanCoordinator {
 
     _isDisposed = true;
     resolutionQueue.dispose();
+  }
+
+  void _enqueueResolution({
+    required String trackId,
+    required ScanCode stableCode,
+    required DateTime createdAt,
+  }) {
+    final String jobId = _createJobId(trackId: trackId, createdAt: createdAt);
+
+    unawaited(
+      resolutionQueue
+          .enqueue(
+            AtlasResolutionJob(
+              jobId: jobId,
+              trackId: trackId,
+              createdAt: createdAt,
+              execute: () =>
+                  _resolveTrack(trackId: trackId, stableCode: stableCode),
+            ),
+          )
+          .catchError((Object error, StackTrace stackTrace) {
+            _handleQueueFailure(trackId: trackId, error: error);
+          }),
+    );
   }
 
   Future<void> _resolveTrack({

@@ -148,6 +148,16 @@ class _AtlasHaulReviewScreenState extends State<AtlasHaulReviewScreen> {
                           widget.collectionName,
                         ),
                     isSaving: _savingTrackIds.contains(entry.trackId),
+                    onRetry: entry.hasFailed
+                        ? () {
+                            final bool accepted = widget.coordinator
+                                .retryFailedTrack(trackId: entry.trackId);
+
+                            if (accepted && mounted) {
+                              setState(() {});
+                            }
+                          }
+                        : null,
                     onAdd: result?.resolvedCatalogProduct == null
                         ? null
                         : () => _addResolvedItem(
@@ -172,6 +182,7 @@ class _HaulReviewItemCard extends StatelessWidget {
     required this.collectionPops,
     required this.ownedWishlistIdentityKeys,
     required this.isSaving,
+    required this.onRetry,
     required this.onAdd,
   });
 
@@ -181,6 +192,7 @@ class _HaulReviewItemCard extends StatelessWidget {
   final List<Pop> collectionPops;
   final Set<String> ownedWishlistIdentityKeys;
   final bool isSaving;
+  final VoidCallback? onRetry;
   final VoidCallback? onAdd;
 
   @override
@@ -269,6 +281,18 @@ class _HaulReviewItemCard extends StatelessWidget {
                     icon: Icons.layers_outlined,
                     accentColor: AtlasColors.warning,
                   ),
+                if (scanResult?.isOfflineResult == true)
+                  const AtlasStatusChip(
+                    label: 'Offline',
+                    icon: Icons.cloud_off_outlined,
+                    accentColor: AtlasColors.intelligenceBlue,
+                  ),
+                if (scanResult?.requiresSync == true)
+                  const AtlasStatusChip(
+                    label: 'Sync Pending',
+                    icon: Icons.cloud_sync_outlined,
+                    accentColor: AtlasColors.warning,
+                  ),
               ],
             ),
           ],
@@ -306,9 +330,10 @@ class _HaulReviewItemCard extends StatelessWidget {
               textAlign: TextAlign.center,
             )
           else if (entry.hasFailed)
-            const Text(
-              '⚠️ Resolution failed. Retry support is added in Scanner 4H.',
-              textAlign: TextAlign.center,
+            FilledButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('🔄 Retry Resolution'),
             ),
         ],
       ),

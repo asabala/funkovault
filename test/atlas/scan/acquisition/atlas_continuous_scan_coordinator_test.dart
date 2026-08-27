@@ -122,6 +122,53 @@ void main() {
 
     coordinator.dispose();
   });
+
+  test('failed track retries without creating a second ledger entry', () {
+    final _HoldingResolutionQueue queue = _HoldingResolutionQueue();
+    final AtlasContinuousScanCoordinator coordinator =
+        AtlasContinuousScanCoordinator(resolutionQueue: queue);
+
+    final DateTime now = DateTime.utc(2026, 8, 27, 12);
+
+    coordinator.ledger.observe(
+      trackId: 'track_retry',
+      stableCode: _code('889698555555'),
+      at: now,
+    );
+    coordinator.ledger.markQueued(trackId: 'track_retry', at: now);
+    coordinator.ledger.markResolving(trackId: 'track_retry', at: now);
+    coordinator.ledger.markFailed(
+      trackId: 'track_retry',
+      error: StateError('network unavailable'),
+      at: now,
+    );
+
+    final bool accepted = coordinator.retryFailedTrack(trackId: 'track_retry');
+
+    expect(accepted, isTrue);
+    expect(coordinator.ledger.entries, hasLength(1));
+    expect(coordinator.ledger.entryForTrack('track_retry')!.isQueued, isTrue);
+    expect(queue.acceptedJobs, hasLength(1));
+
+    coordinator.dispose();
+  });
+
+  test('retry is rejected for a track that has not failed', () {
+    final _HoldingResolutionQueue queue = _HoldingResolutionQueue();
+    final AtlasContinuousScanCoordinator coordinator =
+        AtlasContinuousScanCoordinator(resolutionQueue: queue);
+
+    coordinator.ledger.observe(
+      trackId: 'track_not_failed',
+      stableCode: _code('889698666666'),
+      at: DateTime.utc(2026, 8, 27, 12),
+    );
+
+    expect(coordinator.retryFailedTrack(trackId: 'track_not_failed'), isFalse);
+    expect(queue.acceptedJobs, isEmpty);
+
+    coordinator.dispose();
+  });
 }
 
 class _HoldingResolutionQueue extends AtlasResolutionQueue {

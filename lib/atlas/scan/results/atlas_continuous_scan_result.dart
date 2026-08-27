@@ -16,6 +16,10 @@ class AtlasContinuousScanResult {
   final AtlasBarcodeResolution catalogResolution;
   final DateTime completedAt;
 
+  bool get isOfflineResult => session.isOffline;
+
+  bool get requiresSync => session.requiresSync;
+
   bool get requiresUserReview {
     return session.requiresUserAction || !catalogResolution.hasSingleMatch;
   }
