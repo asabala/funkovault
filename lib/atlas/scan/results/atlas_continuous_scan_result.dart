@@ -1,3 +1,4 @@
+import '../../catalog/models/atlas_catalog_product.dart';
 import '../../catalog/services/atlas_barcode_catalog_resolver.dart';
 import '../models/scan_session.dart';
 
@@ -15,5 +16,11 @@ class AtlasContinuousScanResult {
   final AtlasBarcodeResolution catalogResolution;
   final DateTime completedAt;
 
-  bool get requiresUserReview => session.requiresUserAction;
+  bool get requiresUserReview {
+    return session.requiresUserAction || !catalogResolution.hasSingleMatch;
+  }
+
+  AtlasCatalogProduct? get resolvedCatalogProduct {
+    return session.catalogProduct ?? catalogResolution.singleMatch;
+  }
 }

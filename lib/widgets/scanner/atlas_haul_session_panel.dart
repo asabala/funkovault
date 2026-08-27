@@ -15,12 +15,14 @@ class AtlasHaulSessionPanel extends StatelessWidget {
     required this.results,
     required this.activeResolutionCount,
     required this.pendingResolutionCount,
+    this.onReviewHaul,
   });
 
   final List<AtlasScanLedgerEntry> entries;
   final List<AtlasContinuousScanResult> results;
   final int activeResolutionCount;
   final int pendingResolutionCount;
+  final VoidCallback? onReviewHaul;
 
   @override
   Widget build(BuildContext context) {
@@ -71,6 +73,17 @@ class AtlasHaulSessionPanel extends StatelessWidget {
             ),
           ),
           const SizedBox(height: AtlasSpacing.md),
+          if (orderedEntries.isNotEmpty && onReviewHaul != null) ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AtlasSpacing.lg),
+              child: FilledButton.icon(
+                onPressed: onReviewHaul,
+                icon: const Icon(Icons.fact_check_outlined),
+                label: const Text('📦 Review Haul'),
+              ),
+            ),
+            const SizedBox(height: AtlasSpacing.md),
+          ],
           if (orderedEntries.isEmpty)
             const Padding(
               padding: EdgeInsets.fromLTRB(

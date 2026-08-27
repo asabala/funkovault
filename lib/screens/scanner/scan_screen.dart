@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:provider/provider.dart';
 
+import 'package:funkovault2/services/app_state.dart';
 import 'package:funkovault2/atlas/scan/acquisition/atlas_continuous_scan_coordinator.dart';
 import 'package:funkovault2/atlas/scan/acquisition/atlas_evidence_accumulator.dart';
 import 'package:funkovault2/atlas/scan/acquisition/atlas_mobile_scanner_observation_adapter.dart';
@@ -8,6 +10,7 @@ import 'package:funkovault2/atlas/scan/tracking/atlas_object_track.dart';
 import 'package:funkovault2/atlas/scan/tracking/atlas_object_tracker.dart';
 import 'package:funkovault2/atlas/scan/tracking/atlas_scan_observation.dart';
 import 'package:funkovault2/screens/catalog/funko_catalog_screen.dart';
+import 'package:funkovault2/screens/scanner/atlas_haul_review_screen.dart';
 import 'package:funkovault2/widgets/scanner/atlas_haul_session_panel.dart';
 
 class ScanScreen extends StatefulWidget {
@@ -131,6 +134,32 @@ class _ScanScreenState extends State<ScanScreen> {
     });
   }
 
+  Future<void> _openHaulReview() async {
+    final String collectionName = context.read<AppState>().selectedCollection;
+
+    await _scannerController.stop();
+
+    if (!mounted) {
+      return;
+    }
+
+    await Navigator.push<void>(
+      context,
+      MaterialPageRoute<void>(
+        builder: (_) {
+          return AtlasHaulReviewScreen(
+            coordinator: _coordinator,
+            collectionName: collectionName,
+          );
+        },
+      ),
+    );
+
+    if (mounted) {
+      await _scannerController.start();
+    }
+  }
+
   Future<void> _openCatalog() async {
     await _scannerController.stop();
 
@@ -198,6 +227,9 @@ class _ScanScreenState extends State<ScanScreen> {
                         coordinatorSnapshot.activeResolutionCount,
                     pendingResolutionCount:
                         coordinatorSnapshot.pendingResolutionCount,
+                    onReviewHaul: _coordinator.ledger.entries.isEmpty
+                        ? null
+                        : _openHaulReview,
                   ),
                   const SizedBox(height: 8),
                   SizedBox(

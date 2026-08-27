@@ -319,7 +319,7 @@ class _AddPopScreenState extends State<AddPopScreen> {
       return;
     }
 
-    Navigator.pop(context);
+    Navigator.pop(context, true);
   }
 
   @override

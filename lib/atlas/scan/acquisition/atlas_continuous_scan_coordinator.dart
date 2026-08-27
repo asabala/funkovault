@@ -178,6 +178,31 @@ class AtlasContinuousScanCoordinator {
     return true;
   }
 
+  bool markCommitted({required String trackId, DateTime? at}) {
+    if (_isDisposed) {
+      return false;
+    }
+
+    final AtlasScanLedgerEntry? entry = ledger.entryForTrack(trackId);
+
+    if (entry == null) {
+      return false;
+    }
+
+    if (entry.isCommitted) {
+      return true;
+    }
+
+    if (!entry.isResolved) {
+      return false;
+    }
+
+    ledger.markCommitted(trackId: trackId, at: at ?? DateTime.now().toUtc());
+
+    _notifyChanged();
+    return true;
+  }
+
   void dispose() {
     if (_isDisposed) {
       return;
@@ -263,14 +288,17 @@ class AtlasContinuousScanCoordinator {
 
       final DateTime completedAt = DateTime.now().toUtc();
 
-      _resultsByTrack[trackId] = AtlasContinuousScanResult(
-        trackId: trackId,
-        session: finalSession,
-        catalogResolution: catalogResolution,
-        completedAt: completedAt,
-      );
+      final AtlasContinuousScanResult continuousResult =
+          AtlasContinuousScanResult(
+            trackId: trackId,
+            session: finalSession,
+            catalogResolution: catalogResolution,
+            completedAt: completedAt,
+          );
 
-      if (finalSession.requiresUserAction) {
+      _resultsByTrack[trackId] = continuousResult;
+
+      if (continuousResult.requiresUserReview) {
         ledger.markNeedsReview(
           trackId: trackId,
           resolutionSessionId: finalSession.sessionId,

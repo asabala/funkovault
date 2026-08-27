@@ -76,6 +76,52 @@ void main() {
 
     coordinator.dispose();
   });
+  test('explicit commit only succeeds for a resolved ledger entry', () {
+    final _HoldingResolutionQueue queue = _HoldingResolutionQueue();
+    final AtlasContinuousScanCoordinator coordinator =
+        AtlasContinuousScanCoordinator(resolutionQueue: queue);
+
+    final DateTime now = DateTime.utc(2026, 8, 27, 12);
+
+    coordinator.ledger.observe(
+      trackId: 'track_commit',
+      stableCode: _code('889698444444'),
+      at: now,
+    );
+
+    expect(coordinator.markCommitted(trackId: 'track_commit'), isFalse);
+
+    coordinator.ledger.markQueued(trackId: 'track_commit', at: now);
+    coordinator.ledger.markResolving(trackId: 'track_commit', at: now);
+    coordinator.ledger.markResolved(
+      trackId: 'track_commit',
+      resolutionSessionId: 'session_commit',
+      at: now,
+    );
+
+    expect(
+      coordinator.markCommitted(
+        trackId: 'track_commit',
+        at: now.add(const Duration(seconds: 1)),
+      ),
+      isTrue,
+    );
+
+    expect(
+      coordinator.ledger.entryForTrack('track_commit')!.isCommitted,
+      isTrue,
+    );
+
+    expect(
+      coordinator.markCommitted(
+        trackId: 'track_commit',
+        at: now.add(const Duration(seconds: 2)),
+      ),
+      isTrue,
+    );
+
+    coordinator.dispose();
+  });
 }
 
 class _HoldingResolutionQueue extends AtlasResolutionQueue {
