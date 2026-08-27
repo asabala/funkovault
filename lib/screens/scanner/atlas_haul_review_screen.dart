@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'package:funkovault2/atlas/catalog/services/atlas_pop_factory.dart';
 import 'package:funkovault2/atlas/catalog/models/atlas_catalog_product.dart';
+import 'package:funkovault2/atlas/catalog/services/atlas_pop_factory.dart';
 import 'package:funkovault2/atlas/intelligence/engines/atlas_collector_insight_engine.dart';
 import 'package:funkovault2/atlas/scan/acquisition/atlas_continuous_scan_coordinator.dart';
 import 'package:funkovault2/atlas/scan/ledger/atlas_scan_ledger_entry.dart';
@@ -33,12 +33,13 @@ class AtlasHaulReviewScreen extends StatefulWidget {
 class _AtlasHaulReviewScreenState extends State<AtlasHaulReviewScreen> {
   final Set<String> _savingTrackIds = <String>{};
 
-  Future<void> _addResolvedItem({
+  Future<bool> _runSaveForTrack({
     required AtlasScanLedgerEntry entry,
-    required AtlasCatalogProduct product,
+    required Widget Function(BuildContext context) screenBuilder,
+    required String successLabel,
   }) async {
     if (_savingTrackIds.contains(entry.trackId)) {
-      return;
+      return false;
     }
 
     setState(() {
@@ -48,18 +49,11 @@ class _AtlasHaulReviewScreenState extends State<AtlasHaulReviewScreen> {
     try {
       final bool? added = await Navigator.push<bool>(
         context,
-        MaterialPageRoute<bool>(
-          builder: (_) {
-            return AddPopScreen(
-              atlasProduct: product,
-              collectionName: widget.collectionName,
-            );
-          },
-        ),
+        MaterialPageRoute<bool>(builder: screenBuilder),
       );
 
       if (!mounted || added != true) {
-        return;
+        return false;
       }
 
       final bool committed = widget.coordinator.markCommitted(
@@ -67,7 +61,7 @@ class _AtlasHaulReviewScreenState extends State<AtlasHaulReviewScreen> {
       );
 
       if (!committed) {
-        return;
+        return false;
       }
 
       setState(() {});
@@ -77,10 +71,12 @@ class _AtlasHaulReviewScreenState extends State<AtlasHaulReviewScreen> {
         ..showSnackBar(
           SnackBar(
             content: Text(
-              '${product.displayName} committed to ${widget.collectionName}.',
+              '$successLabel committed to ${widget.collectionName}.',
             ),
           ),
         );
+
+      return true;
     } finally {
       if (mounted) {
         setState(() {
@@ -90,6 +86,122 @@ class _AtlasHaulReviewScreenState extends State<AtlasHaulReviewScreen> {
         _savingTrackIds.remove(entry.trackId);
       }
     }
+  }
+
+  Future<void> _addCatalogItem({
+    required AtlasScanLedgerEntry entry,
+    required AtlasCatalogProduct product,
+  }) async {
+    await _runSaveForTrack(
+      entry: entry,
+      successLabel: product.displayName,
+      screenBuilder: (_) {
+        return AddPopScreen(
+          atlasProduct: product,
+          collectionName: widget.collectionName,
+        );
+      },
+    );
+  }
+
+  Future<void> _addManualItem({required AtlasScanLedgerEntry entry}) async {
+    await _runSaveForTrack(
+      entry: entry,
+      successLabel: 'Reviewed item',
+      screenBuilder: (_) {
+        return AddPopScreen(collectionName: widget.collectionName);
+      },
+    );
+  }
+
+  Future<void> _reviewCatalogMatches({
+    required AtlasScanLedgerEntry entry,
+    required AtlasContinuousScanResult result,
+  }) async {
+    final List<AtlasCatalogProduct> matches = result.catalogResolution.matches;
+
+    if (matches.isEmpty) {
+      return;
+    }
+
+    final AtlasCatalogProduct?
+    selected = await showModalBottomSheet<AtlasCatalogProduct>(
+      context: context,
+      isScrollControlled: true,
+      builder: (BuildContext sheetContext) {
+        return SafeArea(
+          child: FractionallySizedBox(
+            heightFactor: 0.72,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(AtlasSpacing.lg),
+                  child: AtlasSectionHeader(
+                    title: '🔎 Review Catalog Matches',
+                    subtitle:
+                        'Choose the exact collectible before adding it to the Vault.',
+                    icon: Icons.content_copy_rounded,
+                    accentColor: AtlasColors.warning,
+                    trailing: AtlasStatusChip(
+                      label: '${matches.length} matches',
+                      icon: Icons.layers_outlined,
+                      accentColor: AtlasColors.warning,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(
+                      AtlasSpacing.lg,
+                      0,
+                      AtlasSpacing.lg,
+                      AtlasSpacing.lg,
+                    ),
+                    itemCount: matches.length,
+                    separatorBuilder: (_, _) =>
+                        const SizedBox(height: AtlasSpacing.sm),
+                    itemBuilder: (BuildContext context, int index) {
+                      final AtlasCatalogProduct product = matches[index];
+
+                      return AtlasGlassCard(
+                        accentColor: AtlasColors.warning,
+                        onTap: () {
+                          Navigator.pop(sheetContext, product);
+                        },
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.inventory_2_outlined,
+                              color: AtlasColors.warning,
+                            ),
+                            const SizedBox(width: AtlasSpacing.md),
+                            Expanded(
+                              child: Text(
+                                product.displayName,
+                                style: Theme.of(context).textTheme.titleSmall
+                                    ?.copyWith(fontWeight: FontWeight.w700),
+                              ),
+                            ),
+                            const Icon(Icons.chevron_right_rounded),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (!mounted || selected == null) {
+      return;
+    }
+
+    await _addCatalogItem(entry: entry, product: selected);
   }
 
   @override
@@ -133,6 +245,10 @@ class _AtlasHaulReviewScreenState extends State<AtlasHaulReviewScreen> {
               ...entries.map((AtlasScanLedgerEntry entry) {
                 final AtlasContinuousScanResult? result = widget.coordinator
                     .resultForTrack(entry.trackId);
+                final AtlasCatalogProduct? resolvedProduct =
+                    result?.resolvedCatalogProduct;
+                final bool hasMultipleMatches =
+                    result?.catalogResolution.hasMultipleMatches ?? false;
 
                 return Padding(
                   padding: const EdgeInsets.only(bottom: AtlasSpacing.md),
@@ -158,12 +274,24 @@ class _AtlasHaulReviewScreenState extends State<AtlasHaulReviewScreen> {
                             }
                           }
                         : null,
-                    onAdd: result?.resolvedCatalogProduct == null
+                    onAdd: resolvedProduct == null
                         ? null
-                        : () => _addResolvedItem(
+                        : () => _addCatalogItem(
                             entry: entry,
-                            product: result!.resolvedCatalogProduct!,
+                            product: resolvedProduct,
                           ),
+                    onReviewMatches: !hasMultipleMatches || result == null
+                        ? null
+                        : () => _reviewCatalogMatches(
+                            entry: entry,
+                            result: result,
+                          ),
+                    onManualAdd:
+                        entry.needsReview &&
+                            resolvedProduct == null &&
+                            !hasMultipleMatches
+                        ? () => _addManualItem(entry: entry)
+                        : null,
                   ),
                 );
               }),
@@ -184,6 +312,8 @@ class _HaulReviewItemCard extends StatelessWidget {
     required this.isSaving,
     required this.onRetry,
     required this.onAdd,
+    required this.onReviewMatches,
+    required this.onManualAdd,
   });
 
   final AtlasScanLedgerEntry entry;
@@ -194,17 +324,18 @@ class _HaulReviewItemCard extends StatelessWidget {
   final bool isSaving;
   final VoidCallback? onRetry;
   final VoidCallback? onAdd;
+  final VoidCallback? onReviewMatches;
+  final VoidCallback? onManualAdd;
 
   @override
   Widget build(BuildContext context) {
     final AtlasCatalogProduct? catalogProduct = result?.resolvedCatalogProduct;
+    final AtlasContinuousScanResult? scanResult = result;
 
     bool isOwned = false;
     bool isWishlisted = false;
     int ownedCopyCount = 0;
     int relatedMatchCount = 0;
-
-    final AtlasContinuousScanResult? scanResult = result;
 
     if (catalogProduct != null && scanResult != null) {
       final Pop productPop = AtlasPopFactory.createFromCatalog(
@@ -230,9 +361,15 @@ class _HaulReviewItemCard extends StatelessWidget {
     }
 
     final Color accentColor = _accentForStatus(entry.status);
+    final bool hasMultipleMatches =
+        scanResult?.catalogResolution.hasMultipleMatches ?? false;
+    final int matchCount = scanResult?.catalogResolution.matches.length ?? 0;
+
     final String title =
         catalogProduct?.displayName ??
-        'Barcode ${entry.stableCode.normalizedValue}';
+        (hasMultipleMatches
+            ? '$matchCount Possible Matches'
+            : 'Barcode ${entry.stableCode.normalizedValue}');
 
     return AtlasGlassCard(
       accentColor: accentColor,
@@ -250,37 +387,41 @@ class _HaulReviewItemCard extends StatelessWidget {
               accentColor: accentColor,
             ),
           ),
-          if (catalogProduct != null) ...[
+          if (catalogProduct != null ||
+              scanResult?.isOfflineResult == true ||
+              scanResult?.requiresSync == true) ...[
             const SizedBox(height: AtlasSpacing.md),
             Wrap(
               spacing: AtlasSpacing.sm,
               runSpacing: AtlasSpacing.sm,
               children: [
-                AtlasStatusChip(
-                  label: isOwned ? 'Owned ×$ownedCopyCount' : 'Not Owned',
-                  icon: isOwned
-                      ? Icons.inventory_2_rounded
-                      : Icons.inventory_2_outlined,
-                  accentColor: isOwned
-                      ? AtlasColors.success
-                      : AtlasColors.textSecondary,
-                ),
-                AtlasStatusChip(
-                  label: isWishlisted ? 'Wishlisted' : 'Not Wishlisted',
-                  icon: isWishlisted
-                      ? Icons.favorite_rounded
-                      : Icons.favorite_border_rounded,
-                  accentColor: isWishlisted
-                      ? AtlasColors.danger
-                      : AtlasColors.textSecondary,
-                ),
-                if (relatedMatchCount > 0)
+                if (catalogProduct != null) ...[
                   AtlasStatusChip(
-                    label:
-                        '$relatedMatchCount related variant${relatedMatchCount == 1 ? '' : 's'}',
-                    icon: Icons.layers_outlined,
-                    accentColor: AtlasColors.warning,
+                    label: isOwned ? 'Owned ×$ownedCopyCount' : 'Not Owned',
+                    icon: isOwned
+                        ? Icons.inventory_2_rounded
+                        : Icons.inventory_2_outlined,
+                    accentColor: isOwned
+                        ? AtlasColors.success
+                        : AtlasColors.textSecondary,
                   ),
+                  AtlasStatusChip(
+                    label: isWishlisted ? 'Wishlisted' : 'Not Wishlisted',
+                    icon: isWishlisted
+                        ? Icons.favorite_rounded
+                        : Icons.favorite_border_rounded,
+                    accentColor: isWishlisted
+                        ? AtlasColors.danger
+                        : AtlasColors.textSecondary,
+                  ),
+                  if (relatedMatchCount > 0)
+                    AtlasStatusChip(
+                      label:
+                          '$relatedMatchCount related variant${relatedMatchCount == 1 ? '' : 's'}',
+                      icon: Icons.layers_outlined,
+                      accentColor: AtlasColors.warning,
+                    ),
+                ],
                 if (scanResult?.isOfflineResult == true)
                   const AtlasStatusChip(
                     label: 'Offline',
@@ -303,7 +444,14 @@ class _HaulReviewItemCard extends StatelessWidget {
               icon: const Icon(Icons.check_circle_rounded),
               label: const Text('Committed to Vault'),
             )
-          else if (entry.isResolved && catalogProduct != null)
+          else if (entry.hasFailed)
+            FilledButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('🔄 Retry Resolution'),
+            )
+          else if ((entry.isResolved || entry.needsReview) &&
+              catalogProduct != null)
             FilledButton.icon(
               onPressed: isSaving ? null : onAdd,
               icon: isSaving
@@ -319,21 +467,24 @@ class _HaulReviewItemCard extends StatelessWidget {
               label: Text(
                 isSaving
                     ? 'Saving...'
+                    : entry.needsReview
+                    ? '🔎 Review & Add'
                     : isOwned
                     ? '➕ Add Another Copy'
                     : '➕ Add to Vault',
               ),
             )
-          else if (entry.needsReview)
-            const Text(
-              '🔎 Atlas needs additional review before this item can be committed.',
-              textAlign: TextAlign.center,
-            )
-          else if (entry.hasFailed)
+          else if (entry.needsReview && hasMultipleMatches)
             FilledButton.icon(
-              onPressed: onRetry,
-              icon: const Icon(Icons.refresh_rounded),
-              label: const Text('🔄 Retry Resolution'),
+              onPressed: onReviewMatches,
+              icon: const Icon(Icons.content_copy_rounded),
+              label: Text('🔎 Review $matchCount Matches'),
+            )
+          else if (entry.needsReview)
+            FilledButton.icon(
+              onPressed: isSaving ? null : onManualAdd,
+              icon: const Icon(Icons.edit_note_rounded),
+              label: const Text('➕ Add Manually'),
             ),
         ],
       ),
@@ -361,7 +512,7 @@ class _HaulReviewItemCard extends StatelessWidget {
       AtlasScanLedgerStatus.resolved =>
         'Ready for explicit Vault review and save.',
       AtlasScanLedgerStatus.needsReview =>
-        'Atlas could not confirm one unambiguous catalog identity.',
+        'Atlas needs your confirmation before this item can be committed.',
       AtlasScanLedgerStatus.failed =>
         entry.failureMessage?.trim().isNotEmpty == true
             ? entry.failureMessage!.trim()

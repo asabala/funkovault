@@ -16,6 +16,7 @@ class AtlasHaulSessionPanel extends StatelessWidget {
     required this.activeResolutionCount,
     required this.pendingResolutionCount,
     this.onReviewHaul,
+    this.onStartNewHaul,
   });
 
   final List<AtlasScanLedgerEntry> entries;
@@ -23,6 +24,7 @@ class AtlasHaulSessionPanel extends StatelessWidget {
   final int activeResolutionCount;
   final int pendingResolutionCount;
   final VoidCallback? onReviewHaul;
+  final VoidCallback? onStartNewHaul;
 
   @override
   Widget build(BuildContext context) {
@@ -82,7 +84,20 @@ class AtlasHaulSessionPanel extends StatelessWidget {
                 label: const Text('📦 Review Haul'),
               ),
             ),
+            const SizedBox(height: AtlasSpacing.sm),
+          ],
+          if (onStartNewHaul != null) ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AtlasSpacing.lg),
+              child: OutlinedButton.icon(
+                onPressed: onStartNewHaul,
+                icon: const Icon(Icons.restart_alt_rounded),
+                label: const Text('✨ Start New Haul'),
+              ),
+            ),
             const SizedBox(height: AtlasSpacing.md),
+          ] else if (orderedEntries.isNotEmpty) ...[
+            const SizedBox(height: AtlasSpacing.sm),
           ],
           if (orderedEntries.isEmpty)
             const Padding(
@@ -220,8 +235,7 @@ class _HaulItemRow extends StatelessWidget {
     final _HaulItemPresentation presentation = _presentationFor(entry);
 
     final String? resolvedDisplayName = result
-        ?.session
-        .catalogProduct
+        ?.resolvedCatalogProduct
         ?.displayName
         .trim();
 

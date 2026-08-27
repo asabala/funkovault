@@ -51,7 +51,7 @@ class AtlasObjectTracker {
       if (observationCentroid == null) continue;
 
       for (final AtlasObjectTrack track in _tracks.values) {
-        if (track.isCooldown || track.centroid == null) continue;
+        if (track.centroid == null) continue;
 
         final double distance = track.centroid!.distanceTo(observationCentroid);
         if (distance <= config.maxMatchDistance) {
@@ -144,10 +144,7 @@ class AtlasObjectTracker {
   void _removeStaleTracks(DateTime timestamp) {
     _tracks.removeWhere((String _, AtlasObjectTrack track) {
       if (track.isCooldown) {
-        final DateTime? cooldownStartedAt = track.cooldownStartedAt;
-        if (cooldownStartedAt == null) return true;
-        return timestamp.difference(cooldownStartedAt) >
-            config.cooldownDuration;
+        return timestamp.difference(track.lastSeenAt) > config.cooldownDuration;
       }
 
       final Duration elapsed = timestamp.difference(track.lastSeenAt);

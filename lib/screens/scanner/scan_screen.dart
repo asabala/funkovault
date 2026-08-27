@@ -134,6 +134,21 @@ class _ScanScreenState extends State<ScanScreen> {
     });
   }
 
+  void _startNewHaul() {
+    final bool reset = _coordinator.resetCompletedSession();
+
+    if (!reset || !mounted) {
+      return;
+    }
+
+    _objectTracker.reset();
+
+    setState(() {
+      _activeTrackCount = 0;
+      _confirmedTrackCount = 0;
+    });
+  }
+
   Future<void> _openHaulReview() async {
     final String collectionName = context.read<AppState>().selectedCollection;
 
@@ -230,6 +245,9 @@ class _ScanScreenState extends State<ScanScreen> {
                     onReviewHaul: _coordinator.ledger.entries.isEmpty
                         ? null
                         : _openHaulReview,
+                    onStartNewHaul: _coordinator.canResetCompletedSession
+                        ? _startNewHaul
+                        : null,
                   ),
                   const SizedBox(height: 8),
                   SizedBox(

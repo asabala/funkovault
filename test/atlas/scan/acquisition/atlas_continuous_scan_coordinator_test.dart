@@ -169,6 +169,77 @@ void main() {
 
     coordinator.dispose();
   });
+
+  test('explicit reviewed commit succeeds from needsReview state', () {
+    final _HoldingResolutionQueue queue = _HoldingResolutionQueue();
+    final AtlasContinuousScanCoordinator coordinator =
+        AtlasContinuousScanCoordinator(resolutionQueue: queue);
+
+    final DateTime now = DateTime.utc(2026, 8, 27, 12);
+
+    coordinator.ledger.observe(
+      trackId: 'track_reviewed_commit',
+      stableCode: _code('889698777777'),
+      at: now,
+    );
+    coordinator.ledger.markQueued(trackId: 'track_reviewed_commit', at: now);
+    coordinator.ledger.markResolving(trackId: 'track_reviewed_commit', at: now);
+    coordinator.ledger.markNeedsReview(
+      trackId: 'track_reviewed_commit',
+      resolutionSessionId: 'session_reviewed_commit',
+      at: now,
+    );
+
+    expect(
+      coordinator.markCommitted(
+        trackId: 'track_reviewed_commit',
+        at: now.add(const Duration(seconds: 1)),
+      ),
+      isTrue,
+    );
+    expect(
+      coordinator.ledger.entryForTrack('track_reviewed_commit')!.isCommitted,
+      isTrue,
+    );
+
+    coordinator.dispose();
+  });
+
+  test('completed haul resets only after every item is committed', () {
+    final _HoldingResolutionQueue queue = _HoldingResolutionQueue();
+    final AtlasContinuousScanCoordinator coordinator =
+        AtlasContinuousScanCoordinator(resolutionQueue: queue);
+
+    final DateTime now = DateTime.utc(2026, 8, 27, 12);
+
+    coordinator.ledger.observe(
+      trackId: 'track_reset',
+      stableCode: _code('889698888888'),
+      at: now,
+    );
+    coordinator.ledger.markQueued(trackId: 'track_reset', at: now);
+    coordinator.ledger.markResolving(trackId: 'track_reset', at: now);
+    coordinator.ledger.markResolved(
+      trackId: 'track_reset',
+      resolutionSessionId: 'session_reset',
+      at: now,
+    );
+
+    expect(coordinator.canResetCompletedSession, isFalse);
+    expect(coordinator.resetCompletedSession(), isFalse);
+
+    coordinator.markCommitted(
+      trackId: 'track_reset',
+      at: now.add(const Duration(seconds: 1)),
+    );
+
+    expect(coordinator.canResetCompletedSession, isTrue);
+    expect(coordinator.resetCompletedSession(), isTrue);
+    expect(coordinator.ledger.entries, isEmpty);
+    expect(coordinator.results, isEmpty);
+
+    coordinator.dispose();
+  });
 }
 
 class _HoldingResolutionQueue extends AtlasResolutionQueue {

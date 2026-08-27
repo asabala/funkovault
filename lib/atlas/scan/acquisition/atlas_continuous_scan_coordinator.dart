@@ -215,12 +215,32 @@ class AtlasContinuousScanCoordinator {
       return true;
     }
 
-    if (!entry.isResolved) {
+    if (!entry.isResolved && !entry.needsReview) {
       return false;
     }
 
     ledger.markCommitted(trackId: trackId, at: at ?? DateTime.now().toUtc());
 
+    _notifyChanged();
+    return true;
+  }
+
+  bool get canResetCompletedSession {
+    final List<AtlasScanLedgerEntry> entries = ledger.entries;
+
+    return !_isDisposed &&
+        resolutionQueue.snapshot.isIdle &&
+        entries.isNotEmpty &&
+        entries.every((AtlasScanLedgerEntry entry) => entry.isCommitted);
+  }
+
+  bool resetCompletedSession() {
+    if (!canResetCompletedSession) {
+      return false;
+    }
+
+    ledger.clear();
+    _resultsByTrack.clear();
     _notifyChanged();
     return true;
   }

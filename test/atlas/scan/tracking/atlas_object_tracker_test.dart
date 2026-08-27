@@ -210,6 +210,107 @@ void main() {
       expect(tracker.tracks, isEmpty);
     });
 
+    test(
+      'cooldown track keeps claiming the same visible object without spawning duplicates',
+      () {
+        final AtlasObjectTracker tracker = AtlasObjectTracker(
+          config: const AtlasObjectTrackerConfig(
+            confirmationMinHits: 1,
+            cooldownDuration: Duration(seconds: 4),
+          ),
+        );
+
+        final DateTime t0 = DateTime.utc(2026, 8, 27, 12);
+
+        final AtlasObjectTrack initial = tracker
+            .processFrame(
+              observations: <AtlasScanObservation>[
+                _observation(
+                  id: 'cooldown_visible_1',
+                  capturedAt: t0,
+                  barcode: '889698555550',
+                ),
+              ],
+              timestamp: t0,
+            )
+            .single;
+
+        tracker.markCooldown(trackId: initial.trackId, startedAt: t0);
+
+        final List<AtlasObjectTrack> tracks = tracker.processFrame(
+          observations: <AtlasScanObservation>[
+            _observation(
+              id: 'cooldown_visible_2',
+              capturedAt: t0.add(const Duration(milliseconds: 100)),
+              barcode: '889698555550',
+              centerX: 0.51,
+            ),
+          ],
+          timestamp: t0.add(const Duration(milliseconds: 100)),
+        );
+
+        expect(tracks, hasLength(1));
+        expect(tracks.single.trackId, initial.trackId);
+        expect(tracks.single.isCooldown, isTrue);
+        expect(
+          tracks.single.lastSeenAt,
+          t0.add(const Duration(milliseconds: 100)),
+        );
+      },
+    );
+
+    test(
+      'cooldown expires only after the object has been absent for the TTL',
+      () {
+        final AtlasObjectTracker tracker = AtlasObjectTracker(
+          config: const AtlasObjectTrackerConfig(
+            confirmationMinHits: 1,
+            cooldownDuration: Duration(seconds: 4),
+          ),
+        );
+
+        final DateTime t0 = DateTime.utc(2026, 8, 27, 12);
+
+        final AtlasObjectTrack initial = tracker
+            .processFrame(
+              observations: <AtlasScanObservation>[
+                _observation(
+                  id: 'cooldown_absent_1',
+                  capturedAt: t0,
+                  barcode: '889698555551',
+                ),
+              ],
+              timestamp: t0,
+            )
+            .single;
+
+        tracker.markCooldown(trackId: initial.trackId, startedAt: t0);
+
+        tracker.processFrame(
+          observations: <AtlasScanObservation>[
+            _observation(
+              id: 'cooldown_absent_2',
+              capturedAt: t0.add(const Duration(seconds: 3)),
+              barcode: '889698555551',
+            ),
+          ],
+          timestamp: t0.add(const Duration(seconds: 3)),
+        );
+
+        tracker.processFrame(
+          observations: const <AtlasScanObservation>[],
+          timestamp: t0.add(const Duration(seconds: 6, milliseconds: 999)),
+        );
+        expect(tracker.tracks, hasLength(1));
+
+        tracker.processFrame(
+          observations: const <AtlasScanObservation>[],
+          timestamp: t0.add(const Duration(seconds: 7, milliseconds: 1)),
+        );
+        expect(tracker.tracks, isEmpty);
+      },
+    );
+
     test('cooldown preserves camera lastSeenAt', () {
       final AtlasObjectTracker tracker = AtlasObjectTracker(
         config: const AtlasObjectTrackerConfig(confirmationMinHits: 1),
