@@ -8,6 +8,7 @@ import 'package:funkovault2/atlas/scan/tracking/atlas_object_track.dart';
 import 'package:funkovault2/atlas/scan/tracking/atlas_object_tracker.dart';
 import 'package:funkovault2/atlas/scan/tracking/atlas_scan_observation.dart';
 import 'package:funkovault2/screens/catalog/funko_catalog_screen.dart';
+import 'package:funkovault2/widgets/scanner/atlas_haul_session_panel.dart';
 
 class ScanScreen extends StatefulWidget {
   const ScanScreen({super.key});
@@ -36,7 +37,6 @@ class _ScanScreenState extends State<ScanScreen> {
 
   late final AtlasContinuousScanCoordinator _coordinator;
 
-  String? _lastStableCode;
   int _activeTrackCount = 0;
   int _confirmedTrackCount = 0;
 
@@ -106,7 +106,10 @@ class _ScanScreenState extends State<ScanScreen> {
       );
 
       if (accepted) {
-        _lastStableCode = evidence.stableCode.normalizedValue;
+        _objectTracker.markCooldown(
+          trackId: track.trackId,
+          startedAt: capturedAt,
+        );
       }
     }
   }
@@ -188,14 +191,13 @@ class _ScanScreenState extends State<ScanScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
-                    'Atlas Haul Scanner',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  _HaulStatusLine(
-                    snapshot: coordinatorSnapshot,
-                    lastStableCode: _lastStableCode,
+                  AtlasHaulSessionPanel(
+                    entries: _coordinator.ledger.entries,
+                    results: _coordinator.results,
+                    activeResolutionCount:
+                        coordinatorSnapshot.activeResolutionCount,
+                    pendingResolutionCount:
+                        coordinatorSnapshot.pendingResolutionCount,
                   ),
                   const SizedBox(height: 8),
                   SizedBox(
@@ -290,35 +292,5 @@ class _TrackingStatusOverlay extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-class _HaulStatusLine extends StatelessWidget {
-  const _HaulStatusLine({required this.snapshot, required this.lastStableCode});
-
-  final AtlasContinuousScanSnapshot snapshot;
-  final String? lastStableCode;
-
-  @override
-  Widget build(BuildContext context) {
-    final String text;
-
-    if (snapshot.failedCount > 0) {
-      text =
-          '⚠️ ${snapshot.failedCount} scan(s) need retry • '
-          '${snapshot.completedCount} resolved';
-    } else if (snapshot.reviewCount > 0) {
-      text =
-          '🔎 ${snapshot.reviewCount} scan(s) need review • '
-          '${snapshot.resolvedCount} resolved';
-    } else if (snapshot.hasWorkInFlight) {
-      text = 'Scanning continues while Atlas resolves in the background.';
-    } else if (snapshot.completedCount > 0) {
-      text = '${snapshot.completedCount} item(s) ready in this haul.';
-    } else {
-      text = lastStableCode ?? 'Point the camera at collectible barcodes.';
-    }
-
-    return Text(text, textAlign: TextAlign.center);
   }
 }
