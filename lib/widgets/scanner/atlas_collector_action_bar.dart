@@ -94,7 +94,7 @@ class _CollectorActionRow extends StatelessWidget {
     final _ActionPresentation presentation = _presentationFor(action.type);
 
     return AtlasActionRow(
-      title: action.displayLabel,
+      title: action.label,
       description: presentation.description,
       icon: action.icon,
       accentColor: presentation.accentColor,

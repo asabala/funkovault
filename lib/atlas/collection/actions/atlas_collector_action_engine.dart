@@ -19,11 +19,8 @@ class AtlasCollectorActionContext {
 class AtlasCollectorActionEngine {
   const AtlasCollectorActionEngine();
 
-  List<AtlasCollectorAction> buildActions(
-      AtlasCollectorActionContext context,
-      ) {
-    final List<AtlasCollectorAction> actions =
-    <AtlasCollectorAction>[];
+  List<AtlasCollectorAction> buildActions(AtlasCollectorActionContext context) {
+    final List<AtlasCollectorAction> actions = <AtlasCollectorAction>[];
 
     if (context.isOwned && context.canViewExistingItem) {
       actions.add(
@@ -31,7 +28,6 @@ class AtlasCollectorActionEngine {
           type: AtlasCollectorActionType.viewExistingItem,
           label: 'View Existing Item',
           icon: Icons.visibility_outlined,
-          emoji: '🔎',
           priority: 10,
           isPrimary: true,
         ),
@@ -42,7 +38,6 @@ class AtlasCollectorActionEngine {
           type: AtlasCollectorActionType.addAnotherCopy,
           label: 'Add Another Copy',
           icon: Icons.add_circle_outline_rounded,
-          emoji: '➕',
           priority: 20,
         ),
       );
@@ -52,7 +47,6 @@ class AtlasCollectorActionEngine {
           type: AtlasCollectorActionType.addToVault,
           label: 'Add to Vault',
           icon: Icons.add_circle_rounded,
-          emoji: '➕',
           priority: 10,
           isPrimary: true,
         ),
@@ -65,7 +59,6 @@ class AtlasCollectorActionEngine {
           type: AtlasCollectorActionType.removeFromWishlist,
           label: 'Remove from Wishlist',
           icon: Icons.heart_broken_rounded,
-          emoji: '💔',
           priority: 30,
         ),
       );
@@ -75,7 +68,6 @@ class AtlasCollectorActionEngine {
           type: AtlasCollectorActionType.addToWishlist,
           label: 'Add to Wishlist',
           icon: Icons.favorite_border_rounded,
-          emoji: '❤️',
           priority: 30,
         ),
       );
@@ -87,25 +79,15 @@ class AtlasCollectorActionEngine {
           type: AtlasCollectorActionType.scanAnother,
           label: 'Scan Another',
           icon: Icons.qr_code_scanner_rounded,
-          emoji: '📷',
           priority: 100,
         ),
       );
     }
 
-    actions.sort(
-          (
-          AtlasCollectorAction first,
-          AtlasCollectorAction second,
-          ) {
-        return first.priority.compareTo(
-          second.priority,
-        );
-      },
-    );
+    actions.sort((AtlasCollectorAction first, AtlasCollectorAction second) {
+      return first.priority.compareTo(second.priority);
+    });
 
-    return List<AtlasCollectorAction>.unmodifiable(
-      actions,
-    );
+    return List<AtlasCollectorAction>.unmodifiable(actions);
   }
 }

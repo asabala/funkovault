@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 
 enum AtlasCollectorActionType {
@@ -16,7 +15,6 @@ class AtlasCollectorAction {
     required this.type,
     required this.label,
     required this.icon,
-    required this.emoji,
     required this.priority,
     this.isPrimary = false,
   });
@@ -24,19 +22,13 @@ class AtlasCollectorAction {
   final AtlasCollectorActionType type;
   final String label;
   final IconData icon;
-  final String emoji;
   final int priority;
   final bool isPrimary;
-
-  String get displayLabel {
-    return '$emoji $label';
-  }
 
   AtlasCollectorAction copyWith({
     AtlasCollectorActionType? type,
     String? label,
     IconData? icon,
-    String? emoji,
     int? priority,
     bool? isPrimary,
   }) {
@@ -44,7 +36,6 @@ class AtlasCollectorAction {
       type: type ?? this.type,
       label: label ?? this.label,
       icon: icon ?? this.icon,
-      emoji: emoji ?? this.emoji,
       priority: priority ?? this.priority,
       isPrimary: isPrimary ?? this.isPrimary,
     );
@@ -58,20 +49,12 @@ class AtlasCollectorAction {
             type == other.type &&
             label == other.label &&
             icon == other.icon &&
-            emoji == other.emoji &&
             priority == other.priority &&
             isPrimary == other.isPrimary;
   }
 
   @override
   int get hashCode {
-    return Object.hash(
-      type,
-      label,
-      icon,
-      emoji,
-      priority,
-      isPrimary,
-    );
+    return Object.hash(type, label, icon, priority, isPrimary);
   }
 }
