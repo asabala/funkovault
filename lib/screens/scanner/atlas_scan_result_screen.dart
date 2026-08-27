@@ -23,6 +23,8 @@ import 'package:funkovault2/screens/pop/pop_details_screen.dart';
 import 'package:funkovault2/services/app_state.dart';
 import 'package:funkovault2/theme/atlas_colors.dart';
 import 'package:funkovault2/theme/atlas_spacing.dart';
+import 'package:funkovault2/widgets/atlas/atlas_glass_card.dart';
+import 'package:funkovault2/widgets/atlas/components/atlas_section_header.dart';
 import 'package:funkovault2/widgets/atlas/components/atlas_empty_state.dart';
 import 'package:funkovault2/widgets/atlas/components/atlas_insight_panel.dart';
 import 'package:funkovault2/widgets/atlas/components/atlas_status_chip.dart';
@@ -611,26 +613,22 @@ class _CatalogMessageCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Icon(icon, size: 36),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Text(message, textAlign: TextAlign.center),
-            if (actions.isNotEmpty) ...[const SizedBox(height: 20), ...actions],
+    return AtlasGlassCard(
+      accentColor: AtlasColors.intelligenceBlue,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AtlasSectionHeader(
+            title: title,
+            subtitle: message,
+            icon: icon,
+            accentColor: AtlasColors.intelligenceBlue,
+          ),
+          if (actions.isNotEmpty) ...[
+            const SizedBox(height: AtlasSpacing.lg),
+            ...actions,
           ],
-        ),
+        ],
       ),
     );
   }
@@ -647,37 +645,96 @@ class _MultipleCatalogMatchesCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              '${products.length} Possible Catalog Matches',
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+    return AtlasGlassCard(
+      accentColor: AtlasColors.warning,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AtlasSectionHeader(
+            title: 'Possible Catalog Matches',
+            subtitle:
+                'Atlas found multiple products that share this barcode. Review each result and choose the correct collectible.',
+            icon: Icons.content_copy_rounded,
+            accentColor: AtlasColors.warning,
+            badge: AtlasStatusChip(
+              label: '${products.length} matches',
+              icon: Icons.rule_rounded,
+              accentColor: AtlasColors.warning,
+              size: AtlasStatusChipSize.compact,
             ),
-            const SizedBox(height: 8),
-            const Text(
-              'Atlas will not automatically choose between products that share a barcode. Review each product and select the correct match.',
+          ),
+          const SizedBox(height: AtlasSpacing.lg),
+          for (int index = 0; index < products.length; index++) ...[
+            _CatalogMatchOption(
+              product: products[index],
+              index: index,
+              totalCount: products.length,
+              collectionName: collectionName,
             ),
-            const SizedBox(height: AtlasSpacing.md),
-            for (int index = 0; index < products.length; index++) ...[
-              _CatalogProductSummary(product: products[index]),
-              const SizedBox(height: 12),
-              OutlinedButton.icon(
-                onPressed: () {
-                  _openCatalogProduct(context, products[index], collectionName);
-                },
-                icon: const Icon(Icons.add_circle_outline_rounded),
-                label: const Text('Add This Product'),
-              ),
-              if (index < products.length - 1) const Divider(height: 32),
-            ],
+            if (index < products.length - 1)
+              const SizedBox(height: AtlasSpacing.md),
           ],
-        ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CatalogMatchOption extends StatelessWidget {
+  const _CatalogMatchOption({
+    required this.product,
+    required this.index,
+    required this.totalCount,
+    required this.collectionName,
+  });
+
+  final AtlasCatalogProduct product;
+  final int index;
+  final int totalCount;
+  final String collectionName;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(AtlasSpacing.md),
+      decoration: BoxDecoration(
+        color: AtlasColors.card.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AtlasColors.warning.withValues(alpha: 0.18)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Match ${index + 1} of $totalCount',
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: AtlasColors.warning,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              const AtlasStatusChip(
+                label: 'Review',
+                icon: Icons.visibility_outlined,
+                accentColor: AtlasColors.warning,
+                size: AtlasStatusChipSize.compact,
+              ),
+            ],
+          ),
+          const SizedBox(height: AtlasSpacing.md),
+          _CatalogProductSummary(product: product),
+          const SizedBox(height: AtlasSpacing.md),
+          OutlinedButton.icon(
+            onPressed: () {
+              _openCatalogProduct(context, product, collectionName);
+            },
+            icon: const Icon(Icons.add_circle_outline_rounded),
+            label: const Text('➕ Add This Product'),
+          ),
+        ],
       ),
     );
   }
