@@ -1147,75 +1147,122 @@ class _ScanDiagnosticsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: ExpansionTile(
-        initiallyExpanded: false,
-        leading: const Icon(Icons.troubleshoot_rounded),
-        title: Text(
-          '🔍 Scan Diagnostics',
-          style: Theme.of(
-            context,
-          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-        ),
-        subtitle: const Text(
-          'Barcode evidence, identity status, and technical details',
-        ),
-        childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        children: [
-          const Divider(),
-          _ResultRow(
-            label: 'Barcode',
-            value: code.normalizedValue,
-            selectable: true,
+    final Color accentColor = _accentColorForStatus(session.status);
+
+    return AtlasGlassCard(
+      accentColor: accentColor,
+      padding: EdgeInsets.zero,
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          initiallyExpanded: false,
+          tilePadding: const EdgeInsets.symmetric(
+            horizontal: AtlasSpacing.lg,
+            vertical: AtlasSpacing.sm,
           ),
-          const Divider(),
-          _ResultRow(label: 'Format', value: _formatLabel(code.format)),
-          const Divider(),
-          _ResultRow(label: 'Source', value: _sourceLabel(code.source)),
-          const Divider(),
-          _ResultRow(
-            label: 'Validation',
-            value: code.isValid ? 'Passed' : 'Failed',
+          childrenPadding: const EdgeInsets.fromLTRB(
+            AtlasSpacing.lg,
+            0,
+            AtlasSpacing.lg,
+            AtlasSpacing.lg,
           ),
-          const Divider(),
-          _ResultRow(
-            label: 'Evidence',
-            value:
-                '${session.contributionCount} contribution${session.contributionCount == 1 ? '' : 's'}',
+          title: AtlasSectionHeader(
+            title: '🔍 Scan Diagnostics',
+            subtitle:
+                'Barcode evidence, identity status, and technical details',
+            icon: Icons.troubleshoot_rounded,
+            accentColor: accentColor,
+            badge: AtlasStatusChip(
+              label: _statusLabel(session.status),
+              icon: _statusIcon(session.status),
+              accentColor: accentColor,
+              size: AtlasStatusChipSize.compact,
+            ),
           ),
-          const Divider(),
-          _ResultRow(
-            label: 'Identity',
-            value: _resolutionStatusLabel(session.resolutionStatus),
-          ),
-          if (session.atlasProductId != null) ...[
-            const Divider(),
+          children: [
+            const Divider(color: AtlasColors.divider),
             _ResultRow(
-              label: 'Atlas Product ID',
-              value: session.atlasProductId!.value,
+              label: 'Barcode',
+              value: code.normalizedValue,
               selectable: true,
             ),
+            const Divider(color: AtlasColors.divider),
+            _ResultRow(label: 'Format', value: _formatLabel(code.format)),
+            const Divider(color: AtlasColors.divider),
+            _ResultRow(label: 'Source', value: _sourceLabel(code.source)),
+            const Divider(color: AtlasColors.divider),
+            _ResultRow(
+              label: 'Validation',
+              value: code.isValid ? 'Passed' : 'Failed',
+            ),
+            const Divider(color: AtlasColors.divider),
+            _ResultRow(
+              label: 'Evidence',
+              value:
+                  '${session.contributionCount} contribution${session.contributionCount == 1 ? '' : 's'}',
+            ),
+            const Divider(color: AtlasColors.divider),
+            _ResultRow(
+              label: 'Identity',
+              value: _resolutionStatusLabel(session.resolutionStatus),
+            ),
+            if (session.atlasProductId != null) ...[
+              const Divider(color: AtlasColors.divider),
+              _ResultRow(
+                label: 'Atlas Product ID',
+                value: session.atlasProductId!.value,
+                selectable: true,
+              ),
+            ],
+            const Divider(color: AtlasColors.divider),
+            _ResultRow(
+              label: 'User Action',
+              value: session.requiresUserAction
+                  ? 'Review required'
+                  : 'No action required',
+            ),
+            if (session.requiresVariantConfirmation) ...[
+              const Divider(color: AtlasColors.divider),
+              const _ResultRow(
+                label: 'Variant',
+                value: 'Confirmation required',
+              ),
+            ],
+            const Divider(color: AtlasColors.divider),
+            _ResultRow(
+              label: 'Session Status',
+              value: _statusLabel(session.status),
+            ),
           ],
-          const Divider(),
-          _ResultRow(
-            label: 'User Action',
-            value: session.requiresUserAction
-                ? 'Review required'
-                : 'No action required',
-          ),
-          if (session.requiresVariantConfirmation) ...[
-            const Divider(),
-            const _ResultRow(label: 'Variant', value: 'Confirmation required'),
-          ],
-          const Divider(),
-          _ResultRow(
-            label: 'Session Status',
-            value: _statusLabel(session.status),
-          ),
-        ],
+        ),
       ),
     );
+  }
+
+  Color _accentColorForStatus(ScanSessionStatus status) {
+    return switch (status) {
+      ScanSessionStatus.completed => AtlasColors.success,
+      ScanSessionStatus.awaitingConfirmation => AtlasColors.warning,
+      ScanSessionStatus.failed => AtlasColors.danger,
+      ScanSessionStatus.created ||
+      ScanSessionStatus.cancelled => AtlasColors.textSecondary,
+      ScanSessionStatus.scanning ||
+      ScanSessionStatus.analyzing ||
+      ScanSessionStatus.resolving => AtlasColors.intelligenceBlue,
+    };
+  }
+
+  IconData _statusIcon(ScanSessionStatus status) {
+    return switch (status) {
+      ScanSessionStatus.created => Icons.fiber_new_rounded,
+      ScanSessionStatus.scanning => Icons.qr_code_scanner_rounded,
+      ScanSessionStatus.analyzing => Icons.analytics_outlined,
+      ScanSessionStatus.resolving => Icons.manage_search_rounded,
+      ScanSessionStatus.awaitingConfirmation => Icons.fact_check_outlined,
+      ScanSessionStatus.completed => Icons.check_circle_outline_rounded,
+      ScanSessionStatus.cancelled => Icons.cancel_outlined,
+      ScanSessionStatus.failed => Icons.error_outline_rounded,
+    };
   }
 
   String _formatLabel(ScanCodeFormat format) {
