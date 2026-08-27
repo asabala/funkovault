@@ -5,12 +5,17 @@ import 'package:provider/provider.dart';
 import 'package:funkovault2/services/app_state.dart';
 import 'package:funkovault2/atlas/catalog/models/atlas_catalog_product.dart';
 import 'package:funkovault2/atlas/catalog/services/atlas_barcode_catalog_resolver.dart';
+import 'package:funkovault2/atlas/scan/acquisition/atlas_evidence_accumulator.dart';
+import 'package:funkovault2/atlas/scan/acquisition/atlas_mobile_scanner_observation_adapter.dart';
 import 'package:funkovault2/atlas/scan/engine/barcode_intelligence_engine.dart';
 import 'package:funkovault2/atlas/scan/engine/engine_context.dart';
 import 'package:funkovault2/atlas/scan/models/scan_code.dart';
 import 'package:funkovault2/atlas/scan/models/scan_session.dart';
 import 'package:funkovault2/atlas/scan/models/scanner_type.dart';
 import 'package:funkovault2/atlas/scan/pipeline/standard_scan_pipeline.dart';
+import 'package:funkovault2/atlas/scan/tracking/atlas_object_track.dart';
+import 'package:funkovault2/atlas/scan/tracking/atlas_object_tracker.dart';
+import 'package:funkovault2/atlas/scan/tracking/atlas_scan_observation.dart';
 import 'package:funkovault2/atlas/scan/workflow/scan_intent.dart';
 import 'package:funkovault2/atlas/scan/workflow/scan_performance_mode.dart';
 import 'package:funkovault2/screens/catalog/funko_catalog_screen.dart';
@@ -39,8 +44,17 @@ class _ScanScreenState extends State<ScanScreen> {
   final AtlasBarcodeCatalogResolver _catalogResolver =
       AtlasBarcodeCatalogResolver();
 
+  final AtlasObjectTracker _objectTracker = AtlasObjectTracker();
+
+  final AtlasEvidenceAccumulator _evidenceAccumulator =
+      AtlasEvidenceAccumulator();
+
+  final Set<String> _processingTrackIds = <String>{};
+
   String? _scannedCode;
   bool _isProcessing = false;
+  int _activeTrackCount = 0;
+  int _confirmedTrackCount = 0;
 
   @override
   void dispose() {
@@ -49,35 +63,112 @@ class _ScanScreenState extends State<ScanScreen> {
   }
 
   Future<void> _handleDetection(BarcodeCapture capture) async {
+    final DateTime capturedAt = DateTime.now().toUtc();
+
+    final List<AtlasScanObservation> observations =
+        AtlasMobileScannerObservationAdapter.fromCapture(
+          capture,
+          capturedAt: capturedAt,
+        );
+
+    if (observations.isEmpty) {
+      return;
+    }
+
+    final List<AtlasScanObservation> trackableObservations = observations
+        .where((AtlasScanObservation observation) => observation.hasGeometry)
+        .toList(growable: false);
+
+    if (trackableObservations.isEmpty) {
+      if (_isProcessing) {
+        return;
+      }
+
+      final ScanCode? fallbackCode = _firstUsableObservationCode(observations);
+
+      if (fallbackCode == null) {
+        return;
+      }
+
+      await _processStableCode(fallbackCode, trackId: null);
+      return;
+    }
+
+    final List<AtlasObjectTrack> tracks = _objectTracker.processFrame(
+      observations: trackableObservations,
+      timestamp: capturedAt,
+    );
+
+    _updateTrackingStatus(tracks);
+
     if (_isProcessing) {
       return;
     }
 
-    final Barcode? barcode = _firstUsableBarcode(capture);
+    for (final AtlasObjectTrack track in tracks) {
+      if (_processingTrackIds.contains(track.trackId)) {
+        continue;
+      }
 
-    if (barcode == null) {
+      final AtlasAccumulatedEvidence? evidence = _evidenceAccumulator
+          .evaluateTrack(track);
+
+      if (evidence == null || !evidence.isReadyForResolution) {
+        continue;
+      }
+
+      await _processStableCode(evidence.stableCode, trackId: track.trackId);
+      return;
+    }
+  }
+
+  void _updateTrackingStatus(List<AtlasObjectTrack> tracks) {
+    final int confirmedCount = tracks
+        .where((AtlasObjectTrack track) => track.isConfirmed)
+        .length;
+
+    if (!mounted ||
+        (_activeTrackCount == tracks.length &&
+            _confirmedTrackCount == confirmedCount)) {
       return;
     }
 
-    final String rawValue = barcode.rawValue?.trim() ?? '';
+    setState(() {
+      _activeTrackCount = tracks.length;
+      _confirmedTrackCount = confirmedCount;
+    });
+  }
 
-    if (rawValue.isEmpty) {
+  ScanCode? _firstUsableObservationCode(
+    List<AtlasScanObservation> observations,
+  ) {
+    for (final AtlasScanObservation observation in observations) {
+      final ScanCode? code = observation.code;
+
+      if (code != null &&
+          code.isValid &&
+          code.isProductBarcode &&
+          code.normalizedValue.trim().isNotEmpty) {
+        return code;
+      }
+    }
+
+    return null;
+  }
+
+  Future<void> _processStableCode(
+    ScanCode scanCode, {
+    required String? trackId,
+  }) async {
+    if (_isProcessing) {
       return;
     }
 
     final String collectionName = context.read<AppState>().selectedCollection;
 
-    final ScanCodeFormat format = _mapBarcodeFormat(barcode.format);
-
-    final ScanCode scanCode = ScanCode(
-      rawValue: rawValue,
-      normalizedValue: _normalizeCodeValue(rawValue),
-      format: format,
-      source: ScanCodeSource.camera,
-      capturedAt: DateTime.now().toUtc(),
-      isValid: format != ScanCodeFormat.unknown,
-      confidence: 1.0,
-    );
+    if (trackId != null) {
+      _processingTrackIds.add(trackId);
+    }
 
     setState(() {
       _isProcessing = true;
@@ -94,6 +185,16 @@ class _ScanScreenState extends State<ScanScreen> {
         scanCode.normalizedValue,
       );
 
+      final Map<String, Object?> engineAttributes = <String, Object?>{
+        'scanSource': ScanCodeSource.camera.name,
+        'scannerType': ScannerType.mobileScanner.name,
+        'barcodeFormat': scanCode.format.name,
+      };
+
+      if (trackId != null) {
+        engineAttributes['trackId'] = trackId;
+      }
+
       final EngineContext engineContext = EngineContext(
         requestId: executionId,
         createdAt: startedAt,
@@ -102,11 +203,7 @@ class _ScanScreenState extends State<ScanScreen> {
         deviceCapabilities: const <String>{
           BarcodeIntelligenceEngine.capabilityId,
         },
-        attributes: <String, Object?>{
-          'scanSource': ScanCodeSource.camera.name,
-          'scannerType': ScannerType.mobileScanner.name,
-          'barcodeFormat': scanCode.format.name,
-        },
+        attributes: engineAttributes,
       );
 
       final ScanSession initialSession = ScanSession(
@@ -175,6 +272,14 @@ class _ScanScreenState extends State<ScanScreen> {
           SnackBar(content: Text('Atlas could not process this scan: $error')),
         );
     } finally {
+      if (trackId != null) {
+        _objectTracker.markCooldown(
+          trackId: trackId,
+          startedAt: DateTime.now().toUtc(),
+        );
+        _processingTrackIds.remove(trackId);
+      }
+
       if (mounted) {
         setState(() {
           _isProcessing = false;
@@ -185,50 +290,12 @@ class _ScanScreenState extends State<ScanScreen> {
     }
   }
 
-  Barcode? _firstUsableBarcode(BarcodeCapture capture) {
-    for (final Barcode barcode in capture.barcodes) {
-      final String value = barcode.rawValue?.trim() ?? '';
-
-      if (value.isNotEmpty) {
-        return barcode;
-      }
-    }
-
-    return null;
-  }
-
   ScanCode? _firstDetectedCode(ScanSession session) {
     if (session.detectedCodes.isEmpty) {
       return null;
     }
 
     return session.detectedCodes.first;
-  }
-
-  String _normalizeCodeValue(String rawValue) {
-    return rawValue.trim();
-  }
-
-  ScanCodeFormat _mapBarcodeFormat(BarcodeFormat format) {
-    switch (format) {
-      case BarcodeFormat.upcA:
-        return ScanCodeFormat.upcA;
-
-      case BarcodeFormat.upcE:
-        return ScanCodeFormat.upcE;
-
-      case BarcodeFormat.ean8:
-        return ScanCodeFormat.ean8;
-
-      case BarcodeFormat.ean13:
-        return ScanCodeFormat.ean13;
-
-      case BarcodeFormat.qrCode:
-        return ScanCodeFormat.qrCode;
-
-      default:
-        return ScanCodeFormat.unknown;
-    }
   }
 
   String _createExecutionId(DateTime createdAt, String code) {
@@ -280,6 +347,16 @@ class _ScanScreenState extends State<ScanScreen> {
                   onDetect: _handleDetection,
                 ),
                 const _ScannerGuide(),
+                Positioned(
+                  top: 16,
+                  left: 16,
+                  right: 16,
+                  child: _TrackingStatusOverlay(
+                    activeTrackCount: _activeTrackCount,
+                    confirmedTrackCount: _confirmedTrackCount,
+                    isProcessing: _isProcessing,
+                  ),
+                ),
                 if (_isProcessing) const _ProcessingOverlay(),
               ],
             ),
@@ -292,7 +369,7 @@ class _ScanScreenState extends State<ScanScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Text(
-                    'Atlas Catalog Lookup Ready',
+                    'Atlas Continuous Scanner Ready',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
@@ -307,8 +384,8 @@ class _ScanScreenState extends State<ScanScreen> {
                   const SizedBox(height: 8),
                   Text(
                     _isProcessing
-                        ? 'Atlas is analyzing the scan...'
-                        : _scannedCode ?? 'Waiting for scan...',
+                        ? 'Atlas is analyzing the stable scan...'
+                        : _scannerStatusText(),
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -318,6 +395,20 @@ class _ScanScreenState extends State<ScanScreen> {
         ],
       ),
     );
+  }
+
+  String _scannerStatusText() {
+    if (_confirmedTrackCount > 0) {
+      return 'Tracking $_activeTrackCount item(s) — '
+          '$_confirmedTrackCount confirmed';
+    }
+
+    if (_activeTrackCount > 0) {
+      return 'Tracking $_activeTrackCount item(s) — '
+          'gathering stable evidence';
+    }
+
+    return _scannedCode ?? 'Waiting for scan...';
   }
 }
 
@@ -334,6 +425,59 @@ class _ScannerGuide extends StatelessWidget {
           decoration: BoxDecoration(
             border: Border.all(color: Colors.white, width: 3),
             borderRadius: BorderRadius.circular(18),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TrackingStatusOverlay extends StatelessWidget {
+  const _TrackingStatusOverlay({
+    required this.activeTrackCount,
+    required this.confirmedTrackCount,
+    required this.isProcessing,
+  });
+
+  final int activeTrackCount;
+  final int confirmedTrackCount;
+  final bool isProcessing;
+
+  @override
+  Widget build(BuildContext context) {
+    final String label;
+
+    if (isProcessing) {
+      label = '🧠 Resolving stable scan';
+    } else if (confirmedTrackCount > 0) {
+      label =
+          '🎯 $confirmedTrackCount confirmed • '
+          '$activeTrackCount tracked';
+    } else if (activeTrackCount > 0) {
+      label =
+          '👀 $activeTrackCount tracked • '
+          'stabilizing';
+    } else {
+      label = '📷 Continuous tracking active';
+    }
+
+    return IgnorePointer(
+      child: Center(
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: Colors.black54,
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            child: Text(
+              label,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ),
       ),
@@ -365,7 +509,7 @@ class _ProcessingOverlay extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 const Text(
-                  'Validating scan and checking the Atlas catalog',
+                  'Validating stable evidence and checking the Atlas catalog',
                   textAlign: TextAlign.center,
                 ),
               ],
