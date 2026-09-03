@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:funkovault2/atlas/catalog/models/atlas_catalog_attribute_keys.dart';
 import 'package:funkovault2/atlas/catalog/models/atlas_catalog_product.dart';
 import 'package:funkovault2/atlas/identity/product/atlas_product_id.dart';
+import 'package:funkovault2/atlas/scan/authenticity/models/atlas_visual_inspection.dart';
 import 'package:funkovault2/models/activity.dart';
 import 'package:funkovault2/models/pop.dart';
 import 'package:funkovault2/screens/pop/add_pop_screen.dart';
@@ -192,6 +193,14 @@ void main() {
     await enterField(tester, 'Item Condition', 'Excellent');
     await enterField(tester, 'Box Condition', 'Good');
     await enterField(tester, 'Image URL', 'new-image');
+    await tester.tap(find.text('Authenticity & Details'));
+    await tester.pumpAndSettle();
+    await enterField(tester, 'Production Code', 'FAC-NEW');
+    await enterField(tester, 'Copyright Year', '2011');
+    await enterField(tester, 'Sticker Type', 'Shared Convention');
+    await enterField(tester, 'Signature Details', 'Kevin Conroy');
+    await enterField(tester, 'Authentication Provider', 'Beckett');
+    await enterField(tester, 'Authenticity Number', 'BAS-2');
     await tapSave(tester, 'Save Changes');
 
     expect(result, isNotNull);
@@ -210,15 +219,16 @@ void main() {
     expect(result!.productionStatus, original.productionStatus);
     expect(result!.releaseDate, original.releaseDate);
     expect(result!.gradingCompany, original.gradingCompany);
-    expect(result!.authenticityNumber, original.authenticityNumber);
+    expect(result!.authenticityNumber, 'BAS-2');
     expect(result!.finish, original.finish);
     expect(result!.size, original.size);
     expect(result!.packagingType, original.packagingType);
     expect(result!.boxVersion, original.boxVersion);
-    expect(result!.copyrightYear, original.copyrightYear);
-    expect(result!.productionCode, original.productionCode);
-    expect(result!.stickerType, original.stickerType);
-    expect(result!.authenticationProvider, original.authenticationProvider);
+    expect(result!.copyrightYear, '2011');
+    expect(result!.productionCode, 'FAC-NEW');
+    expect(result!.stickerType, 'Shared Convention');
+    expect(result!.signature, 'Kevin Conroy');
+    expect(result!.authenticationProvider, 'Beckett');
     expect(result!.isWishlist, isTrue);
     expect(result!.dateAdded, original.dateAdded);
     expect(state.updatedCollectionName, 'Arthur Collection');
@@ -253,6 +263,14 @@ void main() {
           home: AddPopScreen(
             atlasProduct: product,
             collectionName: 'Arthur Collection',
+            visualInspection: AtlasVisualInspection(
+              productionStampText: 'JJL 240815',
+              copyrightText: '2024',
+              stickerText: 'Special Edition',
+              signature: 'Jane Doe',
+              authenticationProvider: 'JSA',
+              authenticityNumber: 'JSA-123',
+            ),
           ),
         ),
       ),
@@ -268,6 +286,12 @@ void main() {
     expect(saved.sourceCollectibleId, 'source-1');
     expect(saved.sourceUpc, '889698000001');
     expect(saved.productionStatus, 'Vaulted');
+    expect(saved.productionCode, 'JJL 240815');
+    expect(saved.copyrightYear, '2024');
+    expect(saved.stickerType, 'Special Edition');
+    expect(saved.signature, 'Jane Doe');
+    expect(saved.authenticationProvider, 'JSA');
+    expect(saved.authenticityNumber, 'JSA-123');
     expect(state.addedCollectionName, 'Arthur Collection');
   });
 

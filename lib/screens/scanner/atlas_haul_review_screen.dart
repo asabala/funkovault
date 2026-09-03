@@ -7,6 +7,7 @@ import 'package:funkovault2/atlas/intelligence/engines/atlas_collector_insight_e
 import 'package:funkovault2/atlas/scan/acquisition/atlas_continuous_scan_coordinator.dart';
 import 'package:funkovault2/atlas/scan/ledger/atlas_scan_ledger_entry.dart';
 import 'package:funkovault2/atlas/scan/results/atlas_continuous_scan_result.dart';
+import 'package:funkovault2/screens/scanner/atlas_visual_inspection_screen.dart';
 import 'package:funkovault2/models/pop.dart';
 import 'package:funkovault2/screens/pop/add_pop_screen.dart';
 import 'package:funkovault2/services/app_state.dart';
@@ -32,6 +33,24 @@ class AtlasHaulReviewScreen extends StatefulWidget {
 
 class _AtlasHaulReviewScreenState extends State<AtlasHaulReviewScreen> {
   final Set<String> _savingTrackIds = <String>{};
+
+  Future<void> _inspectItem({
+    required AtlasScanLedgerEntry entry,
+    required AtlasContinuousScanResult result,
+  }) async {
+    final session = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AtlasVisualInspectionScreen(session: result.session),
+      ),
+    );
+    if (!mounted || session == null) return;
+    widget.coordinator.applyInspection(
+      trackId: entry.trackId,
+      session: session,
+    );
+    setState(() {});
+  }
 
   Future<bool> _runSaveForTrack({
     required AtlasScanLedgerEntry entry,
@@ -96,9 +115,15 @@ class _AtlasHaulReviewScreenState extends State<AtlasHaulReviewScreen> {
       entry: entry,
       successLabel: product.displayName,
       screenBuilder: (_) {
+        final inspection = widget.coordinator
+            .resultForTrack(entry.trackId)
+            ?.session
+            .visualInspectionContribution
+            ?.inspection;
         return AddPopScreen(
           atlasProduct: product,
           collectionName: widget.collectionName,
+          visualInspection: inspection,
         );
       },
     );
@@ -109,7 +134,15 @@ class _AtlasHaulReviewScreenState extends State<AtlasHaulReviewScreen> {
       entry: entry,
       successLabel: 'Reviewed item',
       screenBuilder: (_) {
-        return AddPopScreen(collectionName: widget.collectionName);
+        final inspection = widget.coordinator
+            .resultForTrack(entry.trackId)
+            ?.session
+            .visualInspectionContribution
+            ?.inspection;
+        return AddPopScreen(
+          collectionName: widget.collectionName,
+          visualInspection: inspection,
+        );
       },
     );
   }
@@ -406,6 +439,9 @@ class _AtlasHaulReviewScreenState extends State<AtlasHaulReviewScreen> {
                             !hasMultipleMatches
                         ? () => _addManualItem(entry: entry)
                         : null,
+                    onInspect: result == null || entry.isCommitted
+                        ? null
+                        : () => _inspectItem(entry: entry, result: result),
                   ),
                 );
               }),
@@ -429,6 +465,7 @@ class _HaulReviewItemCard extends StatelessWidget {
     required this.onReviewMatches,
     required this.onFindExisting,
     required this.onManualAdd,
+    required this.onInspect,
   });
 
   final AtlasScanLedgerEntry entry;
@@ -442,6 +479,7 @@ class _HaulReviewItemCard extends StatelessWidget {
   final VoidCallback? onReviewMatches;
   final VoidCallback? onFindExisting;
   final VoidCallback? onManualAdd;
+  final VoidCallback? onInspect;
 
   @override
   Widget build(BuildContext context) {
@@ -554,6 +592,35 @@ class _HaulReviewItemCard extends StatelessWidget {
             ),
           ],
           const SizedBox(height: AtlasSpacing.md),
+          if (scanResult?.session.authenticityContribution != null) ...[
+            AtlasStatusChip(
+              label: _authenticityLabel(
+                scanResult!.session.authenticityContribution!.assessment.status,
+              ),
+              icon: Icons.shield_outlined,
+              accentColor:
+                  scanResult
+                      .session
+                      .authenticityContribution!
+                      .assessment
+                      .requiresReview
+                  ? AtlasColors.warning
+                  : AtlasColors.success,
+            ),
+            const SizedBox(height: AtlasSpacing.sm),
+          ],
+          if (onInspect != null) ...[
+            OutlinedButton.icon(
+              onPressed: onInspect,
+              icon: const Icon(Icons.verified_user_outlined),
+              label: Text(
+                scanResult?.session.hasAuthenticityAssessment == true
+                    ? '🔎 Review Visual Inspection'
+                    : '🔎 Visual Inspection',
+              ),
+            ),
+            const SizedBox(height: AtlasSpacing.sm),
+          ],
           if (entry.isCommitted)
             FilledButton.icon(
               onPressed: null,
@@ -623,6 +690,15 @@ class _HaulReviewItemCard extends StatelessWidget {
       AtlasScanLedgerStatus.needsReview => 'Review',
       AtlasScanLedgerStatus.failed => 'Failed',
       AtlasScanLedgerStatus.committed => 'Committed',
+    };
+  }
+
+  static String _authenticityLabel(dynamic status) {
+    return switch (status.name) {
+      'strongEvidence' => 'Strong Evidence',
+      'developingEvidence' => 'Developing Evidence',
+      'reviewRecommended' => 'Review Recommended',
+      _ => 'Insufficient Evidence',
     };
   }
 

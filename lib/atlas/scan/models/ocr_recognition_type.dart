@@ -29,6 +29,7 @@ enum OCRRecognitionType {
   // Supporting information.
   certification,
   copyright,
+  productionCode,
   manufacturer,
   language,
   date,
@@ -46,8 +47,7 @@ extension OCRRecognitionTypeX on OCRRecognitionType {
       OCRRecognitionType.title ||
       OCRRecognitionType.characterName ||
       OCRRecognitionType.productNumber ||
-      OCRRecognitionType.series =>
-      true,
+      OCRRecognitionType.series => true,
       _ => false,
     };
   }
@@ -63,8 +63,7 @@ extension OCRRecognitionTypeX on OCRRecognitionType {
       OCRRecognitionType.flocked ||
       OCRRecognitionType.diamond ||
       OCRRecognitionType.blacklight ||
-      OCRRecognitionType.autograph =>
-      true,
+      OCRRecognitionType.autograph => true,
       _ => false,
     };
   }
@@ -94,6 +93,7 @@ extension OCRRecognitionTypeX on OCRRecognitionType {
       OCRRecognitionType.autograph => 'Autograph',
       OCRRecognitionType.certification => 'Certification',
       OCRRecognitionType.copyright => 'Copyright',
+      OCRRecognitionType.productionCode => 'Production Code',
       OCRRecognitionType.manufacturer => 'Manufacturer',
       OCRRecognitionType.language => 'Language',
       OCRRecognitionType.date => 'Date',

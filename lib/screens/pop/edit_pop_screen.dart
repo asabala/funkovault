@@ -13,6 +13,7 @@ import '../../theme/atlas_spacing.dart';
 import '../../theme/atlas_typography.dart';
 import '../../widgets/atlas/atlas_glass_card.dart';
 import '../../widgets/atlas/atlas_glass_panel.dart';
+import '../../widgets/atlas/atlas_expandable_section.dart';
 import '../../widgets/atlas/components/atlas_dropdown_panel.dart';
 import '../../widgets/atlas/components/atlas_form_field.dart';
 import '../../widgets/atlas/components/atlas_product_image.dart';
@@ -72,6 +73,11 @@ class _EditPopScreenState extends State<EditPopScreen> {
   late TextEditingController _customEventStickerController;
   late TextEditingController _customLimitedEditionController;
   late TextEditingController _customSignatureController;
+  late TextEditingController _productionCodeController;
+  late TextEditingController _copyrightYearController;
+  late TextEditingController _stickerTypeController;
+  late TextEditingController _authenticationProviderController;
+  late TextEditingController _authenticityNumberController;
 
   late String _owner;
   late String _variant;
@@ -167,6 +173,21 @@ class _EditPopScreenState extends State<EditPopScreen> {
       text: widget.pop.boxCondition,
     );
     _imageUrlController = TextEditingController(text: widget.pop.imageUrl);
+    _productionCodeController = TextEditingController(
+      text: widget.pop.productionCode,
+    );
+    _copyrightYearController = TextEditingController(
+      text: widget.pop.copyrightYear,
+    );
+    _stickerTypeController = TextEditingController(
+      text: widget.pop.stickerType,
+    );
+    _authenticationProviderController = TextEditingController(
+      text: widget.pop.authenticationProvider,
+    );
+    _authenticityNumberController = TextEditingController(
+      text: widget.pop.authenticityNumber,
+    );
 
     _owner = widget.pop.owner.trim().isEmpty
         ? 'Shared'
@@ -374,6 +395,11 @@ class _EditPopScreenState extends State<EditPopScreen> {
     _customEventStickerController.dispose();
     _customLimitedEditionController.dispose();
     _customSignatureController.dispose();
+    _productionCodeController.dispose();
+    _copyrightYearController.dispose();
+    _stickerTypeController.dispose();
+    _authenticationProviderController.dispose();
+    _authenticityNumberController.dispose();
     super.dispose();
   }
 
@@ -406,11 +432,14 @@ class _EditPopScreenState extends State<EditPopScreen> {
       fallback: 'None',
     );
 
-    final resolvedSignature = _resolvedIdentityValue(
+    final selectedSignature = _resolvedIdentityValue(
       selectedValue: _signature,
       customController: _customSignatureController,
       fallback: 'Unsigned',
     );
+    final resolvedSignature = _customSignatureController.text.trim().isNotEmpty
+        ? _customSignatureController.text.trim()
+        : selectedSignature;
 
     final updatedPop = widget.pop.copyWith(
       name: _nameController.text.trim(),
@@ -422,6 +451,11 @@ class _EditPopScreenState extends State<EditPopScreen> {
       eventSticker: resolvedEventSticker,
       limitedEdition: resolvedLimitedEdition,
       signature: resolvedSignature,
+      productionCode: _productionCodeController.text.trim(),
+      copyrightYear: _copyrightYearController.text.trim(),
+      stickerType: _stickerTypeController.text.trim(),
+      authenticationProvider: _authenticationProviderController.text.trim(),
+      authenticityNumber: _authenticityNumberController.text.trim(),
       value: PopFormValues.parseOptionalMoney(_valueController.text),
       pricePaid: PopFormValues.parseOptionalMoney(_pricePaidController.text),
       quantity: PopFormValues.parseQuantity(_quantityController.text),
@@ -584,6 +618,52 @@ class _EditPopScreenState extends State<EditPopScreen> {
                         ),
                       ],
                     ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AtlasSpacing.lg),
+            AtlasExpandableSection(
+              title: 'Authenticity & Details',
+              subtitle:
+                  'Production, copyright, sticker, autograph, and COA evidence.',
+              icon: Icons.verified_user_outlined,
+              child: Column(
+                children: [
+                  AtlasFormField(
+                    controller: _productionCodeController,
+                    label: 'Production Code',
+                    icon: Icons.factory_outlined,
+                  ),
+                  const SizedBox(height: AtlasSpacing.md),
+                  AtlasFormField(
+                    controller: _copyrightYearController,
+                    label: 'Copyright Year',
+                    icon: Icons.copyright_rounded,
+                  ),
+                  const SizedBox(height: AtlasSpacing.md),
+                  AtlasFormField(
+                    controller: _stickerTypeController,
+                    label: 'Sticker Type',
+                    icon: Icons.sell_outlined,
+                  ),
+                  const SizedBox(height: AtlasSpacing.md),
+                  AtlasFormField(
+                    controller: _customSignatureController,
+                    label: 'Signature Details',
+                    icon: Icons.draw_outlined,
+                  ),
+                  const SizedBox(height: AtlasSpacing.md),
+                  AtlasFormField(
+                    controller: _authenticationProviderController,
+                    label: 'Authentication Provider',
+                    icon: Icons.verified_outlined,
+                  ),
+                  const SizedBox(height: AtlasSpacing.md),
+                  AtlasFormField(
+                    controller: _authenticityNumberController,
+                    label: 'Authenticity Number',
+                    icon: Icons.numbers_rounded,
                   ),
                 ],
               ),

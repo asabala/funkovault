@@ -5,9 +5,11 @@ enum ScanImageType {
   thumbnail,
   frontBox,
   backBox,
+  bottomBox,
   barcode,
   sticker,
   autograph,
+  certification,
   condition,
   unknown,
 }
@@ -78,8 +80,7 @@ class ScanImage {
   }
 
   bool get hasFingerprint {
-    return imageFingerprint != null &&
-        imageFingerprint!.trim().isNotEmpty;
+    return imageFingerprint != null && imageFingerprint!.trim().isNotEmpty;
   }
 
   bool get isAvailable {
@@ -124,10 +125,8 @@ class ScanImage {
       width: width ?? this.width,
       height: height ?? this.height,
       byteSize: byteSize ?? this.byteSize,
-      imageFingerprint:
-      imageFingerprint ?? this.imageFingerprint,
-      processingNotes:
-      processingNotes ?? this.processingNotes,
+      imageFingerprint: imageFingerprint ?? this.imageFingerprint,
+      processingNotes: processingNotes ?? this.processingNotes,
     );
   }
 }

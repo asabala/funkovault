@@ -21,6 +21,11 @@ abstract final class AtlasPopFactory {
     String eventSticker = 'None',
     String limitedEdition = 'None',
     String signature = 'Unsigned',
+    String productionCode = '',
+    String copyrightYear = '',
+    String stickerType = '',
+    String authenticationProvider = '',
+    String authenticityNumber = '',
     double value = 0,
     double pricePaid = 0,
     int quantity = 1,
@@ -55,7 +60,11 @@ abstract final class AtlasPopFactory {
       productionStatus: '',
       releaseDate: '',
       gradingCompany: '',
-      authenticityNumber: '',
+      productionCode: productionCode.trim(),
+      copyrightYear: copyrightYear.trim(),
+      stickerType: stickerType.trim(),
+      authenticationProvider: authenticationProvider.trim(),
+      authenticityNumber: authenticityNumber.trim(),
       value: value < 0 ? 0 : value,
       pricePaid: pricePaid < 0 ? 0 : pricePaid,
       quantity: quantity < 1 ? 1 : quantity,
@@ -85,6 +94,11 @@ abstract final class AtlasPopFactory {
     String? eventSticker,
     String limitedEdition = 'None',
     String? signature,
+    String? productionCode,
+    String? copyrightYear,
+    String? stickerType,
+    String? authenticationProvider,
+    String? authenticityNumber,
     double? value,
     double pricePaid = 0,
     int quantity = 1,
@@ -132,6 +146,13 @@ abstract final class AtlasPopFactory {
       signature: signature == null
           ? catalogPop.signature
           : _defaultText(signature, fallback: 'Unsigned'),
+      productionCode: productionCode?.trim() ?? catalogPop.productionCode,
+      copyrightYear: copyrightYear?.trim() ?? catalogPop.copyrightYear,
+      stickerType: stickerType?.trim() ?? catalogPop.stickerType,
+      authenticationProvider:
+          authenticationProvider?.trim() ?? catalogPop.authenticationProvider,
+      authenticityNumber:
+          authenticityNumber?.trim() ?? catalogPop.authenticityNumber,
       value: value == null
           ? catalogPop.value
           : value < 0

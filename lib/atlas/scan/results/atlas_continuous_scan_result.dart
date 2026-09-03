@@ -27,4 +27,13 @@ class AtlasContinuousScanResult {
   AtlasCatalogProduct? get resolvedCatalogProduct {
     return session.catalogProduct ?? catalogResolution.singleMatch;
   }
+
+  AtlasContinuousScanResult copyWith({ScanSession? session}) {
+    return AtlasContinuousScanResult(
+      trackId: trackId,
+      session: session ?? this.session,
+      catalogResolution: catalogResolution,
+      completedAt: completedAt,
+    );
+  }
 }

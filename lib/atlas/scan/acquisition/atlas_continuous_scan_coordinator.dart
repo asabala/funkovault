@@ -225,6 +225,31 @@ class AtlasContinuousScanCoordinator {
     return true;
   }
 
+  bool applyInspection({
+    required String trackId,
+    required ScanSession session,
+  }) {
+    if (_isDisposed) return false;
+    final normalizedTrackId = trackId.trim();
+    final existing = _resultsByTrack[normalizedTrackId];
+    if (existing == null || existing.session.sessionId != session.sessionId) {
+      return false;
+    }
+    final assessment = session.authenticityContribution?.assessment;
+    if (assessment == null) return false;
+    _resultsByTrack[normalizedTrackId] = existing.copyWith(session: session);
+    ledger.applyInspectionReview(
+      trackId: normalizedTrackId,
+      requiresReview:
+          assessment.requiresReview ||
+          session.requiresUserAction ||
+          !existing.catalogResolution.hasSingleMatch,
+      at: DateTime.now().toUtc(),
+    );
+    _notifyChanged();
+    return true;
+  }
+
   bool get canResetCompletedSession {
     final List<AtlasScanLedgerEntry> entries = ledger.entries;
 

@@ -8,12 +8,14 @@ import '../../atlas/widgets/atlas_insight_card.dart';
 import '../../constants/collector_identity_options.dart';
 import '../../atlas/catalog/models/atlas_catalog_product.dart';
 import '../../atlas/catalog/services/atlas_pop_factory.dart';
+import '../../atlas/scan/authenticity/models/atlas_visual_inspection.dart';
 import '../../services/app_state.dart';
 import '../../theme/atlas_colors.dart';
 import '../../theme/atlas_spacing.dart';
 import '../../theme/atlas_typography.dart';
 import '../../widgets/atlas/atlas_glass_card.dart';
 import '../../widgets/atlas/atlas_glass_panel.dart';
+import '../../widgets/atlas/atlas_expandable_section.dart';
 import '../../widgets/atlas/components/atlas_dropdown_panel.dart';
 import '../../widgets/atlas/components/atlas_form_field.dart';
 import '../../widgets/atlas/components/atlas_product_image.dart';
@@ -23,10 +25,16 @@ import '../../widgets/pop/pop_form.dart';
 import '../../widgets/vault/vault_scroll_view.dart';
 
 class AddPopScreen extends StatefulWidget {
-  const AddPopScreen({super.key, this.atlasProduct, this.collectionName});
+  const AddPopScreen({
+    super.key,
+    this.atlasProduct,
+    this.collectionName,
+    this.visualInspection,
+  });
 
   final AtlasCatalogProduct? atlasProduct;
   final String? collectionName;
+  final AtlasVisualInspection? visualInspection;
 
   @override
   State<AddPopScreen> createState() => _AddPopScreenState();
@@ -50,6 +58,11 @@ class _AddPopScreenState extends State<AddPopScreen> {
   final _customEventStickerController = TextEditingController();
   final _customLimitedEditionController = TextEditingController();
   final _customSignatureController = TextEditingController();
+  final _productionCodeController = TextEditingController();
+  final _copyrightYearController = TextEditingController();
+  final _stickerTypeController = TextEditingController();
+  final _authenticationProviderController = TextEditingController();
+  final _authenticityNumberController = TextEditingController();
 
   String _variant = 'Common';
   String _retailExclusive = 'None';
@@ -118,6 +131,20 @@ class _AddPopScreenState extends State<AddPopScreen> {
 
     final AtlasCatalogProduct? product = widget.atlasProduct;
 
+    final inspection = widget.visualInspection;
+    if (inspection != null) {
+      _productionCodeController.text = inspection.productionStampText;
+      _copyrightYearController.text = inspection.copyrightText;
+      _stickerTypeController.text = inspection.stickerText;
+      _authenticationProviderController.text =
+          inspection.authenticationProvider;
+      _authenticityNumberController.text = inspection.authenticityNumber;
+      if (inspection.signature.trim().isNotEmpty) {
+        _customSignatureController.text = inspection.signature.trim();
+        _signature = 'Other';
+      }
+    }
+
     if (product == null) {
       return;
     }
@@ -166,6 +193,11 @@ class _AddPopScreenState extends State<AddPopScreen> {
       fallback: 'Unsigned',
       customController: _customSignatureController,
     );
+
+    if (inspection != null && inspection.signature.trim().isNotEmpty) {
+      _customSignatureController.text = inspection.signature.trim();
+      _signature = 'Other';
+    }
   }
 
   @override
@@ -185,6 +217,11 @@ class _AddPopScreenState extends State<AddPopScreen> {
     _customEventStickerController.dispose();
     _customLimitedEditionController.dispose();
     _customSignatureController.dispose();
+    _productionCodeController.dispose();
+    _copyrightYearController.dispose();
+    _stickerTypeController.dispose();
+    _authenticationProviderController.dispose();
+    _authenticityNumberController.dispose();
     super.dispose();
   }
 
@@ -231,11 +268,14 @@ class _AddPopScreenState extends State<AddPopScreen> {
       fallback: 'None',
     );
 
-    final resolvedSignature = _resolvedIdentityValue(
+    final selectedSignature = _resolvedIdentityValue(
       selectedValue: _signature,
       customController: _customSignatureController,
       fallback: 'Unsigned',
     );
+    final resolvedSignature = _customSignatureController.text.trim().isNotEmpty
+        ? _customSignatureController.text.trim()
+        : selectedSignature;
 
     final double value = PopFormValues.parseOptionalMoney(
       _valueController.text,
@@ -260,6 +300,11 @@ class _AddPopScreenState extends State<AddPopScreen> {
             eventSticker: resolvedEventSticker,
             limitedEdition: resolvedLimitedEdition,
             signature: resolvedSignature,
+            productionCode: _productionCodeController.text,
+            copyrightYear: _copyrightYearController.text,
+            stickerType: _stickerTypeController.text,
+            authenticationProvider: _authenticationProviderController.text,
+            authenticityNumber: _authenticityNumberController.text,
             value: value,
             pricePaid: pricePaid,
             quantity: quantity,
@@ -280,6 +325,11 @@ class _AddPopScreenState extends State<AddPopScreen> {
             eventSticker: resolvedEventSticker,
             limitedEdition: resolvedLimitedEdition,
             signature: resolvedSignature,
+            productionCode: _productionCodeController.text,
+            copyrightYear: _copyrightYearController.text,
+            stickerType: _stickerTypeController.text,
+            authenticationProvider: _authenticationProviderController.text,
+            authenticityNumber: _authenticityNumberController.text,
             value: value,
             pricePaid: pricePaid,
             quantity: quantity,
@@ -401,6 +451,52 @@ class _AddPopScreenState extends State<AddPopScreen> {
                       ),
                     ),
                   ],
+                ],
+              ),
+            ),
+            const SizedBox(height: AtlasSpacing.lg),
+            AtlasExpandableSection(
+              title: 'Authenticity & Details',
+              subtitle:
+                  'Production, copyright, sticker, autograph, and COA evidence.',
+              icon: Icons.verified_user_outlined,
+              child: Column(
+                children: [
+                  AtlasFormField(
+                    controller: _productionCodeController,
+                    label: 'Production Code',
+                    icon: Icons.factory_outlined,
+                  ),
+                  const SizedBox(height: AtlasSpacing.md),
+                  AtlasFormField(
+                    controller: _copyrightYearController,
+                    label: 'Copyright Year',
+                    icon: Icons.copyright_rounded,
+                  ),
+                  const SizedBox(height: AtlasSpacing.md),
+                  AtlasFormField(
+                    controller: _stickerTypeController,
+                    label: 'Sticker Type',
+                    icon: Icons.sell_outlined,
+                  ),
+                  const SizedBox(height: AtlasSpacing.md),
+                  AtlasFormField(
+                    controller: _customSignatureController,
+                    label: 'Signature Details',
+                    icon: Icons.draw_outlined,
+                  ),
+                  const SizedBox(height: AtlasSpacing.md),
+                  AtlasFormField(
+                    controller: _authenticationProviderController,
+                    label: 'Authentication Provider',
+                    icon: Icons.verified_outlined,
+                  ),
+                  const SizedBox(height: AtlasSpacing.md),
+                  AtlasFormField(
+                    controller: _authenticityNumberController,
+                    label: 'Authenticity Number',
+                    icon: Icons.numbers_rounded,
+                  ),
                 ],
               ),
             ),

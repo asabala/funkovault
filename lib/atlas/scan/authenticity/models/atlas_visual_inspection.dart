@@ -97,6 +97,30 @@ final class AtlasVisualInspection {
         .map((AtlasVisualEvidenceObservation value) => value.area)
         .toSet();
 
+    for (final ScanImage image in images) {
+      switch (image.type) {
+        case ScanImageType.frontBox:
+          result.add(AtlasInspectionArea.frontBox);
+        case ScanImageType.sticker:
+          result.add(AtlasInspectionArea.windowSticker);
+        case ScanImageType.bottomBox:
+          result.add(AtlasInspectionArea.bottomStamp);
+        case ScanImageType.backBox:
+          result.add(AtlasInspectionArea.packagingCopyright);
+        case ScanImageType.autograph:
+          result.add(AtlasInspectionArea.autograph);
+        case ScanImageType.certification:
+          result.add(AtlasInspectionArea.coa);
+        case ScanImageType.original:
+        case ScanImageType.processed:
+        case ScanImageType.thumbnail:
+        case ScanImageType.barcode:
+        case ScanImageType.condition:
+        case ScanImageType.unknown:
+          break;
+      }
+    }
+
     if (hasStickerEvidence ||
         stickerPrintClear != null ||
         stickerCutEven != null) {
