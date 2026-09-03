@@ -18,7 +18,8 @@ android {
     defaultConfig {
         applicationId = "com.example.funkovault2"
 
-        minSdk = flutter.minSdkVersion
+        // Native ML Kit barcode scanning requires API 23+.
+        minSdk = maxOf(flutter.minSdkVersion, 23)
         targetSdk = 36
 
         versionCode = flutter.versionCode
@@ -38,6 +39,13 @@ kotlin {
     compilerOptions {
         jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
     }
+}
+
+dependencies {
+    // Bundled model: Live Sniffer can recognize supported barcodes without
+    // waiting for a Play Services model download after capture begins.
+    implementation("com.google.mlkit:barcode-scanning:17.3.0")
+    implementation("com.google.mlkit:text-recognition:16.0.1")
 }
 
 flutter {

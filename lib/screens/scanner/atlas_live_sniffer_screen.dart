@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../atlas/live_sniffer/atlas_live_sniffer_controller.dart';
+import '../../atlas/live_sniffer/atlas_live_sniffer_recognition_controller.dart';
 import '../../atlas/live_sniffer/atlas_live_sniffer_status.dart';
+import '../../atlas/live_sniffer/models/atlas_live_sniffer_hud_snapshot.dart';
+import '../../atlas/live_sniffer/models/atlas_live_sniffer_scan_mode.dart';
+import '../../services/app_state.dart';
 import '../../theme/atlas_colors.dart';
 import '../../theme/atlas_spacing.dart';
 import '../../widgets/atlas/atlas_glass_card.dart';
@@ -20,12 +25,15 @@ class AtlasLiveSnifferScreen extends StatefulWidget {
 class _AtlasLiveSnifferScreenState extends State<AtlasLiveSnifferScreen>
     with WidgetsBindingObserver {
   late final AtlasLiveSnifferController _controller;
+  late final AtlasLiveSnifferRecognitionController _recognitionController;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _controller = AtlasLiveSnifferController()..addListener(_handleChanged);
+    _recognitionController = AtlasLiveSnifferRecognitionController()
+      ..addListener(_handleChanged);
     _controller.refresh();
   }
 
@@ -33,6 +41,9 @@ class _AtlasLiveSnifferScreenState extends State<AtlasLiveSnifferScreen>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _controller
+      ..removeListener(_handleChanged)
+      ..dispose();
+    _recognitionController
       ..removeListener(_handleChanged)
       ..dispose();
     super.dispose();
@@ -50,9 +61,29 @@ class _AtlasLiveSnifferScreenState extends State<AtlasLiveSnifferScreen>
     setState(() {});
   }
 
+  Future<void> _startLiveSniffer() async {
+    final AppState appState = context.read<AppState>();
+    final String collectionName = appState.selectedCollection;
+
+    _recognitionController.startSession(
+      collectionName: collectionName,
+      collectionPops: appState.popsForCollection(collectionName),
+      ownedWishlistIdentityKeys: appState
+          .ownedWishlistIdentityKeysForCollection(collectionName),
+    );
+
+    await _controller.start();
+  }
+
+  Future<void> _stopLiveSniffer() async {
+    await _controller.stop();
+    await _recognitionController.stopSession();
+  }
+
   @override
   Widget build(BuildContext context) {
     final AtlasLiveSnifferStatus status = _controller.status;
+    final AtlasLiveSnifferHudSnapshot hud = _recognitionController.hud;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Atlas Live Sniffer')),
@@ -81,10 +112,10 @@ class _AtlasLiveSnifferScreenState extends State<AtlasLiveSnifferScreen>
                 ),
                 const SizedBox(height: AtlasSpacing.lg),
                 const AtlasInfoBanner(
-                  title: '6C Foundation',
+                  title: '6C Auction Fast Mode',
                   message:
-                      'This checkpoint establishes Android screen-capture, foreground-service, and floating-HUD lifecycle. Recognition and live pricing are connected in the next 6C checkpoint.',
-                  icon: Icons.construction_rounded,
+                      'Atlas keeps the marketplace full-size, reads Pop name + box number first, and refines series, sticker, variant, and barcode evidence while the auction keeps moving.',
+                  icon: Icons.bolt_rounded,
                   accentColor: AtlasColors.intelligenceBlue,
                 ),
               ],
@@ -111,6 +142,96 @@ class _AtlasLiveSnifferScreenState extends State<AtlasLiveSnifferScreen>
             onPressed: _controller.busy
                 ? null
                 : _controller.requestNotificationPermission,
+          ),
+          const SizedBox(height: AtlasSpacing.lg),
+          AtlasGlassCard(
+            accentColor: AtlasColors.intelligenceBlue,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const AtlasSectionHeader(
+                  title: 'Auction Scan Mode',
+                  subtitle:
+                      'Auto mode scans one clear Pop immediately and asks on the floating HUD when multiple stable Pops are visible.',
+                  icon: Icons.view_module_outlined,
+                  accentColor: AtlasColors.intelligenceBlue,
+                ),
+                const SizedBox(height: AtlasSpacing.md),
+                SegmentedButton<AtlasLiveSnifferScanMode>(
+                  segments: const <ButtonSegment<AtlasLiveSnifferScanMode>>[
+                    ButtonSegment<AtlasLiveSnifferScanMode>(
+                      value: AtlasLiveSnifferScanMode.automatic,
+                      label: Text('Auto'),
+                      icon: Icon(Icons.auto_awesome_rounded),
+                    ),
+                    ButtonSegment<AtlasLiveSnifferScanMode>(
+                      value: AtlasLiveSnifferScanMode.featured,
+                      label: Text('Featured'),
+                      icon: Icon(Icons.center_focus_strong_rounded),
+                    ),
+                    ButtonSegment<AtlasLiveSnifferScanMode>(
+                      value: AtlasLiveSnifferScanMode.allVisible,
+                      label: Text('All Visible'),
+                      icon: Icon(Icons.grid_view_rounded),
+                    ),
+                  ],
+                  selected: <AtlasLiveSnifferScanMode>{
+                    _recognitionController.scanMode,
+                  },
+                  onSelectionChanged: status.isCapturing
+                      ? null
+                      : (Set<AtlasLiveSnifferScanMode> selection) {
+                          if (selection.isEmpty) return;
+                          _recognitionController.setScanMode(selection.first);
+                        },
+                ),
+                const SizedBox(height: AtlasSpacing.sm),
+                Text(
+                  _recognitionController.scanMode.description,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                const SizedBox(height: AtlasSpacing.md),
+                const AtlasInfoBanner(
+                  title: 'Full-screen source preserved',
+                  message:
+                      'TikTok, Whatnot, browser, or marketplace content stays at normal size. Only the Atlas HUD floats above it; capture crops and OCR regions are internal.',
+                  icon: Icons.fullscreen_rounded,
+                  accentColor: AtlasColors.success,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AtlasSpacing.lg),
+          AtlasGlassCard(
+            accentColor: _hudAccent(hud.state),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                AtlasSectionHeader(
+                  title: 'Live HUD Preview',
+                  subtitle:
+                      'Read-only intelligence. Live Sniffer never changes Vault records.',
+                  icon: Icons.hub_outlined,
+                  accentColor: _hudAccent(hud.state),
+                ),
+                const SizedBox(height: AtlasSpacing.md),
+                Text(
+                  hud.toOverlayText(),
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    height: 1.35,
+                  ),
+                ),
+                const SizedBox(height: AtlasSpacing.md),
+                const AtlasInfoBanner(
+                  title: 'Value scope',
+                  message:
+                      'Cached Value is shown only when Atlas already has a stored catalog or exact-owned value. Auction OCR can show a fast provisional match, but release-level ownership stays conservative until the name/number/variant evidence is strong enough.',
+                  icon: Icons.price_check_outlined,
+                  accentColor: AtlasColors.vaultGold,
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: AtlasSpacing.lg),
           AtlasGlassCard(
@@ -166,6 +287,15 @@ class _AtlasLiveSnifferScreenState extends State<AtlasLiveSnifferScreen>
                           ? AtlasColors.success
                           : AtlasColors.textSecondary,
                     ),
+                    AtlasStatusChip(
+                      label: _recognitionController.sessionActive
+                          ? 'Recognition Ready'
+                          : 'Recognition Idle',
+                      icon: Icons.document_scanner_outlined,
+                      accentColor: _recognitionController.sessionActive
+                          ? AtlasColors.success
+                          : AtlasColors.textSecondary,
+                    ),
                   ],
                 ),
                 if (status.lastError != null) ...[
@@ -189,14 +319,14 @@ class _AtlasLiveSnifferScreenState extends State<AtlasLiveSnifferScreen>
                 const SizedBox(height: AtlasSpacing.lg),
                 if (status.isCapturing)
                   FilledButton.icon(
-                    onPressed: _controller.busy ? null : _controller.stop,
+                    onPressed: _controller.busy ? null : _stopLiveSniffer,
                     icon: const Icon(Icons.stop_circle_outlined),
                     label: const Text('Stop Live Sniffer'),
                   )
                 else
                   FilledButton.icon(
                     key: const ValueKey('start-live-sniffer'),
-                    onPressed: _controller.busy ? null : _controller.start,
+                    onPressed: _controller.busy ? null : _startLiveSniffer,
                     icon: _controller.busy
                         ? const SizedBox.square(
                             dimension: 18,
@@ -219,6 +349,17 @@ class _AtlasLiveSnifferScreenState extends State<AtlasLiveSnifferScreen>
         ],
       ),
     );
+  }
+
+  Color _hudAccent(AtlasLiveSnifferHudState state) {
+    return switch (state) {
+      AtlasLiveSnifferHudState.owned => AtlasColors.success,
+      AtlasLiveSnifferHudState.notOwned => AtlasColors.intelligenceBlue,
+      AtlasLiveSnifferHudState.wishlisted => AtlasColors.vaultGold,
+      AtlasLiveSnifferHudState.possibleVariant => AtlasColors.warning,
+      AtlasLiveSnifferHudState.needsReview => AtlasColors.warning,
+      AtlasLiveSnifferHudState.listening => AtlasColors.intelligenceBlue,
+    };
   }
 }
 

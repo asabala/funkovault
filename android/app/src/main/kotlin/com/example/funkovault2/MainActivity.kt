@@ -7,28 +7,52 @@ import android.content.pm.PackageManager
 import android.media.projection.MediaProjectionManager
 import android.net.Uri
 import android.os.Build
-import android.os.Bundle
 import android.provider.Settings
 import androidx.core.content.ContextCompat
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterActivity() {
     companion object {
         private const val CHANNEL = "atlas/live_sniffer"
+        private const val EVENT_CHANNEL = "atlas/live_sniffer/events"
         private const val REQUEST_SCREEN_CAPTURE = 6201
         private const val REQUEST_NOTIFICATIONS = 6202
     }
 
     private var pendingScreenCaptureResult: MethodChannel.Result? = null
     private var pendingNotificationResult: MethodChannel.Result? = null
+    private var liveSnifferEventSink: EventChannel.EventSink? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL)
             .setMethodCallHandler(::handleLiveSnifferCall)
+
+        EventChannel(flutterEngine.dartExecutor.binaryMessenger, EVENT_CHANNEL)
+            .setStreamHandler(
+                object : EventChannel.StreamHandler {
+                    override fun onListen(arguments: Any?, events: EventChannel.EventSink) {
+                        liveSnifferEventSink = events
+                        AtlasLiveSnifferStateStore.setEventSink(events)
+                    }
+
+                    override fun onCancel(arguments: Any?) {
+                        AtlasLiveSnifferStateStore.clearEventSink(liveSnifferEventSink)
+                        liveSnifferEventSink = null
+                    }
+                },
+            )
+    }
+
+    override fun onDestroy() {
+        AtlasLiveSnifferStateStore.clearEventSink(liveSnifferEventSink)
+        liveSnifferEventSink = null
+        super.onDestroy()
     }
 
     private fun handleLiveSnifferCall(call: MethodCall, result: MethodChannel.Result) {
@@ -55,6 +79,24 @@ class MainActivity : FlutterActivity() {
                 startService(intent)
                 result.success(true)
             }
+            "updateHud" -> {
+                val text = call.argument<String>("text")?.trim().orEmpty()
+                if (text.isEmpty()) {
+                    result.error("invalid_hud", "HUD text cannot be empty.", null)
+                    return
+                }
+                val showScanChoices = call.argument<Boolean>("showScanChoices") ?: false
+                val detectedCount = call.argument<Int>("detectedCount") ?: 0
+                AtlasLiveSnifferStateStore.hudText = text
+                AtlasLiveSnifferStateStore.showScanChoices = showScanChoices
+                AtlasLiveSnifferStateStore.detectedCount = detectedCount
+                AtlasLiveSnifferService.updateHudIfActive(
+                    text,
+                    showScanChoices,
+                    detectedCount,
+                )
+                result.success(true)
+            }
             else -> result.notImplemented()
         }
     }
@@ -68,7 +110,8 @@ class MainActivity : FlutterActivity() {
             result.success(true)
             return
         }
-        if (ContextCompat.checkSelfPermission(
+        if (
+            ContextCompat.checkSelfPermission(
                 this,
                 Manifest.permission.POST_NOTIFICATIONS,
             ) == PackageManager.PERMISSION_GRANTED
