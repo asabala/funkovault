@@ -165,7 +165,24 @@ abstract final class AtlasAuthenticityRules {
     required List<AtlasAuthenticitySignal> displaySignals,
     required List<AtlasEvaluatedAuthenticitySignal> evaluatedSignals,
   }) {
-    if (inspection.hasStickerEvidence) {
+    final bool hasStructuredVariantSticker = inspection.observations.any(
+      (AtlasVisualEvidenceObservation observation) =>
+          observation.category == AtlasEvidenceCategory.variantSticker,
+    );
+    final bool hasStructuredProductionStamp = inspection.observations.any(
+      (AtlasVisualEvidenceObservation observation) =>
+          observation.category == AtlasEvidenceCategory.productionStamp,
+    );
+    final bool hasStructuredMacroPackaging = inspection.observations.any(
+      (AtlasVisualEvidenceObservation observation) =>
+          observation.category == AtlasEvidenceCategory.macroPackaging,
+    );
+    final bool hasStructuredAutographCoa = inspection.observations.any(
+      (AtlasVisualEvidenceObservation observation) =>
+          observation.category == AtlasEvidenceCategory.autographCoa,
+    );
+
+    if (inspection.hasStickerEvidence && !hasStructuredVariantSticker) {
       final analysis = AtlasIdentityAnalysisEngine.create().analyze(
         inspection.stickerText,
       );
@@ -262,7 +279,7 @@ abstract final class AtlasAuthenticityRules {
       }
     }
 
-    if (inspection.hasProductionEvidence) {
+    if (inspection.hasProductionEvidence && !hasStructuredProductionStamp) {
       final stamp = AtlasProductionStampParser.parse(
         inspection.productionStampText,
       );
@@ -303,59 +320,65 @@ abstract final class AtlasAuthenticityRules {
       }
     }
 
-    _addLegacyCheck(
-      value: inspection.stickerPrintClear,
-      id: 'sticker-print',
-      area: AtlasInspectionArea.windowSticker,
-      category: AtlasEvidenceCategory.variantSticker,
-      goodTitle: 'Sticker print appears clear',
-      warningTitle: 'Sticker print needs comparison',
-      warningMessage:
-          'Blurred or uneven printing can warrant closer comparison.',
-      displaySignals: displaySignals,
-      evaluatedSignals: evaluatedSignals,
-      confidence: inspection.resolvedEvidenceConfidence,
-    );
-    _addLegacyCheck(
-      value: inspection.stickerCutEven,
-      id: 'sticker-cut',
-      area: AtlasInspectionArea.windowSticker,
-      category: AtlasEvidenceCategory.variantSticker,
-      goodTitle: 'Sticker cut appears even',
-      warningTitle: 'Sticker cut needs comparison',
-      warningMessage: 'An uneven border or cut can warrant closer comparison.',
-      displaySignals: displaySignals,
-      evaluatedSignals: evaluatedSignals,
-      confidence: inspection.resolvedEvidenceConfidence,
-    );
-    _addLegacyCheck(
-      value: inspection.typographyConsistent,
-      id: 'typography',
-      area: AtlasInspectionArea.packagingCopyright,
-      category: AtlasEvidenceCategory.macroPackaging,
-      goodTitle: 'Macro typography appears consistent',
-      warningTitle: 'Packaging typography needs comparison',
-      warningMessage:
-          'Large typography or layout differences should be reviewed, allowing for legitimate factory variance.',
-      displaySignals: displaySignals,
-      evaluatedSignals: evaluatedSignals,
-      confidence: inspection.resolvedEvidenceConfidence,
-    );
-    _addLegacyCheck(
-      value: inspection.borderConsistent,
-      id: 'box-border',
-      area: AtlasInspectionArea.packagingCopyright,
-      category: AtlasEvidenceCategory.macroPackaging,
-      goodTitle: 'Macro box layout appears consistent',
-      warningTitle: 'Packaging layout needs comparison',
-      warningMessage:
-          'Large border or layout differences should be reviewed, allowing for legitimate manufacturing variance.',
-      displaySignals: displaySignals,
-      evaluatedSignals: evaluatedSignals,
-      confidence: inspection.resolvedEvidenceConfidence,
-    );
+    if (!hasStructuredVariantSticker) {
+      _addLegacyCheck(
+        value: inspection.stickerPrintClear,
+        id: 'sticker-print',
+        area: AtlasInspectionArea.windowSticker,
+        category: AtlasEvidenceCategory.variantSticker,
+        goodTitle: 'Sticker print appears clear',
+        warningTitle: 'Sticker print needs comparison',
+        warningMessage:
+            'Blurred or uneven printing can warrant closer comparison.',
+        displaySignals: displaySignals,
+        evaluatedSignals: evaluatedSignals,
+        confidence: inspection.resolvedEvidenceConfidence,
+      );
+      _addLegacyCheck(
+        value: inspection.stickerCutEven,
+        id: 'sticker-cut',
+        area: AtlasInspectionArea.windowSticker,
+        category: AtlasEvidenceCategory.variantSticker,
+        goodTitle: 'Sticker cut appears even',
+        warningTitle: 'Sticker cut needs comparison',
+        warningMessage:
+            'An uneven border or cut can warrant closer comparison.',
+        displaySignals: displaySignals,
+        evaluatedSignals: evaluatedSignals,
+        confidence: inspection.resolvedEvidenceConfidence,
+      );
+    }
 
-    if (inspection.hasCopyrightEvidence) {
+    if (!hasStructuredMacroPackaging) {
+      _addLegacyCheck(
+        value: inspection.typographyConsistent,
+        id: 'typography',
+        area: AtlasInspectionArea.packagingCopyright,
+        category: AtlasEvidenceCategory.macroPackaging,
+        goodTitle: 'Macro typography appears consistent',
+        warningTitle: 'Packaging typography needs comparison',
+        warningMessage:
+            'Large typography or layout differences should be reviewed, allowing for legitimate factory variance.',
+        displaySignals: displaySignals,
+        evaluatedSignals: evaluatedSignals,
+        confidence: inspection.resolvedEvidenceConfidence,
+      );
+      _addLegacyCheck(
+        value: inspection.borderConsistent,
+        id: 'box-border',
+        area: AtlasInspectionArea.packagingCopyright,
+        category: AtlasEvidenceCategory.macroPackaging,
+        goodTitle: 'Macro box layout appears consistent',
+        warningTitle: 'Packaging layout needs comparison',
+        warningMessage:
+            'Large border or layout differences should be reviewed, allowing for legitimate manufacturing variance.',
+        displaySignals: displaySignals,
+        evaluatedSignals: evaluatedSignals,
+        confidence: inspection.resolvedEvidenceConfidence,
+      );
+    }
+
+    if (inspection.hasCopyrightEvidence && !hasStructuredMacroPackaging) {
       displaySignals.add(
         const AtlasAuthenticitySignal(
           id: 'copyright',
@@ -367,7 +390,7 @@ abstract final class AtlasAuthenticityRules {
       );
     }
 
-    if (inspection.hasAutograph == true) {
+    if (inspection.hasAutograph == true && !hasStructuredAutographCoa) {
       if (inspection.hasCoa == true && inspection.hasAuthenticationEvidence) {
         displaySignals.add(
           const AtlasAuthenticitySignal(
@@ -467,18 +490,43 @@ abstract final class AtlasAuthenticityRules {
         case AtlasEvidenceCategory.variantSticker:
           final bool explicitCriticalMismatch =
               observation.attributes['criticalReferenceMismatch'] == true;
-          if (explicitCriticalMismatch) {
+          final bool referenceMismatch =
+              observation.attributes['referenceMismatch'] == true;
+          final bool visualMismatch =
+              observation.attributes['visualMismatch'] == true;
+          final bool resolvedVariantMismatch =
+              observation.attributes['resolvedVariantMismatch'] == true;
+
+          if (explicitCriticalMismatch ||
+              referenceMismatch ||
+              visualMismatch ||
+              resolvedVariantMismatch) {
+            final AtlasSignalSeverity severity = explicitCriticalMismatch
+                ? AtlasSignalSeverity.critical
+                : referenceMismatch || resolvedVariantMismatch
+                ? AtlasSignalSeverity.moderate
+                : AtlasSignalSeverity.advisory;
+            final double baseWeight = explicitCriticalMismatch
+                ? 0.50
+                : referenceMismatch || resolvedVariantMismatch
+                ? 0.25
+                : 0.12;
             evaluatedSignals.add(
               AtlasEvaluatedAuthenticitySignal(
                 id: observation.observationId,
                 area: observation.area,
                 category: observation.category,
-                severity: AtlasSignalSeverity.critical,
+                severity: severity,
                 disposition: AtlasSignalDisposition.discrepancy,
                 confidence: observation.confidence,
-                baseWeight: 0.50,
-                rationale:
-                    'A specialized sticker engine reported a high-signal contradiction against vetted reference evidence.',
+                baseWeight: baseWeight,
+                rationale: explicitCriticalMismatch
+                    ? 'A specialized sticker engine reported a high-signal contradiction against vetted reference evidence.'
+                    : referenceMismatch
+                    ? 'Observed sticker or variant evidence differs from the recorded legitimate reference families.'
+                    : resolvedVariantMismatch
+                    ? 'Observed sticker or variant evidence differs from the resolved catalog variant and should be confirmed.'
+                    : 'A visible sticker print or cut inconsistency was recorded for collector review.',
               ),
             );
           }
