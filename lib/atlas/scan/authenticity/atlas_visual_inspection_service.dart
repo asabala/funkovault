@@ -2,6 +2,7 @@ import '../contributions/contribution_conflict_policy.dart';
 import '../contributions/visual_inspection_contribution.dart';
 import '../engine/engine_context.dart';
 import '../models/scan_session.dart';
+import '../variant/atlas_variant_resolution_bridge.dart';
 import 'atlas_authenticity_engine.dart';
 import 'engines/atlas_high_signal_inspection_pipeline.dart';
 import 'models/atlas_visual_inspection.dart';
@@ -10,10 +11,12 @@ class AtlasVisualInspectionService {
   const AtlasVisualInspectionService({
     this.authenticityEngine = const AtlasAuthenticityEngine(),
     this.highSignalPipeline = const AtlasHighSignalInspectionPipeline(),
+    this.variantResolutionBridge = const AtlasVariantResolutionBridge(),
   });
 
   final AtlasAuthenticityEngine authenticityEngine;
   final AtlasHighSignalInspectionPipeline highSignalPipeline;
+  final AtlasVariantResolutionBridge variantResolutionBridge;
 
   Future<ScanSession> inspect({
     required ScanSession session,
@@ -49,6 +52,14 @@ class AtlasVisualInspectionService {
       ),
       conflictPolicy: ContributionConflictPolicy.replaceExisting,
     );
+
+    // Scanner 5D interprets the structured sticker evidence for the existing
+    // variant-resolution model. This intentionally happens outside the session
+    // projector so visual evidence cannot replace canonical product identity.
+    final variantResolution = variantResolutionBridge.resolve(updated);
+    if (variantResolution != null) {
+      updated = updated.copyWith(variantResolution: variantResolution);
+    }
 
     final result = await authenticityEngine.process(
       updated,
