@@ -12,10 +12,7 @@ class _RecordingNavigatorObserver extends NavigatorObserver {
   Route<dynamic>? lastPushedRoute;
 
   @override
-  void didPush(
-      Route<dynamic> route,
-      Route<dynamic>? previousRoute,
-      ) {
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
     super.didPush(route, previousRoute);
 
     if (previousRoute != null) {
@@ -49,11 +46,11 @@ void main() {
   }
 
   Future<void> pumpRoom(
-      WidgetTester tester,
-      _TestAppState state, {
-        required String collectionName,
-        NavigatorObserver? navigatorObserver,
-      }) async {
+    WidgetTester tester,
+    _TestAppState state, {
+    required String collectionName,
+    NavigatorObserver? navigatorObserver,
+  }) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(1200, 2400);
 
@@ -69,9 +66,7 @@ void main() {
         child: MaterialApp(
           navigatorObservers: navigatorObserver == null
               ? const <NavigatorObserver>[]
-              : <NavigatorObserver>[
-            navigatorObserver,
-          ],
+              : <NavigatorObserver>[navigatorObserver],
           home: AtlasRoomScreen(
             roomName: collectionName,
             description: 'Collection room',
@@ -85,108 +80,62 @@ void main() {
     await tester.pump();
   }
 
-  testWidgets(
-    'collection room uses only the requested collection',
-        (tester) async {
-      final state = _TestAppState();
+  testWidgets('collection room uses only the requested collection', (
+    tester,
+  ) async {
+    final state = _TestAppState();
 
-      state.collections['Entire Family Collection']!.add(
-        pop(
-          id: 'family-pop',
-          name: 'Family Pop',
-          value: 10,
-        ),
-      );
+    state.collections['Entire Family Collection']!.add(
+      pop(id: 'family-pop', name: 'Family Pop', value: 10),
+    );
 
-      state.collections['Arthur Collection']!.add(
-        pop(
-          id: 'arthur-pop',
-          name: 'Arthur Pop',
-          value: 25,
-          isWishlist: true,
-        ),
-      );
+    state.collections['Arthur Collection']!.add(
+      pop(id: 'arthur-pop', name: 'Arthur Pop', value: 25, isWishlist: true),
+    );
 
-      await pumpRoom(
-        tester,
-        state,
-        collectionName: 'Arthur Collection',
-      );
+    await pumpRoom(tester, state, collectionName: 'Arthur Collection');
 
-      expect(
-        find.text('Arthur Pop'),
-        findsOneWidget,
-      );
+    expect(find.text('Arthur Pop'), findsOneWidget);
 
-      expect(
-        find.text('Family Pop'),
-        findsNothing,
-      );
+    expect(find.text('Family Pop'), findsNothing);
 
-      expect(
-        find.text('\$25'),
-        findsWidgets,
-      );
+    expect(find.text('\$25'), findsWidgets);
 
-      expect(
-        find.text('1'),
-        findsWidgets,
-      );
+    expect(find.text('1'), findsWidgets);
 
-      await tester.pumpWidget(
-        const SizedBox.shrink(),
-      );
-    },
-  );
+    expect(find.byKey(const ValueKey('start-shelf-scan')), findsOneWidget);
 
-  testWidgets(
-    'browse catalog preserves collection scope',
-        (tester) async {
-      final state = _TestAppState();
-      final navigatorObserver =
-      _RecordingNavigatorObserver();
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
 
-      await pumpRoom(
-        tester,
-        state,
-        collectionName: 'Arthur Collection',
-        navigatorObserver: navigatorObserver,
-      );
+  testWidgets('browse catalog preserves collection scope', (tester) async {
+    final state = _TestAppState();
+    final navigatorObserver = _RecordingNavigatorObserver();
 
-      final browseButton = tester.widget<FilledButton>(
-        find.widgetWithText(
-          FilledButton,
-          'Browse Catalog',
-        ),
-      );
+    await pumpRoom(
+      tester,
+      state,
+      collectionName: 'Arthur Collection',
+      navigatorObserver: navigatorObserver,
+    );
 
-      browseButton.onPressed!();
+    final browseButton = tester.widget<FilledButton>(
+      find.widgetWithText(FilledButton, 'Browse Catalog'),
+    );
 
-      await tester.idle();
+    browseButton.onPressed!();
 
-      final route =
-      navigatorObserver.lastPushedRoute
-      as MaterialPageRoute<dynamic>;
+    await tester.idle();
 
-      final screen = route.builder(
-        tester.element(
-          find.byType(AtlasRoomScreen),
-        ),
-      );
+    final route =
+        navigatorObserver.lastPushedRoute as MaterialPageRoute<dynamic>;
 
-      expect(
-        screen,
-        isA<FunkoCatalogScreen>(),
-      );
+    final screen = route.builder(tester.element(find.byType(AtlasRoomScreen)));
 
-      expect(
-        (screen as FunkoCatalogScreen).collectionName,
-        'Arthur Collection',
-      );
+    expect(screen, isA<FunkoCatalogScreen>());
 
-      await tester.pumpWidget(
-        const SizedBox.shrink(),
-      );
-    },
-  );
+    expect((screen as FunkoCatalogScreen).collectionName, 'Arthur Collection');
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
 }
