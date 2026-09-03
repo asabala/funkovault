@@ -11,6 +11,7 @@ import 'package:funkovault2/atlas/scan/tracking/atlas_object_tracker.dart';
 import 'package:funkovault2/atlas/scan/tracking/atlas_scan_observation.dart';
 import 'package:funkovault2/screens/catalog/funko_catalog_screen.dart';
 import 'package:funkovault2/screens/scanner/atlas_haul_review_screen.dart';
+import 'package:funkovault2/screens/scanner/atlas_live_sniffer_screen.dart';
 import 'package:funkovault2/widgets/scanner/atlas_haul_session_panel.dart';
 
 class ScanScreen extends StatefulWidget {
@@ -196,6 +197,23 @@ class _ScanScreenState extends State<ScanScreen> {
     }
   }
 
+  Future<void> _openLiveSniffer() async {
+    await _scannerController.stop();
+
+    if (!mounted) {
+      return;
+    }
+
+    await Navigator.push<void>(
+      context,
+      MaterialPageRoute<void>(builder: (_) => const AtlasLiveSnifferScreen()),
+    );
+
+    if (mounted) {
+      await _scannerController.start();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final AtlasContinuousScanSnapshot coordinatorSnapshot =
@@ -255,6 +273,16 @@ class _ScanScreenState extends State<ScanScreen> {
                       onPressed: _openCatalog,
                       icon: const Icon(Icons.search),
                       label: const Text('Browse Catalog'),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      key: const ValueKey('open-live-sniffer'),
+                      onPressed: _openLiveSniffer,
+                      icon: const Icon(Icons.picture_in_picture_alt_rounded),
+                      label: const Text('Android Live Sniffer'),
                     ),
                   ),
                 ],
