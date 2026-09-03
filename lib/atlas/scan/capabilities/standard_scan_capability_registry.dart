@@ -4,6 +4,7 @@ import '../engine/barcode_intelligence_engine.dart';
 import '../engine/engine_context.dart';
 import '../engine/identity_intelligence_engine.dart';
 import '../engine/product_resolution_engine.dart';
+import '../authenticity/atlas_authenticity_engine.dart';
 import 'engine_capability_category.dart';
 import 'scan_capability_registry.dart';
 import 'scan_engine_registration.dart';
@@ -16,27 +17,20 @@ import 'scan_engine_registration.dart';
 abstract final class StandardScanCapabilityRegistry {
   static ScanCapabilityRegistry create() {
     return ScanCapabilityRegistryBuilder()
-        .register(
-      _barcodeIntelligenceRegistration(),
-    )
-        .register(
-      _identityIntelligenceRegistration(),
-    )
-        .register(
-      _productResolutionRegistration(),
-    )
+        .register(_barcodeIntelligenceRegistration())
+        .register(_identityIntelligenceRegistration())
+        .register(_productResolutionRegistration())
+        .register(_authenticityRegistration())
         .build();
   }
 
-  static ScanEngineRegistration
-  _barcodeIntelligenceRegistration() {
+  static ScanEngineRegistration _barcodeIntelligenceRegistration() {
     return ScanEngineRegistration(
-      capabilityId:
-      BarcodeIntelligenceEngine.capabilityId,
+      capabilityId: BarcodeIntelligenceEngine.capabilityId,
       engineId: BarcodeIntelligenceEngine.id,
       displayName: 'Barcode Intelligence',
       description:
-      'Validates barcode and QR evidence and converts it into '
+          'Validates barcode and QR evidence and converts it into '
           'structured Atlas intelligence contributions.',
       category: EngineCapabilityCategory.recognition,
       createEngine: () {
@@ -54,23 +48,20 @@ abstract final class StandardScanCapabilityRegistry {
       },
       attributes: const <String, Object?>{
         'version': 1,
-        'producesContribution':
-        'BarcodeContribution',
+        'producesContribution': 'BarcodeContribution',
         'supportsProductBarcodes': true,
         'supportsQrCodes': true,
       },
     );
   }
 
-  static ScanEngineRegistration
-  _identityIntelligenceRegistration() {
+  static ScanEngineRegistration _identityIntelligenceRegistration() {
     return ScanEngineRegistration(
-      capabilityId:
-      IdentityIntelligenceEngine.capabilityId,
+      capabilityId: IdentityIntelligenceEngine.capabilityId,
       engineId: IdentityIntelligenceEngine.id,
       displayName: 'Identity Intelligence',
       description:
-      'Combines structured recognition evidence into '
+          'Combines structured recognition evidence into '
           'collectible identity hypotheses.',
       category: EngineCapabilityCategory.identity,
       createEngine: () {
@@ -89,37 +80,28 @@ abstract final class StandardScanCapabilityRegistry {
       },
       attributes: const <String, Object?>{
         'version': 1,
-        'consumesContribution':
-        'OCRContribution',
-        'producesContribution':
-        'IdentityContribution',
+        'consumesContribution': 'OCRContribution',
+        'producesContribution': 'IdentityContribution',
         'supportsBarcodeEvidence': true,
         'supportsOcrEvidence': true,
       },
     );
   }
 
-  static ScanEngineRegistration
-  _productResolutionRegistration() {
+  static ScanEngineRegistration _productResolutionRegistration() {
     return ScanEngineRegistration(
-      capabilityId:
-      ProductResolutionEngine.capabilityId,
+      capabilityId: ProductResolutionEngine.capabilityId,
       engineId: ProductResolutionEngine.id,
       displayName: 'Product Resolution',
       description:
-      'Resolves collectible identity hypotheses against '
+          'Resolves collectible identity hypotheses against '
           'the shared Atlas product catalog.',
       category: EngineCapabilityCategory.resolution,
       createEngine: () {
-        final CatalogResolutionService
-        resolutionService =
-        CatalogResolutionService(
-          AtlasCatalogService.instance,
-        );
+        final CatalogResolutionService resolutionService =
+            CatalogResolutionService(AtlasCatalogService.instance);
 
-        return ProductResolutionEngine(
-          resolutionService,
-        );
+        return ProductResolutionEngine(resolutionService);
       },
       minimumAccessTier: AtlasAccessTier.guest,
       enabledByDefault: true,
@@ -134,12 +116,31 @@ abstract final class StandardScanCapabilityRegistry {
       },
       attributes: const <String, Object?>{
         'version': 1,
-        'consumesContribution':
-        'IdentityContribution',
-        'producesContribution':
-        'ProductResolutionContribution',
+        'consumesContribution': 'IdentityContribution',
+        'producesContribution': 'ProductResolutionContribution',
         'usesSharedCatalogService': true,
         'supportsCandidateReview': true,
+      },
+    );
+  }
+
+  static ScanEngineRegistration _authenticityRegistration() {
+    return ScanEngineRegistration(
+      capabilityId: AtlasAuthenticityEngine.capabilityId,
+      engineId: AtlasAuthenticityEngine.id,
+      displayName: 'Authenticity Intelligence',
+      description:
+          'Evaluates visual inspection evidence conservatively and explains warning signals.',
+      category: EngineCapabilityCategory.diagnostics,
+      createEngine: () => const AtlasAuthenticityEngine(),
+      minimumAccessTier: AtlasAccessTier.guest,
+      enabledByDefault: true,
+      requiresOnline: false,
+      tags: const <String>{'authenticity', 'visual-inspection', 'offline'},
+      attributes: const <String, Object?>{
+        'version': 1,
+        'consumesContribution': 'VisualInspectionContribution',
+        'producesContribution': 'AuthenticityContribution',
       },
     );
   }
