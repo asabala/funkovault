@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import '../../atlas/scan/authenticity/models/atlas_authenticity_assessment.dart';
 import '../../theme/atlas_colors.dart';
 import '../../theme/atlas_spacing.dart';
+import '../../theme/atlas_typography.dart';
 import '../atlas/atlas_glass_card.dart';
+import '../atlas/atlas_glass_panel.dart';
 import '../atlas/components/atlas_section_header.dart';
 import '../atlas/components/atlas_status_chip.dart';
 
@@ -14,21 +16,24 @@ class AtlasAuthenticityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final presentation = _presentation(assessment.status);
+    final _ConcernPresentation concern = _concernPresentation(
+      assessment.concernLevel,
+    );
+
     return AtlasGlassCard(
-      accentColor: presentation.color,
+      accentColor: concern.color,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           AtlasSectionHeader(
-            title: '${presentation.emoji} Authenticity Intelligence',
+            title: '🧠 Inspection Assessment',
             subtitle: assessment.summary,
-            icon: Icons.verified_user_outlined,
-            accentColor: presentation.color,
+            icon: Icons.analytics_outlined,
+            accentColor: concern.color,
             trailing: AtlasStatusChip(
-              label: presentation.label,
+              label: concern.label,
               icon: Icons.shield_outlined,
-              accentColor: presentation.color,
+              accentColor: concern.color,
             ),
           ),
           const SizedBox(height: AtlasSpacing.md),
@@ -36,54 +41,125 @@ class AtlasAuthenticityCard extends StatelessWidget {
             spacing: AtlasSpacing.sm,
             runSpacing: AtlasSpacing.sm,
             children: [
-              AtlasStatusChip(
-                label: '${assessment.confidenceScore}% confidence',
-                icon: Icons.speed_rounded,
-                accentColor: presentation.color,
+              _MetricPanel(
+                label: '📷 Evidence',
+                value: assessment.evidenceConfidence,
+                color: AtlasColors.intelligenceBlue,
               ),
-              AtlasStatusChip(
-                label: '${assessment.evidenceCoverage}% coverage',
-                icon: Icons.fact_check_outlined,
-                accentColor: AtlasColors.intelligenceBlue,
+              _MetricPanel(
+                label: '📚 Reference',
+                value: assessment.referenceCoverage,
+                color: AtlasColors.vaultGold,
+              ),
+              _MetricPanel(
+                label: '🛡️ Concern',
+                value: assessment.aggregatedConcernScore,
+                color: concern.color,
               ),
             ],
+          ),
+          const SizedBox(height: AtlasSpacing.sm),
+          Text(
+            'Inspection coverage: ${(assessment.inspectionCoverage * 100).round().clamp(0, 100)}%',
+            style: AtlasTypography.bodySmall.copyWith(
+              color: AtlasColors.textSecondary,
+            ),
           ),
           if (assessment.signals.isNotEmpty) ...[
             const SizedBox(height: AtlasSpacing.md),
             ...assessment.signals.map(
               (signal) => Padding(
                 padding: const EdgeInsets.only(bottom: AtlasSpacing.sm),
-                child: Text('• ${signal.title}: ${signal.message}'),
+                child: AtlasGlassPanel(
+                  accentColor: signal.isWarning
+                      ? AtlasColors.warning
+                      : AtlasColors.intelligenceBlue,
+                  child: Text(
+                    '${signal.title}: ${signal.message}',
+                    style: AtlasTypography.bodySmall,
+                  ),
+                ),
               ),
             ),
           ],
+          const SizedBox(height: AtlasSpacing.sm),
+          Text(
+            'Atlas reports evidence and warning signals. This assessment is not a certification or a definitive authentic/fake verdict.',
+            style: AtlasTypography.bodySmall.copyWith(
+              color: AtlasColors.textMuted,
+            ),
+          ),
         ],
       ),
     );
   }
+}
 
-  static ({String emoji, String label, Color color}) _presentation(
-    AtlasAuthenticityStatus status,
-  ) => switch (status) {
-    AtlasAuthenticityStatus.strongEvidence => (
-      emoji: '🛡️',
-      label: 'Strong Evidence',
-      color: AtlasColors.success,
-    ),
-    AtlasAuthenticityStatus.developingEvidence => (
-      emoji: '🟡',
-      label: 'Developing',
-      color: AtlasColors.intelligenceBlue,
-    ),
-    AtlasAuthenticityStatus.reviewRecommended => (
-      emoji: '⚠️',
-      label: 'Review',
-      color: AtlasColors.warning,
-    ),
-    AtlasAuthenticityStatus.insufficientEvidence => (
-      emoji: '🔎',
-      label: 'Insufficient',
-      color: AtlasColors.textSecondary,
-    ),
+class _MetricPanel extends StatelessWidget {
+  const _MetricPanel({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  final String label;
+  final double value;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 132,
+      child: AtlasGlassPanel(
+        accentColor: color,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: AtlasTypography.bodySmall.copyWith(
+                color: AtlasColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: AtlasSpacing.xs),
+            Text(
+              '${(value * 100).round().clamp(0, 100)}%',
+              style: AtlasTypography.metricSmall.copyWith(color: color),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ConcernPresentation {
+  const _ConcernPresentation(this.label, this.color);
+
+  final String label;
+  final Color color;
+}
+
+_ConcernPresentation _concernPresentation(AtlasAuthenticityConcernLevel level) {
+  return switch (level) {
+    AtlasAuthenticityConcernLevel.noObviousConcerns =>
+      const _ConcernPresentation('No obvious concerns', AtlasColors.success),
+    AtlasAuthenticityConcernLevel.reviewRecommended =>
+      const _ConcernPresentation('Review recommended', AtlasColors.warning),
+    AtlasAuthenticityConcernLevel.significantInconsistencies =>
+      const _ConcernPresentation(
+        'Significant inconsistencies',
+        AtlasColors.warning,
+      ),
+    AtlasAuthenticityConcernLevel.strongCounterfeitIndicators =>
+      const _ConcernPresentation(
+        'Strong warning indicators',
+        AtlasColors.danger,
+      ),
+    AtlasAuthenticityConcernLevel.insufficientData =>
+      const _ConcernPresentation(
+        'Insufficient data',
+        AtlasColors.textSecondary,
+      ),
   };
 }
