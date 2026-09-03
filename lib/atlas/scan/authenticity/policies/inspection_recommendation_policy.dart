@@ -6,6 +6,10 @@ final class AtlasInspectionRecommendationContext {
     this.variantPriceSpread,
     double knownCounterfeitPrevalence = 0.0,
     required double collectorValueThreshold,
+    this.requiresVariantConfirmation = false,
+    this.isLimitedEdition = false,
+    this.hasAutographOrAuthentication = false,
+    this.hasWeakReferenceCoverage = false,
   }) : knownCounterfeitPrevalence = _unitScore(
          knownCounterfeitPrevalence,
          'knownCounterfeitPrevalence',
@@ -19,6 +23,10 @@ final class AtlasInspectionRecommendationContext {
   final double? variantPriceSpread;
   final double knownCounterfeitPrevalence;
   final double collectorValueThreshold;
+  final bool requiresVariantConfirmation;
+  final bool isLimitedEdition;
+  final bool hasAutographOrAuthentication;
+  final bool hasWeakReferenceCoverage;
 }
 
 final class AtlasInspectionRecommendation {
@@ -26,11 +34,13 @@ final class AtlasInspectionRecommendation {
     required this.isRecommended,
     this.badgeLabel,
     this.explanation,
+    this.reasons = const <String>[],
   });
 
   final bool isRecommended;
   final String? badgeLabel;
   final String? explanation;
+  final List<String> reasons;
 
   static const standard = AtlasInspectionRecommendation(isRecommended: false);
 }
@@ -59,39 +69,87 @@ final class AtlasStandardGrailGuardPolicy
         context.variantPriceSpread != null &&
         context.variantPriceSpread! >= 50.0;
 
+    final List<String> reasons = <String>[
+      if (highValue) 'Collector value threshold exceeded',
+      if (reference.highCounterfeitRiskLine || elevatedPrevalence)
+        'Elevated counterfeit exposure',
+      if (highVariantSpread) 'Large known variant value spread',
+      if (context.requiresVariantConfirmation) 'Variant confirmation required',
+      if (context.isLimitedEdition) 'Limited or restricted release',
+      if (context.hasAutographOrAuthentication)
+        'Autograph or authentication evidence recorded',
+      if (context.hasWeakReferenceCoverage)
+        'Reference coverage is limited for this release',
+    ];
+
     if (reference.highCounterfeitRiskLine && highValue) {
-      return const AtlasInspectionRecommendation(
+      return AtlasInspectionRecommendation(
         isRecommended: true,
         badgeLabel: '🛡️ Grail Guard: High Variance',
         explanation:
-            'This release combines elevated counterfeit exposure with significant market value. Visual inspection is recommended.',
+            'This release combines elevated counterfeit exposure with significant collector value. A full visual inspection is recommended.',
+        reasons: List<String>.unmodifiable(reasons),
       );
     }
 
     if (reference.highCounterfeitRiskLine || elevatedPrevalence) {
-      return const AtlasInspectionRecommendation(
+      return AtlasInspectionRecommendation(
         isRecommended: true,
         badgeLabel: '🛡️ Grail Guard',
         explanation:
-            'This release has elevated counterfeit exposure. Visual inspection is recommended before relying on identity or value.',
+            'This release has elevated counterfeit exposure. A full visual inspection is recommended before relying on identity or value.',
+        reasons: List<String>.unmodifiable(reasons),
       );
     }
 
     if (highVariantSpread) {
-      return const AtlasInspectionRecommendation(
+      return AtlasInspectionRecommendation(
         isRecommended: true,
         badgeLabel: '🏷️ High Variant Spread',
         explanation:
             'A large value difference exists between known variants. Sticker and variant inspection is recommended.',
+        reasons: List<String>.unmodifiable(reasons),
+      );
+    }
+
+    if (context.requiresVariantConfirmation) {
+      return AtlasInspectionRecommendation(
+        isRecommended: true,
+        badgeLabel: '🧩 Variant Review',
+        explanation:
+            'Atlas found unresolved physical variant evidence. Confirm the sticker and release details with the guided inspection before relying on the match.',
+        reasons: List<String>.unmodifiable(reasons),
       );
     }
 
     if (highValue) {
-      return const AtlasInspectionRecommendation(
+      return AtlasInspectionRecommendation(
         isRecommended: true,
         badgeLabel: '🛡️ Grail Guard',
         explanation:
             'This item exceeds the collector inspection threshold. A deeper inspection is recommended.',
+        reasons: List<String>.unmodifiable(reasons),
+      );
+    }
+
+    if (context.isLimitedEdition && context.hasAutographOrAuthentication) {
+      return AtlasInspectionRecommendation(
+        isRecommended: true,
+        badgeLabel: '🛡️ Grail Guard',
+        explanation:
+            'This release combines limited-production and autograph or authentication evidence. A full visual inspection is recommended to preserve the collector record.',
+        reasons: List<String>.unmodifiable(reasons),
+      );
+    }
+
+    if (context.hasWeakReferenceCoverage &&
+        (context.isLimitedEdition || context.hasAutographOrAuthentication)) {
+      return AtlasInspectionRecommendation(
+        isRecommended: true,
+        badgeLabel: '📚 Reference Review',
+        explanation:
+            'This collectible has significant release documentation but limited reference coverage. Capture the available visual evidence for collector review.',
+        reasons: List<String>.unmodifiable(reasons),
       );
     }
 

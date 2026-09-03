@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import 'package:funkovault2/atlas/catalog/models/atlas_catalog_product.dart';
 import 'package:funkovault2/atlas/catalog/services/atlas_pop_factory.dart';
 import 'package:funkovault2/atlas/intelligence/engines/atlas_collector_insight_engine.dart';
+import 'package:funkovault2/atlas/scan/authenticity/policies/inspection_recommendation_policy.dart';
+import 'package:funkovault2/atlas/scan/authenticity/services/atlas_grail_guard_service.dart';
 import 'package:funkovault2/atlas/scan/acquisition/atlas_continuous_scan_coordinator.dart';
 import 'package:funkovault2/atlas/scan/ledger/atlas_scan_ledger_entry.dart';
 import 'package:funkovault2/atlas/scan/results/atlas_continuous_scan_result.dart';
@@ -16,6 +18,7 @@ import 'package:funkovault2/theme/atlas_spacing.dart';
 import 'package:funkovault2/widgets/atlas/atlas_glass_card.dart';
 import 'package:funkovault2/widgets/atlas/components/atlas_section_header.dart';
 import 'package:funkovault2/widgets/atlas/components/atlas_status_chip.dart';
+import 'package:funkovault2/widgets/scanner/atlas_grail_guard_card.dart';
 
 class AtlasHaulReviewScreen extends StatefulWidget {
   const AtlasHaulReviewScreen({
@@ -490,6 +493,8 @@ class _HaulReviewItemCard extends StatelessWidget {
     bool isWishlisted = false;
     int ownedCopyCount = 0;
     int relatedMatchCount = 0;
+    AtlasInspectionRecommendation grailGuard =
+        AtlasInspectionRecommendation.standard;
 
     if (catalogProduct != null && scanResult != null) {
       final Pop productPop = AtlasPopFactory.createFromCatalog(
@@ -512,6 +517,10 @@ class _HaulReviewItemCard extends StatelessWidget {
         (int total, Pop pop) => total + pop.quantity,
       );
       relatedMatchCount = insight.state.relatedMatches.length;
+      grailGuard = const AtlasGrailGuardService().evaluate(
+        session: scanResult.session,
+        product: productPop,
+      );
     }
 
     final Color accentColor = _accentForStatus(entry.status);
@@ -609,6 +618,14 @@ class _HaulReviewItemCard extends StatelessWidget {
             ),
             const SizedBox(height: AtlasSpacing.sm),
           ],
+          if (grailGuard.isRecommended && scanResult != null) ...[
+            AtlasGrailGuardCard(
+              recommendation: grailGuard,
+              hasCompletedInspection:
+                  scanResult.session.hasAuthenticityAssessment,
+            ),
+            const SizedBox(height: AtlasSpacing.sm),
+          ],
           if (onInspect != null) ...[
             OutlinedButton.icon(
               onPressed: onInspect,
@@ -616,6 +633,8 @@ class _HaulReviewItemCard extends StatelessWidget {
               label: Text(
                 scanResult?.session.hasAuthenticityAssessment == true
                     ? '🔎 Review Visual Inspection'
+                    : grailGuard.isRecommended
+                    ? '🛡️ Run Recommended Inspection'
                     : '🔎 Visual Inspection',
               ),
             ),
