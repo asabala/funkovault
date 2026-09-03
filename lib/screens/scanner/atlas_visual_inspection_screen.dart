@@ -6,6 +6,7 @@ import '../../atlas/scan/acquisition/atlas_guided_inspection_capture_plan.dart';
 import '../../atlas/scan/acquisition/atlas_inspection_image_capture_service.dart';
 import '../../atlas/scan/authenticity/atlas_visual_inspection_service.dart';
 import '../../atlas/scan/authenticity/models/atlas_visual_inspection.dart';
+import '../../atlas/scan/authenticity/providers/atlas_authentication_evidence_interpreter.dart';
 import '../../atlas/scan/models/scan_image.dart';
 import '../../atlas/scan/models/scan_session.dart';
 import '../../atlas/scan/recognition/atlas_text_recognition_service.dart';
@@ -43,6 +44,7 @@ class _AtlasVisualInspectionScreenState
   final _signature = TextEditingController();
   final _provider = TextEditingController();
   final _number = TextEditingController();
+  final _certificationText = TextEditingController();
   final _notes = TextEditingController();
 
   late final AtlasInspectionImageCapture _capture;
@@ -72,6 +74,7 @@ class _AtlasVisualInspectionScreenState
       _signature.text = existing.signature;
       _provider.text = existing.authenticationProvider;
       _number.text = existing.authenticityNumber;
+      _certificationText.text = existing.certificationText;
       _notes.text = existing.notes;
       _images.addAll(existing.images);
       _typography = existing.typographyConsistent;
@@ -95,6 +98,7 @@ class _AtlasVisualInspectionScreenState
     _signature.dispose();
     _provider.dispose();
     _number.dispose();
+    _certificationText.dispose();
     _notes.dispose();
     _recognizer.close();
     super.dispose();
@@ -149,6 +153,23 @@ class _AtlasVisualInspectionScreenState
         _images.add(image);
         if (recognizedText.isNotEmpty && textTarget != null) {
           textTarget.text = recognizedText;
+          if (step == AtlasGuidedInspectionStep.coa) {
+            final interpretation =
+                AtlasAuthenticationEvidenceInterpreter.interpret(
+                  provider: _provider.text,
+                  certificateNumber: _number.text,
+                  certificationText: recognizedText,
+                  hasCoa: _coa,
+                );
+            if (_provider.text.trim().isEmpty &&
+                interpretation.detectedProviderDisplayName.isNotEmpty) {
+              _provider.text = interpretation.detectedProviderDisplayName;
+            }
+            if (_number.text.trim().isEmpty &&
+                interpretation.detectedCertificateNumber.isNotEmpty) {
+              _number.text = interpretation.detectedCertificateNumber;
+            }
+          }
         }
       });
     } finally {
@@ -163,6 +184,7 @@ class _AtlasVisualInspectionScreenState
     signature: _signature.text,
     authenticationProvider: _provider.text,
     authenticityNumber: _number.text,
+    certificationText: _certificationText.text,
     typographyConsistent: _typography,
     borderConsistent: _border,
     stickerPrintClear: _printClear,
@@ -296,7 +318,10 @@ class _AtlasVisualInspectionScreenState
                 const SizedBox(height: AtlasSpacing.lg),
                 _check('COA is present', _coa, (bool? value) => _coa = value),
                 const SizedBox(height: AtlasSpacing.sm),
-                _captureButton(AtlasGuidedInspectionStep.coa),
+                _captureButton(
+                  AtlasGuidedInspectionStep.coa,
+                  textTarget: _certificationText,
+                ),
                 const SizedBox(height: AtlasSpacing.md),
                 AtlasFormField(
                   controller: _provider,
@@ -308,6 +333,17 @@ class _AtlasVisualInspectionScreenState
                   controller: _number,
                   label: 'Authenticity Number',
                   icon: Icons.numbers_rounded,
+                ),
+                const SizedBox(height: AtlasSpacing.md),
+                AtlasFormField(
+                  controller: _certificationText,
+                  label: 'Observed Certification Text',
+                  icon: Icons.document_scanner_outlined,
+                  maxLines: 4,
+                ),
+                const SizedBox(height: AtlasSpacing.xs),
+                const Text(
+                  'OCR text is observational. Provider names and certificate numbers are not externally verified by Atlas.',
                 ),
               ],
             ),

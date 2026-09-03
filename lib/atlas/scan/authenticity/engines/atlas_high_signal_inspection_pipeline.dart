@@ -73,6 +73,7 @@ final class AtlasHighSignalInspectionPipeline {
       signature: inspection.signature,
       authenticationProvider: inspection.authenticationProvider,
       authenticityNumber: inspection.authenticityNumber,
+      certificationText: inspection.certificationText,
       typographyConsistent: inspection.typographyConsistent,
       borderConsistent: inspection.borderConsistent,
       stickerPrintClear: inspection.stickerPrintClear,

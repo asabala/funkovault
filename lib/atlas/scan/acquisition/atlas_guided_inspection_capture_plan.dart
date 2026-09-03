@@ -58,7 +58,8 @@ extension AtlasGuidedInspectionStepX on AtlasGuidedInspectionStep {
   bool get supportsTextRecognition => switch (this) {
     AtlasGuidedInspectionStep.stickerWindow ||
     AtlasGuidedInspectionStep.bottomStamp ||
-    AtlasGuidedInspectionStep.packagingCopyright => true,
+    AtlasGuidedInspectionStep.packagingCopyright ||
+    AtlasGuidedInspectionStep.coa => true,
     _ => false,
   };
 }

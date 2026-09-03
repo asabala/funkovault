@@ -71,7 +71,7 @@ void main() {
       AtlasGuidedInspectionStep.autograph.supportsTextRecognition,
       isFalse,
     );
-    expect(AtlasGuidedInspectionStep.coa.supportsTextRecognition, isFalse);
+    expect(AtlasGuidedInspectionStep.coa.supportsTextRecognition, isTrue);
   });
 
   test('image-only captures mark their inspection areas as inspected', () {

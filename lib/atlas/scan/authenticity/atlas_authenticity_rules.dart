@@ -558,17 +558,57 @@ abstract final class AtlasAuthenticityRules {
           break;
 
         case AtlasEvidenceCategory.autographCoa:
+          final bool internalMismatch =
+              observation.attributes['internalMismatch'] == true;
+          final bool providerVerified =
+              observation.attributes['providerVerified'] == true;
+          final String documentationState =
+              observation.attributes['documentationState'] as String? ?? '';
+
+          if (internalMismatch) {
+            displaySignals.add(
+              const AtlasAuthenticitySignal(
+                id: 'authentication-details-inconsistent',
+                title: 'Authentication details need review',
+                message:
+                    'Observed COA text differs from manually recorded provider or certificate details. Confirm the document before relying on it.',
+                level: AtlasAuthenticitySignalLevel.caution,
+                weight: -8,
+              ),
+            );
+          } else if (documentationState == 'supported') {
+            displaySignals.add(
+              const AtlasAuthenticitySignal(
+                id: 'authentication-documentation-recorded',
+                title: 'Authentication documentation recorded',
+                message:
+                    'Provider and certificate details were observed. Atlas has not independently verified the provider record.',
+                level: AtlasAuthenticitySignalLevel.support,
+                weight: 5,
+              ),
+            );
+          }
+
           evaluatedSignals.add(
             AtlasEvaluatedAuthenticitySignal(
               id: observation.observationId,
               area: observation.area,
               category: observation.category,
-              severity: AtlasSignalSeverity.info,
-              disposition: AtlasSignalDisposition.observational,
+              severity: internalMismatch
+                  ? AtlasSignalSeverity.advisory
+                  : AtlasSignalSeverity.info,
+              disposition: internalMismatch
+                  ? AtlasSignalDisposition.discrepancy
+                  : providerVerified
+                  ? AtlasSignalDisposition.supporting
+                  : AtlasSignalDisposition.observational,
               confidence: observation.confidence,
-              baseWeight: 0.0,
-              rationale:
-                  'Autograph and COA observations are recorded without an automated authenticity conclusion.',
+              baseWeight: internalMismatch ? 0.12 : 0.0,
+              rationale: internalMismatch
+                  ? 'Observed authentication document text conflicts with separately entered provider or certificate details. This is an internal documentation inconsistency, not a provider-verification result.'
+                  : providerVerified
+                  ? 'An external authentication adapter reported a verified provider result.'
+                  : 'Autograph and COA evidence was recorded without external provider verification.',
             ),
           );
           break;

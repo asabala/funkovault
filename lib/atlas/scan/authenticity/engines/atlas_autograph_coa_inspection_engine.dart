@@ -1,5 +1,6 @@
 import '../models/atlas_authenticity_evidence.dart';
 import '../models/atlas_visual_inspection.dart';
+import '../providers/atlas_authentication_evidence_interpreter.dart';
 
 final class AtlasAutographCoaInspectionEngine {
   const AtlasAutographCoaInspectionEngine();
@@ -18,7 +19,7 @@ final class AtlasAutographCoaInspectionEngine {
     if (inspection.hasAutograph != null || signature.isNotEmpty) {
       result.add(
         AtlasVisualEvidenceObservation(
-          observationId: 'scanner5c-$sessionId-autograph',
+          observationId: 'scanner5e-$sessionId-autograph',
           sourceEngineId: id,
           area: AtlasInspectionArea.autograph,
           category: AtlasEvidenceCategory.autographCoa,
@@ -33,33 +34,68 @@ final class AtlasAutographCoaInspectionEngine {
               'hasAutograph': inspection.hasAutograph,
             if (signature.isNotEmpty) 'signature': signature,
             'providerVerified': false,
+            'verificationState': 'notAttempted',
           },
           observedAt: observedAt,
         ),
       );
     }
 
-    final String provider = inspection.authenticationProvider.trim();
-    final String number = inspection.authenticityNumber.trim();
-    if (inspection.hasCoa != null || provider.isNotEmpty || number.isNotEmpty) {
+    final AtlasAuthenticationEvidenceInterpretation authentication =
+        AtlasAuthenticationEvidenceInterpreter.interpret(
+          provider: inspection.authenticationProvider,
+          certificateNumber: inspection.authenticityNumber,
+          certificationText: inspection.certificationText,
+          hasCoa: inspection.hasCoa,
+        );
+
+    final bool hasAuthenticationObservation =
+        inspection.hasCoa != null ||
+        authentication.hasProvider ||
+        authentication.hasCertificateNumber ||
+        inspection.certificationText.trim().isNotEmpty;
+
+    if (hasAuthenticationObservation) {
+      final String observedValue = <String>[
+        if (authentication.providerDisplayName.isNotEmpty)
+          authentication.providerDisplayName,
+        if (authentication.certificateNumber.isNotEmpty)
+          authentication.certificateNumber,
+      ].join(' - ');
+
       result.add(
         AtlasVisualEvidenceObservation(
-          observationId: 'scanner5c-$sessionId-coa',
+          observationId: 'scanner5e-$sessionId-coa',
           sourceEngineId: id,
           area: AtlasInspectionArea.coa,
           category: AtlasEvidenceCategory.autographCoa,
           label: 'COA / authentication observation',
-          observedValue: <String>[
-            if (provider.isNotEmpty) provider,
-            if (number.isNotEmpty) number,
-          ].join(' - '),
+          observedValue: observedValue.isEmpty
+              ? 'Authentication documentation observed'
+              : observedValue,
           confidence: inspection.resolvedEvidenceConfidence,
           scanImageId: _imageId(inspection, 'certification'),
           attributes: <String, Object?>{
             if (inspection.hasCoa != null) 'hasCoa': inspection.hasCoa,
-            if (provider.isNotEmpty) 'provider': provider,
-            if (number.isNotEmpty) 'certificateNumber': number,
+            if (authentication.providerDisplayName.isNotEmpty)
+              'provider': authentication.providerDisplayName,
+            if (authentication.certificateNumber.isNotEmpty)
+              'certificateNumber': authentication.certificateNumber,
+            if (inspection.certificationText.trim().isNotEmpty)
+              'certificationText': inspection.certificationText.trim(),
+            if (authentication.detectedProviderDisplayName.isNotEmpty)
+              'detectedProvider': authentication.detectedProviderDisplayName,
+            if (authentication.detectedCertificateNumber.isNotEmpty)
+              'detectedCertificateNumber':
+                  authentication.detectedCertificateNumber,
+            'providerKind': authentication.providerKind.name,
+            'documentationState': authentication.documentationState.name,
+            'providerFieldMismatch': authentication.providerFieldMismatch,
+            'certificateNumberMismatch':
+                authentication.certificateNumberMismatch,
+            'internalMismatch': authentication.hasInternalMismatch,
             'providerVerified': false,
+            'verificationState': 'notAttempted',
           },
           observedAt: observedAt,
         ),

@@ -10,6 +10,7 @@ final class AtlasVisualInspection {
     this.signature = '',
     this.authenticationProvider = '',
     this.authenticityNumber = '',
+    this.certificationText = '',
     this.typographyConsistent,
     this.borderConsistent,
     this.stickerPrintClear,
@@ -34,6 +35,7 @@ final class AtlasVisualInspection {
   final String signature;
   final String authenticationProvider;
   final String authenticityNumber;
+  final String certificationText;
   final bool? typographyConsistent;
   final bool? borderConsistent;
   final bool? stickerPrintClear;
@@ -47,11 +49,15 @@ final class AtlasVisualInspection {
   final List<ScanImage> images;
 
   bool get hasStickerEvidence => stickerText.trim().isNotEmpty;
+
   bool get hasProductionEvidence => productionStampText.trim().isNotEmpty;
+
   bool get hasCopyrightEvidence => copyrightText.trim().isNotEmpty;
+
   bool get hasAuthenticationEvidence =>
       authenticationProvider.trim().isNotEmpty ||
       authenticityNumber.trim().isNotEmpty ||
+      certificationText.trim().isNotEmpty ||
       hasCoa != null;
 
   bool get hasStructuredObservations => observations.isNotEmpty;
@@ -60,20 +66,25 @@ final class AtlasVisualInspection {
     if (evidenceConfidence != null) {
       return evidenceConfidence!;
     }
+
     if (observations.isNotEmpty) {
       final double total = observations.fold<double>(
         0.0,
         (double sum, AtlasVisualEvidenceObservation observation) =>
             sum + observation.confidence,
       );
+
       return total / observations.length;
     }
+
     if (images.isNotEmpty) {
       return 0.85;
     }
+
     if (hasAnyLegacyEvidence) {
       return 0.65;
     }
+
     return 0.0;
   }
 
@@ -84,6 +95,7 @@ final class AtlasVisualInspection {
         signature.trim().isNotEmpty ||
         authenticationProvider.trim().isNotEmpty ||
         authenticityNumber.trim().isNotEmpty ||
+        certificationText.trim().isNotEmpty ||
         typographyConsistent != null ||
         borderConsistent != null ||
         stickerPrintClear != null ||
@@ -101,16 +113,22 @@ final class AtlasVisualInspection {
       switch (image.type) {
         case ScanImageType.frontBox:
           result.add(AtlasInspectionArea.frontBox);
+
         case ScanImageType.sticker:
           result.add(AtlasInspectionArea.windowSticker);
+
         case ScanImageType.bottomBox:
           result.add(AtlasInspectionArea.bottomStamp);
+
         case ScanImageType.backBox:
           result.add(AtlasInspectionArea.packagingCopyright);
+
         case ScanImageType.autograph:
           result.add(AtlasInspectionArea.autograph);
+
         case ScanImageType.certification:
           result.add(AtlasInspectionArea.coa);
+
         case ScanImageType.original:
         case ScanImageType.processed:
         case ScanImageType.thumbnail:
@@ -126,17 +144,21 @@ final class AtlasVisualInspection {
         stickerCutEven != null) {
       result.add(AtlasInspectionArea.windowSticker);
     }
+
     if (hasProductionEvidence) {
       result.add(AtlasInspectionArea.bottomStamp);
     }
+
     if (hasCopyrightEvidence ||
         typographyConsistent != null ||
         borderConsistent != null) {
       result.add(AtlasInspectionArea.packagingCopyright);
     }
+
     if (hasAutograph != null || signature.trim().isNotEmpty) {
       result.add(AtlasInspectionArea.autograph);
     }
+
     if (hasCoa != null || hasAuthenticationEvidence) {
       result.add(AtlasInspectionArea.coa);
     }
@@ -148,6 +170,7 @@ final class AtlasVisualInspection {
     if (value == null) {
       return null;
     }
+
     if (!value.isFinite || value < 0.0 || value > 1.0) {
       throw ArgumentError.value(
         value,
@@ -155,6 +178,7 @@ final class AtlasVisualInspection {
         'Evidence confidence must be between 0.0 and 1.0.',
       );
     }
+
     return value;
   }
 }
