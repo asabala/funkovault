@@ -43,23 +43,25 @@ object AtlasLiveSnifferStateStore {
         emit(frame)
     }
 
-    fun emitControl(action: String) {
+    fun emitControl(action: String, selectionGeneration: Int? = null) {
         emit(
             mapOf(
                 "type" to "control",
                 "action" to action,
+                "selectionGeneration" to selectionGeneration,
                 "detectedCount" to detectedCount,
             ),
         )
     }
 
-    fun emitTargetTap(x: Double, y: Double) {
+    fun emitTargetTap(x: Double, y: Double, selectionGeneration: Int) {
         emit(
             mapOf(
                 "type" to "control",
                 "action" to "targetTap",
                 "x" to x.coerceIn(0.0, 1.0),
                 "y" to y.coerceIn(0.0, 1.0),
+                "selectionGeneration" to selectionGeneration,
                 "detectedCount" to detectedCount,
             ),
         )

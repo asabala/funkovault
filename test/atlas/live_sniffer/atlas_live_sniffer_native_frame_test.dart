@@ -55,4 +55,61 @@ void main() {
     expect(frame.textBlocks, hasLength(1));
     expect(frame.textBlocks.single.text, 'SPIDER-MAN 1169');
   });
+
+  fix6NativeFrameContractTests();
+}
+
+// Fix 6 contract coverage lives outside main() in older snapshots, so keep a
+// second group entrypoint-style test declaration in the same library.
+void fix6NativeFrameContractTests() {
+  test(
+    'Fix 6 frame carries target generation, sequence, track and geometry',
+    () {
+      final AtlasLiveSnifferNativeFrame frame =
+          AtlasLiveSnifferNativeFrame.fromMap(<Object?, Object?>{
+            'capturedAtMicros': 1700000000250000,
+            'nativeTimestampMs': 1700000000250,
+            'frameSequence': 44,
+            'selectionGeneration': 7,
+            'lockedTrackId': 91,
+            'targetState': 'locked',
+            'trackedBoundingBox': <Object?, Object?>{
+              'left': 0.2,
+              'top': 0.25,
+              'right': 0.7,
+              'bottom': 0.8,
+            },
+            'activeTracks': <Object?>[
+              <Object?, Object?>{
+                'trackId': 91,
+                'boundingBox': <Object?, Object?>{
+                  'left': 0.2,
+                  'top': 0.25,
+                  'right': 0.7,
+                  'bottom': 0.8,
+                },
+              },
+            ],
+            'barcodes': const <Object?>[],
+            'textBlocks': <Object?>[
+              <Object?, Object?>{
+                'text': 'FRODO 1389',
+                'left': 0.3,
+                'top': 0.4,
+                'right': 0.6,
+                'bottom': 0.5,
+                'trackId': 91,
+              },
+            ],
+          });
+
+      expect(frame.frameSequence, 44);
+      expect(frame.selectionGeneration, 7);
+      expect(frame.lockedTrackId, 91);
+      expect(frame.targetState.name, 'locked');
+      expect(frame.trackedBoundingBox?.centerX, closeTo(0.45, 0.001));
+      expect(frame.activeTracks.single.trackId, 91);
+      expect(frame.textBlocks.single.trackId, 91);
+    },
+  );
 }

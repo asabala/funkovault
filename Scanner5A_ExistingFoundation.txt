@@ -1,0 +1,201 @@
+SCANNER 5A EXISTING FOUNDATION AUDIT
+Generated: 09/03/2026 09:26:58
+
+============================================================
+FILE: .\lib\atlas\scan\contributions\visual_inspection_contribution.dart
+============================================================
+import '../authenticity/models/atlas_visual_inspection.dart';
+import 'abstract_intelligence_contribution.dart';
+import 'contribution_category.dart';
+
+final class VisualInspectionContribution
+    extends AbstractIntelligenceContribution {
+  VisualInspectionContribution({
+    required super.contributionId,
+    required super.sourceEngineId,
+    required super.createdAt,
+    required this.inspection,
+    super.confidence,
+    super.attributes,
+  });
+
+  final AtlasVisualInspection inspection;
+
+  @override
+  ContributionCategory get category => ContributionCategory.authenticity;
+}
+
+============================================================
+FILE: .\lib\atlas\scan\contributions\authenticity_contribution.dart
+============================================================
+import '../authenticity/models/atlas_authenticity_assessment.dart';
+import 'abstract_intelligence_contribution.dart';
+import 'contribution_category.dart';
+
+final class AuthenticityContribution extends AbstractIntelligenceContribution {
+  AuthenticityContribution({
+    required super.contributionId,
+    required super.sourceEngineId,
+    required super.createdAt,
+    required this.assessment,
+    super.confidence,
+    super.attributes,
+  });
+
+  final AtlasAuthenticityAssessment assessment;
+
+  @override
+  ContributionCategory get category => ContributionCategory.authenticity;
+}
+
+============================================================
+FILE: .\lib\atlas\scan\authenticity\atlas_authenticity_engine.dart
+============================================================
+import '../contributions/authenticity_contribution.dart';
+import '../contributions/contribution_conflict_policy.dart';
+import '../contributions/visual_inspection_contribution.dart';
+import '../engine/abstract_scan_engine.dart';
+import '../engine/engine_context.dart';
+import '../engine/engine_result.dart';
+import '../engine/engine_support.dart';
+import '../models/scan_session.dart';
+import 'atlas_authenticity_rules.dart';
+
+final class AtlasAuthenticityEngine extends AbstractScanEngine {
+  const AtlasAuthenticityEngine();
+
+  static const id = 'atlas.scan.authenticity';
+  static const capabilityId = 'atlas.capability.authenticity';
+
+  @override
+  String get engineId => id;
+  @override
+  String get displayName => 'Authenticity Intelligence';
+
+  @override
+  Future<EngineResult> execute(
+    ScanSession session,
+    EngineContext context,
+  ) async {
+    final visual = session
+        .latestContributionOfType<VisualInspectionContribution>();
+    if (visual == null) {
+      return EngineResult.skipped(
+        session: session,
+        reason: 'No visual inspection evidence is available.',
+      );
+    }
+    final assessment = AtlasAuthenticityRules.evaluate(
+      session: session,
+      inspection: visual.inspection,
+    );
+    final contribution = AuthenticityContribution(
+      contributionId: EngineSupport.buildContributionId(
+        namespace: 'atlas.authenticity',
+        segments: <Object?>[session.sessionId],
+      ),
+      sourceEngineId: engineId,
+      createdAt: DateTime.now().toUtc(),
+      assessment: assessment,
+      confidence: assessment.confidenceScore / 100,
+      attributes: <String, Object?>{
+        'status': assessment.status.name,
+        'coverage': assessment.evidenceCoverage,
+      },
+    );
+    final updated = session.addContribution(
+      contribution,
+      conflictPolicy: ContributionConflictPolicy.replaceExisting,
+    );
+    return EngineResult.success(session: updated);
+  }
+}
+
+============================================================
+FILE: .\test\atlas\scan\authenticity\atlas_authenticity_engine_test.dart
+============================================================
+import 'package:flutter_test/flutter_test.dart';
+import 'package:funkovault2/atlas/scan/authenticity/atlas_authenticity_engine.dart';
+import 'package:funkovault2/atlas/scan/authenticity/atlas_visual_inspection_service.dart';
+import 'package:funkovault2/atlas/scan/authenticity/models/atlas_authenticity_assessment.dart';
+import 'package:funkovault2/atlas/scan/authenticity/models/atlas_visual_inspection.dart';
+import 'package:funkovault2/atlas/scan/contributions/authenticity_contribution.dart';
+import 'package:funkovault2/atlas/scan/contributions/visual_inspection_contribution.dart';
+import 'package:funkovault2/atlas/scan/models/scan_session.dart';
+import 'package:funkovault2/atlas/scan/models/scanner_type.dart';
+import 'package:funkovault2/atlas/scan/workflow/scan_intent.dart';
+import 'package:funkovault2/atlas/scan/workflow/scan_performance_mode.dart';
+
+void main() {
+  ScanSession session() => ScanSession(
+    sessionId: 'scan-1',
+    startedAt: DateTime.utc(2026),
+    intent: ScanIntent.identifyProduct,
+    performanceMode: ScanPerformanceMode.fullAnalysis,
+    scannerType: ScannerType.mobileScanner,
+  );
+
+  test('insufficient evidence remains explicitly unassessed', () async {
+    final result = await const AtlasVisualInspectionService().inspect(
+      session: session(),
+      inspection: AtlasVisualInspection(productionStampText: 'JJL 240815'),
+    );
+    expect(
+      result.authenticityContribution!.assessment.status,
+      AtlasAuthenticityStatus.insufficientEvidence,
+    );
+  });
+
+  test('warning signals recommend review and do not claim fake', () async {
+    final result = await const AtlasVisualInspectionService().inspect(
+      session: session(),
+      inspection: AtlasVisualInspection(
+        stickerText: 'Special Edition',
+        productionStampText: 'FAC-053571-19029',
+        copyrightText: 'Funko LLC 2024',
+        typographyConsistent: false,
+        borderConsistent: true,
+        stickerPrintClear: false,
+        stickerCutEven: true,
+        hasAutograph: true,
+        hasCoa: false,
+      ),
+    );
+    final assessment = result.authenticityContribution!.assessment;
+    expect(assessment.status, AtlasAuthenticityStatus.reviewRecommended);
+    expect(assessment.hasWarnings, isTrue);
+    expect(assessment.summary.toLowerCase(), isNot(contains('fake')));
+  });
+
+  test('reinspection replaces typed contributions immutably', () async {
+    const service = AtlasVisualInspectionService(
+      authenticityEngine: AtlasAuthenticityEngine(),
+    );
+    final original = session();
+    final first = await service.inspect(
+      session: original,
+      inspection: AtlasVisualInspection(stickerText: 'Special Edition'),
+    );
+    final second = await service.inspect(
+      session: first,
+      inspection: AtlasVisualInspection(
+        stickerText: 'Special Edition',
+        productionStampText: 'JJL 240815',
+        copyrightText: '2024 Funko',
+        typographyConsistent: true,
+        borderConsistent: true,
+        stickerPrintClear: true,
+        stickerCutEven: true,
+      ),
+    );
+    expect(original.contributionCount, 0);
+    expect(
+      second.contributions.ofType<VisualInspectionContribution>(),
+      hasLength(1),
+    );
+    expect(
+      second.contributions.ofType<AuthenticityContribution>(),
+      hasLength(1),
+    );
+  });
+}

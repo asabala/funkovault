@@ -1,0 +1,971 @@
+SCANNER 6B - UI FINAL VERIFIED SOURCES
+Generated: 09/03/2026 12:57:03
+
+
+============================================================
+FILE: .\lib\screens\scanner\scan_screen.dart
+============================================================
+import 'package:flutter/material.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:provider/provider.dart';
+
+import 'package:funkovault2/services/app_state.dart';
+import 'package:funkovault2/atlas/scan/acquisition/atlas_continuous_scan_coordinator.dart';
+import 'package:funkovault2/atlas/scan/acquisition/atlas_evidence_accumulator.dart';
+import 'package:funkovault2/atlas/scan/acquisition/atlas_mobile_scanner_observation_adapter.dart';
+import 'package:funkovault2/atlas/scan/tracking/atlas_object_track.dart';
+import 'package:funkovault2/atlas/scan/tracking/atlas_object_tracker.dart';
+import 'package:funkovault2/atlas/scan/tracking/atlas_scan_observation.dart';
+import 'package:funkovault2/screens/catalog/funko_catalog_screen.dart';
+import 'package:funkovault2/screens/scanner/atlas_haul_review_screen.dart';
+import 'package:funkovault2/widgets/scanner/atlas_haul_session_panel.dart';
+
+class ScanScreen extends StatefulWidget {
+  const ScanScreen({super.key});
+
+  @override
+  State<ScanScreen> createState() {
+    return _ScanScreenState();
+  }
+}
+
+class _ScanScreenState extends State<ScanScreen> {
+  final MobileScannerController _scannerController = MobileScannerController(
+    formats: const <BarcodeFormat>[
+      BarcodeFormat.upcA,
+      BarcodeFormat.upcE,
+      BarcodeFormat.ean8,
+      BarcodeFormat.ean13,
+      BarcodeFormat.qrCode,
+    ],
+  );
+
+  final AtlasObjectTracker _objectTracker = AtlasObjectTracker();
+
+  final AtlasEvidenceAccumulator _evidenceAccumulator =
+      AtlasEvidenceAccumulator();
+
+  late final AtlasContinuousScanCoordinator _coordinator;
+
+  int _activeTrackCount = 0;
+  int _confirmedTrackCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _coordinator = AtlasContinuousScanCoordinator(
+      onChanged: _handleCoordinatorChanged,
+    );
+  }
+
+  @override
+  void dispose() {
+    _coordinator.dispose();
+    _scannerController.dispose();
+    super.dispose();
+  }
+
+  void _handleCoordinatorChanged() {
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {});
+  }
+
+  void _handleDetection(BarcodeCapture capture) {
+    final DateTime capturedAt = DateTime.now().toUtc();
+
+    final List<AtlasScanObservation> observations =
+        AtlasMobileScannerObservationAdapter.fromCapture(
+          capture,
+          capturedAt: capturedAt,
+        );
+
+    if (observations.isEmpty) {
+      return;
+    }
+
+    final List<AtlasScanObservation> trackableObservations = observations
+        .where((AtlasScanObservation observation) => observation.hasGeometry)
+        .toList(growable: false);
+
+    if (trackableObservations.isEmpty) {
+      return;
+    }
+
+    final List<AtlasObjectTrack> tracks = _objectTracker.processFrame(
+      observations: trackableObservations,
+      timestamp: capturedAt,
+    );
+
+    _updateTrackingStatus(tracks);
+
+    for (final AtlasObjectTrack track in tracks) {
+      final AtlasAccumulatedEvidence? evidence = _evidenceAccumulator
+          .evaluateTrack(track);
+
+      if (evidence == null || !evidence.isReadyForResolution) {
+        continue;
+      }
+
+      final bool accepted = _coordinator.submit(
+        trackId: track.trackId,
+        stableCode: evidence.stableCode,
+      );
+
+      if (accepted) {
+        _objectTracker.markCooldown(
+          trackId: track.trackId,
+          startedAt: capturedAt,
+        );
+      }
+    }
+  }
+
+  void _updateTrackingStatus(List<AtlasObjectTrack> tracks) {
+    final int confirmedCount = tracks
+        .where((AtlasObjectTrack track) => track.isConfirmed)
+        .length;
+
+    if (!mounted ||
+        (_activeTrackCount == tracks.length &&
+            _confirmedTrackCount == confirmedCount)) {
+      return;
+    }
+
+    setState(() {
+      _activeTrackCount = tracks.length;
+      _confirmedTrackCount = confirmedCount;
+    });
+  }
+
+  void _startNewHaul() {
+    final bool reset = _coordinator.resetCompletedSession();
+
+    if (!reset || !mounted) {
+      return;
+    }
+
+    _objectTracker.reset();
+
+    setState(() {
+      _activeTrackCount = 0;
+      _confirmedTrackCount = 0;
+    });
+  }
+
+  Future<void> _openHaulReview() async {
+    final String collectionName = context.read<AppState>().selectedCollection;
+
+    await _scannerController.stop();
+
+    if (!mounted) {
+      return;
+    }
+
+    await Navigator.push<void>(
+      context,
+      MaterialPageRoute<void>(
+        builder: (_) {
+          return AtlasHaulReviewScreen(
+            coordinator: _coordinator,
+            collectionName: collectionName,
+          );
+        },
+      ),
+    );
+
+    if (mounted) {
+      await _scannerController.start();
+    }
+  }
+
+  Future<void> _openCatalog() async {
+    await _scannerController.stop();
+
+    if (!mounted) {
+      return;
+    }
+
+    await Navigator.push<void>(
+      context,
+      MaterialPageRoute<void>(
+        builder: (_) {
+          return const FunkoCatalogScreen();
+        },
+      ),
+    );
+
+    if (mounted) {
+      await _scannerController.start();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final AtlasContinuousScanSnapshot coordinatorSnapshot =
+        _coordinator.snapshot;
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Scan Pop')),
+      body: Column(
+        children: [
+          SizedBox(
+            height: 260,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                MobileScanner(
+                  controller: _scannerController,
+                  onDetect: _handleDetection,
+                ),
+                const _ScannerGuide(),
+                Positioned(
+                  top: 16,
+                  left: 16,
+                  right: 16,
+                  child: _TrackingStatusOverlay(
+                    activeTrackCount: _activeTrackCount,
+                    confirmedTrackCount: _confirmedTrackCount,
+                    snapshot: coordinatorSnapshot,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: SafeArea(
+              top: false,
+              child: ListView(
+                padding: const EdgeInsets.all(12),
+                children: [
+                  AtlasHaulSessionPanel(
+                    entries: _coordinator.ledger.entries,
+                    results: _coordinator.results,
+                    activeResolutionCount:
+                        coordinatorSnapshot.activeResolutionCount,
+                    pendingResolutionCount:
+                        coordinatorSnapshot.pendingResolutionCount,
+                    onReviewHaul: _coordinator.ledger.entries.isEmpty
+                        ? null
+                        : _openHaulReview,
+                    onStartNewHaul: _coordinator.canResetCompletedSession
+                        ? _startNewHaul
+                        : null,
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: _openCatalog,
+                      icon: const Icon(Icons.search),
+                      label: const Text('Browse Catalog'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ScannerGuide extends StatelessWidget {
+  const _ScannerGuide();
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: Center(
+        child: Container(
+          width: 280,
+          height: 170,
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.white, width: 3),
+            borderRadius: BorderRadius.circular(18),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TrackingStatusOverlay extends StatelessWidget {
+  const _TrackingStatusOverlay({
+    required this.activeTrackCount,
+    required this.confirmedTrackCount,
+    required this.snapshot,
+  });
+
+  final int activeTrackCount;
+  final int confirmedTrackCount;
+  final AtlasContinuousScanSnapshot snapshot;
+
+  @override
+  Widget build(BuildContext context) {
+    final String label;
+
+    if (snapshot.hasWorkInFlight) {
+      label =
+          '🧠 ${snapshot.activeResolutionCount} resolving • '
+          '${snapshot.pendingResolutionCount} queued';
+    } else if (snapshot.completedCount > 0) {
+      label =
+          '✅ ${snapshot.completedCount} resolved • '
+          '$activeTrackCount tracked';
+    } else if (confirmedTrackCount > 0) {
+      label =
+          '🎯 $confirmedTrackCount confirmed • '
+          '$activeTrackCount tracked';
+    } else if (activeTrackCount > 0) {
+      label = '👀 $activeTrackCount tracked • stabilizing';
+    } else {
+      label = '📷 Continuous tracking active';
+    }
+
+    return IgnorePointer(
+      child: Center(
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: Colors.black54,
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            child: Text(
+              label,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+============================================================
+FILE: .\lib\atlas\scan\acquisition\atlas_mobile_scanner_observation_adapter.dart
+============================================================
+import 'dart:ui';
+
+import 'package:mobile_scanner/mobile_scanner.dart';
+
+import '../models/scan_code.dart';
+import '../tracking/atlas_scan_observation.dart';
+
+/// Adapts mobile_scanner capture data into Atlas acquisition observations.
+///
+/// This is intentionally the plugin boundary. The tracking domain remains
+/// independent from Flutter camera/plugin geometry.
+abstract final class AtlasMobileScannerObservationAdapter {
+  static List<AtlasScanObservation> fromCapture(
+    BarcodeCapture capture, {
+    required DateTime capturedAt,
+  }) {
+    final List<AtlasScanObservation> observations = <AtlasScanObservation>[];
+
+    final Size captureSize = capture.size;
+    final bool hasUsableCaptureSize =
+        captureSize.width.isFinite &&
+        captureSize.height.isFinite &&
+        captureSize.width > 0.0 &&
+        captureSize.height > 0.0;
+
+    int observationSequence = 0;
+
+    for (final Barcode barcode in capture.barcodes) {
+      final String rawValue = barcode.rawValue?.trim() ?? '';
+
+      if (rawValue.isEmpty) {
+        continue;
+      }
+
+      final ScanCodeFormat format = _mapBarcodeFormat(barcode.format);
+
+      final ScanCode scanCode = ScanCode(
+        rawValue: rawValue,
+        normalizedValue: _normalizeCodeValue(rawValue),
+        format: format,
+        source: ScanCodeSource.camera,
+        capturedAt: capturedAt,
+        isValid: format != ScanCodeFormat.unknown,
+        confidence: 1.0,
+      );
+
+      final List<AtlasNormalizedPoint> normalizedCorners = hasUsableCaptureSize
+          ? _normalizeCorners(barcode.corners, captureSize)
+          : const <AtlasNormalizedPoint>[];
+
+      observations.add(
+        AtlasScanObservation(
+          observationId: _createObservationId(
+            capturedAt: capturedAt,
+            sequence: observationSequence,
+            code: scanCode,
+          ),
+          capturedAt: capturedAt,
+          code: scanCode,
+          cornerPoints: normalizedCorners,
+          confidence: scanCode.confidence,
+        ),
+      );
+
+      observationSequence++;
+    }
+
+    return List<AtlasScanObservation>.unmodifiable(observations);
+  }
+
+  static List<AtlasNormalizedPoint> _normalizeCorners(
+    List<Offset> corners,
+    Size captureSize,
+  ) {
+    if (corners.isEmpty) {
+      return const <AtlasNormalizedPoint>[];
+    }
+
+    final List<AtlasNormalizedPoint> normalized = <AtlasNormalizedPoint>[];
+
+    for (final Offset corner in corners) {
+      if (!corner.dx.isFinite || !corner.dy.isFinite) {
+        continue;
+      }
+
+      normalized.add(
+        AtlasNormalizedPoint(
+          x: _normalizeCoordinate(corner.dx, captureSize.width),
+          y: _normalizeCoordinate(corner.dy, captureSize.height),
+        ),
+      );
+    }
+
+    return List<AtlasNormalizedPoint>.unmodifiable(normalized);
+  }
+
+  static double _normalizeCoordinate(double value, double extent) {
+    if (!value.isFinite || !extent.isFinite || extent <= 0.0) {
+      return 0.0;
+    }
+
+    return (value / extent).clamp(0.0, 1.0).toDouble();
+  }
+
+  static ScanCodeFormat _mapBarcodeFormat(BarcodeFormat format) {
+    return switch (format) {
+      BarcodeFormat.upcA => ScanCodeFormat.upcA,
+      BarcodeFormat.upcE => ScanCodeFormat.upcE,
+      BarcodeFormat.ean8 => ScanCodeFormat.ean8,
+      BarcodeFormat.ean13 => ScanCodeFormat.ean13,
+      BarcodeFormat.qrCode => ScanCodeFormat.qrCode,
+      _ => ScanCodeFormat.unknown,
+    };
+  }
+
+  static String _normalizeCodeValue(String rawValue) {
+    return rawValue.trim();
+  }
+
+  static String _createObservationId({
+    required DateTime capturedAt,
+    required int sequence,
+    required ScanCode code,
+  }) {
+    final int codeHash = code.normalizedValue.hashCode.abs();
+
+    return 'obs_'
+        '${capturedAt.microsecondsSinceEpoch}_'
+        '${sequence}_'
+        '$codeHash';
+  }
+}
+
+============================================================
+FILE: .\lib\atlas\scan\tracking\atlas_scan_observation.dart
+============================================================
+import 'dart:math' as math;
+
+import '../../scan/models/scan_code.dart';
+
+class AtlasNormalizedPoint {
+  AtlasNormalizedPoint({required this.x, required this.y}) {
+    _validateCoordinate(x, 'x');
+    _validateCoordinate(y, 'y');
+  }
+
+  final double x;
+  final double y;
+
+  double distanceTo(AtlasNormalizedPoint other) {
+    final double dx = x - other.x;
+    final double dy = y - other.y;
+    return math.sqrt((dx * dx) + (dy * dy));
+  }
+
+  static void _validateCoordinate(double value, String fieldName) {
+    if (!value.isFinite || value < 0.0 || value > 1.0) {
+      throw ArgumentError.value(
+        value,
+        fieldName,
+        '$fieldName must be between 0.0 and 1.0.',
+      );
+    }
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is AtlasNormalizedPoint &&
+          runtimeType == other.runtimeType &&
+          x == other.x &&
+          y == other.y;
+
+  @override
+  int get hashCode => Object.hash(x, y);
+}
+
+class AtlasNormalizedBounds {
+  AtlasNormalizedBounds({
+    required this.left,
+    required this.top,
+    required this.right,
+    required this.bottom,
+  }) {
+    AtlasNormalizedPoint._validateCoordinate(left, 'left');
+    AtlasNormalizedPoint._validateCoordinate(top, 'top');
+    AtlasNormalizedPoint._validateCoordinate(right, 'right');
+    AtlasNormalizedPoint._validateCoordinate(bottom, 'bottom');
+
+    if (right < left) {
+      throw ArgumentError.value(
+        right,
+        'right',
+        'right cannot be less than left.',
+      );
+    }
+    if (bottom < top) {
+      throw ArgumentError.value(
+        bottom,
+        'bottom',
+        'bottom cannot be less than top.',
+      );
+    }
+  }
+
+  final double left;
+  final double top;
+  final double right;
+  final double bottom;
+
+  double get width => right - left;
+  double get height => bottom - top;
+
+  AtlasNormalizedPoint get centroid =>
+      AtlasNormalizedPoint(x: left + (width / 2), y: top + (height / 2));
+}
+
+class AtlasScanObservation {
+  AtlasScanObservation({
+    required this.observationId,
+    required this.capturedAt,
+    this.code,
+    List<AtlasNormalizedPoint> cornerPoints = const <AtlasNormalizedPoint>[],
+    this.confidence = 1.0,
+  }) : cornerPoints = List<AtlasNormalizedPoint>.unmodifiable(cornerPoints) {
+    if (observationId.trim().isEmpty) {
+      throw ArgumentError.value(
+        observationId,
+        'observationId',
+        'observationId cannot be empty.',
+      );
+    }
+
+    if (!confidence.isFinite || confidence < 0.0 || confidence > 1.0) {
+      throw ArgumentError.value(
+        confidence,
+        'confidence',
+        'confidence must be between 0.0 and 1.0.',
+      );
+    }
+  }
+
+  final String observationId;
+  final DateTime capturedAt;
+  final ScanCode? code;
+  final List<AtlasNormalizedPoint> cornerPoints;
+  final double confidence;
+
+  bool get hasGeometry => cornerPoints.isNotEmpty;
+  bool get hasCode => code != null;
+
+  bool get hasUsableProductBarcode {
+    final ScanCode? observedCode = code;
+    return observedCode != null &&
+        observedCode.isValid &&
+        observedCode.isProductBarcode &&
+        observedCode.normalizedValue.trim().isNotEmpty;
+  }
+
+  AtlasNormalizedPoint? get centroid {
+    if (cornerPoints.isEmpty) return null;
+
+    double sumX = 0.0;
+    double sumY = 0.0;
+
+    for (final AtlasNormalizedPoint point in cornerPoints) {
+      sumX += point.x;
+      sumY += point.y;
+    }
+
+    return AtlasNormalizedPoint(
+      x: sumX / cornerPoints.length,
+      y: sumY / cornerPoints.length,
+    );
+  }
+
+  AtlasNormalizedBounds? get normalizedBounds {
+    if (cornerPoints.isEmpty) return null;
+
+    double minX = cornerPoints.first.x;
+    double maxX = cornerPoints.first.x;
+    double minY = cornerPoints.first.y;
+    double maxY = cornerPoints.first.y;
+
+    for (final AtlasNormalizedPoint point in cornerPoints.skip(1)) {
+      minX = math.min(minX, point.x);
+      maxX = math.max(maxX, point.x);
+      minY = math.min(minY, point.y);
+      maxY = math.max(maxY, point.y);
+    }
+
+    return AtlasNormalizedBounds(
+      left: minX,
+      top: minY,
+      right: maxX,
+      bottom: maxY,
+    );
+  }
+}
+
+============================================================
+FILE: .\lib\atlas\scan\continuous\atlas_continuous_perception_coordinator.dart
+============================================================
+import 'dart:async';
+
+import '../acquisition/atlas_evidence_accumulator.dart';
+import '../models/scan_code.dart';
+import '../tracking/atlas_object_track.dart';
+import '../tracking/atlas_object_tracker.dart';
+import '../tracking/atlas_scan_observation.dart';
+import 'atlas_continuous_candidate_projector.dart';
+import 'atlas_frame_triage_gate.dart';
+import 'models/atlas_continuous_candidate.dart';
+import 'models/atlas_frame_quality_assessment.dart';
+import 'models/atlas_perception_frame_result.dart';
+
+typedef AtlasStableCandidateSubmitter =
+    bool Function({required String trackId, required ScanCode stableCode});
+
+final class AtlasContinuousPerceptionConfig {
+  const AtlasContinuousPerceptionConfig({
+    this.minimumFrameInterval = const Duration(milliseconds: 250),
+  });
+
+  /// Default 250 ms cadence targets approximately 4 FPS, inside the 3-5 FPS
+  /// continuous-perception budget. Callers may tune this without changing the
+  /// tracking or evidence contracts.
+  final Duration minimumFrameInterval;
+}
+
+/// Shared 6A foundation for camera Shelf Scan and future live-feed ingestion.
+///
+/// Responsibilities:
+/// - sample cadence enforcement
+/// - frame-quality fast-fail
+/// - reuse AtlasObjectTracker for spatial persistence
+/// - reuse AtlasEvidenceAccumulator for stable barcode agreement
+/// - emit transient candidate/result models for HUD consumers
+/// - optionally cross the existing Scanner 4 submission boundary
+///
+/// This coordinator never mutates the Vault and never rewrites product identity.
+final class AtlasContinuousPerceptionCoordinator {
+  AtlasContinuousPerceptionCoordinator({
+    AtlasObjectTracker? objectTracker,
+    AtlasEvidenceAccumulator? evidenceAccumulator,
+    AtlasFrameTriageGate? frameTriageGate,
+    this.submitStableCandidate,
+    this.config = const AtlasContinuousPerceptionConfig(),
+  }) : objectTracker = objectTracker ?? AtlasObjectTracker(),
+       evidenceAccumulator = evidenceAccumulator ?? AtlasEvidenceAccumulator(),
+       frameTriageGate = frameTriageGate ?? AtlasFrameTriageGate() {
+    if (config.minimumFrameInterval.isNegative) {
+      throw ArgumentError.value(
+        config.minimumFrameInterval,
+        'minimumFrameInterval',
+        'minimumFrameInterval cannot be negative.',
+      );
+    }
+  }
+
+  final AtlasObjectTracker objectTracker;
+  final AtlasEvidenceAccumulator evidenceAccumulator;
+  final AtlasFrameTriageGate frameTriageGate;
+  final AtlasStableCandidateSubmitter? submitStableCandidate;
+  final AtlasContinuousPerceptionConfig config;
+
+  final StreamController<AtlasPerceptionFrameResult> _resultsController =
+      StreamController<AtlasPerceptionFrameResult>.broadcast(sync: true);
+
+  final Set<String> _knownTrackIds = <String>{};
+  final Set<String> _submittedTrackIds = <String>{};
+
+  DateTime? _lastInputAt;
+  DateTime? _lastProcessedAt;
+  AtlasPerceptionFrameResult? _latestResult;
+  bool _isDisposed = false;
+
+  Stream<AtlasPerceptionFrameResult> get results => _resultsController.stream;
+
+  AtlasPerceptionFrameResult? get latestResult => _latestResult;
+
+  AtlasPerceptionFrameResult processFrame({
+    required DateTime timestamp,
+    required List<AtlasScanObservation> observations,
+    AtlasFrameQualitySample? qualitySample,
+  }) {
+    if (_isDisposed) {
+      throw StateError('AtlasContinuousPerceptionCoordinator is disposed.');
+    }
+
+    final DateTime normalizedTimestamp = timestamp.toUtc();
+    final DateTime? previousInput = _lastInputAt;
+    if (previousInput != null && normalizedTimestamp.isBefore(previousInput)) {
+      throw ArgumentError.value(
+        timestamp,
+        'timestamp',
+        'Frame timestamps must be monotonic.',
+      );
+    }
+    _lastInputAt = normalizedTimestamp;
+
+    final AtlasFrameQualityAssessment qualityAssessment = frameTriageGate
+        .evaluate(qualitySample ?? AtlasFrameQualitySample());
+
+    final DateTime? previousProcessed = _lastProcessedAt;
+    if (previousProcessed != null &&
+        normalizedTimestamp.difference(previousProcessed) <
+            config.minimumFrameInterval) {
+      return _emit(
+        AtlasPerceptionFrameResult(
+          timestamp: normalizedTimestamp,
+          disposition: AtlasPerceptionFrameDisposition.skippedCadence,
+          qualityAssessment: qualityAssessment,
+          candidates: _projectCurrentCandidates(),
+        ),
+      );
+    }
+
+    _lastProcessedAt = normalizedTimestamp;
+
+    final List<AtlasObjectTrack> tracked = objectTracker.processFrame(
+      observations: qualityAssessment.isAccepted
+          ? observations
+          : const <AtlasScanObservation>[],
+      timestamp: normalizedTimestamp,
+    );
+
+    final Set<String> currentTrackIds = tracked
+        .map((AtlasObjectTrack track) => track.trackId)
+        .toSet();
+    final Set<String> expiredTrackIds = _knownTrackIds.difference(
+      currentTrackIds,
+    );
+    _knownTrackIds
+      ..clear()
+      ..addAll(currentTrackIds);
+
+    final Set<String> submittedThisFrame = <String>{};
+
+    if (qualityAssessment.isAccepted && submitStableCandidate != null) {
+      for (final AtlasObjectTrack track in tracked) {
+        if (track.isCooldown || _submittedTrackIds.contains(track.trackId)) {
+          continue;
+        }
+
+        final AtlasAccumulatedEvidence? evidence = evidenceAccumulator
+            .evaluateTrack(track);
+        if (evidence == null || !evidence.isReadyForResolution) {
+          continue;
+        }
+
+        final bool accepted = submitStableCandidate!(
+          trackId: track.trackId,
+          stableCode: evidence.stableCode,
+        );
+
+        if (accepted) {
+          _submittedTrackIds.add(track.trackId);
+          submittedThisFrame.add(track.trackId);
+          objectTracker.markCooldown(
+            trackId: track.trackId,
+            startedAt: normalizedTimestamp,
+          );
+        }
+      }
+    }
+
+    final AtlasPerceptionFrameResult result = AtlasPerceptionFrameResult(
+      timestamp: normalizedTimestamp,
+      disposition: qualityAssessment.isAccepted
+          ? AtlasPerceptionFrameDisposition.processed
+          : AtlasPerceptionFrameDisposition.rejectedQuality,
+      qualityAssessment: qualityAssessment,
+      candidates: _projectCurrentCandidates(),
+      expiredTrackIds: expiredTrackIds,
+      submittedTrackIds: submittedThisFrame,
+    );
+
+    return _emit(result);
+  }
+
+  void reset() {
+    if (_isDisposed) return;
+    objectTracker.reset();
+    _knownTrackIds.clear();
+    _submittedTrackIds.clear();
+    _lastInputAt = null;
+    _lastProcessedAt = null;
+    _latestResult = null;
+  }
+
+  Future<void> dispose() async {
+    if (_isDisposed) return;
+    _isDisposed = true;
+    await _resultsController.close();
+  }
+
+  List<AtlasContinuousCandidate> _projectCurrentCandidates() {
+    return objectTracker.tracks
+        .map((AtlasObjectTrack track) {
+          final AtlasAccumulatedEvidence? evidence = evidenceAccumulator
+              .evaluateTrack(track);
+          return AtlasContinuousCandidateProjector.project(
+            track: track,
+            accumulatedEvidence: evidence,
+          );
+        })
+        .toList(growable: false);
+  }
+
+  AtlasPerceptionFrameResult _emit(AtlasPerceptionFrameResult result) {
+    _latestResult = result;
+    _resultsController.add(result);
+    return result;
+  }
+}
+
+============================================================
+FILE: .\lib\widgets\vault\collector_tools_card.dart
+============================================================
+import 'package:flutter/material.dart';
+
+import '../../theme/atlas_colors.dart';
+import '../../theme/atlas_icons.dart';
+import '../../theme/atlas_spacing.dart';
+import '../atlas/atlas_action_tile.dart';
+import '../atlas/components/atlas_section_header.dart';
+
+class CollectorToolsCard extends StatelessWidget {
+  const CollectorToolsCard({
+    super.key,
+    this.onAddPop,
+    this.onScan,
+    this.onWishlist,
+    this.onSearch,
+    this.onValueLookup,
+    this.onAtlasAi,
+  });
+
+  final VoidCallback? onAddPop;
+  final VoidCallback? onScan;
+  final VoidCallback? onWishlist;
+  final VoidCallback? onSearch;
+  final VoidCallback? onValueLookup;
+  final VoidCallback? onAtlasAi;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const AtlasSectionHeader(
+          title: 'Collector Tools',
+          subtitle:
+          'Quick access to collection management and Atlas intelligence.',
+          icon: Icons.dashboard_customize_outlined,
+          accentColor: AtlasColors.vaultGold,
+        ),
+        const SizedBox(
+          height: AtlasSpacing.md,
+        ),
+        GridView.count(
+          crossAxisCount: 3,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisSpacing: AtlasSpacing.sm,
+          mainAxisSpacing: AtlasSpacing.sm,
+          childAspectRatio: 0.98,
+          children: [
+            AtlasActionTile(
+              icon: Icons.add,
+              label: 'Add Pop',
+              onTap: onAddPop,
+            ),
+            AtlasActionTile(
+              icon: Icons.qr_code_scanner,
+              label: 'Scan',
+              onTap: onScan,
+            ),
+            AtlasActionTile(
+              icon: AtlasIcons.wishlist,
+              label: 'Wishlist',
+              onTap: onWishlist,
+            ),
+            AtlasActionTile(
+              icon: Icons.search,
+              label: 'Search',
+              onTap: onSearch,
+            ),
+            AtlasActionTile(
+              icon: Icons.sell_outlined,
+              label: 'Values',
+              onTap: onValueLookup,
+            ),
+            AtlasActionTile(
+              icon: AtlasIcons.intelligence,
+              label: 'Atlas AI',
+              onTap: onAtlasAi,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+============================================================
+FILE: .\test\screens\scanner\scan_screen_test.dart
+============================================================
+FILE NOT FOUND
+
+============================================================
+FILE: .\test\widgets\vault\collector_tools_card_test.dart
+============================================================
+FILE NOT FOUND

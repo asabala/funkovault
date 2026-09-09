@@ -1,0 +1,2142 @@
+SCANNER 5A CURRENT SOURCE AUDIT
+Generated: 09/03/2026 09:25:04
+
+
+============================================================
+FILE: .\pubspec.yaml
+============================================================
+name: funkovault2
+description: "A new Flutter project."
+
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+  provider: ^6.1.2
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  file_selector: ^1.0.3
+  csv: ^6.0.0
+  mobile_scanner: ^7.1.1
+  image_picker: ^1.2.3
+  google_mlkit_text_recognition: ^0.17.1
+  supabase_flutter: ^2.15.3
+  purchases_flutter: ^10.10.0
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^6.0.0
+
+  build_runner: ^2.4.9
+  hive_generator: ^2.0.1
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/data/pop_vinyl_products.json
+    - assets/data/funko_pop.json
+
+============================================================
+FILE: .\lib\atlas\scan\models\scan_session.dart
+============================================================
+import '../../catalog/models/atlas_catalog_product.dart';
+import '../contributions/contribution_collection.dart';
+import '../contributions/contribution_conflict_policy.dart';
+import '../contributions/intelligence_contribution.dart';
+import '../contributions/authenticity_contribution.dart';
+import '../contributions/visual_inspection_contribution.dart';
+import '../../identity/product/atlas_product_id.dart';
+import '../projection/scan_session_projector.dart';
+import '../resolution/resolved_product_snapshot.dart';
+import '../results/collector_item_status.dart';
+import '../results/market_value_snapshot.dart';
+import '../results/scan_variant_status.dart';
+import '../workflow/identity_resolution_status.dart';
+import '../workflow/scan_intent.dart';
+import '../workflow/scan_performance_mode.dart';
+import 'scan_code.dart';
+import 'scan_image.dart';
+import 'scanner_type.dart';
+import 'visual_identity.dart';
+
+// Describes the lifecycle of an Atlas scan session.
+enum ScanSessionStatus {
+  created,
+  scanning,
+  analyzing,
+  resolving,
+  awaitingConfirmation,
+  completed,
+  cancelled,
+  failed,
+}
+
+// Immutable orchestration model for one Atlas scanning workflow.
+//
+// A session begins when a collector opens the scanner and continues
+// through code detection, visual analysis, identity resolution,
+// market lookup, Vault matching, and briefing generation.
+class ScanSession {
+  ScanSession({
+    required this.sessionId,
+    required this.startedAt,
+    required this.intent,
+    required this.performanceMode,
+    required this.scannerType,
+    this.status = ScanSessionStatus.created,
+    this.completedAt,
+    List<ScanCode> detectedCodes = const [],
+    this.bestCandidate,
+    this.visualIdentity = const VisualIdentity(),
+    this.resolutionStatus = IdentityResolutionStatus.notStarted,
+    this.atlasProductId,
+    this.resolvedProduct,
+    this.marketSnapshot,
+    this.collectorStatus,
+    this.variantResolution,
+    ContributionCollection? contributions,
+    List<ScanImage> images = const [],
+    this.confidence = 0.0,
+    this.isOffline = false,
+    this.requiresSync = false,
+    List<String> notes = const [],
+    List<String> warnings = const [],
+  }) : detectedCodes = List<ScanCode>.unmodifiable(detectedCodes),
+       contributions = contributions ?? ContributionCollection.empty,
+       images = List<ScanImage>.unmodifiable(images),
+       notes = List<String>.unmodifiable(notes),
+       warnings = List<String>.unmodifiable(warnings);
+
+  final String sessionId;
+
+  final DateTime startedAt;
+
+  final DateTime? completedAt;
+
+  final ScanSessionStatus status;
+
+  final ScanIntent intent;
+
+  final ScanPerformanceMode performanceMode;
+
+  final ScannerType scannerType;
+
+  final List<ScanCode> detectedCodes;
+
+  final ScanCode? bestCandidate;
+
+  final VisualIdentity visualIdentity;
+
+  final IdentityResolutionStatus resolutionStatus;
+
+  final AtlasProductId? atlasProductId;
+
+  final ResolvedProductSnapshot? resolvedProduct;
+
+  final MarketValueSnapshot? marketSnapshot;
+
+  final CollectorItemStatus? collectorStatus;
+
+  final ScanVariantResolution? variantResolution;
+
+  final ContributionCollection contributions;
+
+  final List<ScanImage> images;
+
+  final double confidence;
+
+  final bool isOffline;
+
+  final bool requiresSync;
+
+  final List<String> notes;
+
+  final List<String> warnings;
+
+  bool get hasDetectedCodes {
+    return detectedCodes.isNotEmpty;
+  }
+
+  bool get hasBestCandidate {
+    return bestCandidate != null;
+  }
+
+  bool get hasVisualEvidence {
+    return visualIdentity.isNotEmpty;
+  }
+
+  bool get hasResolvedProduct {
+    return atlasProductId != null && resolutionStatus.isResolved;
+  }
+
+  bool get hasMarketData {
+    return marketSnapshot?.hasMarketEvidence ?? false;
+  }
+
+  bool get hasCollectorStatus {
+    return collectorStatus != null;
+  }
+
+  bool get hasVariantResolution {
+    return variantResolution != null;
+  }
+
+  bool get hasContributions {
+    return contributions.isNotEmpty;
+  }
+
+  VisualInspectionContribution? get visualInspectionContribution =>
+      latestContributionOfType<VisualInspectionContribution>();
+
+  AuthenticityContribution? get authenticityContribution =>
+      latestContributionOfType<AuthenticityContribution>();
+
+  bool get hasAuthenticityAssessment => authenticityContribution != null;
+
+  int get contributionCount {
+    return contributions.length;
+  }
+
+  bool hasContributionOfType<T extends IntelligenceContribution>() {
+    return contributions.ofType<T>().isNotEmpty;
+  }
+
+  T? latestContributionOfType<T extends IntelligenceContribution>() {
+    return contributions.latestOfType<T>();
+  }
+
+  bool get requiresVariantConfirmation {
+    return variantResolution?.requiresConfirmation ?? false;
+  }
+
+  bool get hasImages {
+    return images.isNotEmpty;
+  }
+
+  bool get hasOriginalImage {
+    return images.any((ScanImage image) => image.isOriginal);
+  }
+
+  bool get hasProcessedImage {
+    return images.any((ScanImage image) => image.isProcessed);
+  }
+
+  bool get isActive {
+    return status == ScanSessionStatus.scanning ||
+        status == ScanSessionStatus.analyzing ||
+        status == ScanSessionStatus.resolving;
+  }
+
+  bool get isCompleted {
+    return status == ScanSessionStatus.completed;
+  }
+
+  AtlasCatalogProduct? get catalogProduct {
+    return resolvedProduct?.toCatalogProduct();
+  }
+
+  bool get requiresUserAction {
+    return status == ScanSessionStatus.awaitingConfirmation ||
+        resolutionStatus.requiresUserReview ||
+        requiresVariantConfirmation;
+  }
+
+  bool get canBuildBriefing {
+    return hasResolvedProduct && resolutionStatus.isResolved;
+  }
+
+  Duration get elapsed {
+    final DateTime end = completedAt ?? DateTime.now();
+
+    return end.difference(startedAt);
+  }
+
+  ScanImage? get originalImage {
+    for (final ScanImage image in images) {
+      if (image.type == ScanImageType.original) {
+        return image;
+      }
+    }
+
+    return null;
+  }
+
+  ScanImage? get processedImage {
+    for (final ScanImage image in images) {
+      if (image.type == ScanImageType.processed) {
+        return image;
+      }
+    }
+
+    return null;
+  }
+
+  ScanSession copyWith({
+    String? sessionId,
+    DateTime? startedAt,
+    DateTime? completedAt,
+    ScanSessionStatus? status,
+    ScanIntent? intent,
+    ScanPerformanceMode? performanceMode,
+    ScannerType? scannerType,
+    List<ScanCode>? detectedCodes,
+    ScanCode? bestCandidate,
+    VisualIdentity? visualIdentity,
+    IdentityResolutionStatus? resolutionStatus,
+    AtlasProductId? atlasProductId,
+    ResolvedProductSnapshot? resolvedProduct,
+    MarketValueSnapshot? marketSnapshot,
+    CollectorItemStatus? collectorStatus,
+    ScanVariantResolution? variantResolution,
+    ContributionCollection? contributions,
+    List<ScanImage>? images,
+    double? confidence,
+    bool? isOffline,
+    bool? requiresSync,
+    List<String>? notes,
+    List<String>? warnings,
+  }) {
+    return ScanSession(
+      sessionId: sessionId ?? this.sessionId,
+      startedAt: startedAt ?? this.startedAt,
+      completedAt: completedAt ?? this.completedAt,
+      status: status ?? this.status,
+      intent: intent ?? this.intent,
+      performanceMode: performanceMode ?? this.performanceMode,
+      scannerType: scannerType ?? this.scannerType,
+      detectedCodes: detectedCodes ?? this.detectedCodes,
+      bestCandidate: bestCandidate ?? this.bestCandidate,
+      visualIdentity: visualIdentity ?? this.visualIdentity,
+      resolutionStatus: resolutionStatus ?? this.resolutionStatus,
+      atlasProductId: atlasProductId ?? this.atlasProductId,
+      resolvedProduct: resolvedProduct ?? this.resolvedProduct,
+      marketSnapshot: marketSnapshot ?? this.marketSnapshot,
+      collectorStatus: collectorStatus ?? this.collectorStatus,
+      variantResolution: variantResolution ?? this.variantResolution,
+      contributions: contributions ?? this.contributions,
+      images: images ?? this.images,
+      confidence: confidence ?? this.confidence,
+      isOffline: isOffline ?? this.isOffline,
+      requiresSync: requiresSync ?? this.requiresSync,
+      notes: notes ?? this.notes,
+      warnings: warnings ?? this.warnings,
+    );
+  }
+
+  ScanSession addDetectedCode(ScanCode code, {bool makeBestCandidate = false}) {
+    final bool alreadyDetected = detectedCodes.any((ScanCode existing) {
+      return existing.format == code.format &&
+          existing.normalizedValue == code.normalizedValue;
+    });
+
+    final List<ScanCode> updatedCodes = alreadyDetected
+        ? detectedCodes
+        : <ScanCode>[...detectedCodes, code];
+
+    return copyWith(
+      detectedCodes: updatedCodes,
+      bestCandidate: makeBestCandidate ? code : bestCandidate,
+    );
+  }
+
+  ScanSession addContribution(
+    IntelligenceContribution contribution, {
+    ContributionConflictPolicy conflictPolicy =
+        ContributionConflictPolicy.reject,
+  }) {
+    final ContributionCollection updatedContributions = contributions.add(
+      contribution,
+      conflictPolicy: conflictPolicy,
+    );
+
+    return _withProjectedContributions(updatedContributions);
+  }
+
+  ScanSession addContributions(
+    Iterable<IntelligenceContribution> values, {
+    ContributionConflictPolicy conflictPolicy =
+        ContributionConflictPolicy.reject,
+  }) {
+    final ContributionCollection updatedContributions = contributions.addAll(
+      values,
+      conflictPolicy: conflictPolicy,
+    );
+
+    return _withProjectedContributions(updatedContributions);
+  }
+
+  ScanSession _withProjectedContributions(
+    ContributionCollection updatedContributions,
+  ) {
+    final ScanSessionProjection projection = ScanSessionProjector.project(
+      contributions: updatedContributions,
+      currentStatus: status,
+      currentResolutionStatus: resolutionStatus,
+      currentAtlasProductId: atlasProductId,
+      currentResolvedProduct: resolvedProduct,
+      currentConfidence: confidence,
+      isOffline: isOffline,
+    );
+
+    return copyWith(
+      contributions: updatedContributions,
+      status: projection.status,
+      resolutionStatus: projection.resolutionStatus,
+      atlasProductId: projection.atlasProductId,
+      resolvedProduct: projection.resolvedProduct,
+      confidence: projection.confidence,
+    );
+  }
+
+  ScanSession removeContributionById(String contributionId) {
+    final ContributionCollection updated = contributions.removeById(
+      contributionId,
+    );
+
+    if (identical(updated, contributions)) {
+      return this;
+    }
+
+    return copyWith(contributions: updated);
+  }
+
+  ScanSession removeContributionsFromEngine(String engineId) {
+    final ContributionCollection updated = contributions.removeFromEngine(
+      engineId,
+    );
+
+    if (identical(updated, contributions)) {
+      return this;
+    }
+
+    return copyWith(contributions: updated);
+  }
+
+  ScanSession addImage(ScanImage image) {
+    final List<ScanImage> updatedImages =
+        images
+            .where((ScanImage existing) => existing.imageId != image.imageId)
+            .toList()
+          ..add(image);
+
+    return copyWith(images: updatedImages);
+  }
+
+  ScanSession addNote(String note) {
+    final String normalized = note.trim();
+
+    if (normalized.isEmpty || notes.contains(normalized)) {
+      return this;
+    }
+
+    return copyWith(notes: <String>[...notes, normalized]);
+  }
+
+  ScanSession addWarning(String warning) {
+    final String normalized = warning.trim();
+
+    if (normalized.isEmpty || warnings.contains(normalized)) {
+      return this;
+    }
+
+    return copyWith(warnings: <String>[...warnings, normalized]);
+  }
+
+  @override
+  String toString() {
+    return 'ScanSession('
+        'sessionId: $sessionId, '
+        'status: ${status.name}, '
+        'intent: ${intent.name}, '
+        'codes: ${detectedCodes.length}, '
+        'images: ${images.length}, '
+        'resolutionStatus: ${resolutionStatus.name}, '
+        'atlasProductId: $atlasProductId, '
+        'confidence: $confidence, '
+        'isOffline: $isOffline, '
+        'requiresSync: $requiresSync'
+        ')';
+  }
+}
+
+============================================================
+FILE: .\lib\atlas\scan\models\scan_image.dart
+============================================================
+// Describes the role an image plays within an Atlas scan session.
+enum ScanImageType {
+  original,
+  processed,
+  thumbnail,
+  frontBox,
+  backBox,
+  bottomBox,
+  barcode,
+  sticker,
+  autograph,
+  certification,
+  condition,
+  unknown,
+}
+
+// Describes the current processing state of a scan image.
+enum ScanImageStatus {
+  captured,
+  queued,
+  uploading,
+  uploaded,
+  processing,
+  processed,
+  approved,
+  rejected,
+  failed,
+}
+
+// Immutable image reference associated with a scan session.
+//
+// Images may initially exist only on the local device. Remote storage
+// information can be added later after upload or synchronization.
+class ScanImage {
+  const ScanImage({
+    required this.imageId,
+    required this.type,
+    required this.status,
+    required this.capturedAt,
+    this.localPath,
+    this.remoteUrl,
+    this.mimeType,
+    this.width,
+    this.height,
+    this.byteSize,
+    this.imageFingerprint,
+    this.processingNotes = const [],
+  });
+
+  final String imageId;
+
+  final ScanImageType type;
+
+  final ScanImageStatus status;
+
+  final DateTime capturedAt;
+
+  final String? localPath;
+
+  final String? remoteUrl;
+
+  final String? mimeType;
+
+  final int? width;
+
+  final int? height;
+
+  final int? byteSize;
+
+  final String? imageFingerprint;
+
+  final List<String> processingNotes;
+
+  bool get hasLocalPath {
+    return localPath != null && localPath!.trim().isNotEmpty;
+  }
+
+  bool get hasRemoteUrl {
+    return remoteUrl != null && remoteUrl!.trim().isNotEmpty;
+  }
+
+  bool get hasFingerprint {
+    return imageFingerprint != null && imageFingerprint!.trim().isNotEmpty;
+  }
+
+  bool get isAvailable {
+    return hasLocalPath || hasRemoteUrl;
+  }
+
+  bool get isOriginal {
+    return type == ScanImageType.original;
+  }
+
+  bool get isProcessed {
+    return status == ScanImageStatus.processed ||
+        status == ScanImageStatus.approved;
+  }
+
+  bool get requiresSync {
+    return hasLocalPath && !hasRemoteUrl;
+  }
+
+  ScanImage copyWith({
+    String? imageId,
+    ScanImageType? type,
+    ScanImageStatus? status,
+    DateTime? capturedAt,
+    String? localPath,
+    String? remoteUrl,
+    String? mimeType,
+    int? width,
+    int? height,
+    int? byteSize,
+    String? imageFingerprint,
+    List<String>? processingNotes,
+  }) {
+    return ScanImage(
+      imageId: imageId ?? this.imageId,
+      type: type ?? this.type,
+      status: status ?? this.status,
+      capturedAt: capturedAt ?? this.capturedAt,
+      localPath: localPath ?? this.localPath,
+      remoteUrl: remoteUrl ?? this.remoteUrl,
+      mimeType: mimeType ?? this.mimeType,
+      width: width ?? this.width,
+      height: height ?? this.height,
+      byteSize: byteSize ?? this.byteSize,
+      imageFingerprint: imageFingerprint ?? this.imageFingerprint,
+      processingNotes: processingNotes ?? this.processingNotes,
+    );
+  }
+}
+
+============================================================
+FILE: .\lib\atlas\scan\models\visual_identity.dart
+============================================================
+// Visual evidence collected while identifying a collectible.
+//
+// This information supplements traditional identifiers such as UPC,
+// QR, and EAN. Over time Atlas Intelligence will continue enriching
+// this model as new computer vision capabilities are introduced.
+class VisualIdentity {
+  const VisualIdentity({
+    this.boxNumber,
+    this.detectedStickers = const [],
+    this.detectedLogos = const [],
+    this.detectedAutographs = const [],
+    this.detectedCharacters = const [],
+    this.imageFingerprint,
+    this.visualEmbedding,
+    this.colorSignature,
+    this.boxConditionScore,
+    this.windowConditionScore,
+    this.confidence = 0.0,
+  });
+
+  final String? boxNumber;
+
+  final List<String> detectedStickers;
+
+  final List<String> detectedLogos;
+
+  final List<String> detectedAutographs;
+
+  final List<String> detectedCharacters;
+
+  final String? imageFingerprint;
+
+  // Reserved for future AI vector embeddings.
+  final String? visualEmbedding;
+
+  // Reserved for future color histogram matching.
+  final String? colorSignature;
+
+  final double? boxConditionScore;
+
+  final double? windowConditionScore;
+
+  final double confidence;
+
+  bool get hasBoxNumber => boxNumber != null && boxNumber!.isNotEmpty;
+
+  bool get hasStickerEvidence => detectedStickers.isNotEmpty;
+
+  bool get hasAutographEvidence => detectedAutographs.isNotEmpty;
+
+  bool get hasCharacterEvidence => detectedCharacters.isNotEmpty;
+
+  bool get hasImageFingerprint =>
+      imageFingerprint != null &&
+          imageFingerprint!.isNotEmpty;
+
+  bool get hasVisualEmbedding =>
+      visualEmbedding != null &&
+          visualEmbedding!.isNotEmpty;
+
+  bool get isEmpty {
+    return !hasBoxNumber &&
+        !hasStickerEvidence &&
+        !hasAutographEvidence &&
+        !hasCharacterEvidence &&
+        !hasImageFingerprint &&
+        !hasVisualEmbedding;
+  }
+
+  bool get isNotEmpty => !isEmpty;
+
+  VisualIdentity copyWith({
+    String? boxNumber,
+    List<String>? detectedStickers,
+    List<String>? detectedLogos,
+    List<String>? detectedAutographs,
+    List<String>? detectedCharacters,
+    String? imageFingerprint,
+    String? visualEmbedding,
+    String? colorSignature,
+    double? boxConditionScore,
+    double? windowConditionScore,
+    double? confidence,
+  }) {
+    return VisualIdentity(
+      boxNumber: boxNumber ?? this.boxNumber,
+      detectedStickers:
+      detectedStickers ?? this.detectedStickers,
+      detectedLogos:
+      detectedLogos ?? this.detectedLogos,
+      detectedAutographs:
+      detectedAutographs ??
+          this.detectedAutographs,
+      detectedCharacters:
+      detectedCharacters ??
+          this.detectedCharacters,
+      imageFingerprint:
+      imageFingerprint ?? this.imageFingerprint,
+      visualEmbedding:
+      visualEmbedding ?? this.visualEmbedding,
+      colorSignature:
+      colorSignature ?? this.colorSignature,
+      boxConditionScore:
+      boxConditionScore ??
+          this.boxConditionScore,
+      windowConditionScore:
+      windowConditionScore ??
+          this.windowConditionScore,
+      confidence:
+      confidence ?? this.confidence,
+    );
+  }
+}
+
+============================================================
+FILE: .\lib\atlas\scan\models\scanner_type.dart
+============================================================
+// Identifies the scanner implementation or input method that produced
+// scan evidence.
+//
+// Atlas domain models should depend on this type rather than directly
+// depending on a specific camera or barcode package.
+enum ScannerType {
+  mobileScanner,
+  mlKit,
+  visionKit,
+  manualEntry,
+  importedData,
+  externalProvider,
+  unknown,
+}
+
+// Presentation and capability helpers for scanner implementations.
+extension ScannerTypeX on ScannerType {
+  String get label {
+    switch (this) {
+      case ScannerType.mobileScanner:
+        return 'Mobile Scanner';
+      case ScannerType.mlKit:
+        return 'ML Kit';
+      case ScannerType.visionKit:
+        return 'Vision Kit';
+      case ScannerType.manualEntry:
+        return 'Manual Entry';
+      case ScannerType.importedData:
+        return 'Imported Data';
+      case ScannerType.externalProvider:
+        return 'External Provider';
+      case ScannerType.unknown:
+        return 'Unknown';
+    }
+  }
+
+  bool get usesCamera {
+    return this == ScannerType.mobileScanner ||
+        this == ScannerType.mlKit ||
+        this == ScannerType.visionKit;
+  }
+
+  bool get isManual {
+    return this == ScannerType.manualEntry;
+  }
+
+  bool get isExternal {
+    return this == ScannerType.importedData ||
+        this == ScannerType.externalProvider;
+  }
+}
+
+============================================================
+FILE: .\lib\atlas\scan\contributions\intelligence_contribution.dart
+============================================================
+import 'contribution_category.dart';
+
+// Shared contract for immutable intelligence produced by an Atlas engine.
+//
+// Concrete contribution models own their domain-specific fields while this
+// contract provides the common information needed for discovery, diagnostics,
+// conflict handling, and downstream intelligence processing.
+abstract interface class IntelligenceContribution {
+  String get contributionId;
+
+  ContributionCategory get category;
+
+  String get sourceEngineId;
+
+  DateTime get createdAt;
+
+  double? get confidence;
+
+  Map<String, Object?> get attributes;
+}
+
+// Shared validation helpers for concrete contribution implementations.
+abstract final class IntelligenceContributionValidation {
+  static String requireIdentifier(
+      String value, {
+        required String fieldName,
+      }) {
+    final String normalized = value.trim();
+
+    if (normalized.isEmpty) {
+      throw ArgumentError.value(
+        value,
+        fieldName,
+        '$fieldName cannot be empty.',
+      );
+    }
+
+    return normalized;
+  }
+
+  static double? normalizeConfidence(
+      double? value,
+      ) {
+    if (value == null) {
+      return null;
+    }
+
+    if (value.isNaN ||
+        value.isInfinite ||
+        value < 0 ||
+        value > 1) {
+      throw ArgumentError.value(
+        value,
+        'confidence',
+        'Confidence must be between 0 and 1.',
+      );
+    }
+
+    return value;
+  }
+
+  static Map<String, Object?> immutableAttributes(
+      Map<String, Object?> values,
+      ) {
+    return Map<String, Object?>.unmodifiable(
+      values,
+    );
+  }
+}
+
+============================================================
+FILE: .\lib\atlas\scan\contributions\abstract_intelligence_contribution.dart
+============================================================
+import 'contribution_category.dart';
+import 'intelligence_contribution.dart';
+
+// Reusable immutable base for intelligence produced by Atlas engines.
+//
+// Concrete contribution classes inherit the common identity, source,
+// timestamp, confidence, and attribute behavior while defining only their
+// domain-specific fields and category.
+abstract base class AbstractIntelligenceContribution
+    implements IntelligenceContribution {
+  AbstractIntelligenceContribution({
+    required String contributionId,
+    required String sourceEngineId,
+    required this.createdAt,
+    double? confidence,
+    Map<String, Object?> attributes =
+    const <String, Object?>{},
+  })  : contributionId =
+  IntelligenceContributionValidation.requireIdentifier(
+    contributionId,
+    fieldName: 'contributionId',
+  ),
+        sourceEngineId =
+        IntelligenceContributionValidation.requireIdentifier(
+          sourceEngineId,
+          fieldName: 'sourceEngineId',
+        ),
+        confidence =
+        IntelligenceContributionValidation.normalizeConfidence(
+          confidence,
+        ),
+        attributes =
+        IntelligenceContributionValidation.immutableAttributes(
+          attributes,
+        );
+
+  @override
+  final String contributionId;
+
+  @override
+  final String sourceEngineId;
+
+  @override
+  final DateTime createdAt;
+
+  @override
+  final double? confidence;
+
+  @override
+  final Map<String, Object?> attributes;
+
+  @override
+  ContributionCategory get category;
+
+  bool get hasConfidence {
+    return confidence != null;
+  }
+
+  bool get hasAttributes {
+    return attributes.isNotEmpty;
+  }
+
+  bool get hasNoAttributes {
+    return attributes.isEmpty;
+  }
+
+  bool wasProducedBy(
+      String engineId,
+      ) {
+    final String normalized = engineId.trim();
+
+    return normalized.isNotEmpty &&
+        sourceEngineId == normalized;
+  }
+
+  T? attribute<T>(
+      String key,
+      ) {
+    final Object? value = attributes[key];
+
+    if (value is T) {
+      return value;
+    }
+
+    return null;
+  }
+
+  bool hasAttribute(
+      String key,
+      ) {
+    final String normalized = key.trim();
+
+    return normalized.isNotEmpty &&
+        attributes.containsKey(normalized);
+  }
+
+  @override
+  String toString() {
+    return '$runtimeType('
+        'contributionId: $contributionId, '
+        'category: ${category.name}, '
+        'sourceEngineId: $sourceEngineId, '
+        'confidence: $confidence'
+        ')';
+  }
+}
+
+============================================================
+FILE: .\lib\atlas\scan\contributions\abstract_recognition_contribution.dart
+============================================================
+import 'abstract_intelligence_contribution.dart';
+import 'contribution_category.dart';
+
+// Base class for recognition-based intelligence contributions.
+//
+// Recognition contributions represent evidence extracted from a collector
+// item before identity or product resolution occurs. Examples include
+// barcode recognition, OCR, vision analysis, logo detection, and sticker
+// detection.
+abstract base class AbstractRecognitionContribution
+    extends AbstractIntelligenceContribution {
+  AbstractRecognitionContribution({
+    required super.contributionId,
+    required super.sourceEngineId,
+    required super.createdAt,
+    super.confidence,
+    super.attributes,
+    this.passedValidation = true,
+    String? validationMessage,
+  }) : validationMessage =
+  _normalizeValidationMessage(validationMessage);
+
+  @override
+  ContributionCategory get category {
+    return ContributionCategory.evidence;
+  }
+
+  final bool passedValidation;
+
+  final String? validationMessage;
+
+  bool get failedValidation {
+    return !passedValidation;
+  }
+
+  bool get hasValidationMessage {
+    return validationMessage != null;
+  }
+
+  bool get isTrusted {
+    final double? value = confidence;
+
+    return passedValidation &&
+        value != null &&
+        value >= 0.75;
+  }
+
+  bool get isLowConfidence {
+    final double? value = confidence;
+
+    return value != null && value < 0.50;
+  }
+
+  bool get hasUnknownConfidence {
+    return confidence == null;
+  }
+
+  bool get shouldReview {
+    return failedValidation ||
+        hasUnknownConfidence ||
+        isLowConfidence;
+  }
+
+  static String? _normalizeValidationMessage(
+      String? value,
+      ) {
+    final String? normalized = value?.trim();
+
+    if (normalized == null || normalized.isEmpty) {
+      return null;
+    }
+
+    return normalized;
+  }
+
+  @override
+  String toString() {
+    return '$runtimeType('
+        'confidence: $confidence, '
+        'passedValidation: $passedValidation'
+        ')';
+  }
+}
+
+============================================================
+FILE: .\lib\atlas\scan\contributions\contribution_category.dart
+============================================================
+// Groups intelligence contributions by their primary responsibility.
+enum ContributionCategory {
+  evidence,
+  recognition,
+  identity,
+  resolution,
+  variant,
+  market,
+  collection,
+  authenticity,
+  recommendation,
+  briefing,
+  diagnostics,
+}
+
+============================================================
+FILE: .\lib\atlas\scan\contributions\contribution_conflict_policy.dart
+============================================================
+// Determines how duplicate contribution IDs are handled.
+enum ContributionConflictPolicy {
+  reject,
+  keepExisting,
+  replaceExisting,
+}
+
+============================================================
+FILE: .\lib\atlas\scan\contributions\contribution_collection.dart
+============================================================
+import 'contribution_category.dart';
+import 'contribution_conflict_policy.dart';
+import 'intelligence_contribution.dart';
+
+// Immutable collection of intelligence contributed during an Atlas scan.
+//
+// Contributions can be discovered by ID, concrete type, category, or source
+// engine without requiring consumers to understand ScanSession internals.
+class ContributionCollection {
+  factory ContributionCollection({
+    Iterable<IntelligenceContribution> contributions =
+    const <IntelligenceContribution>[],
+  }) {
+    final Map<String, IntelligenceContribution> byId =
+    <String, IntelligenceContribution>{};
+
+    for (final IntelligenceContribution contribution
+    in contributions) {
+      final String contributionId =
+      _normalizedContributionId(contribution);
+
+      if (byId.containsKey(contributionId)) {
+        throw StateError(
+          'Duplicate contribution ID: $contributionId',
+        );
+      }
+
+      byId[contributionId] = contribution;
+    }
+
+    return ContributionCollection._(
+      Map<String, IntelligenceContribution>.unmodifiable(
+        byId,
+      ),
+    );
+  }
+
+  const ContributionCollection._(this._byId);
+
+  static final ContributionCollection empty =
+  ContributionCollection();
+
+  final Map<String, IntelligenceContribution> _byId;
+
+  int get length {
+    return _byId.length;
+  }
+
+  bool get isEmpty {
+    return _byId.isEmpty;
+  }
+
+  bool get isNotEmpty {
+    return _byId.isNotEmpty;
+  }
+
+  List<IntelligenceContribution> get values {
+    return List<IntelligenceContribution>.unmodifiable(
+      _byId.values,
+    );
+  }
+
+  bool containsId(
+      String contributionId,
+      ) {
+    return _byId.containsKey(
+      contributionId.trim(),
+    );
+  }
+
+  IntelligenceContribution? contributionForId(
+      String contributionId,
+      ) {
+    return _byId[contributionId.trim()];
+  }
+
+  T? contributionForIdAs<
+  T extends IntelligenceContribution>(
+      String contributionId,
+      ) {
+    final IntelligenceContribution? contribution =
+    contributionForId(contributionId);
+
+    if (contribution is T) {
+      return contribution;
+    }
+
+    return null;
+  }
+
+  List<T> ofType<T extends IntelligenceContribution>() {
+    return List<T>.unmodifiable(
+      _byId.values.whereType<T>(),
+    );
+  }
+
+  T? latestOfType<
+  T extends IntelligenceContribution>() {
+    T? latest;
+
+    for (final T contribution
+    in _byId.values.whereType<T>()) {
+      if (latest == null ||
+          contribution.createdAt.isAfter(
+            latest.createdAt,
+          )) {
+        latest = contribution;
+      }
+    }
+
+    return latest;
+  }
+
+  List<IntelligenceContribution> forCategory(
+      ContributionCategory category,
+      ) {
+    return List<IntelligenceContribution>.unmodifiable(
+      _byId.values.where(
+            (IntelligenceContribution contribution) {
+          return contribution.category == category;
+        },
+      ),
+    );
+  }
+
+  List<IntelligenceContribution> fromEngine(
+      String engineId,
+      ) {
+    final String normalizedEngineId =
+    engineId.trim();
+
+    if (normalizedEngineId.isEmpty) {
+      return const <IntelligenceContribution>[];
+    }
+
+    return List<IntelligenceContribution>.unmodifiable(
+      _byId.values.where(
+            (IntelligenceContribution contribution) {
+          return contribution.sourceEngineId ==
+              normalizedEngineId;
+        },
+      ),
+    );
+  }
+
+  List<IntelligenceContribution>
+  withMinimumConfidence(
+      double minimumConfidence,
+      ) {
+    final double normalizedMinimum =
+    IntelligenceContributionValidation
+        .normalizeConfidence(
+      minimumConfidence,
+    )!;
+
+    return List<IntelligenceContribution>.unmodifiable(
+      _byId.values.where(
+            (IntelligenceContribution contribution) {
+          final double? confidence =
+              contribution.confidence;
+
+          return confidence != null &&
+              confidence >= normalizedMinimum;
+        },
+      ),
+    );
+  }
+
+  ContributionCollection add(
+      IntelligenceContribution contribution, {
+        ContributionConflictPolicy conflictPolicy =
+            ContributionConflictPolicy.reject,
+      }) {
+    final String contributionId =
+    _normalizedContributionId(contribution);
+
+    final bool alreadyExists =
+    _byId.containsKey(contributionId);
+
+    if (alreadyExists) {
+      switch (conflictPolicy) {
+        case ContributionConflictPolicy.reject:
+          throw StateError(
+            'Contribution "$contributionId" '
+                'already exists.',
+          );
+
+        case ContributionConflictPolicy.keepExisting:
+          return this;
+
+        case ContributionConflictPolicy.replaceExisting:
+          break;
+      }
+    }
+
+    return ContributionCollection(
+      contributions:
+      <IntelligenceContribution>[
+        ..._byId.values.where(
+              (IntelligenceContribution existing) {
+            return existing.contributionId.trim() !=
+                contributionId;
+          },
+        ),
+        contribution,
+      ],
+    );
+  }
+
+  ContributionCollection addAll(
+      Iterable<IntelligenceContribution> contributions, {
+        ContributionConflictPolicy conflictPolicy =
+            ContributionConflictPolicy.reject,
+      }) {
+    ContributionCollection current = this;
+
+    for (final IntelligenceContribution contribution
+    in contributions) {
+      current = current.add(
+        contribution,
+        conflictPolicy: conflictPolicy,
+      );
+    }
+
+    return current;
+  }
+
+  ContributionCollection removeById(
+      String contributionId,
+      ) {
+    final String normalized =
+    contributionId.trim();
+
+    if (normalized.isEmpty ||
+        !_byId.containsKey(normalized)) {
+      return this;
+    }
+
+    return ContributionCollection(
+      contributions: _byId.values.where(
+            (IntelligenceContribution contribution) {
+          return contribution.contributionId.trim() !=
+              normalized;
+        },
+      ),
+    );
+  }
+
+  ContributionCollection removeFromEngine(
+      String engineId,
+      ) {
+    final String normalizedEngineId =
+    engineId.trim();
+
+    if (normalizedEngineId.isEmpty) {
+      return this;
+    }
+
+    final List<IntelligenceContribution> remaining =
+    _byId.values.where(
+          (IntelligenceContribution contribution) {
+        return contribution.sourceEngineId !=
+            normalizedEngineId;
+      },
+    ).toList(growable: false);
+
+    if (remaining.length == length) {
+      return this;
+    }
+
+    return ContributionCollection(
+      contributions: remaining,
+    );
+  }
+
+  ContributionCollection removeCategory(
+      ContributionCategory category,
+      ) {
+    final List<IntelligenceContribution> remaining =
+    _byId.values.where(
+          (IntelligenceContribution contribution) {
+        return contribution.category != category;
+      },
+    ).toList(growable: false);
+
+    if (remaining.length == length) {
+      return this;
+    }
+
+    return ContributionCollection(
+      contributions: remaining,
+    );
+  }
+
+  static String _normalizedContributionId(
+      IntelligenceContribution contribution,
+      ) {
+    return IntelligenceContributionValidation
+        .requireIdentifier(
+      contribution.contributionId,
+      fieldName: 'contributionId',
+    );
+  }
+
+  @override
+  String toString() {
+    return 'ContributionCollection('
+        'length: $length'
+        ')';
+  }
+}
+
+============================================================
+FILE: .\lib\atlas\scan\projection\scan_session_projector.dart
+============================================================
+import '../contributions/contribution_collection.dart';
+import '../contributions/product_resolution_contribution.dart';
+import '../../identity/product/atlas_product_id.dart';
+import '../models/scan_session.dart';
+import '../resolution/resolved_product_snapshot.dart';
+import '../workflow/identity_resolution_status.dart';
+
+/// Immutable projected state derived from scanner intelligence contributions.
+///
+/// Scan engines contribute evidence. The projector converts that evidence into
+/// the canonical state displayed by Atlas.
+class ScanSessionProjection {
+  const ScanSessionProjection({
+    required this.status,
+    required this.resolutionStatus,
+    required this.atlasProductId,
+    required this.resolvedProduct,
+    required this.confidence,
+  });
+
+  final ScanSessionStatus status;
+
+  final IdentityResolutionStatus resolutionStatus;
+
+  final AtlasProductId? atlasProductId;
+
+  final ResolvedProductSnapshot? resolvedProduct;
+
+  final double confidence;
+}
+
+/// Converts immutable intelligence contributions into trusted ScanSession
+/// state.
+///
+/// Engines should produce contributions rather than independently deciding
+/// what the scanner UI displays.
+abstract final class ScanSessionProjector {
+  static ScanSessionProjection project({
+    required ContributionCollection contributions,
+    required ScanSessionStatus currentStatus,
+    required IdentityResolutionStatus currentResolutionStatus,
+    required AtlasProductId? currentAtlasProductId,
+    required ResolvedProductSnapshot? currentResolvedProduct,
+    required double currentConfidence,
+    required bool isOffline,
+  }) {
+    final ProductResolutionContribution? resolutionContribution =
+    contributions.latestOfType<ProductResolutionContribution>();
+
+    if (resolutionContribution == null) {
+      return ScanSessionProjection(
+        status: currentStatus,
+        resolutionStatus: currentResolutionStatus,
+        atlasProductId: currentAtlasProductId,
+        resolvedProduct: currentResolvedProduct,
+        confidence: _normalizeConfidence(
+          currentConfidence,
+        ),
+      );
+    }
+
+    final resolution = resolutionContribution.resolution;
+    final double confidence = _normalizeConfidence(
+      resolution.matchConfidence,
+    );
+
+    if (resolution.requiresReview) {
+      return ScanSessionProjection(
+        status: ScanSessionStatus.awaitingConfirmation,
+        resolutionStatus:
+        IdentityResolutionStatus.ambiguous,
+        atlasProductId: resolution.productId,
+        resolvedProduct: resolution.resolvedProduct,
+        confidence: confidence,
+      );
+    }
+
+    return ScanSessionProjection(
+      status: ScanSessionStatus.completed,
+      resolutionStatus: isOffline
+          ? IdentityResolutionStatus.resolvedLocal
+          : IdentityResolutionStatus.resolvedRemote,
+      atlasProductId: resolution.productId,
+      resolvedProduct: resolution.resolvedProduct,
+      confidence: confidence,
+    );
+  }
+
+  static double _normalizeConfidence(double value) {
+    if (!value.isFinite) {
+      return 0.0;
+    }
+
+    return value.clamp(0.0, 1.0).toDouble();
+  }
+}
+
+============================================================
+FILE: .\lib\atlas\scan\workflow\identity_resolution_status.dart
+============================================================
+// Describes the current state of product identity resolution.
+enum IdentityResolutionStatus {
+  notStarted,
+  resolving,
+  resolvedLocal,
+  resolvedRemote,
+  pendingSync,
+  ambiguous,
+  unresolved,
+  failed,
+}
+
+// Helpers for controlling the scan workflow from resolution state.
+extension IdentityResolutionStatusX on IdentityResolutionStatus {
+  bool get isResolved {
+    return this == IdentityResolutionStatus.resolvedLocal ||
+        this == IdentityResolutionStatus.resolvedRemote;
+  }
+
+  bool get requiresNetwork {
+    return this == IdentityResolutionStatus.pendingSync;
+  }
+
+  bool get requiresUserReview {
+    return this == IdentityResolutionStatus.ambiguous ||
+        this == IdentityResolutionStatus.unresolved;
+  }
+
+  bool get isTerminal {
+    return isResolved ||
+        this == IdentityResolutionStatus.pendingSync ||
+        this == IdentityResolutionStatus.ambiguous ||
+        this == IdentityResolutionStatus.unresolved ||
+        this == IdentityResolutionStatus.failed;
+  }
+}
+
+============================================================
+FILE: .\lib\atlas\scan\workflow\scan_intent.dart
+============================================================
+// Describes the workflow Atlas should start after identifying an item.
+enum ScanIntent {
+  addToVault,
+  identifyProduct,
+  catalogSubmission,
+  marketplaceListing,
+  verifyOwnership,
+  search,
+}
+
+// Presentation helpers for scan-driven workflows.
+extension ScanIntentX on ScanIntent {
+  String get label {
+    switch (this) {
+      case ScanIntent.addToVault:
+        return 'Add to Vault';
+      case ScanIntent.identifyProduct:
+        return 'Identify Product';
+      case ScanIntent.catalogSubmission:
+        return 'Catalog Submission';
+      case ScanIntent.marketplaceListing:
+        return 'Marketplace Listing';
+      case ScanIntent.verifyOwnership:
+        return 'Verify Ownership';
+      case ScanIntent.search:
+        return 'Search';
+    }
+  }
+
+  bool get canCreateCatalogSubmission {
+    return this == ScanIntent.catalogSubmission ||
+        this == ScanIntent.addToVault;
+  }
+
+  bool get requiresResolvedProduct {
+    return this == ScanIntent.addToVault ||
+        this == ScanIntent.marketplaceListing ||
+        this == ScanIntent.verifyOwnership;
+  }
+}
+
+============================================================
+FILE: .\lib\atlas\scan\workflow\scan_performance_mode.dart
+============================================================
+// Controls how much real-time analysis runs during a scan session.
+enum ScanPerformanceMode {
+  fastBarcodeOnly,
+  fullAnalysis,
+  lowLight,
+  batterySaver,
+}
+
+// Runtime capability helpers for scan performance modes.
+extension ScanPerformanceModeX on ScanPerformanceMode {
+  bool get usesBarcodeDetection => true;
+
+  bool get usesQrDetection => true;
+
+  bool get usesOcr {
+    return this == ScanPerformanceMode.fullAnalysis ||
+        this == ScanPerformanceMode.lowLight;
+  }
+
+  bool get usesVisualAnalysis {
+    return this == ScanPerformanceMode.fullAnalysis ||
+        this == ScanPerformanceMode.lowLight;
+  }
+
+  bool get usesLiveImageHashing {
+    return this == ScanPerformanceMode.fullAnalysis;
+  }
+
+  bool get prefersReducedFrameRate {
+    return this == ScanPerformanceMode.batterySaver ||
+        this == ScanPerformanceMode.lowLight;
+  }
+
+  String get label {
+    switch (this) {
+      case ScanPerformanceMode.fastBarcodeOnly:
+        return 'Fast Scan';
+      case ScanPerformanceMode.fullAnalysis:
+        return 'Full Analysis';
+      case ScanPerformanceMode.lowLight:
+        return 'Low Light';
+      case ScanPerformanceMode.batterySaver:
+        return 'Battery Saver';
+    }
+  }
+}
+
+============================================================
+FILE: .\lib\atlas\identity\product\atlas_product_id.dart
+============================================================
+// Canonical identifier for a product known by Atlas.
+//
+// Example:
+//
+// ATLAS-FNK-000001
+//
+// This ID is owned by Atlas and remains stable regardless of changes to
+// external product databases.
+final class AtlasProductId {
+  AtlasProductId({
+    required String categoryCode,
+    required int numericId,
+  })  : categoryCode = _normalizeCategoryCode(categoryCode),
+        numericId = _validateNumericId(numericId);
+
+  // Convenience constructor for Funko products.
+  AtlasProductId.funko({
+    required int numericId,
+  }) : this(
+    categoryCode: 'FNK',
+    numericId: numericId,
+  );
+
+  // Future convenience constructors.
+  AtlasProductId.pokemon({
+    required int numericId,
+  }) : this(
+    categoryCode: 'PKM',
+    numericId: numericId,
+  );
+
+  AtlasProductId.hotWheels({
+    required int numericId,
+  }) : this(
+    categoryCode: 'HW',
+    numericId: numericId,
+  );
+
+  AtlasProductId.sports({
+    required int numericId,
+  }) : this(
+    categoryCode: 'SPT',
+    numericId: numericId,
+  );
+
+  // Product family/category.
+  final String categoryCode;
+
+  // Stable Atlas-owned identifier.
+  final int numericId;
+
+  String get formattedNumericId {
+    return numericId.toString().padLeft(
+      6,
+      '0',
+    );
+  }
+
+  // Human-readable identifier.
+  String get value {
+    return 'ATLAS-$categoryCode-$formattedNumericId';
+  }
+
+  // Atlas URI.
+  Uri get uri {
+    return Uri(
+      scheme: 'atlas',
+      host: 'product',
+      pathSegments: <String>[
+        value,
+      ],
+    );
+  }
+
+  static String _normalizeCategoryCode(
+      String value,
+      ) {
+    final String normalized =
+    value.trim().toUpperCase();
+
+    if (normalized.isEmpty) {
+      throw ArgumentError.value(
+        value,
+        'categoryCode',
+        'Category code cannot be empty.',
+      );
+    }
+
+    return normalized;
+  }
+
+  static int _validateNumericId(
+      int value,
+      ) {
+    if (value <= 0) {
+      throw ArgumentError.value(
+        value,
+        'numericId',
+        'Numeric ID must be greater than zero.',
+      );
+    }
+
+    return value;
+  }
+
+  @override
+  bool operator ==(
+      Object other,
+      ) {
+    return identical(this, other) ||
+        other is AtlasProductId &&
+            other.categoryCode == categoryCode &&
+            other.numericId == numericId;
+  }
+
+  @override
+  int get hashCode {
+    return Object.hash(
+      categoryCode,
+      numericId,
+    );
+  }
+
+  @override
+  String toString() {
+    return value;
+  }
+}
+
+============================================================
+FILE: .\lib\atlas\scan\resolution\resolved_product_snapshot.dart
+============================================================
+import '../../catalog/models/atlas_catalog_product.dart';
+import '../../identity/product/atlas_product_id.dart';
+
+/// Immutable scanner-owned snapshot of a resolved Atlas product.
+///
+/// The scanner stores this snapshot instead of depending directly on the
+/// catalog repository or database model. This allows the result screen and
+/// downstream intelligence engines to use the resolved product without
+/// performing another catalog lookup.
+final class ResolvedProductSnapshot {
+  ResolvedProductSnapshot({
+    required this.productId,
+    required String displayName,
+    required String categoryCode,
+    String? brand,
+    String? productLine,
+    String? series,
+    String? characterName,
+    String? productNumber,
+    String? variantName,
+    Iterable<String> barcodes = const <String>[],
+    Map<String, Object?> attributes = const <String, Object?>{},
+  })  : displayName = _requireText(
+    displayName,
+    'displayName',
+  ),
+        categoryCode = _normalizeCode(categoryCode),
+        brand = _normalizeOptionalText(brand),
+        productLine = _normalizeOptionalText(productLine),
+        series = _normalizeOptionalText(series),
+        characterName = _normalizeOptionalText(characterName),
+        productNumber = _normalizeOptionalText(productNumber),
+        variantName = _normalizeOptionalText(variantName),
+        barcodes = List<String>.unmodifiable(
+          _normalizeBarcodes(barcodes),
+        ),
+        attributes = Map<String, Object?>.unmodifiable(
+          Map<String, Object?>.from(attributes),
+        );
+
+  factory ResolvedProductSnapshot.fromCatalogProduct(
+      AtlasCatalogProduct product,
+      ) {
+    return ResolvedProductSnapshot(
+      productId: product.productId,
+      displayName: product.displayName,
+      categoryCode: product.categoryCode,
+      brand: product.brand,
+      productLine: product.productLine,
+      series: product.series,
+      characterName: product.characterName,
+      productNumber: product.productNumber,
+      variantName: product.variantName,
+      barcodes: product.barcodes,
+      attributes: product.attributes,
+    );
+  }
+
+  final AtlasProductId productId;
+
+  final String displayName;
+
+  final String categoryCode;
+
+  final String? brand;
+
+  final String? productLine;
+
+  final String? series;
+
+  final String? characterName;
+
+  final String? productNumber;
+
+  final String? variantName;
+
+  final List<String> barcodes;
+
+  final Map<String, Object?> attributes;
+
+  bool get hasBarcode => barcodes.isNotEmpty;
+
+  bool get hasVariant => variantName != null;
+
+  bool get hasProductNumber => productNumber != null;
+
+  String? get primaryBarcode {
+    if (barcodes.isEmpty) {
+      return null;
+    }
+
+    return barcodes.first;
+  }
+
+  T? attribute<T>(String key) {
+    final Object? value = attributes[key];
+
+    if (value is T) {
+      return value;
+    }
+
+    return null;
+  }
+
+  bool hasAttribute(String key) {
+    return attributes.containsKey(key);
+  }
+
+  bool matchesBarcode(String value) {
+    final String normalized = _normalizeBarcode(value);
+
+    return normalized.isNotEmpty &&
+        barcodes.contains(normalized);
+  }
+
+  AtlasCatalogProduct toCatalogProduct() {
+    return AtlasCatalogProduct(
+      productId: productId,
+      displayName: displayName,
+      categoryCode: categoryCode,
+      brand: brand,
+      productLine: productLine,
+      series: series,
+      characterName: characterName,
+      productNumber: productNumber,
+      variantName: variantName,
+      barcodes: barcodes,
+      attributes: attributes,
+    );
+  }
+
+  static String _requireText(
+      String value,
+      String parameterName,
+      ) {
+    final String normalized = value.trim();
+
+    if (normalized.isEmpty) {
+      throw ArgumentError.value(
+        value,
+        parameterName,
+        '$parameterName cannot be empty.',
+      );
+    }
+
+    return normalized;
+  }
+
+  static String _normalizeCode(String value) {
+    final String normalized = value.trim().toUpperCase();
+
+    if (normalized.isEmpty) {
+      throw ArgumentError.value(
+        value,
+        'categoryCode',
+        'Category code cannot be empty.',
+      );
+    }
+
+    return normalized;
+  }
+
+  static String? _normalizeOptionalText(String? value) {
+    final String normalized = value?.trim() ?? '';
+
+    if (normalized.isEmpty) {
+      return null;
+    }
+
+    return normalized;
+  }
+
+  static List<String> _normalizeBarcodes(
+      Iterable<String> values,
+      ) {
+    final Set<String> normalized = <String>{};
+
+    for (final String value in values) {
+      final String barcode = _normalizeBarcode(value);
+
+      if (barcode.isNotEmpty) {
+        normalized.add(barcode);
+      }
+    }
+
+    return normalized.toList(growable: false);
+  }
+
+  static String _normalizeBarcode(String value) {
+    return value.replaceAll(
+      RegExp(r'[^0-9A-Za-z]'),
+      '',
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        other is ResolvedProductSnapshot &&
+            other.productId == productId;
+  }
+
+  @override
+  int get hashCode => productId.hashCode;
+
+  @override
+  String toString() {
+    return '$displayName (${productId.value})';
+  }
+}
+
+============================================================
+FILE: .\lib\atlas\scan\capabilities\standard_scan_capability_registry.dart
+============================================================
+import '../../catalog/resolution/catalog_resolution_service.dart';
+import '../../catalog/services/atlas_catalog_service.dart';
+import '../engine/barcode_intelligence_engine.dart';
+import '../engine/engine_context.dart';
+import '../engine/identity_intelligence_engine.dart';
+import '../engine/product_resolution_engine.dart';
+import '../authenticity/atlas_authenticity_engine.dart';
+import 'engine_capability_category.dart';
+import 'scan_capability_registry.dart';
+import 'scan_engine_registration.dart';
+
+// Creates the standard set of Atlas scan capabilities.
+//
+// This is the central composition point for built-in intelligence engines.
+// Future OCR, vision, identity, market, vault, and briefing capabilities
+// should be registered here without changing ScanPipeline.
+abstract final class StandardScanCapabilityRegistry {
+  static ScanCapabilityRegistry create() {
+    return ScanCapabilityRegistryBuilder()
+        .register(_barcodeIntelligenceRegistration())
+        .register(_identityIntelligenceRegistration())
+        .register(_productResolutionRegistration())
+        .register(_authenticityRegistration())
+        .build();
+  }
+
+  static ScanEngineRegistration _barcodeIntelligenceRegistration() {
+    return ScanEngineRegistration(
+      capabilityId: BarcodeIntelligenceEngine.capabilityId,
+      engineId: BarcodeIntelligenceEngine.id,
+      displayName: 'Barcode Intelligence',
+      description:
+          'Validates barcode and QR evidence and converts it into '
+          'structured Atlas intelligence contributions.',
+      category: EngineCapabilityCategory.recognition,
+      createEngine: () {
+        return const BarcodeIntelligenceEngine();
+      },
+      minimumAccessTier: AtlasAccessTier.guest,
+      enabledByDefault: true,
+      requiresOnline: false,
+      tags: const <String>{
+        'barcode',
+        'qr',
+        'evidence',
+        'offline',
+        'identity-input',
+      },
+      attributes: const <String, Object?>{
+        'version': 1,
+        'producesContribution': 'BarcodeContribution',
+        'supportsProductBarcodes': true,
+        'supportsQrCodes': true,
+      },
+    );
+  }
+
+  static ScanEngineRegistration _identityIntelligenceRegistration() {
+    return ScanEngineRegistration(
+      capabilityId: IdentityIntelligenceEngine.capabilityId,
+      engineId: IdentityIntelligenceEngine.id,
+      displayName: 'Identity Intelligence',
+      description:
+          'Combines structured recognition evidence into '
+          'collectible identity hypotheses.',
+      category: EngineCapabilityCategory.identity,
+      createEngine: () {
+        return const IdentityIntelligenceEngine();
+      },
+      minimumAccessTier: AtlasAccessTier.guest,
+      enabledByDefault: true,
+      requiresOnline: false,
+      tags: const <String>{
+        'identity',
+        'recognition',
+        'ocr',
+        'hypothesis',
+        'offline',
+        'resolution-input',
+      },
+      attributes: const <String, Object?>{
+        'version': 1,
+        'consumesContribution': 'OCRContribution',
+        'producesContribution': 'IdentityContribution',
+        'supportsBarcodeEvidence': true,
+        'supportsOcrEvidence': true,
+      },
+    );
+  }
+
+  static ScanEngineRegistration _productResolutionRegistration() {
+    return ScanEngineRegistration(
+      capabilityId: ProductResolutionEngine.capabilityId,
+      engineId: ProductResolutionEngine.id,
+      displayName: 'Product Resolution',
+      description:
+          'Resolves collectible identity hypotheses against '
+          'the shared Atlas product catalog.',
+      category: EngineCapabilityCategory.resolution,
+      createEngine: () {
+        final CatalogResolutionService resolutionService =
+            CatalogResolutionService(AtlasCatalogService.instance);
+
+        return ProductResolutionEngine(resolutionService);
+      },
+      minimumAccessTier: AtlasAccessTier.guest,
+      enabledByDefault: true,
+      requiresOnline: false,
+      tags: const <String>{
+        'product',
+        'resolution',
+        'catalog',
+        'identity',
+        'matching',
+        'offline',
+      },
+      attributes: const <String, Object?>{
+        'version': 1,
+        'consumesContribution': 'IdentityContribution',
+        'producesContribution': 'ProductResolutionContribution',
+        'usesSharedCatalogService': true,
+        'supportsCandidateReview': true,
+      },
+    );
+  }
+
+  static ScanEngineRegistration _authenticityRegistration() {
+    return ScanEngineRegistration(
+      capabilityId: AtlasAuthenticityEngine.capabilityId,
+      engineId: AtlasAuthenticityEngine.id,
+      displayName: 'Authenticity Intelligence',
+      description:
+          'Evaluates visual inspection evidence conservatively and explains warning signals.',
+      category: EngineCapabilityCategory.diagnostics,
+      createEngine: () => const AtlasAuthenticityEngine(),
+      minimumAccessTier: AtlasAccessTier.guest,
+      enabledByDefault: true,
+      requiresOnline: false,
+      tags: const <String>{'authenticity', 'visual-inspection', 'offline'},
+      attributes: const <String, Object?>{
+        'version': 1,
+        'consumesContribution': 'VisualInspectionContribution',
+        'producesContribution': 'AuthenticityContribution',
+      },
+    );
+  }
+}
+
+============================================================
+SCANSESSION USAGE IN TESTS
+============================================================
+
+Path                                                                                                             LineNumber Line                                   
+----                                                                                                             ---------- ----                                   
+C:\Users\Arthur Sabala\Documents\funkovault2\test\atlas\scan\authenticity\atlas_authenticity_engine_test.dart            14   ScanSession session() => ScanSession(
+C:\Users\Arthur Sabala\Documents\funkovault2\test\screens\scanner\atlas_scan_result_catalog_context_test.dart            38   ScanSession scanSession() {          
+C:\Users\Arthur Sabala\Documents\funkovault2\test\screens\scanner\atlas_scan_result_catalog_context_test.dart            41     return ScanSession(                
+C:\Users\Arthur Sabala\Documents\funkovault2\test\screens\scanner\atlas_scan_result_catalog_context_test.dart            71             session: scanSession(),    
+C:\Users\Arthur Sabala\Documents\funkovault2\test\screens\scanner\atlas_scan_result_collection_context_test.dart         43   ScanSession scanSession() {          
+C:\Users\Arthur Sabala\Documents\funkovault2\test\screens\scanner\atlas_scan_result_collection_context_test.dart         46     return ScanSession(                
+C:\Users\Arthur Sabala\Documents\funkovault2\test\screens\scanner\atlas_scan_result_collection_context_test.dart         77             session: scanSession(),    
+C:\Users\Arthur Sabala\Documents\funkovault2\test\screens\scanner\atlas_scan_result_wishlist_scope_test.dart             97   ScanSession scanSession() {          
+C:\Users\Arthur Sabala\Documents\funkovault2\test\screens\scanner\atlas_scan_result_wishlist_scope_test.dart            100     return ScanSession(                
+C:\Users\Arthur Sabala\Documents\funkovault2\test\screens\scanner\atlas_scan_result_wishlist_scope_test.dart            129             session: scanSession(),    
+
+
+

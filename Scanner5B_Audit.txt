@@ -1,0 +1,1278 @@
+SCANNER 5B GUIDED CAPTURE AUDIT
+Generated: 09/03/2026 09:47:53
+
+
+============================================================
+FILE: .\lib\atlas\scan\acquisition\atlas_inspection_image_capture_service.dart
+============================================================
+import 'package:image_picker/image_picker.dart';
+
+import '../models/scan_image.dart';
+
+enum AtlasInspectionImageSource { camera, gallery }
+
+abstract interface class AtlasInspectionImageCapture {
+  Future<ScanImage?> capture({
+    required AtlasInspectionImageSource source,
+    required ScanImageType type,
+  });
+}
+
+final class AtlasInspectionImageCaptureService
+    implements AtlasInspectionImageCapture {
+  AtlasInspectionImageCaptureService({ImagePicker? picker})
+    : _picker = picker ?? ImagePicker();
+
+  final ImagePicker _picker;
+
+  @override
+  Future<ScanImage?> capture({
+    required AtlasInspectionImageSource source,
+    required ScanImageType type,
+  }) async {
+    final file = await _picker.pickImage(
+      source: source == AtlasInspectionImageSource.camera
+          ? ImageSource.camera
+          : ImageSource.gallery,
+      imageQuality: 92,
+    );
+    if (file == null) return null;
+    final capturedAt = DateTime.now().toUtc();
+    return ScanImage(
+      imageId: 'inspection_${capturedAt.microsecondsSinceEpoch}_${type.name}',
+      type: type,
+      status: ScanImageStatus.captured,
+      capturedAt: capturedAt,
+      localPath: file.path,
+      mimeType: file.mimeType,
+      byteSize: await file.length(),
+    );
+  }
+}
+
+============================================================
+FILE: .\lib\atlas\scan\recognition\atlas_text_recognition_service.dart
+============================================================
+import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
+
+abstract interface class AtlasTextRecognition {
+  Future<String> recognize(String path);
+  Future<void> close();
+}
+
+final class AtlasTextRecognitionService implements AtlasTextRecognition {
+  AtlasTextRecognitionService({TextRecognizer? recognizer})
+    : _recognizer = recognizer ?? TextRecognizer();
+
+  final TextRecognizer _recognizer;
+
+  @override
+  Future<String> recognize(String path) async {
+    final normalized = path.trim();
+    if (normalized.isEmpty) return '';
+    final result = await _recognizer.processImage(
+      InputImage.fromFilePath(normalized),
+    );
+    return result.text.trim();
+  }
+
+  @override
+  Future<void> close() => _recognizer.close();
+}
+
+============================================================
+FILE: .\lib\screens\scanner\atlas_visual_inspection_screen.dart
+============================================================
+import 'dart:io';
+
+import 'package:flutter/material.dart';
+
+import '../../atlas/scan/acquisition/atlas_inspection_image_capture_service.dart';
+import '../../atlas/scan/authenticity/atlas_visual_inspection_service.dart';
+import '../../atlas/scan/authenticity/models/atlas_visual_inspection.dart';
+import '../../atlas/scan/models/scan_image.dart';
+import '../../atlas/scan/models/scan_session.dart';
+import '../../atlas/scan/recognition/atlas_text_recognition_service.dart';
+import '../../theme/atlas_spacing.dart';
+import '../../widgets/atlas/atlas_expandable_section.dart';
+import '../../widgets/atlas/components/atlas_form_field.dart';
+import '../../widgets/atlas/components/atlas_info_banner.dart';
+import '../../widgets/vault/vault_scroll_view.dart';
+import '../../widgets/scanner/atlas_authenticity_card.dart';
+
+class AtlasVisualInspectionScreen extends StatefulWidget {
+  const AtlasVisualInspectionScreen({
+    super.key,
+    required this.session,
+    this.imageCapture,
+    this.textRecognition,
+    this.inspectionService = const AtlasVisualInspectionService(),
+  });
+
+  final ScanSession session;
+  final AtlasInspectionImageCapture? imageCapture;
+  final AtlasTextRecognition? textRecognition;
+  final AtlasVisualInspectionService inspectionService;
+
+  @override
+  State<AtlasVisualInspectionScreen> createState() =>
+      _AtlasVisualInspectionScreenState();
+}
+
+class _AtlasVisualInspectionScreenState
+    extends State<AtlasVisualInspectionScreen> {
+  final _sticker = TextEditingController();
+  final _stamp = TextEditingController();
+  final _copyright = TextEditingController();
+  final _signature = TextEditingController();
+  final _provider = TextEditingController();
+  final _number = TextEditingController();
+  final _notes = TextEditingController();
+  late final AtlasInspectionImageCapture _capture;
+  late final AtlasTextRecognition _recognizer;
+  final List<ScanImage> _images = <ScanImage>[];
+  bool? _typography;
+  bool? _border;
+  bool? _printClear;
+  bool? _cutEven;
+  bool? _autograph;
+  bool? _coa;
+  bool _busy = false;
+  ScanSession? _preview;
+
+  @override
+  void initState() {
+    super.initState();
+    _capture = widget.imageCapture ?? AtlasInspectionImageCaptureService();
+    _recognizer = widget.textRecognition ?? AtlasTextRecognitionService();
+    final existing = widget.session.visualInspectionContribution?.inspection;
+    if (existing != null) {
+      _sticker.text = existing.stickerText;
+      _stamp.text = existing.productionStampText;
+      _copyright.text = existing.copyrightText;
+      _signature.text = existing.signature;
+      _provider.text = existing.authenticationProvider;
+      _number.text = existing.authenticityNumber;
+      _notes.text = existing.notes;
+      _images.addAll(existing.images);
+      _typography = existing.typographyConsistent;
+      _border = existing.borderConsistent;
+      _printClear = existing.stickerPrintClear;
+      _cutEven = existing.stickerCutEven;
+      _autograph = existing.hasAutograph;
+      _coa = existing.hasCoa;
+    }
+  }
+
+  @override
+  void dispose() {
+    _sticker.dispose();
+    _stamp.dispose();
+    _copyright.dispose();
+    _signature.dispose();
+    _provider.dispose();
+    _number.dispose();
+    _notes.dispose();
+    _recognizer.close();
+    super.dispose();
+  }
+
+  Future<void> _captureEvidence(
+    ScanImageType type,
+    TextEditingController target,
+  ) async {
+    final source = await showModalBottomSheet<AtlasInspectionImageSource>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_camera_outlined),
+              title: const Text('Camera'),
+              onTap: () =>
+                  Navigator.pop(context, AtlasInspectionImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: const Text('Gallery'),
+              onTap: () =>
+                  Navigator.pop(context, AtlasInspectionImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (source == null) return;
+    setState(() => _busy = true);
+    try {
+      final image = await _capture.capture(source: source, type: type);
+      if (image == null) return;
+      final text = await _recognizer.recognize(image.localPath!);
+      if (!mounted) return;
+      setState(() {
+        _images.removeWhere((item) => item.type == type);
+        _images.add(image);
+        if (text.isNotEmpty) target.text = text;
+      });
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  AtlasVisualInspection _inspection() => AtlasVisualInspection(
+    stickerText: _sticker.text,
+    productionStampText: _stamp.text,
+    copyrightText: _copyright.text,
+    signature: _signature.text,
+    authenticationProvider: _provider.text,
+    authenticityNumber: _number.text,
+    typographyConsistent: _typography,
+    borderConsistent: _border,
+    stickerPrintClear: _printClear,
+    stickerCutEven: _cutEven,
+    hasAutograph: _autograph,
+    hasCoa: _coa,
+    notes: _notes.text,
+    images: _images,
+  );
+
+  Future<void> _analyze({required bool finish}) async {
+    setState(() => _busy = true);
+    try {
+      final session = await widget.inspectionService.inspect(
+        session: widget.session,
+        inspection: _inspection(),
+      );
+      if (!mounted) return;
+      if (finish) {
+        Navigator.pop(context, session);
+      } else {
+        setState(() => _preview = session);
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Visual Inspection')),
+      body: VaultScrollView(
+        children: [
+          const AtlasInfoBanner(
+            title: 'Evidence, not certification',
+            message:
+                'Atlas records warning signals and evidence consistency. It does not certify an item as authentic or fake.',
+            icon: Icons.info_outline_rounded,
+          ),
+          const SizedBox(height: AtlasSpacing.lg),
+          _section(
+            title: '🏷️ Sticker & Variant',
+            controller: _sticker,
+            label: 'Sticker Text',
+            type: ScanImageType.sticker,
+            checks: [
+              _check(
+                'Print is clear',
+                _printClear,
+                (value) => _printClear = value,
+              ),
+              _check(
+                'Cut and border are even',
+                _cutEven,
+                (value) => _cutEven = value,
+              ),
+            ],
+          ),
+          const SizedBox(height: AtlasSpacing.lg),
+          _section(
+            title: '🏭 Bottom-Box Production Stamp',
+            controller: _stamp,
+            label: 'Production Code (JJL/FAC)',
+            type: ScanImageType.bottomBox,
+          ),
+          const SizedBox(height: AtlasSpacing.lg),
+          AtlasExpandableSection(
+            title: 'Typography, Border & Copyright',
+            icon: Icons.text_fields_rounded,
+            initiallyExpanded: true,
+            child: Column(
+              children: [
+                AtlasFormField(
+                  controller: _copyright,
+                  label: 'Copyright Text / Year',
+                  icon: Icons.copyright_rounded,
+                ),
+                _check(
+                  'Typography looks consistent',
+                  _typography,
+                  (value) => _typography = value,
+                ),
+                _check(
+                  'Box borders look consistent',
+                  _border,
+                  (value) => _border = value,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AtlasSpacing.lg),
+          AtlasExpandableSection(
+            title: 'Autograph & COA Evidence',
+            icon: Icons.draw_outlined,
+            initiallyExpanded: true,
+            child: Column(
+              children: [
+                _check(
+                  'Autograph is present',
+                  _autograph,
+                  (value) => _autograph = value,
+                ),
+                _check('COA is present', _coa, (value) => _coa = value),
+                AtlasFormField(
+                  controller: _signature,
+                  label: 'Signature / Signer',
+                  icon: Icons.draw_outlined,
+                ),
+                const SizedBox(height: AtlasSpacing.md),
+                AtlasFormField(
+                  controller: _provider,
+                  label: 'Authentication Provider',
+                  icon: Icons.verified_outlined,
+                ),
+                const SizedBox(height: AtlasSpacing.md),
+                AtlasFormField(
+                  controller: _number,
+                  label: 'Authenticity Number',
+                  icon: Icons.numbers_rounded,
+                ),
+              ],
+            ),
+          ),
+          if (_images.isNotEmpty) ...[
+            const SizedBox(height: AtlasSpacing.lg),
+            SizedBox(
+              height: 100,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: _images.length,
+                separatorBuilder: (_, _) =>
+                    const SizedBox(width: AtlasSpacing.sm),
+                itemBuilder: (_, index) => Image.file(
+                  File(_images[index].localPath!),
+                  width: 90,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+          ],
+          if (_preview?.authenticityContribution != null) ...[
+            const SizedBox(height: AtlasSpacing.lg),
+            AtlasAuthenticityCard(
+              assessment: _preview!.authenticityContribution!.assessment,
+            ),
+          ],
+          const SizedBox(height: AtlasSpacing.lg),
+          OutlinedButton.icon(
+            onPressed: _busy ? null : () => _analyze(finish: false),
+            icon: const Icon(Icons.analytics_outlined),
+            label: const Text('🧠 Preview Assessment'),
+          ),
+          const SizedBox(height: AtlasSpacing.sm),
+          FilledButton.icon(
+            onPressed: _busy ? null : () => _analyze(finish: true),
+            icon: _busy
+                ? const SizedBox.square(
+                    dimension: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.check_rounded),
+            label: const Text('Save Inspection'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _section({
+    required String title,
+    required TextEditingController controller,
+    required String label,
+    required ScanImageType type,
+    List<Widget> checks = const <Widget>[],
+  }) => AtlasExpandableSection(
+    title: title,
+    icon: Icons.center_focus_strong_rounded,
+    initiallyExpanded: true,
+    child: Column(
+      children: [
+        AtlasFormField(
+          controller: controller,
+          label: label,
+          icon: Icons.text_snippet_outlined,
+          maxLines: 3,
+        ),
+        const SizedBox(height: AtlasSpacing.sm),
+        OutlinedButton.icon(
+          onPressed: _busy ? null : () => _captureEvidence(type, controller),
+          icon: const Icon(Icons.add_a_photo_outlined),
+          label: const Text('Capture or Choose Image'),
+        ),
+        ...checks,
+      ],
+    ),
+  );
+
+  Widget _check(String label, bool? value, ValueChanged<bool?> update) =>
+      DropdownButtonFormField<bool?>(
+        initialValue: value,
+        decoration: InputDecoration(labelText: label),
+        items: const [
+          DropdownMenuItem(value: null, child: Text('Not inspected')),
+          DropdownMenuItem(value: true, child: Text('Yes')),
+          DropdownMenuItem(value: false, child: Text('No / warning seen')),
+        ],
+        onChanged: (next) => setState(() => update(next)),
+      );
+}
+
+============================================================
+FILE: .\lib\widgets\scanner\atlas_authenticity_card.dart
+============================================================
+import 'package:flutter/material.dart';
+
+import '../../atlas/scan/authenticity/models/atlas_authenticity_assessment.dart';
+import '../../theme/atlas_colors.dart';
+import '../../theme/atlas_spacing.dart';
+import '../atlas/atlas_glass_card.dart';
+import '../atlas/components/atlas_section_header.dart';
+import '../atlas/components/atlas_status_chip.dart';
+
+class AtlasAuthenticityCard extends StatelessWidget {
+  const AtlasAuthenticityCard({super.key, required this.assessment});
+
+  final AtlasAuthenticityAssessment assessment;
+
+  @override
+  Widget build(BuildContext context) {
+    final presentation = _presentation(assessment.status);
+    return AtlasGlassCard(
+      accentColor: presentation.color,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AtlasSectionHeader(
+            title: '${presentation.emoji} Authenticity Intelligence',
+            subtitle: assessment.summary,
+            icon: Icons.verified_user_outlined,
+            accentColor: presentation.color,
+            trailing: AtlasStatusChip(
+              label: presentation.label,
+              icon: Icons.shield_outlined,
+              accentColor: presentation.color,
+            ),
+          ),
+          const SizedBox(height: AtlasSpacing.md),
+          Wrap(
+            spacing: AtlasSpacing.sm,
+            runSpacing: AtlasSpacing.sm,
+            children: [
+              AtlasStatusChip(
+                label: '${assessment.confidenceScore}% confidence',
+                icon: Icons.speed_rounded,
+                accentColor: presentation.color,
+              ),
+              AtlasStatusChip(
+                label: '${assessment.evidenceCoverage}% coverage',
+                icon: Icons.fact_check_outlined,
+                accentColor: AtlasColors.intelligenceBlue,
+              ),
+            ],
+          ),
+          if (assessment.signals.isNotEmpty) ...[
+            const SizedBox(height: AtlasSpacing.md),
+            ...assessment.signals.map(
+              (signal) => Padding(
+                padding: const EdgeInsets.only(bottom: AtlasSpacing.sm),
+                child: Text('• ${signal.title}: ${signal.message}'),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  static ({String emoji, String label, Color color}) _presentation(
+    AtlasAuthenticityStatus status,
+  ) => switch (status) {
+    AtlasAuthenticityStatus.strongEvidence => (
+      emoji: '🛡️',
+      label: 'Strong Evidence',
+      color: AtlasColors.success,
+    ),
+    AtlasAuthenticityStatus.developingEvidence => (
+      emoji: '🟡',
+      label: 'Developing',
+      color: AtlasColors.intelligenceBlue,
+    ),
+    AtlasAuthenticityStatus.reviewRecommended => (
+      emoji: '⚠️',
+      label: 'Review',
+      color: AtlasColors.warning,
+    ),
+    AtlasAuthenticityStatus.insufficientEvidence => (
+      emoji: '🔎',
+      label: 'Insufficient',
+      color: AtlasColors.textSecondary,
+    ),
+  };
+}
+
+============================================================
+FILE: .\lib\atlas\scan\models\scan_image.dart
+============================================================
+// Describes the role an image plays within an Atlas scan session.
+enum ScanImageType {
+  original,
+  processed,
+  thumbnail,
+  frontBox,
+  backBox,
+  bottomBox,
+  barcode,
+  sticker,
+  autograph,
+  certification,
+  condition,
+  unknown,
+}
+
+// Describes the current processing state of a scan image.
+enum ScanImageStatus {
+  captured,
+  queued,
+  uploading,
+  uploaded,
+  processing,
+  processed,
+  approved,
+  rejected,
+  failed,
+}
+
+// Immutable image reference associated with a scan session.
+//
+// Images may initially exist only on the local device. Remote storage
+// information can be added later after upload or synchronization.
+class ScanImage {
+  const ScanImage({
+    required this.imageId,
+    required this.type,
+    required this.status,
+    required this.capturedAt,
+    this.localPath,
+    this.remoteUrl,
+    this.mimeType,
+    this.width,
+    this.height,
+    this.byteSize,
+    this.imageFingerprint,
+    this.processingNotes = const [],
+  });
+
+  final String imageId;
+
+  final ScanImageType type;
+
+  final ScanImageStatus status;
+
+  final DateTime capturedAt;
+
+  final String? localPath;
+
+  final String? remoteUrl;
+
+  final String? mimeType;
+
+  final int? width;
+
+  final int? height;
+
+  final int? byteSize;
+
+  final String? imageFingerprint;
+
+  final List<String> processingNotes;
+
+  bool get hasLocalPath {
+    return localPath != null && localPath!.trim().isNotEmpty;
+  }
+
+  bool get hasRemoteUrl {
+    return remoteUrl != null && remoteUrl!.trim().isNotEmpty;
+  }
+
+  bool get hasFingerprint {
+    return imageFingerprint != null && imageFingerprint!.trim().isNotEmpty;
+  }
+
+  bool get isAvailable {
+    return hasLocalPath || hasRemoteUrl;
+  }
+
+  bool get isOriginal {
+    return type == ScanImageType.original;
+  }
+
+  bool get isProcessed {
+    return status == ScanImageStatus.processed ||
+        status == ScanImageStatus.approved;
+  }
+
+  bool get requiresSync {
+    return hasLocalPath && !hasRemoteUrl;
+  }
+
+  ScanImage copyWith({
+    String? imageId,
+    ScanImageType? type,
+    ScanImageStatus? status,
+    DateTime? capturedAt,
+    String? localPath,
+    String? remoteUrl,
+    String? mimeType,
+    int? width,
+    int? height,
+    int? byteSize,
+    String? imageFingerprint,
+    List<String>? processingNotes,
+  }) {
+    return ScanImage(
+      imageId: imageId ?? this.imageId,
+      type: type ?? this.type,
+      status: status ?? this.status,
+      capturedAt: capturedAt ?? this.capturedAt,
+      localPath: localPath ?? this.localPath,
+      remoteUrl: remoteUrl ?? this.remoteUrl,
+      mimeType: mimeType ?? this.mimeType,
+      width: width ?? this.width,
+      height: height ?? this.height,
+      byteSize: byteSize ?? this.byteSize,
+      imageFingerprint: imageFingerprint ?? this.imageFingerprint,
+      processingNotes: processingNotes ?? this.processingNotes,
+    );
+  }
+}
+
+============================================================
+FILE: .\lib\atlas\scan\models\ocr_recognition_type.dart
+============================================================
+// Describes the semantic meaning of OCR text recognized by Atlas.
+//
+// OCR engines should classify recognized text whenever possible so that
+// downstream identity engines reason about structured knowledge instead of
+// arbitrary strings.
+enum OCRRecognitionType {
+  unknown,
+
+  // Core identity.
+  productLine,
+  brand,
+  title,
+  characterName,
+  productNumber,
+  series,
+
+  // Variant information.
+  sticker,
+  exclusive,
+  limitedEdition,
+  chase,
+  glow,
+  metallic,
+  flocked,
+  diamond,
+  blacklight,
+  autograph,
+
+  // Supporting information.
+  certification,
+  copyright,
+  productionCode,
+  manufacturer,
+  language,
+  date,
+  website,
+  barcodeText,
+  qrText,
+  miscellaneous,
+}
+
+extension OCRRecognitionTypeX on OCRRecognitionType {
+  bool get isIdentity {
+    return switch (this) {
+      OCRRecognitionType.productLine ||
+      OCRRecognitionType.brand ||
+      OCRRecognitionType.title ||
+      OCRRecognitionType.characterName ||
+      OCRRecognitionType.productNumber ||
+      OCRRecognitionType.series => true,
+      _ => false,
+    };
+  }
+
+  bool get isVariant {
+    return switch (this) {
+      OCRRecognitionType.sticker ||
+      OCRRecognitionType.exclusive ||
+      OCRRecognitionType.limitedEdition ||
+      OCRRecognitionType.chase ||
+      OCRRecognitionType.glow ||
+      OCRRecognitionType.metallic ||
+      OCRRecognitionType.flocked ||
+      OCRRecognitionType.diamond ||
+      OCRRecognitionType.blacklight ||
+      OCRRecognitionType.autograph => true,
+      _ => false,
+    };
+  }
+
+  bool get displayPriority {
+    return isIdentity || isVariant;
+  }
+
+  String get displayName {
+    return switch (this) {
+      OCRRecognitionType.unknown => 'Unknown',
+      OCRRecognitionType.productLine => 'Product Line',
+      OCRRecognitionType.brand => 'Brand',
+      OCRRecognitionType.title => 'Title',
+      OCRRecognitionType.characterName => 'Character Name',
+      OCRRecognitionType.productNumber => 'Product Number',
+      OCRRecognitionType.series => 'Series',
+      OCRRecognitionType.sticker => 'Sticker',
+      OCRRecognitionType.exclusive => 'Exclusive',
+      OCRRecognitionType.limitedEdition => 'Limited Edition',
+      OCRRecognitionType.chase => 'Chase',
+      OCRRecognitionType.glow => 'Glow',
+      OCRRecognitionType.metallic => 'Metallic',
+      OCRRecognitionType.flocked => 'Flocked',
+      OCRRecognitionType.diamond => 'Diamond',
+      OCRRecognitionType.blacklight => 'Blacklight',
+      OCRRecognitionType.autograph => 'Autograph',
+      OCRRecognitionType.certification => 'Certification',
+      OCRRecognitionType.copyright => 'Copyright',
+      OCRRecognitionType.productionCode => 'Production Code',
+      OCRRecognitionType.manufacturer => 'Manufacturer',
+      OCRRecognitionType.language => 'Language',
+      OCRRecognitionType.date => 'Date',
+      OCRRecognitionType.website => 'Website',
+      OCRRecognitionType.barcodeText => 'Barcode',
+      OCRRecognitionType.qrText => 'QR Code',
+      OCRRecognitionType.miscellaneous => 'Miscellaneous',
+    };
+  }
+}
+
+============================================================
+FILE: .\lib\atlas\scan\authenticity\atlas_visual_inspection_service.dart
+============================================================
+import '../contributions/contribution_conflict_policy.dart';
+import '../contributions/visual_inspection_contribution.dart';
+import '../engine/engine_context.dart';
+import '../models/scan_session.dart';
+import 'atlas_authenticity_engine.dart';
+import 'models/atlas_visual_inspection.dart';
+
+class AtlasVisualInspectionService {
+  const AtlasVisualInspectionService({
+    this.authenticityEngine = const AtlasAuthenticityEngine(),
+  });
+
+  final AtlasAuthenticityEngine authenticityEngine;
+
+  Future<ScanSession> inspect({
+    required ScanSession session,
+    required AtlasVisualInspection inspection,
+  }) async {
+    var updated = session;
+
+    for (final image in inspection.images) {
+      updated = updated.addImage(image);
+    }
+
+    updated = updated.addContribution(
+      VisualInspectionContribution(
+        contributionId: 'visual-inspection-${session.sessionId}',
+        sourceEngineId: 'atlas.visual-inspection',
+        createdAt: DateTime.now().toUtc(),
+        inspection: inspection,
+        confidence: inspection.resolvedEvidenceConfidence,
+        attributes: <String, Object?>{
+          'inspectionAreas': inspection.inspectedAreas
+              .map((area) => area.name)
+              .toList(growable: false),
+          'structuredObservationCount': inspection.observations.length,
+          'hasReferenceCriteria': inspection.referenceCriteria != null,
+        },
+      ),
+      conflictPolicy: ContributionConflictPolicy.replaceExisting,
+    );
+
+    final result = await authenticityEngine.process(
+      updated,
+      EngineContext(
+        requestId: session.sessionId,
+        createdAt: DateTime.now().toUtc(),
+        deviceType: EngineDeviceType.mobile,
+      ),
+    );
+
+    return result.session;
+  }
+}
+
+============================================================
+FILE: .\lib\atlas\scan\authenticity\models\atlas_visual_inspection.dart
+============================================================
+import '../../models/scan_image.dart';
+import 'atlas_authenticity_evidence.dart';
+import 'atlas_inspection_reference.dart';
+
+final class AtlasVisualInspection {
+  AtlasVisualInspection({
+    this.stickerText = '',
+    this.productionStampText = '',
+    this.copyrightText = '',
+    this.signature = '',
+    this.authenticationProvider = '',
+    this.authenticityNumber = '',
+    this.typographyConsistent,
+    this.borderConsistent,
+    this.stickerPrintClear,
+    this.stickerCutEven,
+    this.hasAutograph,
+    this.hasCoa,
+    this.notes = '',
+    this.referenceCriteria,
+    double? evidenceConfidence,
+    List<AtlasVisualEvidenceObservation> observations =
+        const <AtlasVisualEvidenceObservation>[],
+    List<ScanImage> images = const <ScanImage>[],
+  }) : evidenceConfidence = _normalizeOptionalConfidence(evidenceConfidence),
+       observations = List<AtlasVisualEvidenceObservation>.unmodifiable(
+         observations,
+       ),
+       images = List<ScanImage>.unmodifiable(images);
+
+  final String stickerText;
+  final String productionStampText;
+  final String copyrightText;
+  final String signature;
+  final String authenticationProvider;
+  final String authenticityNumber;
+  final bool? typographyConsistent;
+  final bool? borderConsistent;
+  final bool? stickerPrintClear;
+  final bool? stickerCutEven;
+  final bool? hasAutograph;
+  final bool? hasCoa;
+  final String notes;
+  final AtlasInspectionReferenceCriteria? referenceCriteria;
+  final double? evidenceConfidence;
+  final List<AtlasVisualEvidenceObservation> observations;
+  final List<ScanImage> images;
+
+  bool get hasStickerEvidence => stickerText.trim().isNotEmpty;
+  bool get hasProductionEvidence => productionStampText.trim().isNotEmpty;
+  bool get hasCopyrightEvidence => copyrightText.trim().isNotEmpty;
+  bool get hasAuthenticationEvidence =>
+      authenticationProvider.trim().isNotEmpty ||
+      authenticityNumber.trim().isNotEmpty ||
+      hasCoa != null;
+
+  bool get hasStructuredObservations => observations.isNotEmpty;
+
+  double get resolvedEvidenceConfidence {
+    if (evidenceConfidence != null) {
+      return evidenceConfidence!;
+    }
+    if (observations.isNotEmpty) {
+      final double total = observations.fold<double>(
+        0.0,
+        (double sum, AtlasVisualEvidenceObservation observation) =>
+            sum + observation.confidence,
+      );
+      return total / observations.length;
+    }
+    if (images.isNotEmpty) {
+      return 0.85;
+    }
+    if (hasAnyLegacyEvidence) {
+      return 0.65;
+    }
+    return 0.0;
+  }
+
+  bool get hasAnyLegacyEvidence {
+    return hasStickerEvidence ||
+        hasProductionEvidence ||
+        hasCopyrightEvidence ||
+        signature.trim().isNotEmpty ||
+        authenticationProvider.trim().isNotEmpty ||
+        authenticityNumber.trim().isNotEmpty ||
+        typographyConsistent != null ||
+        borderConsistent != null ||
+        stickerPrintClear != null ||
+        stickerCutEven != null ||
+        hasAutograph != null ||
+        hasCoa != null;
+  }
+
+  Set<AtlasInspectionArea> get inspectedAreas {
+    final Set<AtlasInspectionArea> result = observations
+        .map((AtlasVisualEvidenceObservation value) => value.area)
+        .toSet();
+
+    if (hasStickerEvidence ||
+        stickerPrintClear != null ||
+        stickerCutEven != null) {
+      result.add(AtlasInspectionArea.windowSticker);
+    }
+    if (hasProductionEvidence) {
+      result.add(AtlasInspectionArea.bottomStamp);
+    }
+    if (hasCopyrightEvidence ||
+        typographyConsistent != null ||
+        borderConsistent != null) {
+      result.add(AtlasInspectionArea.packagingCopyright);
+    }
+    if (hasAutograph != null || signature.trim().isNotEmpty) {
+      result.add(AtlasInspectionArea.autograph);
+    }
+    if (hasCoa != null || hasAuthenticationEvidence) {
+      result.add(AtlasInspectionArea.coa);
+    }
+
+    return Set<AtlasInspectionArea>.unmodifiable(result);
+  }
+
+  static double? _normalizeOptionalConfidence(double? value) {
+    if (value == null) {
+      return null;
+    }
+    if (!value.isFinite || value < 0.0 || value > 1.0) {
+      throw ArgumentError.value(
+        value,
+        'evidenceConfidence',
+        'Evidence confidence must be between 0.0 and 1.0.',
+      );
+    }
+    return value;
+  }
+}
+
+============================================================
+FILE: .\lib\atlas\scan\authenticity\models\atlas_authenticity_evidence.dart
+============================================================
+import 'normalized_image_region.dart';
+
+enum AtlasInspectionArea {
+  frontBox,
+  windowSticker,
+  bottomStamp,
+  packagingCopyright,
+  autograph,
+  coa,
+}
+
+enum AtlasEvidenceCategory {
+  variantSticker,
+  productionStamp,
+  macroPackaging,
+  autographCoa,
+}
+
+enum AtlasSignalSeverity { info, advisory, moderate, critical }
+
+enum AtlasSignalDisposition { supporting, observational, discrepancy }
+
+final class AtlasVisualEvidenceObservation {
+  static const int currentSchemaVersion = 1;
+
+  AtlasVisualEvidenceObservation({
+    required String observationId,
+    required String sourceEngineId,
+    required this.area,
+    required this.category,
+    required String label,
+    required String observedValue,
+    required double confidence,
+    String? scanImageId,
+    this.cropRegion,
+    Map<String, Object?> attributes = const <String, Object?>{},
+    DateTime? observedAt,
+  }) : observationId = _requireText(observationId, 'observationId'),
+       sourceEngineId = _requireText(sourceEngineId, 'sourceEngineId'),
+       label = _requireText(label, 'label'),
+       observedValue = observedValue.trim(),
+       confidence = _normalizeConfidence(confidence),
+       scanImageId = _optionalText(scanImageId),
+       attributes = _deepFreezeMap(attributes),
+       observedAt = (observedAt ?? DateTime.now()).toUtc();
+
+  final String observationId;
+  final String sourceEngineId;
+  final AtlasInspectionArea area;
+  final AtlasEvidenceCategory category;
+  final String label;
+  final String observedValue;
+  final double confidence;
+  final String? scanImageId;
+  final NormalizedImageRegion? cropRegion;
+  final Map<String, Object?> attributes;
+  final DateTime observedAt;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    'schemaVersion': currentSchemaVersion,
+    'observationId': observationId,
+    'sourceEngineId': sourceEngineId,
+    'area': area.name,
+    'category': category.name,
+    'label': label,
+    'observedValue': observedValue,
+    'confidence': confidence,
+    'scanImageId': scanImageId,
+    'cropRegion': cropRegion?.toJson(),
+    'attributes': attributes,
+    'observedAt': observedAt.toIso8601String(),
+  };
+
+  static AtlasVisualEvidenceObservation? fromJson(Map<String, Object?> json) {
+    try {
+      if (json['schemaVersion'] != currentSchemaVersion) {
+        return null;
+      }
+
+      final AtlasInspectionArea? area = _parseArea(json['area']);
+      final AtlasEvidenceCategory? category = _parseCategory(json['category']);
+      if (area == null || category == null) {
+        return null;
+      }
+
+      NormalizedImageRegion? crop;
+      final Object? rawCrop = json['cropRegion'];
+      if (rawCrop != null) {
+        if (rawCrop is! Map) {
+          return null;
+        }
+        crop = NormalizedImageRegion.fromJson(
+          Map<String, Object?>.from(rawCrop),
+        );
+        if (crop == null) {
+          return null;
+        }
+      }
+
+      final Object? rawAttributes = json['attributes'];
+      final Map<String, Object?> attributes = rawAttributes is Map
+          ? Map<String, Object?>.from(rawAttributes)
+          : const <String, Object?>{};
+
+      return AtlasVisualEvidenceObservation(
+        observationId: json['observationId'] as String,
+        sourceEngineId: json['sourceEngineId'] as String,
+        area: area,
+        category: category,
+        label: json['label'] as String,
+        observedValue: json['observedValue'] as String,
+        confidence: (json['confidence'] as num).toDouble(),
+        scanImageId: json['scanImageId'] as String?,
+        cropRegion: crop,
+        attributes: attributes,
+        observedAt: DateTime.parse(json['observedAt'] as String).toUtc(),
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static AtlasInspectionArea? _parseArea(Object? value) {
+    if (value is! String) return null;
+    for (final AtlasInspectionArea area in AtlasInspectionArea.values) {
+      if (area.name == value) return area;
+    }
+    return null;
+  }
+
+  static AtlasEvidenceCategory? _parseCategory(Object? value) {
+    if (value is! String) return null;
+    for (final AtlasEvidenceCategory category in AtlasEvidenceCategory.values) {
+      if (category.name == value) return category;
+    }
+    return null;
+  }
+}
+
+final class AtlasEvaluatedAuthenticitySignal {
+  AtlasEvaluatedAuthenticitySignal({
+    required String id,
+    required this.area,
+    required this.category,
+    required this.severity,
+    required this.disposition,
+    required double confidence,
+    required double baseWeight,
+    required String rationale,
+  }) : id = _requireText(id, 'id'),
+       confidence = _normalizeConfidence(confidence),
+       baseWeight = _normalizeWeight(baseWeight),
+       rationale = _requireText(rationale, 'rationale');
+
+  final String id;
+  final AtlasInspectionArea area;
+  final AtlasEvidenceCategory category;
+  final AtlasSignalSeverity severity;
+  final AtlasSignalDisposition disposition;
+  final double confidence;
+  final double baseWeight;
+  final String rationale;
+
+  bool get isDiscrepancy => disposition == AtlasSignalDisposition.discrepancy;
+  bool get isSupporting => disposition == AtlasSignalDisposition.supporting;
+  double get weightedConcern => isDiscrepancy ? baseWeight * confidence : 0.0;
+}
+
+String _requireText(String value, String fieldName) {
+  final String normalized = value.trim();
+  if (normalized.isEmpty) {
+    throw ArgumentError.value(value, fieldName, '$fieldName cannot be empty.');
+  }
+  return normalized;
+}
+
+String? _optionalText(String? value) {
+  final String normalized = value?.trim() ?? '';
+  return normalized.isEmpty ? null : normalized;
+}
+
+double _normalizeConfidence(double value) {
+  if (!value.isFinite || value < 0.0 || value > 1.0) {
+    throw ArgumentError.value(
+      value,
+      'confidence',
+      'Confidence must be between 0.0 and 1.0.',
+    );
+  }
+  return value;
+}
+
+double _normalizeWeight(double value) {
+  if (!value.isFinite || value < 0.0) {
+    throw ArgumentError.value(
+      value,
+      'baseWeight',
+      'baseWeight must be finite and non-negative.',
+    );
+  }
+  return value;
+}
+
+Map<String, Object?> _deepFreezeMap(Map<String, Object?> values) {
+  final Map<String, Object?> copy = <String, Object?>{};
+  for (final MapEntry<String, Object?> entry in values.entries) {
+    copy[entry.key] = _deepFreeze(entry.value);
+  }
+  return Map<String, Object?>.unmodifiable(copy);
+}
+
+Object? _deepFreeze(Object? value) {
+  if (value is Map) {
+    final Map<String, Object?> mapped = <String, Object?>{};
+    for (final MapEntry<Object?, Object?> entry in value.entries) {
+      mapped[entry.key.toString()] = _deepFreeze(entry.value);
+    }
+    return Map<String, Object?>.unmodifiable(mapped);
+  }
+  if (value is List) {
+    return List<Object?>.unmodifiable(value.map<Object?>(_deepFreeze));
+  }
+  if (value is Set) {
+    return Set<Object?>.unmodifiable(value.map<Object?>(_deepFreeze));
+  }
+  return value;
+}
+
+============================================================
+FILE: .\lib\atlas\scan\contributions\visual_inspection_contribution.dart
+============================================================
+import '../authenticity/models/atlas_visual_inspection.dart';
+import 'abstract_intelligence_contribution.dart';
+import 'contribution_category.dart';
+
+final class VisualInspectionContribution
+    extends AbstractIntelligenceContribution {
+  VisualInspectionContribution({
+    required super.contributionId,
+    required super.sourceEngineId,
+    required super.createdAt,
+    required this.inspection,
+    super.confidence,
+    super.attributes,
+  });
+
+  final AtlasVisualInspection inspection;
+
+  @override
+  ContributionCategory get category => ContributionCategory.authenticity;
+}
+
+============================================================
+VISUAL INSPECTION REFERENCES
+============================================================
+
+Path                                                                                                                LineNumber Line                                                                         
+----                                                                                                                ---------- ----                                                                         
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\acquisition\atlas_inspection_image_capture_service.dart         14 final class AtlasInspectionImageCaptureService                               
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\acquisition\atlas_inspection_image_capture_service.dart         16   AtlasInspectionImageCaptureService({ImagePicker? picker})                  
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\authenticity\atlas_authenticity_engine.dart                     29         .latestContributionOfType<VisualInspectionContribution>();           
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\authenticity\atlas_visual_inspection_service.dart                8 class AtlasVisualInspectionService {                                         
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\authenticity\atlas_visual_inspection_service.dart                9   const AtlasVisualInspectionService({                                       
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\authenticity\atlas_visual_inspection_service.dart               26       VisualInspectionContribution(                                          
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\capabilities\standard_scan_capability_registry.dart            142         'consumesContribution': 'VisualInspectionContribution',              
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\contributions\visual_inspection_contribution.dart                5 final class VisualInspectionContribution                                     
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\contributions\visual_inspection_contribution.dart                7   VisualInspectionContribution({                                             
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\models\scan_session.dart                                       147   VisualInspectionContribution? get visualInspectionContribution =>          
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\models\scan_session.dart                                       148       latestContributionOfType<VisualInspectionContribution>();              
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\recognition\atlas_text_recognition_service.dart                  8 final class AtlasTextRecognitionService implements AtlasTextRecognition {    
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\recognition\atlas_text_recognition_service.dart                  9   AtlasTextRecognitionService({TextRecognizer? recognizer})                  
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\screens\scanner\atlas_haul_review_screen.dart                              44         builder: (_) => AtlasVisualInspectionScreen(session: result.session),
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\screens\scanner\atlas_haul_review_screen.dart                             121             .visualInspectionContribution                                    
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\screens\scanner\atlas_haul_review_screen.dart                             140             .visualInspectionContribution                                    
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\screens\scanner\atlas_visual_inspection_screen.dart                        18 class AtlasVisualInspectionScreen extends StatefulWidget {                   
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\screens\scanner\atlas_visual_inspection_screen.dart                        19   const AtlasVisualInspectionScreen({                                        
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\screens\scanner\atlas_visual_inspection_screen.dart                        24     this.inspectionService = const AtlasVisualInspectionService(),           
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\screens\scanner\atlas_visual_inspection_screen.dart                        30   final AtlasVisualInspectionService inspectionService;                      
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\screens\scanner\atlas_visual_inspection_screen.dart                        33   State<AtlasVisualInspectionScreen> createState() =>                        
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\screens\scanner\atlas_visual_inspection_screen.dart                        34       _AtlasVisualInspectionScreenState();                                   
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\screens\scanner\atlas_visual_inspection_screen.dart                        37 class _AtlasVisualInspectionScreenState                                      
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\screens\scanner\atlas_visual_inspection_screen.dart                        38     extends State<AtlasVisualInspectionScreen> {                             
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\screens\scanner\atlas_visual_inspection_screen.dart                        61     _capture = widget.imageCapture ?? AtlasInspectionImageCaptureService();  
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\screens\scanner\atlas_visual_inspection_screen.dart                        62     _recognizer = widget.textRecognition ?? AtlasTextRecognitionService();   
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\screens\scanner\atlas_visual_inspection_screen.dart                        63     final existing = widget.session.visualInspectionContribution?.inspection;
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\screens\scanner\atlas_visual_inspection_screen.dart                       189             type: ScanImageType.sticker,                                     
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\screens\scanner\atlas_visual_inspection_screen.dart                       208             type: ScanImageType.bottomBox,                                   
+C:\Users\Arthur Sabala\Documents\funkovault2\test\atlas\scan\authenticity\atlas_authenticity_engine_test.dart               51     final result = await const AtlasVisualInspectionService().inspect(       
+C:\Users\Arthur Sabala\Documents\funkovault2\test\atlas\scan\authenticity\atlas_authenticity_engine_test.dart               74       final result = await const AtlasVisualInspectionService().inspect(     
+C:\Users\Arthur Sabala\Documents\funkovault2\test\atlas\scan\authenticity\atlas_authenticity_engine_test.dart              101       final result = await const AtlasVisualInspectionService().inspect(     
+C:\Users\Arthur Sabala\Documents\funkovault2\test\atlas\scan\authenticity\atlas_authenticity_engine_test.dart              120     final result = await const AtlasVisualInspectionService().inspect(       
+C:\Users\Arthur Sabala\Documents\funkovault2\test\atlas\scan\authenticity\atlas_authenticity_engine_test.dart              153     final result = await const AtlasVisualInspectionService().inspect(       
+C:\Users\Arthur Sabala\Documents\funkovault2\test\atlas\scan\authenticity\atlas_authenticity_engine_test.dart              187       final result = await const AtlasVisualInspectionService().inspect(     
+C:\Users\Arthur Sabala\Documents\funkovault2\test\atlas\scan\authenticity\atlas_authenticity_engine_test.dart              233       final result = await const AtlasVisualInspectionService().inspect(     
+C:\Users\Arthur Sabala\Documents\funkovault2\test\atlas\scan\authenticity\atlas_authenticity_engine_test.dart              252     const service = AtlasVisualInspectionService(                            
+C:\Users\Arthur Sabala\Documents\funkovault2\test\atlas\scan\authenticity\atlas_authenticity_engine_test.dart              276       second.contributions.ofType<VisualInspectionContribution>(),           
+
+
+

@@ -115,8 +115,8 @@ void main() {
       await Future<void>.delayed(Duration.zero);
 
       expect(controller.scanMode, AtlasLiveSnifferScanMode.featured);
-      expect(controller.hud.toOverlayText(), contains('Target locked'));
-      expect(controller.hud.toOverlayText(), contains('selected Pop'));
+      expect(controller.hud.toOverlayText(), contains('Target selected'));
+      expect(controller.hud.toOverlayText(), contains('only this target'));
 
       await controller.stopSession();
       controller.dispose();
@@ -149,4 +149,131 @@ void main() {
       await platform.dispose();
     },
   );
+
+  test('Fix 6 ignores stale selection generations', () async {
+    final _FakeRecognitionPlatform platform = _FakeRecognitionPlatform();
+    final AtlasLiveSnifferRecognitionController controller =
+        AtlasLiveSnifferRecognitionController(platform: platform);
+
+    controller.startSession(
+      collectionName: 'Arthur Collection',
+      collectionPops: const [],
+    );
+    platform.controller.add(<Object?, Object?>{
+      'type': 'control',
+      'action': 'targetTap',
+      'x': 0.5,
+      'y': 0.5,
+      'selectionGeneration': 9,
+    });
+    await Future<void>.delayed(Duration.zero);
+
+    platform.controller.add(<Object?, Object?>{
+      'type': 'frame',
+      'capturedAtMicros': 1700000000250000,
+      'frameSequence': 10,
+      'selectionGeneration': 8,
+      'targetState': 'lost',
+      'barcodes': const <Object?>[],
+      'textBlocks': const <Object?>[],
+    });
+    await Future<void>.delayed(Duration.zero);
+
+    expect(controller.hud.toOverlayText(), contains('Target selected'));
+    expect(controller.hud.toOverlayText(), isNot(contains('Target lost')));
+
+    await controller.stopSession();
+    controller.dispose();
+    await platform.dispose();
+  });
+
+  test(
+    'Fix 6 target loss waits for retap and never switches to Scan All',
+    () async {
+      final _FakeRecognitionPlatform platform = _FakeRecognitionPlatform();
+      final AtlasLiveSnifferRecognitionController controller =
+          AtlasLiveSnifferRecognitionController(platform: platform);
+
+      controller.startSession(
+        collectionName: 'Arthur Collection',
+        collectionPops: const [],
+      );
+      platform.controller.add(<Object?, Object?>{
+        'type': 'control',
+        'action': 'targetTap',
+        'x': 0.52,
+        'y': 0.58,
+        'selectionGeneration': 12,
+      });
+      await Future<void>.delayed(Duration.zero);
+
+      platform.controller.add(<Object?, Object?>{
+        'type': 'frame',
+        'capturedAtMicros': 1700000000500000,
+        'frameSequence': 20,
+        'selectionGeneration': 12,
+        'targetState': 'lost',
+        'barcodes': const <Object?>[],
+        'textBlocks': const <Object?>[],
+      });
+      await Future<void>.delayed(Duration.zero);
+
+      expect(controller.scanMode, AtlasLiveSnifferScanMode.featured);
+      expect(controller.hud.toOverlayText(), contains('Target lost'));
+      expect(controller.hud.toOverlayText(), contains('tap'));
+
+      await controller.stopSession();
+      controller.dispose();
+      await platform.dispose();
+    },
+  );
+
+  test('Fix 6 drops out-of-order frame sequence', () async {
+    final _FakeRecognitionPlatform platform = _FakeRecognitionPlatform();
+    final AtlasLiveSnifferRecognitionController controller =
+        AtlasLiveSnifferRecognitionController(platform: platform);
+
+    controller.startSession(
+      collectionName: 'Arthur Collection',
+      collectionPops: const [],
+    );
+    platform.controller.add(<Object?, Object?>{
+      'type': 'control',
+      'action': 'targetTap',
+      'x': 0.5,
+      'y': 0.5,
+      'selectionGeneration': 15,
+    });
+    await Future<void>.delayed(Duration.zero);
+
+    platform.controller.add(<Object?, Object?>{
+      'type': 'frame',
+      'capturedAtMicros': 1700000001000000,
+      'frameSequence': 40,
+      'selectionGeneration': 15,
+      'targetState': 'coasting',
+      'barcodes': const <Object?>[],
+      'textBlocks': const <Object?>[],
+    });
+    await Future<void>.delayed(Duration.zero);
+    expect(controller.hud.toOverlayText(), contains('Tracking selected Pop'));
+
+    platform.controller.add(<Object?, Object?>{
+      'type': 'frame',
+      'capturedAtMicros': 1700000001250000,
+      'frameSequence': 39,
+      'selectionGeneration': 15,
+      'targetState': 'lost',
+      'barcodes': const <Object?>[],
+      'textBlocks': const <Object?>[],
+    });
+    await Future<void>.delayed(Duration.zero);
+
+    expect(controller.hud.toOverlayText(), contains('Tracking selected Pop'));
+    expect(controller.hud.toOverlayText(), isNot(contains('Target lost')));
+
+    await controller.stopSession();
+    controller.dispose();
+    await platform.dispose();
+  });
 }

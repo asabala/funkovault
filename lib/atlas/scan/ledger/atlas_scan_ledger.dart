@@ -232,6 +232,27 @@ class AtlasScanLedger {
     return updated;
   }
 
+  AtlasScanLedgerEntry applyInspectionReview({
+    required String trackId,
+    required bool requiresReview,
+    required DateTime at,
+  }) {
+    final entry = _requireEntry(trackId);
+    if (entry.isCommitted || (!entry.isResolved && !entry.needsReview)) {
+      throw StateError(
+        'Track "${entry.trackId}" is not available for inspection review.',
+      );
+    }
+    final updated = entry.copyWith(
+      status: requiresReview
+          ? AtlasScanLedgerStatus.needsReview
+          : AtlasScanLedgerStatus.resolved,
+      updatedAt: at,
+    );
+    _entries[entry.trackId] = updated;
+    return updated;
+  }
+
   void clear() {
     _entries.clear();
   }

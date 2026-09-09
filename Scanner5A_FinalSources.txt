@@ -1,0 +1,366 @@
+SCANNER 5A FINAL EXISTING SOURCES
+Generated: 09/03/2026 09:28:31
+
+============================================================
+FILE: .\lib\atlas\scan\authenticity\atlas_authenticity_rules.dart
+============================================================
+import '../../intelligence/identity/atlas_identity_analysis_engine.dart';
+import '../models/scan_session.dart';
+import 'atlas_production_stamp_parser.dart';
+import 'models/atlas_authenticity_assessment.dart';
+import 'models/atlas_authenticity_signal.dart';
+import 'models/atlas_visual_inspection.dart';
+
+abstract final class AtlasAuthenticityRules {
+  static AtlasAuthenticityAssessment evaluate({
+    required ScanSession session,
+    required AtlasVisualInspection inspection,
+  }) {
+    final signals = <AtlasAuthenticitySignal>[];
+    var coverage = 0;
+    var score = 55;
+
+    if (inspection.hasStickerEvidence) {
+      coverage += 20;
+      final analysis = AtlasIdentityAnalysisEngine.create().analyze(
+        inspection.stickerText,
+      );
+      final detected = <String>{
+        ...analysis.stickerResult.stickers.map((value) => value.displayName),
+        ...analysis.variantResult.variants.map((value) => value.displayName),
+      };
+      if (detected.isEmpty) {
+        signals.add(
+          const AtlasAuthenticitySignal(
+            id: 'sticker-unclassified',
+            title: 'Sticker needs confirmation',
+            message: 'Atlas could not classify the observed sticker text.',
+            level: AtlasAuthenticitySignalLevel.caution,
+            weight: -5,
+          ),
+        );
+        score -= 5;
+      } else {
+        signals.add(
+          AtlasAuthenticitySignal(
+            id: 'sticker-classified',
+            title: 'Sticker evidence classified',
+            message: detected.join(' • '),
+            level: AtlasAuthenticitySignalLevel.support,
+            weight: 10,
+          ),
+        );
+        score += 10;
+      }
+
+      final expectedVariant = session.catalogProduct?.variantName
+          ?.toLowerCase();
+      if (expectedVariant != null &&
+          expectedVariant.isNotEmpty &&
+          !inspection.stickerText.toLowerCase().contains(expectedVariant)) {
+        signals.add(
+          const AtlasAuthenticitySignal(
+            id: 'sticker-variant-conflict',
+            title: 'Sticker and catalog variant differ',
+            message:
+                'Confirm the exact sticker and physical variant before saving.',
+            level: AtlasAuthenticitySignalLevel.warning,
+            weight: -25,
+          ),
+        );
+        score -= 25;
+      }
+    }
+
+    final stamp = AtlasProductionStampParser.parse(
+      inspection.productionStampText,
+    );
+    if (inspection.hasProductionEvidence) {
+      coverage += 20;
+      final signal = stamp.isValid
+          ? AtlasAuthenticitySignal(
+              id: 'production-stamp',
+              title: '${stamp.factoryCode} production stamp recognized',
+              message: stamp.itemBatch ?? inspection.productionStampText,
+              level: AtlasAuthenticitySignalLevel.support,
+              weight: 10,
+            )
+          : const AtlasAuthenticitySignal(
+              id: 'production-stamp-unreadable',
+              title: 'Production stamp needs review',
+              message:
+                  'The bottom-box marking is not a recognized JJL/FAC format.',
+              level: AtlasAuthenticitySignalLevel.caution,
+              weight: -8,
+            );
+      signals.add(signal);
+      score += signal.weight;
+    }
+
+    void inspectCheck({
+      required bool? value,
+      required String id,
+      required String goodTitle,
+      required String warningTitle,
+      required String warningMessage,
+    }) {
+      if (value == null) return;
+      coverage += 10;
+      if (value) {
+        signals.add(
+          AtlasAuthenticitySignal(
+            id: id,
+            title: goodTitle,
+            message: 'Collector-confirmed visual observation.',
+            level: AtlasAuthenticitySignalLevel.support,
+            weight: 5,
+          ),
+        );
+        score += 5;
+      } else {
+        signals.add(
+          AtlasAuthenticitySignal(
+            id: id,
+            title: warningTitle,
+            message: warningMessage,
+            level: AtlasAuthenticitySignalLevel.warning,
+            weight: -18,
+          ),
+        );
+        score -= 18;
+      }
+    }
+
+    inspectCheck(
+      value: inspection.stickerPrintClear,
+      id: 'sticker-print',
+      goodTitle: 'Sticker print appears clear',
+      warningTitle: 'Sticker print warning',
+      warningMessage:
+          'Blurred or uneven printing can warrant closer comparison.',
+    );
+    inspectCheck(
+      value: inspection.stickerCutEven,
+      id: 'sticker-cut',
+      goodTitle: 'Sticker cut appears even',
+      warningTitle: 'Sticker cut warning',
+      warningMessage: 'An uneven border or cut can warrant closer comparison.',
+    );
+    inspectCheck(
+      value: inspection.typographyConsistent,
+      id: 'typography',
+      goodTitle: 'Typography appears consistent',
+      warningTitle: 'Typography warning',
+      warningMessage:
+          'Unexpected font weight, spacing, or alignment needs review.',
+    );
+    inspectCheck(
+      value: inspection.borderConsistent,
+      id: 'box-border',
+      goodTitle: 'Box borders appear consistent',
+      warningTitle: 'Box-border warning',
+      warningMessage: 'Unexpected line weight or alignment needs review.',
+    );
+
+    if (inspection.hasCopyrightEvidence) {
+      coverage += 10;
+      signals.add(
+        const AtlasAuthenticitySignal(
+          id: 'copyright',
+          title: 'Copyright evidence recorded',
+          message: 'Copyright text is preserved for comparison and review.',
+          level: AtlasAuthenticitySignalLevel.support,
+          weight: 5,
+        ),
+      );
+      score += 5;
+    }
+
+    if (inspection.hasAutograph == true) {
+      coverage += 10;
+      if (inspection.hasCoa == true && inspection.hasAuthenticationEvidence) {
+        signals.add(
+          const AtlasAuthenticitySignal(
+            id: 'autograph-documented',
+            title: 'Autograph documentation recorded',
+            message: 'A COA provider or certification number was supplied.',
+            level: AtlasAuthenticitySignalLevel.support,
+            weight: 10,
+          ),
+        );
+        score += 10;
+      } else {
+        signals.add(
+          const AtlasAuthenticitySignal(
+            id: 'autograph-undocumented',
+            title: 'Autograph documentation missing',
+            message:
+                'A signature without verifiable COA evidence needs review.',
+            level: AtlasAuthenticitySignalLevel.warning,
+            weight: -25,
+          ),
+        );
+        score -= 25;
+      }
+    }
+
+    coverage = coverage.clamp(0, 100);
+    score = score.clamp(0, 100);
+    final hasWarning = signals.any((signal) => signal.isWarning);
+    final status = coverage < 35
+        ? AtlasAuthenticityStatus.insufficientEvidence
+        : hasWarning
+        ? AtlasAuthenticityStatus.reviewRecommended
+        : score >= 80 && coverage >= 70
+        ? AtlasAuthenticityStatus.strongEvidence
+        : AtlasAuthenticityStatus.developingEvidence;
+
+    return AtlasAuthenticityAssessment(
+      status: status,
+      confidenceScore: score,
+      evidenceCoverage: coverage,
+      summary: switch (status) {
+        AtlasAuthenticityStatus.strongEvidence =>
+          'The recorded evidence is broadly consistent. This is not a guarantee of authenticity.',
+        AtlasAuthenticityStatus.developingEvidence =>
+          'The evidence is useful but incomplete. Add or verify more details when practical.',
+        AtlasAuthenticityStatus.reviewRecommended =>
+          'One or more warning signals should be reviewed before relying on this inspection.',
+        AtlasAuthenticityStatus.insufficientEvidence =>
+          'There is not enough evidence to form a useful authenticity assessment.',
+      },
+      signals: signals,
+      productionStamp: inspection.hasProductionEvidence ? stamp : null,
+    );
+  }
+}
+
+============================================================
+FILE: .\lib\atlas\scan\authenticity\atlas_visual_inspection_service.dart
+============================================================
+import '../contributions/contribution_conflict_policy.dart';
+import '../contributions/visual_inspection_contribution.dart';
+import '../engine/engine_context.dart';
+import '../models/scan_session.dart';
+import 'atlas_authenticity_engine.dart';
+import 'models/atlas_visual_inspection.dart';
+
+class AtlasVisualInspectionService {
+  const AtlasVisualInspectionService({
+    this.authenticityEngine = const AtlasAuthenticityEngine(),
+  });
+
+  final AtlasAuthenticityEngine authenticityEngine;
+
+  Future<ScanSession> inspect({
+    required ScanSession session,
+    required AtlasVisualInspection inspection,
+  }) async {
+    var updated = session;
+    for (final image in inspection.images) {
+      updated = updated.addImage(image);
+    }
+    updated = updated.addContribution(
+      VisualInspectionContribution(
+        contributionId: 'visual-inspection-${session.sessionId}',
+        sourceEngineId: 'atlas.visual-inspection',
+        createdAt: DateTime.now().toUtc(),
+        inspection: inspection,
+        confidence: inspection.images.isEmpty ? 0.65 : 0.85,
+      ),
+      conflictPolicy: ContributionConflictPolicy.replaceExisting,
+    );
+    final result = await authenticityEngine.process(
+      updated,
+      EngineContext(
+        requestId: session.sessionId,
+        createdAt: DateTime.now().toUtc(),
+        deviceType: EngineDeviceType.mobile,
+      ),
+    );
+    return result.session;
+  }
+}
+
+============================================================
+FILE: .\lib\atlas\scan\authenticity\models\atlas_visual_inspection.dart
+============================================================
+import '../../models/scan_image.dart';
+
+final class AtlasVisualInspection {
+  AtlasVisualInspection({
+    this.stickerText = '',
+    this.productionStampText = '',
+    this.copyrightText = '',
+    this.signature = '',
+    this.authenticationProvider = '',
+    this.authenticityNumber = '',
+    this.typographyConsistent,
+    this.borderConsistent,
+    this.stickerPrintClear,
+    this.stickerCutEven,
+    this.hasAutograph,
+    this.hasCoa,
+    this.notes = '',
+    List<ScanImage> images = const <ScanImage>[],
+  }) : images = List<ScanImage>.unmodifiable(images);
+
+  final String stickerText;
+  final String productionStampText;
+  final String copyrightText;
+  final String signature;
+  final String authenticationProvider;
+  final String authenticityNumber;
+  final bool? typographyConsistent;
+  final bool? borderConsistent;
+  final bool? stickerPrintClear;
+  final bool? stickerCutEven;
+  final bool? hasAutograph;
+  final bool? hasCoa;
+  final String notes;
+  final List<ScanImage> images;
+
+  bool get hasStickerEvidence => stickerText.trim().isNotEmpty;
+  bool get hasProductionEvidence => productionStampText.trim().isNotEmpty;
+  bool get hasCopyrightEvidence => copyrightText.trim().isNotEmpty;
+  bool get hasAuthenticationEvidence =>
+      authenticationProvider.trim().isNotEmpty ||
+      authenticityNumber.trim().isNotEmpty ||
+      hasCoa != null;
+}
+
+============================================================
+FILE: .\lib\atlas\scan\authenticity\models\atlas_authenticity_assessment.dart
+============================================================
+import 'atlas_authenticity_signal.dart';
+import 'atlas_production_stamp.dart';
+
+enum AtlasAuthenticityStatus {
+  strongEvidence,
+  developingEvidence,
+  reviewRecommended,
+  insufficientEvidence,
+}
+
+final class AtlasAuthenticityAssessment {
+  AtlasAuthenticityAssessment({
+    required this.status,
+    required this.confidenceScore,
+    required this.evidenceCoverage,
+    required this.summary,
+    required List<AtlasAuthenticitySignal> signals,
+    this.productionStamp,
+  }) : signals = List<AtlasAuthenticitySignal>.unmodifiable(signals);
+
+  final AtlasAuthenticityStatus status;
+  final int confidenceScore;
+  final int evidenceCoverage;
+  final String summary;
+  final List<AtlasAuthenticitySignal> signals;
+  final AtlasProductionStamp? productionStamp;
+
+  bool get requiresReview =>
+      status == AtlasAuthenticityStatus.reviewRecommended ||
+      status == AtlasAuthenticityStatus.insufficientEvidence;
+  bool get hasWarnings => signals.any((signal) => signal.isWarning);
+}

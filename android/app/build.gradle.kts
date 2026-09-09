@@ -46,6 +46,8 @@ dependencies {
     // waiting for a Play Services model download after capture begins.
     implementation("com.google.mlkit:barcode-scanning:17.3.0")
     implementation("com.google.mlkit:text-recognition:16.0.1")
+    // Stream-mode spatial tracking for Fix 6 persistent target lock.
+    implementation("com.google.mlkit:object-detection:17.0.2")
 }
 
 flutter {

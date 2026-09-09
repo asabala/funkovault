@@ -2,6 +2,8 @@ import '../../catalog/models/atlas_catalog_product.dart';
 import '../contributions/contribution_collection.dart';
 import '../contributions/contribution_conflict_policy.dart';
 import '../contributions/intelligence_contribution.dart';
+import '../contributions/authenticity_contribution.dart';
+import '../contributions/visual_inspection_contribution.dart';
 import '../../identity/product/atlas_product_id.dart';
 import '../projection/scan_session_projector.dart';
 import '../resolution/resolved_product_snapshot.dart';
@@ -45,8 +47,7 @@ class ScanSession {
     List<ScanCode> detectedCodes = const [],
     this.bestCandidate,
     this.visualIdentity = const VisualIdentity(),
-    this.resolutionStatus =
-        IdentityResolutionStatus.notStarted,
+    this.resolutionStatus = IdentityResolutionStatus.notStarted,
     this.atlasProductId,
     this.resolvedProduct,
     this.marketSnapshot,
@@ -59,13 +60,11 @@ class ScanSession {
     this.requiresSync = false,
     List<String> notes = const [],
     List<String> warnings = const [],
-  })  : detectedCodes =
-  List<ScanCode>.unmodifiable(detectedCodes),
-        contributions =
-            contributions ?? ContributionCollection.empty,
-        images = List<ScanImage>.unmodifiable(images),
-        notes = List<String>.unmodifiable(notes),
-        warnings = List<String>.unmodifiable(warnings);
+  }) : detectedCodes = List<ScanCode>.unmodifiable(detectedCodes),
+       contributions = contributions ?? ContributionCollection.empty,
+       images = List<ScanImage>.unmodifiable(images),
+       notes = List<String>.unmodifiable(notes),
+       warnings = List<String>.unmodifiable(warnings);
 
   final String sessionId;
 
@@ -126,8 +125,7 @@ class ScanSession {
   }
 
   bool get hasResolvedProduct {
-    return atlasProductId != null &&
-        resolutionStatus.isResolved;
+    return atlasProductId != null && resolutionStatus.isResolved;
   }
 
   bool get hasMarketData {
@@ -146,17 +144,23 @@ class ScanSession {
     return contributions.isNotEmpty;
   }
 
+  VisualInspectionContribution? get visualInspectionContribution =>
+      latestContributionOfType<VisualInspectionContribution>();
+
+  AuthenticityContribution? get authenticityContribution =>
+      latestContributionOfType<AuthenticityContribution>();
+
+  bool get hasAuthenticityAssessment => authenticityContribution != null;
+
   int get contributionCount {
     return contributions.length;
   }
 
-  bool hasContributionOfType<
-  T extends IntelligenceContribution>() {
+  bool hasContributionOfType<T extends IntelligenceContribution>() {
     return contributions.ofType<T>().isNotEmpty;
   }
 
-  T? latestContributionOfType<
-  T extends IntelligenceContribution>() {
+  T? latestContributionOfType<T extends IntelligenceContribution>() {
     return contributions.latestOfType<T>();
   }
 
@@ -169,15 +173,11 @@ class ScanSession {
   }
 
   bool get hasOriginalImage {
-    return images.any(
-          (ScanImage image) => image.isOriginal,
-    );
+    return images.any((ScanImage image) => image.isOriginal);
   }
 
   bool get hasProcessedImage {
-    return images.any(
-          (ScanImage image) => image.isProcessed,
-    );
+    return images.any((ScanImage image) => image.isProcessed);
   }
 
   bool get isActive {
@@ -195,20 +195,17 @@ class ScanSession {
   }
 
   bool get requiresUserAction {
-    return status ==
-        ScanSessionStatus.awaitingConfirmation ||
+    return status == ScanSessionStatus.awaitingConfirmation ||
         resolutionStatus.requiresUserReview ||
         requiresVariantConfirmation;
   }
 
   bool get canBuildBriefing {
-    return hasResolvedProduct &&
-        resolutionStatus.isResolved;
+    return hasResolvedProduct && resolutionStatus.isResolved;
   }
 
   Duration get elapsed {
-    final DateTime end =
-        completedAt ?? DateTime.now();
+    final DateTime end = completedAt ?? DateTime.now();
 
     return end.difference(startedAt);
   }
@@ -264,102 +261,73 @@ class ScanSession {
       completedAt: completedAt ?? this.completedAt,
       status: status ?? this.status,
       intent: intent ?? this.intent,
-      performanceMode:
-      performanceMode ?? this.performanceMode,
+      performanceMode: performanceMode ?? this.performanceMode,
       scannerType: scannerType ?? this.scannerType,
-      detectedCodes:
-      detectedCodes ?? this.detectedCodes,
-      bestCandidate:
-      bestCandidate ?? this.bestCandidate,
-      visualIdentity:
-      visualIdentity ?? this.visualIdentity,
-      resolutionStatus:
-      resolutionStatus ?? this.resolutionStatus,
-      atlasProductId:
-      atlasProductId ?? this.atlasProductId,
-      resolvedProduct:
-      resolvedProduct ?? this.resolvedProduct,
-      marketSnapshot:
-      marketSnapshot ?? this.marketSnapshot,
-      collectorStatus:
-      collectorStatus ?? this.collectorStatus,
-      variantResolution:
-      variantResolution ?? this.variantResolution,
-      contributions:
-      contributions ?? this.contributions,
+      detectedCodes: detectedCodes ?? this.detectedCodes,
+      bestCandidate: bestCandidate ?? this.bestCandidate,
+      visualIdentity: visualIdentity ?? this.visualIdentity,
+      resolutionStatus: resolutionStatus ?? this.resolutionStatus,
+      atlasProductId: atlasProductId ?? this.atlasProductId,
+      resolvedProduct: resolvedProduct ?? this.resolvedProduct,
+      marketSnapshot: marketSnapshot ?? this.marketSnapshot,
+      collectorStatus: collectorStatus ?? this.collectorStatus,
+      variantResolution: variantResolution ?? this.variantResolution,
+      contributions: contributions ?? this.contributions,
       images: images ?? this.images,
       confidence: confidence ?? this.confidence,
       isOffline: isOffline ?? this.isOffline,
-      requiresSync:
-      requiresSync ?? this.requiresSync,
+      requiresSync: requiresSync ?? this.requiresSync,
       notes: notes ?? this.notes,
       warnings: warnings ?? this.warnings,
     );
   }
 
-  ScanSession addDetectedCode(
-      ScanCode code, {
-        bool makeBestCandidate = false,
-      }) {
-    final bool alreadyDetected = detectedCodes.any(
-          (ScanCode existing) {
-        return existing.format == code.format &&
-            existing.normalizedValue ==
-                code.normalizedValue;
-      },
-    );
+  ScanSession addDetectedCode(ScanCode code, {bool makeBestCandidate = false}) {
+    final bool alreadyDetected = detectedCodes.any((ScanCode existing) {
+      return existing.format == code.format &&
+          existing.normalizedValue == code.normalizedValue;
+    });
 
-    final List<ScanCode> updatedCodes =
-    alreadyDetected
+    final List<ScanCode> updatedCodes = alreadyDetected
         ? detectedCodes
-        : <ScanCode>[
-      ...detectedCodes,
-      code,
-    ];
+        : <ScanCode>[...detectedCodes, code];
 
     return copyWith(
       detectedCodes: updatedCodes,
-      bestCandidate:
-      makeBestCandidate ? code : bestCandidate,
+      bestCandidate: makeBestCandidate ? code : bestCandidate,
     );
   }
+
   ScanSession addContribution(
-      IntelligenceContribution contribution, {
-        ContributionConflictPolicy conflictPolicy =
-            ContributionConflictPolicy.reject,
-      }) {
-    final ContributionCollection updatedContributions =
-    contributions.add(
+    IntelligenceContribution contribution, {
+    ContributionConflictPolicy conflictPolicy =
+        ContributionConflictPolicy.reject,
+  }) {
+    final ContributionCollection updatedContributions = contributions.add(
       contribution,
       conflictPolicy: conflictPolicy,
     );
 
-    return _withProjectedContributions(
-      updatedContributions,
-    );
+    return _withProjectedContributions(updatedContributions);
   }
 
   ScanSession addContributions(
-      Iterable<IntelligenceContribution> values, {
-        ContributionConflictPolicy conflictPolicy =
-            ContributionConflictPolicy.reject,
-      }) {
-    final ContributionCollection updatedContributions =
-    contributions.addAll(
+    Iterable<IntelligenceContribution> values, {
+    ContributionConflictPolicy conflictPolicy =
+        ContributionConflictPolicy.reject,
+  }) {
+    final ContributionCollection updatedContributions = contributions.addAll(
       values,
       conflictPolicy: conflictPolicy,
     );
 
-    return _withProjectedContributions(
-      updatedContributions,
-    );
+    return _withProjectedContributions(updatedContributions);
   }
-  ScanSession _withProjectedContributions(
-      ContributionCollection updatedContributions,
-      ) {
 
-    final ScanSessionProjection projection =
-    ScanSessionProjector.project(
+  ScanSession _withProjectedContributions(
+    ContributionCollection updatedContributions,
+  ) {
+    final ScanSessionProjection projection = ScanSessionProjector.project(
       contributions: updatedContributions,
       currentStatus: status,
       currentResolutionStatus: resolutionStatus,
@@ -378,11 +346,11 @@ class ScanSession {
       confidence: projection.confidence,
     );
   }
-  ScanSession removeContributionById(
-      String contributionId,
-      ) {
-    final ContributionCollection updated =
-    contributions.removeById(contributionId);
+
+  ScanSession removeContributionById(String contributionId) {
+    final ContributionCollection updated = contributions.removeById(
+      contributionId,
+    );
 
     if (identical(updated, contributions)) {
       return this;
@@ -391,11 +359,10 @@ class ScanSession {
     return copyWith(contributions: updated);
   }
 
-  ScanSession removeContributionsFromEngine(
-      String engineId,
-      ) {
-    final ContributionCollection updated =
-    contributions.removeFromEngine(engineId);
+  ScanSession removeContributionsFromEngine(String engineId) {
+    final ContributionCollection updated = contributions.removeFromEngine(
+      engineId,
+    );
 
     if (identical(updated, contributions)) {
       return this;
@@ -403,15 +370,13 @@ class ScanSession {
 
     return copyWith(contributions: updated);
   }
+
   ScanSession addImage(ScanImage image) {
     final List<ScanImage> updatedImages =
-    images
-        .where(
-          (ScanImage existing) =>
-      existing.imageId != image.imageId,
-    )
-        .toList()
-      ..add(image);
+        images
+            .where((ScanImage existing) => existing.imageId != image.imageId)
+            .toList()
+          ..add(image);
 
     return copyWith(images: updatedImages);
   }
@@ -419,33 +384,21 @@ class ScanSession {
   ScanSession addNote(String note) {
     final String normalized = note.trim();
 
-    if (normalized.isEmpty ||
-        notes.contains(normalized)) {
+    if (normalized.isEmpty || notes.contains(normalized)) {
       return this;
     }
 
-    return copyWith(
-      notes: <String>[
-        ...notes,
-        normalized,
-      ],
-    );
+    return copyWith(notes: <String>[...notes, normalized]);
   }
 
   ScanSession addWarning(String warning) {
     final String normalized = warning.trim();
 
-    if (normalized.isEmpty ||
-        warnings.contains(normalized)) {
+    if (normalized.isEmpty || warnings.contains(normalized)) {
       return this;
     }
 
-    return copyWith(
-      warnings: <String>[
-        ...warnings,
-        normalized,
-      ],
-    );
+    return copyWith(warnings: <String>[...warnings, normalized]);
   }
 
   @override

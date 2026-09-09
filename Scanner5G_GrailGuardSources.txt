@@ -1,0 +1,546 @@
+SCANNER 5G - ACTUAL GRAIL GUARD SOURCES
+Generated: 09/03/2026 11:42:03
+
+
+============================================================
+FILE: .\lib\atlas\scan\authenticity\policies\inspection_recommendation_policy.dart
+============================================================
+import '../models/atlas_inspection_reference.dart';
+
+final class AtlasInspectionRecommendationContext {
+  AtlasInspectionRecommendationContext({
+    this.marketValue,
+    this.variantPriceSpread,
+    double knownCounterfeitPrevalence = 0.0,
+    required double collectorValueThreshold,
+  }) : knownCounterfeitPrevalence = _unitScore(
+         knownCounterfeitPrevalence,
+         'knownCounterfeitPrevalence',
+       ),
+       collectorValueThreshold = _nonNegative(
+         collectorValueThreshold,
+         'collectorValueThreshold',
+       );
+
+  final double? marketValue;
+  final double? variantPriceSpread;
+  final double knownCounterfeitPrevalence;
+  final double collectorValueThreshold;
+}
+
+final class AtlasInspectionRecommendation {
+  const AtlasInspectionRecommendation({
+    required this.isRecommended,
+    this.badgeLabel,
+    this.explanation,
+  });
+
+  final bool isRecommended;
+  final String? badgeLabel;
+  final String? explanation;
+
+  static const standard = AtlasInspectionRecommendation(isRecommended: false);
+}
+
+abstract interface class AtlasInspectionRecommendationPolicy {
+  AtlasInspectionRecommendation evaluate({
+    required AtlasInspectionReferenceCriteria reference,
+    required AtlasInspectionRecommendationContext context,
+  });
+}
+
+final class AtlasStandardGrailGuardPolicy
+    implements AtlasInspectionRecommendationPolicy {
+  const AtlasStandardGrailGuardPolicy();
+
+  @override
+  AtlasInspectionRecommendation evaluate({
+    required AtlasInspectionReferenceCriteria reference,
+    required AtlasInspectionRecommendationContext context,
+  }) {
+    final bool highValue =
+        context.marketValue != null &&
+        context.marketValue! >= context.collectorValueThreshold;
+    final bool elevatedPrevalence = context.knownCounterfeitPrevalence >= 0.40;
+    final bool highVariantSpread =
+        context.variantPriceSpread != null &&
+        context.variantPriceSpread! >= 50.0;
+
+    if (reference.highCounterfeitRiskLine && highValue) {
+      return const AtlasInspectionRecommendation(
+        isRecommended: true,
+        badgeLabel: '🛡️ Grail Guard: High Variance',
+        explanation:
+            'This release combines elevated counterfeit exposure with significant market value. Visual inspection is recommended.',
+      );
+    }
+
+    if (reference.highCounterfeitRiskLine || elevatedPrevalence) {
+      return const AtlasInspectionRecommendation(
+        isRecommended: true,
+        badgeLabel: '🛡️ Grail Guard',
+        explanation:
+            'This release has elevated counterfeit exposure. Visual inspection is recommended before relying on identity or value.',
+      );
+    }
+
+    if (highVariantSpread) {
+      return const AtlasInspectionRecommendation(
+        isRecommended: true,
+        badgeLabel: '🏷️ High Variant Spread',
+        explanation:
+            'A large value difference exists between known variants. Sticker and variant inspection is recommended.',
+      );
+    }
+
+    if (highValue) {
+      return const AtlasInspectionRecommendation(
+        isRecommended: true,
+        badgeLabel: '🛡️ Grail Guard',
+        explanation:
+            'This item exceeds the collector inspection threshold. A deeper inspection is recommended.',
+      );
+    }
+
+    return AtlasInspectionRecommendation.standard;
+  }
+}
+
+double _unitScore(double value, String fieldName) {
+  if (!value.isFinite || value < 0.0 || value > 1.0) {
+    throw ArgumentError.value(
+      value,
+      fieldName,
+      '$fieldName must be between 0.0 and 1.0.',
+    );
+  }
+  return value;
+}
+
+double _nonNegative(double value, String fieldName) {
+  if (!value.isFinite || value < 0.0) {
+    throw ArgumentError.value(
+      value,
+      fieldName,
+      '$fieldName must be finite and non-negative.',
+    );
+  }
+  return value;
+}
+
+============================================================
+FILE: .\test\atlas\scan\authenticity\inspection_recommendation_policy_test.dart
+============================================================
+import 'package:flutter_test/flutter_test.dart';
+import 'package:funkovault2/atlas/scan/authenticity/models/atlas_inspection_reference.dart';
+import 'package:funkovault2/atlas/scan/authenticity/policies/inspection_recommendation_policy.dart';
+
+void main() {
+  test(
+    'grail guard recommends inspection without making authenticity claim',
+    () {
+      final reference = AtlasInspectionReferenceCriteria(
+        productId: 'ATLAS-FNK-000001',
+        coverageLevel: AtlasReferenceCoverageLevel.partial,
+        completenessScore: 0.75,
+        highCounterfeitRiskLine: true,
+      );
+
+      final result = const AtlasStandardGrailGuardPolicy().evaluate(
+        reference: reference,
+        context: AtlasInspectionRecommendationContext(
+          marketValue: 250.0,
+          collectorValueThreshold: 100.0,
+        ),
+      );
+
+      expect(result.isRecommended, isTrue);
+      expect(result.badgeLabel, contains('Grail Guard'));
+      expect(result.explanation!.toLowerCase(), contains('inspection'));
+      expect(result.explanation!.toLowerCase(), isNot(contains('fake')));
+    },
+  );
+}
+
+============================================================
+FILE: .\lib\atlas\scan\authenticity\models\atlas_inspection_reference.dart
+============================================================
+enum AtlasReferenceCoverageLevel { unknown, limited, partial, comprehensive }
+
+enum AtlasReferenceSourceType {
+  officialRecord,
+  verifiedCollectorArchive,
+  communityConsensus,
+  inferredEstimate,
+}
+
+final class AtlasReferenceProvenance {
+  AtlasReferenceProvenance({
+    required this.sourceType,
+    required String sourceIdentifier,
+    required DateTime lastVerifiedAt,
+    this.specialistVetted = false,
+  }) : sourceIdentifier = _requireText(sourceIdentifier, 'sourceIdentifier'),
+       lastVerifiedAt = lastVerifiedAt.toUtc();
+
+  final AtlasReferenceSourceType sourceType;
+  final String sourceIdentifier;
+  final DateTime lastVerifiedAt;
+  final bool specialistVetted;
+}
+
+final class AtlasProductionRunReference {
+  AtlasProductionRunReference({
+    required String runIdentifier,
+    Iterable<String> knownFactoryPrefixes = const <String>[],
+    this.earliestKnownDate,
+    this.latestKnownDate,
+    Iterable<int> expectedCopyrightYears = const <int>[],
+    Iterable<String> verifiedStickerFamilies = const <String>[],
+    required this.provenance,
+  }) : runIdentifier = _requireText(runIdentifier, 'runIdentifier'),
+       knownFactoryPrefixes = List<String>.unmodifiable(
+         knownFactoryPrefixes
+             .map((String value) => value.trim().toUpperCase())
+             .where((String value) => value.isNotEmpty)
+             .toSet(),
+       ),
+       expectedCopyrightYears = List<int>.unmodifiable(
+         expectedCopyrightYears.where((int value) => value > 1900).toSet(),
+       ),
+       verifiedStickerFamilies = List<String>.unmodifiable(
+         verifiedStickerFamilies
+             .map((String value) => value.trim())
+             .where((String value) => value.isNotEmpty)
+             .toSet(),
+       ) {
+    if (earliestKnownDate != null &&
+        latestKnownDate != null &&
+        earliestKnownDate!.isAfter(latestKnownDate!)) {
+      throw ArgumentError('earliestKnownDate cannot be after latestKnownDate.');
+    }
+  }
+
+  final String runIdentifier;
+  final List<String> knownFactoryPrefixes;
+  final DateTime? earliestKnownDate;
+  final DateTime? latestKnownDate;
+  final List<int> expectedCopyrightYears;
+  final List<String> verifiedStickerFamilies;
+  final AtlasReferenceProvenance provenance;
+
+  bool matchesFactoryPrefix(String prefix) {
+    if (knownFactoryPrefixes.isEmpty) {
+      return true;
+    }
+    return knownFactoryPrefixes.contains(prefix.trim().toUpperCase());
+  }
+
+  bool containsProductionDate(DateTime date) {
+    final DateTime normalized = date.toUtc();
+    if (earliestKnownDate != null &&
+        normalized.isBefore(earliestKnownDate!.toUtc())) {
+      return false;
+    }
+    if (latestKnownDate != null &&
+        normalized.isAfter(latestKnownDate!.toUtc())) {
+      return false;
+    }
+    return true;
+  }
+
+  bool matchesStamp({required String prefix, required DateTime date}) {
+    return matchesFactoryPrefix(prefix) && containsProductionDate(date);
+  }
+}
+
+final class AtlasInspectionReferenceCriteria {
+  AtlasInspectionReferenceCriteria({
+    required String productId,
+    String? upc,
+    required this.coverageLevel,
+    required double completenessScore,
+    Iterable<AtlasProductionRunReference> knownRuns =
+        const <AtlasProductionRunReference>[],
+    Iterable<String> legitimateVariantTypes = const <String>[],
+    Iterable<String> knownPackagingRevisions = const <String>[],
+    Iterable<AtlasReferenceProvenance> provenance =
+        const <AtlasReferenceProvenance>[],
+    this.highCounterfeitRiskLine = false,
+  }) : productId = _requireText(productId, 'productId'),
+       upc = _optionalText(upc),
+       completenessScore = _normalizeScore(
+         completenessScore,
+         'completenessScore',
+       ),
+       knownRuns = List<AtlasProductionRunReference>.unmodifiable(knownRuns),
+       legitimateVariantTypes = List<String>.unmodifiable(
+         legitimateVariantTypes
+             .map((String value) => value.trim())
+             .where((String value) => value.isNotEmpty)
+             .toSet(),
+       ),
+       knownPackagingRevisions = List<String>.unmodifiable(
+         knownPackagingRevisions
+             .map((String value) => value.trim())
+             .where((String value) => value.isNotEmpty)
+             .toSet(),
+       ),
+       provenance = List<AtlasReferenceProvenance>.unmodifiable(provenance);
+
+  final String productId;
+  final String? upc;
+  final AtlasReferenceCoverageLevel coverageLevel;
+  final double completenessScore;
+  final List<AtlasProductionRunReference> knownRuns;
+  final List<String> legitimateVariantTypes;
+  final List<String> knownPackagingRevisions;
+  final List<AtlasReferenceProvenance> provenance;
+  final bool highCounterfeitRiskLine;
+
+  bool get hasUsefulReferenceData {
+    return coverageLevel != AtlasReferenceCoverageLevel.unknown &&
+        completenessScore > 0.0;
+  }
+
+  bool get canSupportConcernAssessment {
+    return (coverageLevel == AtlasReferenceCoverageLevel.partial ||
+            coverageLevel == AtlasReferenceCoverageLevel.comprehensive) &&
+        completenessScore >= 0.50;
+  }
+
+  static AtlasInspectionReferenceCriteria unknown({
+    required String productId,
+    String? upc,
+  }) {
+    return AtlasInspectionReferenceCriteria(
+      productId: productId,
+      upc: upc,
+      coverageLevel: AtlasReferenceCoverageLevel.unknown,
+      completenessScore: 0.0,
+    );
+  }
+}
+
+String _requireText(String value, String fieldName) {
+  final String normalized = value.trim();
+  if (normalized.isEmpty) {
+    throw ArgumentError.value(value, fieldName, '$fieldName cannot be empty.');
+  }
+  return normalized;
+}
+
+String? _optionalText(String? value) {
+  final String normalized = value?.trim() ?? '';
+  return normalized.isEmpty ? null : normalized;
+}
+
+double _normalizeScore(double value, String fieldName) {
+  if (!value.isFinite || value < 0.0 || value > 1.0) {
+    throw ArgumentError.value(
+      value,
+      fieldName,
+      '$fieldName must be between 0.0 and 1.0.',
+    );
+  }
+  return value;
+}
+
+============================================================
+FILE: .\lib\widgets\scanner\atlas_collector_action_bar.dart
+============================================================
+import 'package:flutter/material.dart';
+
+import 'package:funkovault2/atlas/collection/actions/atlas_collector_action.dart';
+import 'package:funkovault2/theme/atlas_colors.dart';
+import 'package:funkovault2/theme/atlas_spacing.dart';
+import 'package:funkovault2/widgets/atlas/atlas_glass_card.dart';
+import 'package:funkovault2/widgets/atlas/components/atlas_action_row.dart';
+import 'package:funkovault2/widgets/atlas/components/atlas_section_header.dart';
+import 'package:funkovault2/widgets/atlas/components/atlas_status_chip.dart';
+
+class AtlasCollectorActionBar extends StatelessWidget {
+  const AtlasCollectorActionBar({
+    required this.actions,
+    required this.onActionPressed,
+    super.key,
+  });
+
+  final List<AtlasCollectorAction> actions;
+  final ValueChanged<AtlasCollectorActionType> onActionPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    if (actions.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final List<AtlasCollectorAction> sortedActions =
+    List<AtlasCollectorAction>.from(actions)
+      ..sort(
+            (
+            AtlasCollectorAction first,
+            AtlasCollectorAction second,
+            ) {
+          return first.priority.compareTo(second.priority);
+        },
+      );
+
+    final AtlasCollectorAction? primaryAction = _findPrimaryAction(
+      sortedActions,
+    );
+
+    return AtlasGlassCard(
+      accentColor: AtlasColors.intelligenceBlue,
+      padding: const EdgeInsets.all(AtlasSpacing.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AtlasSectionHeader(
+            title: 'Quick Actions',
+            subtitle:
+            'Recommended actions based on this collectible and your collection.',
+            icon: Icons.bolt_rounded,
+            accentColor: AtlasColors.intelligenceBlue,
+            badge: primaryAction == null
+                ? null
+                : const AtlasStatusChip(
+              label: 'Atlas Ready',
+              icon: Icons.auto_awesome_rounded,
+              accentColor: AtlasColors.vaultGold,
+              size: AtlasStatusChipSize.compact,
+            ),
+          ),
+          const SizedBox(height: AtlasSpacing.lg),
+          for (int index = 0; index < sortedActions.length; index++) ...[
+            _CollectorActionRow(
+              action: sortedActions[index],
+              onPressed: () {
+                onActionPressed(sortedActions[index].type);
+              },
+            ),
+            if (index < sortedActions.length - 1)
+              const SizedBox(height: AtlasSpacing.sm),
+          ],
+        ],
+      ),
+    );
+  }
+
+  AtlasCollectorAction? _findPrimaryAction(
+      List<AtlasCollectorAction> actions,
+      ) {
+    for (final AtlasCollectorAction action in actions) {
+      if (action.isPrimary) {
+        return action;
+      }
+    }
+
+    return null;
+  }
+}
+
+class _CollectorActionRow extends StatelessWidget {
+  const _CollectorActionRow({
+    required this.action,
+    required this.onPressed,
+  });
+
+  final AtlasCollectorAction action;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final _ActionPresentation presentation = _presentationFor(action.type);
+
+    return AtlasActionRow(
+      title: action.label,
+      description: presentation.description,
+      icon: action.icon,
+      accentColor: presentation.accentColor,
+      badge: action.isPrimary
+          ? const AtlasStatusChip(
+        label: 'Recommended',
+        icon: Icons.star_rounded,
+        accentColor: AtlasColors.vaultGold,
+        size: AtlasStatusChipSize.compact,
+      )
+          : null,
+      compact: action.type == AtlasCollectorActionType.scanAnother,
+      showChevron: action.type != AtlasCollectorActionType.scanAnother,
+      onTap: onPressed,
+    );
+  }
+
+  _ActionPresentation _presentationFor(
+      AtlasCollectorActionType type,
+      ) {
+    switch (type) {
+      case AtlasCollectorActionType.viewExistingItem:
+        return const _ActionPresentation(
+          description:
+          'Open the collectible already stored in this collection.',
+          accentColor: AtlasColors.success,
+        );
+
+      case AtlasCollectorActionType.addToVault:
+        return const _ActionPresentation(
+          description:
+          'Add this collectible to the selected collection.',
+          accentColor: AtlasColors.vaultGold,
+        );
+
+      case AtlasCollectorActionType.addAnotherCopy:
+        return const _ActionPresentation(
+          description:
+          'Add another physical copy while preserving the existing collectible.',
+          accentColor: AtlasColors.vaultGold,
+        );
+
+      case AtlasCollectorActionType.reviewVariantSticker:
+        return const _ActionPresentation(
+          description:
+          'Review variant, exclusive, sticker, limited edition, and signature details.',
+          accentColor: AtlasColors.intelligenceBlue,
+        );
+
+      case AtlasCollectorActionType.updateCondition:
+        return const _ActionPresentation(
+          description:
+          'Update the collectible and box condition for your existing copy.',
+          accentColor: AtlasColors.intelligenceBlue,
+        );
+
+      case AtlasCollectorActionType.addToWishlist:
+        return const _ActionPresentation(
+          description:
+          'Track this collectible on your wishlist for later.',
+          accentColor: AtlasColors.intelligenceBlue,
+        );
+
+      case AtlasCollectorActionType.removeFromWishlist:
+        return const _ActionPresentation(
+          description:
+          'Remove this collectible from the wishlist for this collection.',
+          accentColor: AtlasColors.warning,
+        );
+
+      case AtlasCollectorActionType.scanAnother:
+        return const _ActionPresentation(
+          description:
+          'Return to the scanner and identify another collectible.',
+          accentColor: AtlasColors.textSecondary,
+        );
+    }
+  }
+}
+
+class _ActionPresentation {
+  const _ActionPresentation({
+    required this.description,
+    required this.accentColor,
+  });
+
+  final String description;
+  final Color accentColor;
+}

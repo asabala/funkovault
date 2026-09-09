@@ -1,3 +1,6 @@
+import 'atlas_live_sniffer_target_state.dart';
+import 'atlas_live_sniffer_track.dart';
+
 final class AtlasLiveSnifferNativeBarcode {
   const AtlasLiveSnifferNativeBarcode({
     required this.rawValue,
@@ -6,6 +9,7 @@ final class AtlasLiveSnifferNativeBarcode {
     required this.top,
     required this.right,
     required this.bottom,
+    this.trackId,
   });
 
   final String rawValue;
@@ -14,6 +18,7 @@ final class AtlasLiveSnifferNativeBarcode {
   final double top;
   final double right;
   final double bottom;
+  final int? trackId;
 }
 
 final class AtlasLiveSnifferNativeTextBlock {
@@ -23,6 +28,7 @@ final class AtlasLiveSnifferNativeTextBlock {
     required this.top,
     required this.right,
     required this.bottom,
+    this.trackId,
   });
 
   final String text;
@@ -30,6 +36,7 @@ final class AtlasLiveSnifferNativeTextBlock {
   final double top;
   final double right;
   final double bottom;
+  final int? trackId;
 
   double get centerX => (left + right) / 2;
   double get centerY => (top + bottom) / 2;
@@ -39,6 +46,13 @@ final class AtlasLiveSnifferNativeFrame {
   const AtlasLiveSnifferNativeFrame({
     required this.capturedAt,
     required this.barcodes,
+    this.frameSequence = 0,
+    this.selectionGeneration = 0,
+    this.nativeTimestampMs = 0,
+    this.targetState = AtlasLiveSnifferTargetState.none,
+    this.lockedTrackId,
+    this.trackedBoundingBox,
+    this.activeTracks = const <AtlasLiveSnifferTrack>[],
     this.textBlocks = const <AtlasLiveSnifferNativeTextBlock>[],
     this.recognizedText = '',
   });
@@ -47,9 +61,45 @@ final class AtlasLiveSnifferNativeFrame {
   final List<AtlasLiveSnifferNativeBarcode> barcodes;
   final List<AtlasLiveSnifferNativeTextBlock> textBlocks;
   final String recognizedText;
+  final int frameSequence;
+  final int selectionGeneration;
+  final int nativeTimestampMs;
+  final int? lockedTrackId;
+  final AtlasLiveSnifferTargetState targetState;
+  final AtlasLiveSnifferNormalizedRect? trackedBoundingBox;
+  final List<AtlasLiveSnifferTrack> activeTracks;
+
+  bool get isSingleTargetFrame => targetState.isSingleTargetLifecycle;
+
+  AtlasLiveSnifferNativeFrame scopedToLockedTrack() {
+    final int? trackId = lockedTrackId;
+    if (trackId == null) return this;
+    return AtlasLiveSnifferNativeFrame(
+      capturedAt: capturedAt,
+      barcodes: barcodes
+          .where(
+            (AtlasLiveSnifferNativeBarcode item) => item.trackId == trackId,
+          )
+          .toList(growable: false),
+      textBlocks: textBlocks
+          .where(
+            (AtlasLiveSnifferNativeTextBlock item) => item.trackId == trackId,
+          )
+          .toList(growable: false),
+      recognizedText: recognizedText,
+      frameSequence: frameSequence,
+      selectionGeneration: selectionGeneration,
+      nativeTimestampMs: nativeTimestampMs,
+      lockedTrackId: lockedTrackId,
+      targetState: targetState,
+      trackedBoundingBox: trackedBoundingBox,
+      activeTracks: activeTracks,
+    );
+  }
 
   factory AtlasLiveSnifferNativeFrame.fromMap(Map<Object?, Object?> map) {
     final int micros = _readInt(map['capturedAtMicros']);
+    final int nativeTimestampMs = _readInt(map['nativeTimestampMs']);
     final List<AtlasLiveSnifferNativeBarcode> parsedBarcodes =
         <AtlasLiveSnifferNativeBarcode>[];
     final Object? rawBarcodes = map['barcodes'];
@@ -71,6 +121,7 @@ final class AtlasLiveSnifferNativeFrame {
             top: _readUnitDouble(barcodeMap['top']),
             right: _readUnitDouble(barcodeMap['right']),
             bottom: _readUnitDouble(barcodeMap['bottom']),
+            trackId: _readNullableInt(barcodeMap['trackId']),
           ),
         );
       }
@@ -95,7 +146,27 @@ final class AtlasLiveSnifferNativeFrame {
             top: _readUnitDouble(blockMap['top']),
             right: _readUnitDouble(blockMap['right']),
             bottom: _readUnitDouble(blockMap['bottom']),
+            trackId: _readNullableInt(blockMap['trackId']),
           ),
+        );
+      }
+    }
+
+    AtlasLiveSnifferNormalizedRect? trackedBoundingBox;
+    final Object? rawTrackedBox = map['trackedBoundingBox'];
+    if (rawTrackedBox is Map) {
+      trackedBoundingBox = AtlasLiveSnifferNormalizedRect.fromMap(
+        Map<Object?, Object?>.from(rawTrackedBox),
+      );
+    }
+
+    final List<AtlasLiveSnifferTrack> activeTracks = <AtlasLiveSnifferTrack>[];
+    final Object? rawTracks = map['activeTracks'];
+    if (rawTracks is List) {
+      for (final Object? rawTrack in rawTracks) {
+        if (rawTrack is! Map) continue;
+        activeTracks.add(
+          AtlasLiveSnifferTrack.fromMap(Map<Object?, Object?>.from(rawTrack)),
         );
       }
     }
@@ -111,6 +182,15 @@ final class AtlasLiveSnifferNativeFrame {
         parsedTextBlocks,
       ),
       recognizedText: map['recognizedText']?.toString().trim() ?? '',
+      frameSequence: _readInt(map['frameSequence']),
+      selectionGeneration: _readInt(map['selectionGeneration']),
+      nativeTimestampMs: nativeTimestampMs,
+      lockedTrackId: _readNullableInt(map['lockedTrackId']),
+      targetState: atlasLiveSnifferTargetStateFromWire(
+        map['targetState']?.toString() ?? '',
+      ),
+      trackedBoundingBox: trackedBoundingBox,
+      activeTracks: List<AtlasLiveSnifferTrack>.unmodifiable(activeTracks),
     );
   }
 
@@ -118,6 +198,13 @@ final class AtlasLiveSnifferNativeFrame {
     if (value is int) return value;
     if (value is num) return value.toInt();
     return int.tryParse(value?.toString() ?? '') ?? 0;
+  }
+
+  static int? _readNullableInt(Object? value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return int.tryParse(value.toString());
   }
 
   static double _readUnitDouble(Object? value) {

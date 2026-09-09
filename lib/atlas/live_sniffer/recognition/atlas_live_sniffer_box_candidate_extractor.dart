@@ -2,6 +2,7 @@ import 'dart:math';
 
 import '../models/atlas_live_sniffer_box_candidate.dart';
 import '../models/atlas_live_sniffer_native_frame.dart';
+import '../models/atlas_live_sniffer_target_state.dart';
 
 final class AtlasLiveSnifferBoxCandidateExtractor {
   const AtlasLiveSnifferBoxCandidateExtractor();
@@ -62,14 +63,20 @@ final class AtlasLiveSnifferBoxCandidateExtractor {
     }
 
     final bool hasFocus = focusX != null && focusY != null;
+    final double targetX = focusX ?? 0.5;
+    final double targetY = focusY ?? 0.5;
+    final bool targetScoped =
+        frame.isSingleTargetFrame && frame.targetState.mayContributeEvidence;
     final List<AtlasLiveSnifferNativeTextBlock> usableBlocks = frame.textBlocks
-        .where(_isUsableBlock)
+        .where((AtlasLiveSnifferNativeTextBlock block) {
+          return _isUsableBlock(block, targetScoped: targetScoped);
+        })
         .where((AtlasLiveSnifferNativeTextBlock block) {
           if (!hasFocus) return true;
           // Mirrors the native focused OCR crop. The touch is authoritative:
           // background shelf text outside this generous box region cannot win.
-          return (block.centerX - focusX).abs() <= 0.34 &&
-              (block.centerY - focusY).abs() <= 0.34;
+          return (block.centerX - targetX).abs() <= 0.34 &&
+              (block.centerY - targetY).abs() <= 0.34;
         })
         .toList(growable: false);
     if (usableBlocks.isEmpty) {
@@ -107,7 +114,7 @@ final class AtlasLiveSnifferBoxCandidateExtractor {
             .clamp(0.0, 1.0)
             .toDouble();
         final double regionBottom = (anchor.centerY + 0.48)
-            .clamp(0.0, 0.90)
+            .clamp(0.0, targetScoped ? 1.0 : 0.90)
             .toDouble();
 
         final List<AtlasLiveSnifferNativeTextBlock> nearby = usableBlocks
@@ -172,8 +179,8 @@ final class AtlasLiveSnifferBoxCandidateExtractor {
 
         final double focusBonus;
         if (hasFocus) {
-          final double dx = anchor.centerX - focusX;
-          final double dy = anchor.centerY - focusY;
+          final double dx = anchor.centerX - targetX;
+          final double dy = anchor.centerY - targetY;
           final double distance = sqrt(dx * dx + dy * dy);
           focusBonus = ((1 - (distance / 0.48)).clamp(0.0, 1.0) * 0.42)
               .toDouble();
@@ -220,14 +227,19 @@ final class AtlasLiveSnifferBoxCandidateExtractor {
     return List<AtlasLiveSnifferBoxCandidate>.unmodifiable(results.take(12));
   }
 
-  bool _isUsableBlock(AtlasLiveSnifferNativeTextBlock block) {
+  bool _isUsableBlock(
+    AtlasLiveSnifferNativeTextBlock block, {
+    required bool targetScoped,
+  }) {
     final String lower = block.text.toLowerCase().trim();
     if (lower.isEmpty) return false;
 
     // Ignore status/app chrome. Also mask the native Atlas overlay footprint in
     // the upper-right so Atlas never OCRs its own '#9', 'Match: 15%', etc.
-    if (block.centerY < 0.075 || block.centerY > 0.91) return false;
-    if (block.centerY < 0.27 && block.centerX > 0.28) return false;
+    if (!targetScoped) {
+      if (block.centerY < 0.075 || block.centerY > 0.91) return false;
+      if (block.centerY < 0.27 && block.centerX > 0.28) return false;
+    }
 
     final Set<String> tokens = _tokens(lower);
     if (tokens.any(_overlayNoiseTokens.contains)) return false;

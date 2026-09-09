@@ -1,0 +1,2615 @@
+SCANNER 5D VARIANT RESOLUTION + AUTHENTICITY INTEGRATION AUDIT
+Generated: 09/03/2026 10:17:02
+
+
+============================================================
+FILE: .\lib\atlas\scan\models\scan_session.dart
+============================================================
+import '../../catalog/models/atlas_catalog_product.dart';
+import '../contributions/contribution_collection.dart';
+import '../contributions/contribution_conflict_policy.dart';
+import '../contributions/intelligence_contribution.dart';
+import '../contributions/authenticity_contribution.dart';
+import '../contributions/visual_inspection_contribution.dart';
+import '../../identity/product/atlas_product_id.dart';
+import '../projection/scan_session_projector.dart';
+import '../resolution/resolved_product_snapshot.dart';
+import '../results/collector_item_status.dart';
+import '../results/market_value_snapshot.dart';
+import '../results/scan_variant_status.dart';
+import '../workflow/identity_resolution_status.dart';
+import '../workflow/scan_intent.dart';
+import '../workflow/scan_performance_mode.dart';
+import 'scan_code.dart';
+import 'scan_image.dart';
+import 'scanner_type.dart';
+import 'visual_identity.dart';
+
+// Describes the lifecycle of an Atlas scan session.
+enum ScanSessionStatus {
+  created,
+  scanning,
+  analyzing,
+  resolving,
+  awaitingConfirmation,
+  completed,
+  cancelled,
+  failed,
+}
+
+// Immutable orchestration model for one Atlas scanning workflow.
+//
+// A session begins when a collector opens the scanner and continues
+// through code detection, visual analysis, identity resolution,
+// market lookup, Vault matching, and briefing generation.
+class ScanSession {
+  ScanSession({
+    required this.sessionId,
+    required this.startedAt,
+    required this.intent,
+    required this.performanceMode,
+    required this.scannerType,
+    this.status = ScanSessionStatus.created,
+    this.completedAt,
+    List<ScanCode> detectedCodes = const [],
+    this.bestCandidate,
+    this.visualIdentity = const VisualIdentity(),
+    this.resolutionStatus = IdentityResolutionStatus.notStarted,
+    this.atlasProductId,
+    this.resolvedProduct,
+    this.marketSnapshot,
+    this.collectorStatus,
+    this.variantResolution,
+    ContributionCollection? contributions,
+    List<ScanImage> images = const [],
+    this.confidence = 0.0,
+    this.isOffline = false,
+    this.requiresSync = false,
+    List<String> notes = const [],
+    List<String> warnings = const [],
+  }) : detectedCodes = List<ScanCode>.unmodifiable(detectedCodes),
+       contributions = contributions ?? ContributionCollection.empty,
+       images = List<ScanImage>.unmodifiable(images),
+       notes = List<String>.unmodifiable(notes),
+       warnings = List<String>.unmodifiable(warnings);
+
+  final String sessionId;
+
+  final DateTime startedAt;
+
+  final DateTime? completedAt;
+
+  final ScanSessionStatus status;
+
+  final ScanIntent intent;
+
+  final ScanPerformanceMode performanceMode;
+
+  final ScannerType scannerType;
+
+  final List<ScanCode> detectedCodes;
+
+  final ScanCode? bestCandidate;
+
+  final VisualIdentity visualIdentity;
+
+  final IdentityResolutionStatus resolutionStatus;
+
+  final AtlasProductId? atlasProductId;
+
+  final ResolvedProductSnapshot? resolvedProduct;
+
+  final MarketValueSnapshot? marketSnapshot;
+
+  final CollectorItemStatus? collectorStatus;
+
+  final ScanVariantResolution? variantResolution;
+
+  final ContributionCollection contributions;
+
+  final List<ScanImage> images;
+
+  final double confidence;
+
+  final bool isOffline;
+
+  final bool requiresSync;
+
+  final List<String> notes;
+
+  final List<String> warnings;
+
+  bool get hasDetectedCodes {
+    return detectedCodes.isNotEmpty;
+  }
+
+  bool get hasBestCandidate {
+    return bestCandidate != null;
+  }
+
+  bool get hasVisualEvidence {
+    return visualIdentity.isNotEmpty;
+  }
+
+  bool get hasResolvedProduct {
+    return atlasProductId != null && resolutionStatus.isResolved;
+  }
+
+  bool get hasMarketData {
+    return marketSnapshot?.hasMarketEvidence ?? false;
+  }
+
+  bool get hasCollectorStatus {
+    return collectorStatus != null;
+  }
+
+  bool get hasVariantResolution {
+    return variantResolution != null;
+  }
+
+  bool get hasContributions {
+    return contributions.isNotEmpty;
+  }
+
+  VisualInspectionContribution? get visualInspectionContribution =>
+      latestContributionOfType<VisualInspectionContribution>();
+
+  AuthenticityContribution? get authenticityContribution =>
+      latestContributionOfType<AuthenticityContribution>();
+
+  bool get hasAuthenticityAssessment => authenticityContribution != null;
+
+  int get contributionCount {
+    return contributions.length;
+  }
+
+  bool hasContributionOfType<T extends IntelligenceContribution>() {
+    return contributions.ofType<T>().isNotEmpty;
+  }
+
+  T? latestContributionOfType<T extends IntelligenceContribution>() {
+    return contributions.latestOfType<T>();
+  }
+
+  bool get requiresVariantConfirmation {
+    return variantResolution?.requiresConfirmation ?? false;
+  }
+
+  bool get hasImages {
+    return images.isNotEmpty;
+  }
+
+  bool get hasOriginalImage {
+    return images.any((ScanImage image) => image.isOriginal);
+  }
+
+  bool get hasProcessedImage {
+    return images.any((ScanImage image) => image.isProcessed);
+  }
+
+  bool get isActive {
+    return status == ScanSessionStatus.scanning ||
+        status == ScanSessionStatus.analyzing ||
+        status == ScanSessionStatus.resolving;
+  }
+
+  bool get isCompleted {
+    return status == ScanSessionStatus.completed;
+  }
+
+  AtlasCatalogProduct? get catalogProduct {
+    return resolvedProduct?.toCatalogProduct();
+  }
+
+  bool get requiresUserAction {
+    return status == ScanSessionStatus.awaitingConfirmation ||
+        resolutionStatus.requiresUserReview ||
+        requiresVariantConfirmation;
+  }
+
+  bool get canBuildBriefing {
+    return hasResolvedProduct && resolutionStatus.isResolved;
+  }
+
+  Duration get elapsed {
+    final DateTime end = completedAt ?? DateTime.now();
+
+    return end.difference(startedAt);
+  }
+
+  ScanImage? get originalImage {
+    for (final ScanImage image in images) {
+      if (image.type == ScanImageType.original) {
+        return image;
+      }
+    }
+
+    return null;
+  }
+
+  ScanImage? get processedImage {
+    for (final ScanImage image in images) {
+      if (image.type == ScanImageType.processed) {
+        return image;
+      }
+    }
+
+    return null;
+  }
+
+  ScanSession copyWith({
+    String? sessionId,
+    DateTime? startedAt,
+    DateTime? completedAt,
+    ScanSessionStatus? status,
+    ScanIntent? intent,
+    ScanPerformanceMode? performanceMode,
+    ScannerType? scannerType,
+    List<ScanCode>? detectedCodes,
+    ScanCode? bestCandidate,
+    VisualIdentity? visualIdentity,
+    IdentityResolutionStatus? resolutionStatus,
+    AtlasProductId? atlasProductId,
+    ResolvedProductSnapshot? resolvedProduct,
+    MarketValueSnapshot? marketSnapshot,
+    CollectorItemStatus? collectorStatus,
+    ScanVariantResolution? variantResolution,
+    ContributionCollection? contributions,
+    List<ScanImage>? images,
+    double? confidence,
+    bool? isOffline,
+    bool? requiresSync,
+    List<String>? notes,
+    List<String>? warnings,
+  }) {
+    return ScanSession(
+      sessionId: sessionId ?? this.sessionId,
+      startedAt: startedAt ?? this.startedAt,
+      completedAt: completedAt ?? this.completedAt,
+      status: status ?? this.status,
+      intent: intent ?? this.intent,
+      performanceMode: performanceMode ?? this.performanceMode,
+      scannerType: scannerType ?? this.scannerType,
+      detectedCodes: detectedCodes ?? this.detectedCodes,
+      bestCandidate: bestCandidate ?? this.bestCandidate,
+      visualIdentity: visualIdentity ?? this.visualIdentity,
+      resolutionStatus: resolutionStatus ?? this.resolutionStatus,
+      atlasProductId: atlasProductId ?? this.atlasProductId,
+      resolvedProduct: resolvedProduct ?? this.resolvedProduct,
+      marketSnapshot: marketSnapshot ?? this.marketSnapshot,
+      collectorStatus: collectorStatus ?? this.collectorStatus,
+      variantResolution: variantResolution ?? this.variantResolution,
+      contributions: contributions ?? this.contributions,
+      images: images ?? this.images,
+      confidence: confidence ?? this.confidence,
+      isOffline: isOffline ?? this.isOffline,
+      requiresSync: requiresSync ?? this.requiresSync,
+      notes: notes ?? this.notes,
+      warnings: warnings ?? this.warnings,
+    );
+  }
+
+  ScanSession addDetectedCode(ScanCode code, {bool makeBestCandidate = false}) {
+    final bool alreadyDetected = detectedCodes.any((ScanCode existing) {
+      return existing.format == code.format &&
+          existing.normalizedValue == code.normalizedValue;
+    });
+
+    final List<ScanCode> updatedCodes = alreadyDetected
+        ? detectedCodes
+        : <ScanCode>[...detectedCodes, code];
+
+    return copyWith(
+      detectedCodes: updatedCodes,
+      bestCandidate: makeBestCandidate ? code : bestCandidate,
+    );
+  }
+
+  ScanSession addContribution(
+    IntelligenceContribution contribution, {
+    ContributionConflictPolicy conflictPolicy =
+        ContributionConflictPolicy.reject,
+  }) {
+    final ContributionCollection updatedContributions = contributions.add(
+      contribution,
+      conflictPolicy: conflictPolicy,
+    );
+
+    return _withProjectedContributions(updatedContributions);
+  }
+
+  ScanSession addContributions(
+    Iterable<IntelligenceContribution> values, {
+    ContributionConflictPolicy conflictPolicy =
+        ContributionConflictPolicy.reject,
+  }) {
+    final ContributionCollection updatedContributions = contributions.addAll(
+      values,
+      conflictPolicy: conflictPolicy,
+    );
+
+    return _withProjectedContributions(updatedContributions);
+  }
+
+  ScanSession _withProjectedContributions(
+    ContributionCollection updatedContributions,
+  ) {
+    final ScanSessionProjection projection = ScanSessionProjector.project(
+      contributions: updatedContributions,
+      currentStatus: status,
+      currentResolutionStatus: resolutionStatus,
+      currentAtlasProductId: atlasProductId,
+      currentResolvedProduct: resolvedProduct,
+      currentConfidence: confidence,
+      isOffline: isOffline,
+    );
+
+    return copyWith(
+      contributions: updatedContributions,
+      status: projection.status,
+      resolutionStatus: projection.resolutionStatus,
+      atlasProductId: projection.atlasProductId,
+      resolvedProduct: projection.resolvedProduct,
+      confidence: projection.confidence,
+    );
+  }
+
+  ScanSession removeContributionById(String contributionId) {
+    final ContributionCollection updated = contributions.removeById(
+      contributionId,
+    );
+
+    if (identical(updated, contributions)) {
+      return this;
+    }
+
+    return copyWith(contributions: updated);
+  }
+
+  ScanSession removeContributionsFromEngine(String engineId) {
+    final ContributionCollection updated = contributions.removeFromEngine(
+      engineId,
+    );
+
+    if (identical(updated, contributions)) {
+      return this;
+    }
+
+    return copyWith(contributions: updated);
+  }
+
+  ScanSession addImage(ScanImage image) {
+    final List<ScanImage> updatedImages =
+        images
+            .where((ScanImage existing) => existing.imageId != image.imageId)
+            .toList()
+          ..add(image);
+
+    return copyWith(images: updatedImages);
+  }
+
+  ScanSession addNote(String note) {
+    final String normalized = note.trim();
+
+    if (normalized.isEmpty || notes.contains(normalized)) {
+      return this;
+    }
+
+    return copyWith(notes: <String>[...notes, normalized]);
+  }
+
+  ScanSession addWarning(String warning) {
+    final String normalized = warning.trim();
+
+    if (normalized.isEmpty || warnings.contains(normalized)) {
+      return this;
+    }
+
+    return copyWith(warnings: <String>[...warnings, normalized]);
+  }
+
+  @override
+  String toString() {
+    return 'ScanSession('
+        'sessionId: $sessionId, '
+        'status: ${status.name}, '
+        'intent: ${intent.name}, '
+        'codes: ${detectedCodes.length}, '
+        'images: ${images.length}, '
+        'resolutionStatus: ${resolutionStatus.name}, '
+        'atlasProductId: $atlasProductId, '
+        'confidence: $confidence, '
+        'isOffline: $isOffline, '
+        'requiresSync: $requiresSync'
+        ')';
+  }
+}
+
+============================================================
+FILE: .\lib\atlas\scan\projection\scan_session_projector.dart
+============================================================
+import '../contributions/contribution_collection.dart';
+import '../contributions/product_resolution_contribution.dart';
+import '../../identity/product/atlas_product_id.dart';
+import '../models/scan_session.dart';
+import '../resolution/resolved_product_snapshot.dart';
+import '../workflow/identity_resolution_status.dart';
+
+/// Immutable projected state derived from scanner intelligence contributions.
+///
+/// Scan engines contribute evidence. The projector converts that evidence into
+/// the canonical state displayed by Atlas.
+class ScanSessionProjection {
+  const ScanSessionProjection({
+    required this.status,
+    required this.resolutionStatus,
+    required this.atlasProductId,
+    required this.resolvedProduct,
+    required this.confidence,
+  });
+
+  final ScanSessionStatus status;
+
+  final IdentityResolutionStatus resolutionStatus;
+
+  final AtlasProductId? atlasProductId;
+
+  final ResolvedProductSnapshot? resolvedProduct;
+
+  final double confidence;
+}
+
+/// Converts immutable intelligence contributions into trusted ScanSession
+/// state.
+///
+/// Engines should produce contributions rather than independently deciding
+/// what the scanner UI displays.
+abstract final class ScanSessionProjector {
+  static ScanSessionProjection project({
+    required ContributionCollection contributions,
+    required ScanSessionStatus currentStatus,
+    required IdentityResolutionStatus currentResolutionStatus,
+    required AtlasProductId? currentAtlasProductId,
+    required ResolvedProductSnapshot? currentResolvedProduct,
+    required double currentConfidence,
+    required bool isOffline,
+  }) {
+    final ProductResolutionContribution? resolutionContribution =
+    contributions.latestOfType<ProductResolutionContribution>();
+
+    if (resolutionContribution == null) {
+      return ScanSessionProjection(
+        status: currentStatus,
+        resolutionStatus: currentResolutionStatus,
+        atlasProductId: currentAtlasProductId,
+        resolvedProduct: currentResolvedProduct,
+        confidence: _normalizeConfidence(
+          currentConfidence,
+        ),
+      );
+    }
+
+    final resolution = resolutionContribution.resolution;
+    final double confidence = _normalizeConfidence(
+      resolution.matchConfidence,
+    );
+
+    if (resolution.requiresReview) {
+      return ScanSessionProjection(
+        status: ScanSessionStatus.awaitingConfirmation,
+        resolutionStatus:
+        IdentityResolutionStatus.ambiguous,
+        atlasProductId: resolution.productId,
+        resolvedProduct: resolution.resolvedProduct,
+        confidence: confidence,
+      );
+    }
+
+    return ScanSessionProjection(
+      status: ScanSessionStatus.completed,
+      resolutionStatus: isOffline
+          ? IdentityResolutionStatus.resolvedLocal
+          : IdentityResolutionStatus.resolvedRemote,
+      atlasProductId: resolution.productId,
+      resolvedProduct: resolution.resolvedProduct,
+      confidence: confidence,
+    );
+  }
+
+  static double _normalizeConfidence(double value) {
+    if (!value.isFinite) {
+      return 0.0;
+    }
+
+    return value.clamp(0.0, 1.0).toDouble();
+  }
+}
+
+============================================================
+FILE: .\lib\atlas\scan\authenticity\atlas_visual_inspection_service.dart
+============================================================
+import '../contributions/contribution_conflict_policy.dart';
+import '../contributions/visual_inspection_contribution.dart';
+import '../engine/engine_context.dart';
+import '../models/scan_session.dart';
+import 'atlas_authenticity_engine.dart';
+import 'engines/atlas_high_signal_inspection_pipeline.dart';
+import 'models/atlas_visual_inspection.dart';
+
+class AtlasVisualInspectionService {
+  const AtlasVisualInspectionService({
+    this.authenticityEngine = const AtlasAuthenticityEngine(),
+    this.highSignalPipeline = const AtlasHighSignalInspectionPipeline(),
+  });
+
+  final AtlasAuthenticityEngine authenticityEngine;
+  final AtlasHighSignalInspectionPipeline highSignalPipeline;
+
+  Future<ScanSession> inspect({
+    required ScanSession session,
+    required AtlasVisualInspection inspection,
+  }) async {
+    final AtlasVisualInspection enrichedInspection = highSignalPipeline.enrich(
+      sessionId: session.sessionId,
+      inspection: inspection,
+      expectedResolvedVariant: session.resolvedProduct?.variantName,
+    );
+
+    var updated = session;
+
+    for (final image in enrichedInspection.images) {
+      updated = updated.addImage(image);
+    }
+
+    updated = updated.addContribution(
+      VisualInspectionContribution(
+        contributionId: 'visual-inspection-${session.sessionId}',
+        sourceEngineId: 'atlas.visual-inspection',
+        createdAt: DateTime.now().toUtc(),
+        inspection: enrichedInspection,
+        confidence: enrichedInspection.resolvedEvidenceConfidence,
+        attributes: <String, Object?>{
+          'inspectionAreas': enrichedInspection.inspectedAreas
+              .map((area) => area.name)
+              .toList(growable: false),
+          'structuredObservationCount': enrichedInspection.observations.length,
+          'hasReferenceCriteria': enrichedInspection.referenceCriteria != null,
+          'highSignalEnginesApplied': true,
+        },
+      ),
+      conflictPolicy: ContributionConflictPolicy.replaceExisting,
+    );
+
+    final result = await authenticityEngine.process(
+      updated,
+      EngineContext(
+        requestId: session.sessionId,
+        createdAt: DateTime.now().toUtc(),
+        deviceType: EngineDeviceType.mobile,
+      ),
+    );
+
+    return result.session;
+  }
+}
+
+============================================================
+FILE: .\lib\atlas\scan\authenticity\atlas_authenticity_engine.dart
+============================================================
+import '../contributions/authenticity_contribution.dart';
+import '../contributions/contribution_conflict_policy.dart';
+import '../contributions/visual_inspection_contribution.dart';
+import '../engine/abstract_scan_engine.dart';
+import '../engine/engine_context.dart';
+import '../engine/engine_result.dart';
+import '../engine/engine_support.dart';
+import '../models/scan_session.dart';
+import 'atlas_authenticity_rules.dart';
+
+final class AtlasAuthenticityEngine extends AbstractScanEngine {
+  const AtlasAuthenticityEngine();
+
+  static const id = 'atlas.scan.authenticity';
+  static const capabilityId = 'atlas.capability.authenticity';
+
+  @override
+  String get engineId => id;
+
+  @override
+  String get displayName => 'Authenticity Intelligence';
+
+  @override
+  Future<EngineResult> execute(
+    ScanSession session,
+    EngineContext context,
+  ) async {
+    final visual = session
+        .latestContributionOfType<VisualInspectionContribution>();
+    if (visual == null) {
+      return EngineResult.skipped(
+        session: session,
+        reason: 'No visual inspection evidence is available.',
+      );
+    }
+
+    final assessment = AtlasAuthenticityRules.evaluate(
+      session: session,
+      inspection: visual.inspection,
+    );
+
+    final contribution = AuthenticityContribution(
+      contributionId: EngineSupport.buildContributionId(
+        namespace: 'atlas.authenticity',
+        segments: <Object?>[session.sessionId],
+      ),
+      sourceEngineId: engineId,
+      createdAt: DateTime.now().toUtc(),
+      assessment: assessment,
+      confidence: assessment.evidenceConfidence,
+      attributes: <String, Object?>{
+        'status': assessment.status.name,
+        'concernLevel': assessment.concernLevel.name,
+        'evidenceConfidence': assessment.evidenceConfidence,
+        'referenceCoverage': assessment.referenceCoverage,
+        'inspectionCoverage': assessment.inspectionCoverage,
+        'concernScore': assessment.aggregatedConcernScore,
+      },
+    );
+
+    final updated = session.addContribution(
+      contribution,
+      conflictPolicy: ContributionConflictPolicy.replaceExisting,
+    );
+
+    return EngineResult.success(session: updated);
+  }
+}
+
+============================================================
+FILE: .\lib\atlas\scan\authenticity\engines\atlas_high_signal_inspection_pipeline.dart
+============================================================
+import '../models/atlas_authenticity_evidence.dart';
+import '../models/atlas_visual_inspection.dart';
+import 'atlas_autograph_coa_inspection_engine.dart';
+import 'atlas_packaging_consistency_engine.dart';
+import 'atlas_production_stamp_inspection_engine.dart';
+import 'atlas_sticker_variant_inspection_engine.dart';
+
+final class AtlasHighSignalInspectionPipeline {
+  const AtlasHighSignalInspectionPipeline({
+    this.stickerVariantEngine = const AtlasStickerVariantInspectionEngine(),
+    this.productionStampEngine = const AtlasProductionStampInspectionEngine(),
+    this.packagingConsistencyEngine = const AtlasPackagingConsistencyEngine(),
+    this.autographCoaEngine = const AtlasAutographCoaInspectionEngine(),
+  });
+
+  final AtlasStickerVariantInspectionEngine stickerVariantEngine;
+  final AtlasProductionStampInspectionEngine productionStampEngine;
+  final AtlasPackagingConsistencyEngine packagingConsistencyEngine;
+  final AtlasAutographCoaInspectionEngine autographCoaEngine;
+
+  static const Set<String> managedSourceEngineIds = <String>{
+    AtlasStickerVariantInspectionEngine.id,
+    AtlasProductionStampInspectionEngine.id,
+    AtlasPackagingConsistencyEngine.id,
+    AtlasAutographCoaInspectionEngine.id,
+  };
+
+  AtlasVisualInspection enrich({
+    required String sessionId,
+    required AtlasVisualInspection inspection,
+    String? expectedResolvedVariant,
+    DateTime? observedAt,
+  }) {
+    final DateTime timestamp = (observedAt ?? DateTime.now()).toUtc();
+
+    final List<AtlasVisualEvidenceObservation> preserved = inspection
+        .observations
+        .where(
+          (AtlasVisualEvidenceObservation observation) =>
+              !managedSourceEngineIds.contains(observation.sourceEngineId),
+        )
+        .toList(growable: false);
+
+    final List<AtlasVisualEvidenceObservation> generated =
+        <AtlasVisualEvidenceObservation>[
+          ...stickerVariantEngine.inspect(
+            sessionId: sessionId,
+            inspection: inspection,
+            expectedResolvedVariant: expectedResolvedVariant,
+            observedAt: timestamp,
+          ),
+          ...productionStampEngine.inspect(
+            sessionId: sessionId,
+            inspection: inspection,
+            observedAt: timestamp,
+          ),
+          ...packagingConsistencyEngine.inspect(
+            sessionId: sessionId,
+            inspection: inspection,
+            observedAt: timestamp,
+          ),
+          ...autographCoaEngine.inspect(
+            sessionId: sessionId,
+            inspection: inspection,
+            observedAt: timestamp,
+          ),
+        ];
+
+    return AtlasVisualInspection(
+      stickerText: inspection.stickerText,
+      productionStampText: inspection.productionStampText,
+      copyrightText: inspection.copyrightText,
+      signature: inspection.signature,
+      authenticationProvider: inspection.authenticationProvider,
+      authenticityNumber: inspection.authenticityNumber,
+      typographyConsistent: inspection.typographyConsistent,
+      borderConsistent: inspection.borderConsistent,
+      stickerPrintClear: inspection.stickerPrintClear,
+      stickerCutEven: inspection.stickerCutEven,
+      hasAutograph: inspection.hasAutograph,
+      hasCoa: inspection.hasCoa,
+      notes: inspection.notes,
+      referenceCriteria: inspection.referenceCriteria,
+      evidenceConfidence: inspection.evidenceConfidence,
+      observations: <AtlasVisualEvidenceObservation>[
+        ...preserved,
+        ...generated,
+      ],
+      images: inspection.images,
+    );
+  }
+}
+
+============================================================
+FILE: .\lib\atlas\scan\authenticity\engines\atlas_sticker_variant_inspection_engine.dart
+============================================================
+import '../../../intelligence/identity/atlas_identity_analysis_engine.dart';
+import '../models/atlas_authenticity_evidence.dart';
+import '../models/atlas_inspection_reference.dart';
+import '../models/atlas_visual_inspection.dart';
+
+final class AtlasStickerVariantInspectionEngine {
+  const AtlasStickerVariantInspectionEngine();
+
+  static const String id = 'atlas.scan.authenticity.sticker-variant';
+
+  List<AtlasVisualEvidenceObservation> inspect({
+    required String sessionId,
+    required AtlasVisualInspection inspection,
+    String? expectedResolvedVariant,
+    required DateTime observedAt,
+  }) {
+    final String stickerText = inspection.stickerText.trim();
+    if (stickerText.isEmpty) {
+      return const <AtlasVisualEvidenceObservation>[];
+    }
+
+    final analysis = AtlasIdentityAnalysisEngine.create().analyze(stickerText);
+    final Set<String> detected = <String>{
+      ...analysis.stickerResult.stickers.map((value) => value.displayName),
+      ...analysis.variantResult.variants.map((value) => value.displayName),
+    }..removeWhere((String value) => value.trim().isEmpty);
+
+    final AtlasInspectionReferenceCriteria? reference =
+        inspection.referenceCriteria;
+    final bool hasReferenceVariants =
+        reference != null && reference.legitimateVariantTypes.isNotEmpty;
+    final bool referenceMismatch =
+        hasReferenceVariants &&
+        detected.isNotEmpty &&
+        !_hasAnySemanticMatch(detected, reference.legitimateVariantTypes);
+    final bool criticalReferenceMismatch =
+        referenceMismatch && _hasHighConfidenceVettedReference(reference);
+    final bool visualMismatch =
+        inspection.stickerPrintClear == false ||
+        inspection.stickerCutEven == false;
+
+    final String expected = expectedResolvedVariant?.trim() ?? '';
+    final bool resolvedVariantMismatch =
+        expected.isNotEmpty &&
+        detected.isNotEmpty &&
+        !_hasAnySemanticMatch(detected, <String>[expected]);
+
+    return <AtlasVisualEvidenceObservation>[
+      AtlasVisualEvidenceObservation(
+        observationId: 'scanner5c-$sessionId-sticker-variant',
+        sourceEngineId: id,
+        area: AtlasInspectionArea.windowSticker,
+        category: AtlasEvidenceCategory.variantSticker,
+        label: detected.isEmpty
+            ? 'Sticker text recorded'
+            : 'Sticker / variant classification',
+        observedValue: stickerText,
+        confidence: inspection.resolvedEvidenceConfidence,
+        scanImageId: _imageIdForArea(
+          inspection,
+          AtlasInspectionArea.windowSticker,
+        ),
+        attributes: <String, Object?>{
+          'classified': detected.isNotEmpty,
+          'detectedLabels': detected.toList(growable: false),
+          if (expected.isNotEmpty) 'expectedResolvedVariant': expected,
+          if (resolvedVariantMismatch) 'resolvedVariantMismatch': true,
+          if (inspection.stickerPrintClear != null)
+            'stickerPrintClear': inspection.stickerPrintClear,
+          if (inspection.stickerCutEven != null)
+            'stickerCutEven': inspection.stickerCutEven,
+          if (visualMismatch) 'visualMismatch': true,
+          if (hasReferenceVariants)
+            'referenceVariantFamilies': reference.legitimateVariantTypes,
+          if (referenceMismatch) 'referenceMismatch': true,
+          if (criticalReferenceMismatch) 'criticalReferenceMismatch': true,
+        },
+        observedAt: observedAt,
+      ),
+    ];
+  }
+
+  static bool _hasAnySemanticMatch(
+    Iterable<String> observed,
+    Iterable<String> expected,
+  ) {
+    for (final String left in observed) {
+      final String normalizedLeft = _normalize(left);
+      if (normalizedLeft.isEmpty) continue;
+      for (final String right in expected) {
+        final String normalizedRight = _normalize(right);
+        if (normalizedRight.isEmpty) continue;
+        if (normalizedLeft == normalizedRight ||
+            normalizedLeft.contains(normalizedRight) ||
+            normalizedRight.contains(normalizedLeft)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  static bool _hasHighConfidenceVettedReference(
+    AtlasInspectionReferenceCriteria reference,
+  ) {
+    if (reference.coverageLevel != AtlasReferenceCoverageLevel.comprehensive ||
+        reference.completenessScore < 0.85) {
+      return false;
+    }
+    return reference.provenance.any(
+          (AtlasReferenceProvenance source) => source.specialistVetted,
+        ) ||
+        reference.knownRuns.any(
+          (AtlasProductionRunReference run) => run.provenance.specialistVetted,
+        );
+  }
+
+  static String _normalize(String value) =>
+      value.trim().toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+
+  static String? _imageIdForArea(
+    AtlasVisualInspection inspection,
+    AtlasInspectionArea area,
+  ) {
+    for (final image in inspection.images) {
+      final bool matches = switch (area) {
+        AtlasInspectionArea.windowSticker => image.type.name == 'sticker',
+        _ => false,
+      };
+      if (matches) return image.imageId;
+    }
+    return null;
+  }
+}
+
+============================================================
+FILE: .\lib\atlas\scan\contributions\visual_inspection_contribution.dart
+============================================================
+import '../authenticity/models/atlas_visual_inspection.dart';
+import 'abstract_intelligence_contribution.dart';
+import 'contribution_category.dart';
+
+final class VisualInspectionContribution
+    extends AbstractIntelligenceContribution {
+  VisualInspectionContribution({
+    required super.contributionId,
+    required super.sourceEngineId,
+    required super.createdAt,
+    required this.inspection,
+    super.confidence,
+    super.attributes,
+  });
+
+  final AtlasVisualInspection inspection;
+
+  @override
+  ContributionCategory get category => ContributionCategory.authenticity;
+}
+
+============================================================
+FILE: .\lib\atlas\scan\contributions\authenticity_contribution.dart
+============================================================
+import '../authenticity/models/atlas_authenticity_assessment.dart';
+import 'abstract_intelligence_contribution.dart';
+import 'contribution_category.dart';
+
+final class AuthenticityContribution extends AbstractIntelligenceContribution {
+  AuthenticityContribution({
+    required super.contributionId,
+    required super.sourceEngineId,
+    required super.createdAt,
+    required this.assessment,
+    super.confidence,
+    super.attributes,
+  });
+
+  final AtlasAuthenticityAssessment assessment;
+
+  @override
+  ContributionCategory get category => ContributionCategory.authenticity;
+}
+
+============================================================
+FILE: .\lib\atlas\scan\models\variant_resolution.dart
+============================================================
+FILE NOT FOUND
+
+============================================================
+FILE: .\lib\atlas\scan\results\atlas_continuous_scan_result.dart
+============================================================
+import '../../catalog/models/atlas_catalog_product.dart';
+import '../../catalog/services/atlas_barcode_catalog_resolver.dart';
+import '../models/scan_session.dart';
+
+/// Immutable completed background-resolution result for one physical track.
+class AtlasContinuousScanResult {
+  const AtlasContinuousScanResult({
+    required this.trackId,
+    required this.session,
+    required this.catalogResolution,
+    required this.completedAt,
+  });
+
+  final String trackId;
+  final ScanSession session;
+  final AtlasBarcodeResolution catalogResolution;
+  final DateTime completedAt;
+
+  bool get isOfflineResult => session.isOffline;
+
+  bool get requiresSync => session.requiresSync;
+
+  bool get requiresUserReview {
+    return session.requiresUserAction || !catalogResolution.hasSingleMatch;
+  }
+
+  AtlasCatalogProduct? get resolvedCatalogProduct {
+    return session.catalogProduct ?? catalogResolution.singleMatch;
+  }
+
+  AtlasContinuousScanResult copyWith({ScanSession? session}) {
+    return AtlasContinuousScanResult(
+      trackId: trackId,
+      session: session ?? this.session,
+      catalogResolution: catalogResolution,
+      completedAt: completedAt,
+    );
+  }
+}
+
+============================================================
+FILE: .\lib\screens\scanner\atlas_haul_review_screen.dart
+============================================================
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import 'package:funkovault2/atlas/catalog/models/atlas_catalog_product.dart';
+import 'package:funkovault2/atlas/catalog/services/atlas_pop_factory.dart';
+import 'package:funkovault2/atlas/intelligence/engines/atlas_collector_insight_engine.dart';
+import 'package:funkovault2/atlas/scan/acquisition/atlas_continuous_scan_coordinator.dart';
+import 'package:funkovault2/atlas/scan/ledger/atlas_scan_ledger_entry.dart';
+import 'package:funkovault2/atlas/scan/results/atlas_continuous_scan_result.dart';
+import 'package:funkovault2/screens/scanner/atlas_visual_inspection_screen.dart';
+import 'package:funkovault2/models/pop.dart';
+import 'package:funkovault2/screens/pop/add_pop_screen.dart';
+import 'package:funkovault2/services/app_state.dart';
+import 'package:funkovault2/theme/atlas_colors.dart';
+import 'package:funkovault2/theme/atlas_spacing.dart';
+import 'package:funkovault2/widgets/atlas/atlas_glass_card.dart';
+import 'package:funkovault2/widgets/atlas/components/atlas_section_header.dart';
+import 'package:funkovault2/widgets/atlas/components/atlas_status_chip.dart';
+
+class AtlasHaulReviewScreen extends StatefulWidget {
+  const AtlasHaulReviewScreen({
+    super.key,
+    required this.coordinator,
+    required this.collectionName,
+  });
+
+  final AtlasContinuousScanCoordinator coordinator;
+  final String collectionName;
+
+  @override
+  State<AtlasHaulReviewScreen> createState() => _AtlasHaulReviewScreenState();
+}
+
+class _AtlasHaulReviewScreenState extends State<AtlasHaulReviewScreen> {
+  final Set<String> _savingTrackIds = <String>{};
+
+  Future<void> _inspectItem({
+    required AtlasScanLedgerEntry entry,
+    required AtlasContinuousScanResult result,
+  }) async {
+    final session = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AtlasVisualInspectionScreen(session: result.session),
+      ),
+    );
+    if (!mounted || session == null) return;
+    widget.coordinator.applyInspection(
+      trackId: entry.trackId,
+      session: session,
+    );
+    setState(() {});
+  }
+
+  Future<bool> _runSaveForTrack({
+    required AtlasScanLedgerEntry entry,
+    required Widget Function(BuildContext context) screenBuilder,
+    required String successLabel,
+  }) async {
+    if (_savingTrackIds.contains(entry.trackId)) {
+      return false;
+    }
+
+    setState(() {
+      _savingTrackIds.add(entry.trackId);
+    });
+
+    try {
+      final bool? added = await Navigator.push<bool>(
+        context,
+        MaterialPageRoute<bool>(builder: screenBuilder),
+      );
+
+      if (!mounted || added != true) {
+        return false;
+      }
+
+      final bool committed = widget.coordinator.markCommitted(
+        trackId: entry.trackId,
+      );
+
+      if (!committed) {
+        return false;
+      }
+
+      setState(() {});
+
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(
+              '$successLabel committed to ${widget.collectionName}.',
+            ),
+          ),
+        );
+
+      return true;
+    } finally {
+      if (mounted) {
+        setState(() {
+          _savingTrackIds.remove(entry.trackId);
+        });
+      } else {
+        _savingTrackIds.remove(entry.trackId);
+      }
+    }
+  }
+
+  Future<void> _addCatalogItem({
+    required AtlasScanLedgerEntry entry,
+    required AtlasCatalogProduct product,
+  }) async {
+    await _runSaveForTrack(
+      entry: entry,
+      successLabel: product.displayName,
+      screenBuilder: (_) {
+        final inspection = widget.coordinator
+            .resultForTrack(entry.trackId)
+            ?.session
+            .visualInspectionContribution
+            ?.inspection;
+        return AddPopScreen(
+          atlasProduct: product,
+          collectionName: widget.collectionName,
+          visualInspection: inspection,
+        );
+      },
+    );
+  }
+
+  Future<void> _addManualItem({required AtlasScanLedgerEntry entry}) async {
+    await _runSaveForTrack(
+      entry: entry,
+      successLabel: 'Reviewed item',
+      screenBuilder: (_) {
+        final inspection = widget.coordinator
+            .resultForTrack(entry.trackId)
+            ?.session
+            .visualInspectionContribution
+            ?.inspection;
+        return AddPopScreen(
+          collectionName: widget.collectionName,
+          visualInspection: inspection,
+        );
+      },
+    );
+  }
+
+  Future<void> _linkExistingVaultItem({
+    required AtlasScanLedgerEntry entry,
+    required List<Pop> collectionPops,
+  }) async {
+    if (_savingTrackIds.contains(entry.trackId)) {
+      return;
+    }
+
+    final Pop? selected = await showModalBottomSheet<Pop>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) {
+        return _VaultItemPickerSheet(
+          collectionName: widget.collectionName,
+          collectionPops: collectionPops,
+          scannedBarcode: entry.stableCode.normalizedValue,
+        );
+      },
+    );
+
+    if (!mounted || selected == null) {
+      return;
+    }
+
+    final String scannedBarcode = entry.stableCode.normalizedValue.trim();
+    final String existingBarcode = selected.sourceUpc.trim();
+
+    if (existingBarcode.isNotEmpty && existingBarcode != scannedBarcode) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(
+              '${selected.name} already has barcode $existingBarcode. Atlas did not overwrite it.',
+            ),
+          ),
+        );
+      return;
+    }
+
+    setState(() {
+      _savingTrackIds.add(entry.trackId);
+    });
+
+    try {
+      final AppState appState = context.read<AppState>();
+      final Pop linkedPop = existingBarcode == scannedBarcode
+          ? selected
+          : selected.copyWith(sourceUpc: scannedBarcode);
+
+      final Pop? persisted = await appState.updatePop(
+        linkedPop,
+        collectionName: widget.collectionName,
+        existingRecordKey: selected.collectionRecordKey,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      if (persisted == null) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Atlas could not safely link that Vault item. Nothing was changed.',
+              ),
+            ),
+          );
+        return;
+      }
+
+      final bool committed = widget.coordinator.markCommitted(
+        trackId: entry.trackId,
+      );
+
+      if (!committed) {
+        return;
+      }
+
+      setState(() {});
+
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(
+              'Linked barcode $scannedBarcode to ${persisted.name} and committed this haul item.',
+            ),
+          ),
+        );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _savingTrackIds.remove(entry.trackId);
+        });
+      } else {
+        _savingTrackIds.remove(entry.trackId);
+      }
+    }
+  }
+
+  Future<void> _reviewCatalogMatches({
+    required AtlasScanLedgerEntry entry,
+    required AtlasContinuousScanResult result,
+  }) async {
+    final List<AtlasCatalogProduct> matches = result.catalogResolution.matches;
+
+    if (matches.isEmpty) {
+      return;
+    }
+
+    final AtlasCatalogProduct?
+    selected = await showModalBottomSheet<AtlasCatalogProduct>(
+      context: context,
+      isScrollControlled: true,
+      builder: (BuildContext sheetContext) {
+        return SafeArea(
+          child: FractionallySizedBox(
+            heightFactor: 0.72,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(AtlasSpacing.lg),
+                  child: AtlasSectionHeader(
+                    title: '🔎 Review Catalog Matches',
+                    subtitle:
+                        'Choose the exact collectible before adding it to the Vault.',
+                    icon: Icons.content_copy_rounded,
+                    accentColor: AtlasColors.warning,
+                    trailing: AtlasStatusChip(
+                      label: '${matches.length} matches',
+                      icon: Icons.layers_outlined,
+                      accentColor: AtlasColors.warning,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(
+                      AtlasSpacing.lg,
+                      0,
+                      AtlasSpacing.lg,
+                      AtlasSpacing.lg,
+                    ),
+                    itemCount: matches.length,
+                    separatorBuilder: (_, _) =>
+                        const SizedBox(height: AtlasSpacing.sm),
+                    itemBuilder: (BuildContext context, int index) {
+                      final AtlasCatalogProduct product = matches[index];
+
+                      return AtlasGlassCard(
+                        accentColor: AtlasColors.warning,
+                        onTap: () {
+                          Navigator.pop(sheetContext, product);
+                        },
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.inventory_2_outlined,
+                              color: AtlasColors.warning,
+                            ),
+                            const SizedBox(width: AtlasSpacing.md),
+                            Expanded(
+                              child: Text(
+                                product.displayName,
+                                style: Theme.of(context).textTheme.titleSmall
+                                    ?.copyWith(fontWeight: FontWeight.w700),
+                              ),
+                            ),
+                            const Icon(Icons.chevron_right_rounded),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (!mounted || selected == null) {
+      return;
+    }
+
+    await _addCatalogItem(entry: entry, product: selected);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final AppState appState = context.watch<AppState>();
+
+    final List<AtlasScanLedgerEntry> entries =
+        widget.coordinator.ledger.entries.toList(growable: false)..sort(
+          (AtlasScanLedgerEntry a, AtlasScanLedgerEntry b) =>
+              b.createdAt.compareTo(a.createdAt),
+        );
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Review Haul')),
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.all(AtlasSpacing.md),
+          children: [
+            AtlasGlassCard(
+              accentColor: AtlasColors.vaultGold,
+              child: AtlasSectionHeader(
+                title: '📦 Review Haul',
+                subtitle:
+                    'Nothing enters the Vault until you explicitly save it.',
+                icon: Icons.fact_check_outlined,
+                accentColor: AtlasColors.vaultGold,
+                trailing: AtlasStatusChip(
+                  label:
+                      '${entries.length} item${entries.length == 1 ? '' : 's'}',
+                  icon: Icons.inventory_2_outlined,
+                  accentColor: AtlasColors.vaultGold,
+                ),
+              ),
+            ),
+            const SizedBox(height: AtlasSpacing.md),
+            if (entries.isEmpty)
+              AtlasGlassCard(
+                child: const Text('No haul items are ready for review yet.'),
+              )
+            else
+              ...entries.map((AtlasScanLedgerEntry entry) {
+                final AtlasContinuousScanResult? result = widget.coordinator
+                    .resultForTrack(entry.trackId);
+                final AtlasCatalogProduct? resolvedProduct =
+                    result?.resolvedCatalogProduct;
+                final bool hasMultipleMatches =
+                    result?.catalogResolution.hasMultipleMatches ?? false;
+
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: AtlasSpacing.md),
+                  child: _HaulReviewItemCard(
+                    entry: entry,
+                    result: result,
+                    collectionName: widget.collectionName,
+                    collectionPops: appState.popsForCollection(
+                      widget.collectionName,
+                    ),
+                    ownedWishlistIdentityKeys: appState
+                        .ownedWishlistIdentityKeysForCollection(
+                          widget.collectionName,
+                        ),
+                    isSaving: _savingTrackIds.contains(entry.trackId),
+                    onRetry: entry.hasFailed
+                        ? () {
+                            final bool accepted = widget.coordinator
+                                .retryFailedTrack(trackId: entry.trackId);
+
+                            if (accepted && mounted) {
+                              setState(() {});
+                            }
+                          }
+                        : null,
+                    onAdd: resolvedProduct == null
+                        ? null
+                        : () => _addCatalogItem(
+                            entry: entry,
+                            product: resolvedProduct,
+                          ),
+                    onReviewMatches: !hasMultipleMatches || result == null
+                        ? null
+                        : () => _reviewCatalogMatches(
+                            entry: entry,
+                            result: result,
+                          ),
+                    onFindExisting:
+                        entry.needsReview &&
+                            resolvedProduct == null &&
+                            !hasMultipleMatches
+                        ? () => _linkExistingVaultItem(
+                            entry: entry,
+                            collectionPops: appState.popsForCollection(
+                              widget.collectionName,
+                            ),
+                          )
+                        : null,
+                    onManualAdd:
+                        entry.needsReview &&
+                            resolvedProduct == null &&
+                            !hasMultipleMatches
+                        ? () => _addManualItem(entry: entry)
+                        : null,
+                    onInspect: result == null || entry.isCommitted
+                        ? null
+                        : () => _inspectItem(entry: entry, result: result),
+                  ),
+                );
+              }),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HaulReviewItemCard extends StatelessWidget {
+  const _HaulReviewItemCard({
+    required this.entry,
+    required this.result,
+    required this.collectionName,
+    required this.collectionPops,
+    required this.ownedWishlistIdentityKeys,
+    required this.isSaving,
+    required this.onRetry,
+    required this.onAdd,
+    required this.onReviewMatches,
+    required this.onFindExisting,
+    required this.onManualAdd,
+    required this.onInspect,
+  });
+
+  final AtlasScanLedgerEntry entry;
+  final AtlasContinuousScanResult? result;
+  final String collectionName;
+  final List<Pop> collectionPops;
+  final Set<String> ownedWishlistIdentityKeys;
+  final bool isSaving;
+  final VoidCallback? onRetry;
+  final VoidCallback? onAdd;
+  final VoidCallback? onReviewMatches;
+  final VoidCallback? onFindExisting;
+  final VoidCallback? onManualAdd;
+  final VoidCallback? onInspect;
+
+  @override
+  Widget build(BuildContext context) {
+    final AtlasCatalogProduct? catalogProduct = result?.resolvedCatalogProduct;
+    final AtlasContinuousScanResult? scanResult = result;
+
+    bool isOwned = false;
+    bool isWishlisted = false;
+    int ownedCopyCount = 0;
+    int relatedMatchCount = 0;
+
+    if (catalogProduct != null && scanResult != null) {
+      final Pop productPop = AtlasPopFactory.createFromCatalog(
+        product: catalogProduct,
+      );
+
+      final insight = const AtlasCollectorInsightEngine().evaluateScan(
+        session: scanResult.session,
+        product: productPop,
+        scannedBarcode: entry.stableCode.normalizedValue,
+        collectionPops: collectionPops,
+        collectionName: collectionName,
+        ownedWishlistIdentityKeys: ownedWishlistIdentityKeys,
+      );
+
+      isOwned = insight.state.isOwned;
+      isWishlisted = insight.state.isWishlisted;
+      ownedCopyCount = insight.state.ownedMatches.fold<int>(
+        0,
+        (int total, Pop pop) => total + pop.quantity,
+      );
+      relatedMatchCount = insight.state.relatedMatches.length;
+    }
+
+    final Color accentColor = _accentForStatus(entry.status);
+    final bool hasMultipleMatches =
+        scanResult?.catalogResolution.hasMultipleMatches ?? false;
+    final int matchCount = scanResult?.catalogResolution.matches.length ?? 0;
+
+    final String title =
+        catalogProduct?.displayName ??
+        (hasMultipleMatches
+            ? '$matchCount Possible Matches'
+            : 'Barcode ${entry.stableCode.normalizedValue}');
+
+    return AtlasGlassCard(
+      accentColor: accentColor,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AtlasSectionHeader(
+            title: title,
+            subtitle: _statusMessage(entry),
+            icon: _iconForStatus(entry.status),
+            accentColor: accentColor,
+            trailing: AtlasStatusChip(
+              label: _statusLabel(entry.status),
+              icon: _iconForStatus(entry.status),
+              accentColor: accentColor,
+            ),
+          ),
+          if (catalogProduct != null ||
+              scanResult?.isOfflineResult == true ||
+              scanResult?.requiresSync == true) ...[
+            const SizedBox(height: AtlasSpacing.md),
+            Wrap(
+              spacing: AtlasSpacing.sm,
+              runSpacing: AtlasSpacing.sm,
+              children: [
+                if (catalogProduct != null) ...[
+                  AtlasStatusChip(
+                    label: isOwned ? 'Owned ×$ownedCopyCount' : 'Not Owned',
+                    icon: isOwned
+                        ? Icons.inventory_2_rounded
+                        : Icons.inventory_2_outlined,
+                    accentColor: isOwned
+                        ? AtlasColors.success
+                        : AtlasColors.textSecondary,
+                  ),
+                  AtlasStatusChip(
+                    label: isWishlisted ? 'Wishlisted' : 'Not Wishlisted',
+                    icon: isWishlisted
+                        ? Icons.favorite_rounded
+                        : Icons.favorite_border_rounded,
+                    accentColor: isWishlisted
+                        ? AtlasColors.danger
+                        : AtlasColors.textSecondary,
+                  ),
+                  if (relatedMatchCount > 0)
+                    AtlasStatusChip(
+                      label:
+                          '$relatedMatchCount related variant${relatedMatchCount == 1 ? '' : 's'}',
+                      icon: Icons.layers_outlined,
+                      accentColor: AtlasColors.warning,
+                    ),
+                ],
+                if (scanResult?.isOfflineResult == true)
+                  const AtlasStatusChip(
+                    label: 'Offline',
+                    icon: Icons.cloud_off_outlined,
+                    accentColor: AtlasColors.intelligenceBlue,
+                  ),
+                if (scanResult?.requiresSync == true)
+                  const AtlasStatusChip(
+                    label: 'Sync Pending',
+                    icon: Icons.cloud_sync_outlined,
+                    accentColor: AtlasColors.warning,
+                  ),
+              ],
+            ),
+          ],
+          const SizedBox(height: AtlasSpacing.md),
+          if (scanResult?.session.authenticityContribution != null) ...[
+            AtlasStatusChip(
+              label: _authenticityLabel(
+                scanResult!.session.authenticityContribution!.assessment.status,
+              ),
+              icon: Icons.shield_outlined,
+              accentColor:
+                  scanResult
+                      .session
+                      .authenticityContribution!
+                      .assessment
+                      .requiresReview
+                  ? AtlasColors.warning
+                  : AtlasColors.success,
+            ),
+            const SizedBox(height: AtlasSpacing.sm),
+          ],
+          if (onInspect != null) ...[
+            OutlinedButton.icon(
+              onPressed: onInspect,
+              icon: const Icon(Icons.verified_user_outlined),
+              label: Text(
+                scanResult?.session.hasAuthenticityAssessment == true
+                    ? '🔎 Review Visual Inspection'
+                    : '🔎 Visual Inspection',
+              ),
+            ),
+            const SizedBox(height: AtlasSpacing.sm),
+          ],
+          if (entry.isCommitted)
+            FilledButton.icon(
+              onPressed: null,
+              icon: const Icon(Icons.check_circle_rounded),
+              label: const Text('Committed to Vault'),
+            )
+          else if (entry.hasFailed)
+            FilledButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('🔄 Retry Resolution'),
+            )
+          else if ((entry.isResolved || entry.needsReview) &&
+              catalogProduct != null)
+            FilledButton.icon(
+              onPressed: isSaving ? null : onAdd,
+              icon: isSaving
+                  ? const SizedBox.square(
+                      dimension: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Icon(
+                      isOwned
+                          ? Icons.add_circle_outline_rounded
+                          : Icons.inventory_2_outlined,
+                    ),
+              label: Text(
+                isSaving
+                    ? 'Saving...'
+                    : entry.needsReview
+                    ? '🔎 Review & Add'
+                    : isOwned
+                    ? '➕ Add Another Copy'
+                    : '➕ Add to Vault',
+              ),
+            )
+          else if (entry.needsReview && hasMultipleMatches)
+            FilledButton.icon(
+              onPressed: onReviewMatches,
+              icon: const Icon(Icons.content_copy_rounded),
+              label: Text('🔎 Review $matchCount Matches'),
+            )
+          else if (entry.needsReview) ...[
+            FilledButton.icon(
+              onPressed: isSaving ? null : onFindExisting,
+              icon: const Icon(Icons.link_rounded),
+              label: const Text('🔗 Find Existing in Vault'),
+            ),
+            const SizedBox(height: AtlasSpacing.sm),
+            OutlinedButton.icon(
+              onPressed: isSaving ? null : onManualAdd,
+              icon: const Icon(Icons.edit_note_rounded),
+              label: const Text('➕ Add Manually'),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  static String _statusLabel(AtlasScanLedgerStatus status) {
+    return switch (status) {
+      AtlasScanLedgerStatus.observed => 'Observed',
+      AtlasScanLedgerStatus.queued => 'Queued',
+      AtlasScanLedgerStatus.resolving => 'Resolving',
+      AtlasScanLedgerStatus.resolved => 'Resolved',
+      AtlasScanLedgerStatus.needsReview => 'Review',
+      AtlasScanLedgerStatus.failed => 'Failed',
+      AtlasScanLedgerStatus.committed => 'Committed',
+    };
+  }
+
+  static String _authenticityLabel(dynamic status) {
+    return switch (status.name) {
+      'strongEvidence' => 'Strong Evidence',
+      'developingEvidence' => 'Developing Evidence',
+      'reviewRecommended' => 'Review Recommended',
+      _ => 'Insufficient Evidence',
+    };
+  }
+
+  static String _statusMessage(AtlasScanLedgerEntry entry) {
+    return switch (entry.status) {
+      AtlasScanLedgerStatus.observed => 'Stable evidence captured.',
+      AtlasScanLedgerStatus.queued => 'Waiting for an available resolver slot.',
+      AtlasScanLedgerStatus.resolving =>
+        'Atlas is resolving this item in the background.',
+      AtlasScanLedgerStatus.resolved =>
+        'Ready for explicit Vault review and save.',
+      AtlasScanLedgerStatus.needsReview =>
+        'Atlas needs your confirmation before this item can be committed.',
+      AtlasScanLedgerStatus.failed =>
+        entry.failureMessage?.trim().isNotEmpty == true
+            ? entry.failureMessage!.trim()
+            : 'Atlas could not complete resolution.',
+      AtlasScanLedgerStatus.committed =>
+        'This physical haul item has been committed.',
+    };
+  }
+
+  static IconData _iconForStatus(AtlasScanLedgerStatus status) {
+    return switch (status) {
+      AtlasScanLedgerStatus.observed => Icons.visibility_outlined,
+      AtlasScanLedgerStatus.queued => Icons.schedule_rounded,
+      AtlasScanLedgerStatus.resolving => Icons.sync_rounded,
+      AtlasScanLedgerStatus.resolved => Icons.check_circle_outline_rounded,
+      AtlasScanLedgerStatus.needsReview => Icons.fact_check_outlined,
+      AtlasScanLedgerStatus.failed => Icons.error_outline_rounded,
+      AtlasScanLedgerStatus.committed => Icons.inventory_rounded,
+    };
+  }
+
+  static Color _accentForStatus(AtlasScanLedgerStatus status) {
+    return switch (status) {
+      AtlasScanLedgerStatus.observed => AtlasColors.textSecondary,
+      AtlasScanLedgerStatus.queued => AtlasColors.warning,
+      AtlasScanLedgerStatus.resolving => AtlasColors.intelligenceBlue,
+      AtlasScanLedgerStatus.resolved => AtlasColors.success,
+      AtlasScanLedgerStatus.needsReview => AtlasColors.warning,
+      AtlasScanLedgerStatus.failed => AtlasColors.danger,
+      AtlasScanLedgerStatus.committed => AtlasColors.success,
+    };
+  }
+}
+
+class _VaultItemPickerSheet extends StatefulWidget {
+  const _VaultItemPickerSheet({
+    required this.collectionName,
+    required this.collectionPops,
+    required this.scannedBarcode,
+  });
+
+  final String collectionName;
+  final List<Pop> collectionPops;
+  final String scannedBarcode;
+
+  @override
+  State<_VaultItemPickerSheet> createState() => _VaultItemPickerSheetState();
+}
+
+class _VaultItemPickerSheetState extends State<_VaultItemPickerSheet> {
+  final TextEditingController _searchController = TextEditingController();
+  String _query = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  List<Pop> get _matches {
+    final String query = _query.trim().toLowerCase();
+
+    final List<Pop> pops = widget.collectionPops
+        .where((Pop pop) {
+          if (query.isEmpty) {
+            return true;
+          }
+
+          final List<String> values = <String>[
+            pop.name,
+            pop.number,
+            pop.series,
+            pop.variant,
+            pop.retailExclusive,
+            pop.eventSticker,
+            pop.limitedEdition,
+            pop.signature,
+            pop.sourceUpc,
+          ];
+
+          return values.any(
+            (String value) => value.toLowerCase().contains(query),
+          );
+        })
+        .toList(growable: false);
+
+    pops.sort((Pop a, Pop b) {
+      final int nameCompare = a.name.toLowerCase().compareTo(
+        b.name.toLowerCase(),
+      );
+      if (nameCompare != 0) {
+        return nameCompare;
+      }
+      return a.number.toLowerCase().compareTo(b.number.toLowerCase());
+    });
+
+    return pops;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final List<Pop> matches = _matches;
+
+    return SafeArea(
+      child: FractionallySizedBox(
+        heightFactor: 0.84,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AtlasSpacing.lg,
+                AtlasSpacing.lg,
+                AtlasSpacing.lg,
+                AtlasSpacing.md,
+              ),
+              child: AtlasSectionHeader(
+                title: '🔗 Find Existing in Vault',
+                subtitle:
+                    'Select the existing collectible that belongs to barcode ${widget.scannedBarcode}.',
+                icon: Icons.link_rounded,
+                accentColor: AtlasColors.intelligenceBlue,
+                trailing: AtlasStatusChip(
+                  label: widget.collectionName,
+                  icon: Icons.inventory_2_outlined,
+                  accentColor: AtlasColors.intelligenceBlue,
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AtlasSpacing.lg),
+              child: TextField(
+                controller: _searchController,
+                autofocus: true,
+                decoration: const InputDecoration(
+                  prefixIcon: Icon(Icons.search_rounded),
+                  hintText: 'Search name, number, variant, sticker...',
+                  border: OutlineInputBorder(),
+                ),
+                onChanged: (String value) {
+                  setState(() {
+                    _query = value;
+                  });
+                },
+              ),
+            ),
+            const SizedBox(height: AtlasSpacing.md),
+            Expanded(
+              child: matches.isEmpty
+                  ? const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(AtlasSpacing.lg),
+                        child: Text(
+                          'No matching Vault items. Try a different search or use Add Manually.',
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    )
+                  : ListView.separated(
+                      keyboardDismissBehavior:
+                          ScrollViewKeyboardDismissBehavior.onDrag,
+                      padding: const EdgeInsets.fromLTRB(
+                        AtlasSpacing.lg,
+                        0,
+                        AtlasSpacing.lg,
+                        AtlasSpacing.lg,
+                      ),
+                      itemCount: matches.length,
+                      separatorBuilder: (_, _) =>
+                          const SizedBox(height: AtlasSpacing.sm),
+                      itemBuilder: (BuildContext context, int index) {
+                        final Pop pop = matches[index];
+                        final String barcode = pop.sourceUpc.trim();
+                        final bool hasDifferentBarcode =
+                            barcode.isNotEmpty &&
+                            barcode != widget.scannedBarcode;
+
+                        final List<String> details = <String>[
+                          if (pop.number.trim().isNotEmpty)
+                            '#${pop.number.trim()}',
+                          if (pop.variant.trim().isNotEmpty &&
+                              pop.variant.trim().toLowerCase() != 'common')
+                            pop.variant.trim(),
+                          if (pop.retailExclusive.trim().isNotEmpty &&
+                              pop.retailExclusive.trim().toLowerCase() !=
+                                  'none')
+                            pop.retailExclusive.trim(),
+                          if (pop.eventSticker.trim().isNotEmpty &&
+                              pop.eventSticker.trim().toLowerCase() != 'none')
+                            pop.eventSticker.trim(),
+                          'Qty ${pop.quantity}',
+                        ];
+
+                        return AtlasGlassCard(
+                          accentColor: hasDifferentBarcode
+                              ? AtlasColors.warning
+                              : AtlasColors.intelligenceBlue,
+                          onTap: hasDifferentBarcode
+                              ? null
+                              : () {
+                                  Navigator.pop(context, pop);
+                                },
+                          child: Row(
+                            children: [
+                              Icon(
+                                hasDifferentBarcode
+                                    ? Icons.warning_amber_rounded
+                                    : Icons.inventory_2_outlined,
+                                color: hasDifferentBarcode
+                                    ? AtlasColors.warning
+                                    : AtlasColors.intelligenceBlue,
+                              ),
+                              const SizedBox(width: AtlasSpacing.md),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      pop.name,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleSmall
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                    ),
+                                    if (details.isNotEmpty) ...[
+                                      const SizedBox(height: AtlasSpacing.xs),
+                                      Text(
+                                        details.join(' • '),
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall
+                                            ?.copyWith(
+                                              color: AtlasColors.textSecondary,
+                                            ),
+                                      ),
+                                    ],
+                                    if (hasDifferentBarcode) ...[
+                                      const SizedBox(height: AtlasSpacing.xs),
+                                      Text(
+                                        'Already linked to $barcode',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall
+                                            ?.copyWith(
+                                              color: AtlasColors.warning,
+                                            ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                              if (!hasDifferentBarcode)
+                                const Icon(Icons.chevron_right_rounded),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+============================================================
+FILE: .\lib\screens\scanner\atlas_visual_inspection_screen.dart
+============================================================
+import 'dart:io';
+
+import 'package:flutter/material.dart';
+
+import '../../atlas/scan/acquisition/atlas_guided_inspection_capture_plan.dart';
+import '../../atlas/scan/acquisition/atlas_inspection_image_capture_service.dart';
+import '../../atlas/scan/authenticity/atlas_visual_inspection_service.dart';
+import '../../atlas/scan/authenticity/models/atlas_visual_inspection.dart';
+import '../../atlas/scan/models/scan_image.dart';
+import '../../atlas/scan/models/scan_session.dart';
+import '../../atlas/scan/recognition/atlas_text_recognition_service.dart';
+import '../../theme/atlas_spacing.dart';
+import '../../widgets/atlas/atlas_expandable_section.dart';
+import '../../widgets/atlas/components/atlas_form_field.dart';
+import '../../widgets/atlas/components/atlas_info_banner.dart';
+import '../../widgets/scanner/atlas_authenticity_card.dart';
+import '../../widgets/vault/vault_scroll_view.dart';
+
+class AtlasVisualInspectionScreen extends StatefulWidget {
+  const AtlasVisualInspectionScreen({
+    super.key,
+    required this.session,
+    this.imageCapture,
+    this.textRecognition,
+    this.inspectionService = const AtlasVisualInspectionService(),
+  });
+
+  final ScanSession session;
+  final AtlasInspectionImageCapture? imageCapture;
+  final AtlasTextRecognition? textRecognition;
+  final AtlasVisualInspectionService inspectionService;
+
+  @override
+  State<AtlasVisualInspectionScreen> createState() =>
+      _AtlasVisualInspectionScreenState();
+}
+
+class _AtlasVisualInspectionScreenState
+    extends State<AtlasVisualInspectionScreen> {
+  final _sticker = TextEditingController();
+  final _stamp = TextEditingController();
+  final _copyright = TextEditingController();
+  final _signature = TextEditingController();
+  final _provider = TextEditingController();
+  final _number = TextEditingController();
+  final _notes = TextEditingController();
+
+  late final AtlasInspectionImageCapture _capture;
+  late final AtlasTextRecognition _recognizer;
+
+  final List<ScanImage> _images = <ScanImage>[];
+  bool? _typography;
+  bool? _border;
+  bool? _printClear;
+  bool? _cutEven;
+  bool? _autograph;
+  bool? _coa;
+  bool _busy = false;
+  ScanSession? _preview;
+
+  @override
+  void initState() {
+    super.initState();
+    _capture = widget.imageCapture ?? AtlasInspectionImageCaptureService();
+    _recognizer = widget.textRecognition ?? AtlasTextRecognitionService();
+
+    final existing = widget.session.visualInspectionContribution?.inspection;
+    if (existing != null) {
+      _sticker.text = existing.stickerText;
+      _stamp.text = existing.productionStampText;
+      _copyright.text = existing.copyrightText;
+      _signature.text = existing.signature;
+      _provider.text = existing.authenticationProvider;
+      _number.text = existing.authenticityNumber;
+      _notes.text = existing.notes;
+      _images.addAll(existing.images);
+      _typography = existing.typographyConsistent;
+      _border = existing.borderConsistent;
+      _printClear = existing.stickerPrintClear;
+      _cutEven = existing.stickerCutEven;
+      _autograph = existing.hasAutograph;
+      _coa = existing.hasCoa;
+    }
+
+    if (widget.session.authenticityContribution != null) {
+      _preview = widget.session;
+    }
+  }
+
+  @override
+  void dispose() {
+    _sticker.dispose();
+    _stamp.dispose();
+    _copyright.dispose();
+    _signature.dispose();
+    _provider.dispose();
+    _number.dispose();
+    _notes.dispose();
+    _recognizer.close();
+    super.dispose();
+  }
+
+  Future<void> _captureStep(
+    AtlasGuidedInspectionStep step, {
+    TextEditingController? textTarget,
+  }) async {
+    final source = await showModalBottomSheet<AtlasInspectionImageSource>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_camera_outlined),
+              title: const Text('Camera'),
+              onTap: () =>
+                  Navigator.pop(context, AtlasInspectionImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: const Text('Gallery'),
+              onTap: () =>
+                  Navigator.pop(context, AtlasInspectionImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (source == null) return;
+
+    setState(() => _busy = true);
+    try {
+      final ScanImage? image = await _capture.capture(
+        source: source,
+        type: step.imageType,
+      );
+      if (image == null) return;
+
+      String recognizedText = '';
+      if (step.supportsTextRecognition &&
+          textTarget != null &&
+          image.hasLocalPath) {
+        recognizedText = await _recognizer.recognize(image.localPath!);
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _images.removeWhere((ScanImage item) => item.type == step.imageType);
+        _images.add(image);
+        if (recognizedText.isNotEmpty && textTarget != null) {
+          textTarget.text = recognizedText;
+        }
+      });
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  AtlasVisualInspection _inspection() => AtlasVisualInspection(
+    stickerText: _sticker.text,
+    productionStampText: _stamp.text,
+    copyrightText: _copyright.text,
+    signature: _signature.text,
+    authenticationProvider: _provider.text,
+    authenticityNumber: _number.text,
+    typographyConsistent: _typography,
+    borderConsistent: _border,
+    stickerPrintClear: _printClear,
+    stickerCutEven: _cutEven,
+    hasAutograph: _autograph,
+    hasCoa: _coa,
+    notes: _notes.text,
+    images: _images,
+  );
+
+  Future<void> _analyze({required bool finish}) async {
+    setState(() => _busy = true);
+    try {
+      final ScanSession session = await widget.inspectionService.inspect(
+        session: widget.session,
+        inspection: _inspection(),
+      );
+
+      if (!mounted) return;
+      if (finish) {
+        Navigator.pop(context, session);
+      } else {
+        setState(() => _preview = session);
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  bool _hasImage(AtlasGuidedInspectionStep step) {
+    return _images.any((ScanImage image) => image.type == step.imageType);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final List<ScanImage> localPreviewImages = _images
+        .where((ScanImage image) => image.hasLocalPath)
+        .toList(growable: false);
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Visual Inspection')),
+      body: VaultScrollView(
+        children: [
+          const AtlasInfoBanner(
+            title: 'Evidence, not certification',
+            message:
+                'Atlas records inspection evidence and warning signals. It does not certify an item as authentic or fake.',
+            icon: Icons.info_outline_rounded,
+          ),
+          const SizedBox(height: AtlasSpacing.lg),
+          _captureOnlySection(AtlasGuidedInspectionStep.frontBox),
+          const SizedBox(height: AtlasSpacing.lg),
+          _textCaptureSection(
+            step: AtlasGuidedInspectionStep.stickerWindow,
+            controller: _sticker,
+            label: 'Sticker Text',
+            checks: [
+              _check(
+                'Print is clear',
+                _printClear,
+                (bool? value) => _printClear = value,
+              ),
+              _check(
+                'Cut and border are even',
+                _cutEven,
+                (bool? value) => _cutEven = value,
+              ),
+            ],
+          ),
+          const SizedBox(height: AtlasSpacing.lg),
+          _textCaptureSection(
+            step: AtlasGuidedInspectionStep.bottomStamp,
+            controller: _stamp,
+            label: 'Production Code (JJL/FAC)',
+          ),
+          const SizedBox(height: AtlasSpacing.lg),
+          AtlasExpandableSection(
+            title: AtlasGuidedInspectionStep.packagingCopyright.title,
+            icon: Icons.text_fields_rounded,
+            initiallyExpanded: true,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(AtlasGuidedInspectionStep.packagingCopyright.guidance),
+                const SizedBox(height: AtlasSpacing.md),
+                AtlasFormField(
+                  controller: _copyright,
+                  label: 'Copyright Text / Year',
+                  icon: Icons.copyright_rounded,
+                  maxLines: 3,
+                ),
+                const SizedBox(height: AtlasSpacing.sm),
+                _captureButton(
+                  AtlasGuidedInspectionStep.packagingCopyright,
+                  textTarget: _copyright,
+                ),
+                _check(
+                  'Typography looks consistent',
+                  _typography,
+                  (bool? value) => _typography = value,
+                ),
+                _check(
+                  'Box borders look consistent',
+                  _border,
+                  (bool? value) => _border = value,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AtlasSpacing.lg),
+          AtlasExpandableSection(
+            title: '✍️ Autograph & 📜 COA Evidence',
+            icon: Icons.draw_outlined,
+            initiallyExpanded: true,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _check(
+                  'Autograph is present',
+                  _autograph,
+                  (bool? value) => _autograph = value,
+                ),
+                const SizedBox(height: AtlasSpacing.sm),
+                _captureButton(AtlasGuidedInspectionStep.autograph),
+                const SizedBox(height: AtlasSpacing.md),
+                AtlasFormField(
+                  controller: _signature,
+                  label: 'Signature / Signer',
+                  icon: Icons.draw_outlined,
+                ),
+                const SizedBox(height: AtlasSpacing.lg),
+                _check('COA is present', _coa, (bool? value) => _coa = value),
+                const SizedBox(height: AtlasSpacing.sm),
+                _captureButton(AtlasGuidedInspectionStep.coa),
+                const SizedBox(height: AtlasSpacing.md),
+                AtlasFormField(
+                  controller: _provider,
+                  label: 'Authentication Provider',
+                  icon: Icons.verified_outlined,
+                ),
+                const SizedBox(height: AtlasSpacing.md),
+                AtlasFormField(
+                  controller: _number,
+                  label: 'Authenticity Number',
+                  icon: Icons.numbers_rounded,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AtlasSpacing.lg),
+          AtlasFormField(
+            controller: _notes,
+            label: 'Inspection Notes',
+            icon: Icons.notes_rounded,
+            maxLines: 4,
+          ),
+          if (localPreviewImages.isNotEmpty) ...[
+            const SizedBox(height: AtlasSpacing.lg),
+            SizedBox(
+              height: 100,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: localPreviewImages.length,
+                separatorBuilder: (_, _) =>
+                    const SizedBox(width: AtlasSpacing.sm),
+                itemBuilder: (_, int index) => ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.file(
+                    File(localPreviewImages[index].localPath!),
+                    width: 90,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+            ),
+          ],
+          if (_preview?.authenticityContribution != null) ...[
+            const SizedBox(height: AtlasSpacing.lg),
+            AtlasAuthenticityCard(
+              assessment: _preview!.authenticityContribution!.assessment,
+            ),
+          ],
+          const SizedBox(height: AtlasSpacing.lg),
+          OutlinedButton.icon(
+            onPressed: _busy ? null : () => _analyze(finish: false),
+            icon: const Icon(Icons.analytics_outlined),
+            label: const Text('🧠 Preview Assessment'),
+          ),
+          const SizedBox(height: AtlasSpacing.sm),
+          FilledButton.icon(
+            onPressed: _busy ? null : () => _analyze(finish: true),
+            icon: _busy
+                ? const SizedBox.square(
+                    dimension: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.check_rounded),
+            label: const Text('Save Inspection'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _captureOnlySection(AtlasGuidedInspectionStep step) {
+    return AtlasExpandableSection(
+      title: step.title,
+      icon: Icons.center_focus_strong_rounded,
+      initiallyExpanded: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(step.guidance),
+          const SizedBox(height: AtlasSpacing.md),
+          _captureButton(step),
+        ],
+      ),
+    );
+  }
+
+  Widget _textCaptureSection({
+    required AtlasGuidedInspectionStep step,
+    required TextEditingController controller,
+    required String label,
+    List<Widget> checks = const <Widget>[],
+  }) {
+    return AtlasExpandableSection(
+      title: step.title,
+      icon: Icons.center_focus_strong_rounded,
+      initiallyExpanded: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(step.guidance),
+          const SizedBox(height: AtlasSpacing.md),
+          AtlasFormField(
+            controller: controller,
+            label: label,
+            icon: Icons.text_snippet_outlined,
+            maxLines: 3,
+          ),
+          const SizedBox(height: AtlasSpacing.sm),
+          _captureButton(step, textTarget: controller),
+          ...checks,
+        ],
+      ),
+    );
+  }
+
+  Widget _captureButton(
+    AtlasGuidedInspectionStep step, {
+    TextEditingController? textTarget,
+  }) {
+    final bool captured = _hasImage(step);
+    return OutlinedButton.icon(
+      onPressed: _busy
+          ? null
+          : () => _captureStep(step, textTarget: textTarget),
+      icon: Icon(
+        captured ? Icons.check_circle_outline : Icons.add_a_photo_outlined,
+      ),
+      label: Text(
+        captured ? 'Captured — Replace Image' : 'Capture or Choose Image',
+      ),
+    );
+  }
+
+  Widget _check(String label, bool? value, ValueChanged<bool?> update) {
+    return DropdownButtonFormField<bool?>(
+      initialValue: value,
+      decoration: InputDecoration(labelText: label),
+      items: const [
+        DropdownMenuItem<bool?>(value: null, child: Text('Not inspected')),
+        DropdownMenuItem<bool?>(value: true, child: Text('Yes')),
+        DropdownMenuItem<bool?>(value: false, child: Text('No / warning seen')),
+      ],
+      onChanged: (bool? next) => setState(() => update(next)),
+    );
+  }
+}
+
+============================================================
+VARIANT RESOLUTION REFERENCES
+============================================================
+
+Path                                                                                                                          LineNumber Line                                                                          
+----                                                                                                                          ---------- ----                                                                          
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\catalog\converters\atlas_catalog_converter.dart                               358       product.variantName,                                                    
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\catalog\indexing\atlas_catalog_search_index.dart                               22     String? variantName,                                                      
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\catalog\indexing\atlas_catalog_search_index.dart                               42         variantName: variantName,                                             
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\catalog\indexing\atlas_catalog_search_index.dart                               68     String? variantName,                                                      
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\catalog\indexing\atlas_catalog_search_index.dart                              103     if (variantName != null &&                                                
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\catalog\indexing\atlas_catalog_search_index.dart                              104         product.variantName !=                                                
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\catalog\indexing\atlas_catalog_search_index.dart                              105             variantName) {                                                    
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\catalog\mappers\pop_vinyl_catalog_mapper.dart                                  44       variantName: _variantNameFrom(                                          
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\catalog\mappers\pop_vinyl_catalog_mapper.dart                                 265   static String? _variantNameFrom({                                           
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\catalog\matching\catalog_matcher.dart                                          18     String? variantName,                                                      
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\catalog\matching\catalog_matcher.dart                                          33     _normalize(variantName);                                                  
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\catalog\matching\catalog_matcher.dart                                          58           _normalize(product.variantName) ==                                  
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\catalog\models\atlas_catalog_product.dart                                      18     String? variantName,                                                      
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\catalog\models\atlas_catalog_product.dart                                      40         variantName = _normalizeOptionalText(                                 
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\catalog\models\atlas_catalog_product.dart                                      41           variantName,                                                        
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\catalog\models\atlas_catalog_product.dart                                      66   final String? variantName;                                                  
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\catalog\models\atlas_catalog_product.dart                                      77     return variantName != null;                                               
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\catalog\repository\atlas_catalog_repository.dart                               26     String? variantName,                                                      
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\catalog\repository\in_memory_atlas_catalog_repository.dart                     54     String? variantName,                                                      
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\catalog\repository\in_memory_atlas_catalog_repository.dart                     65       variantName: variantName,                                               
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\catalog\repository\local_atlas_catalog_repository.dart                        221     String? variantName,                                                      
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\catalog\repository\local_atlas_catalog_repository.dart                        262     final String normalizedVariantName =                                      
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\catalog\repository\local_atlas_catalog_repository.dart                        264       variantName,                                                            
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\catalog\repository\local_atlas_catalog_repository.dart                        315         value: product.variantName,                                           
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\catalog\repository\local_atlas_catalog_repository.dart                        316         filter: normalizedVariantName,                                        
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\catalog\repository\local_atlas_catalog_repository.dart                        358       product.variantName,                                                    
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\catalog\repository\supabase_atlas_catalog_sync_repository.dart                285       'variant_name': product.variantName,                                    
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\catalog\repository\supabase_atlas_catalog_sync_repository.dart                470         'variantName': product.variantName,                                   
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\catalog\resolution\catalog_resolution_request.dart                             14     String? variantName,                                                      
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\catalog\resolution\catalog_resolution_request.dart                             37         variantName = _normalizeOptionalText(                                 
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\catalog\resolution\catalog_resolution_request.dart                             38           variantName,                                                        
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\catalog\resolution\catalog_resolution_request.dart                             64   final String? variantName;                                                  
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\catalog\resolution\catalog_resolution_request.dart                             81     return variantName != null;                                               
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\catalog\resolution\catalog_resolution_service.dart                             34       variantName: request.variantName,                                       
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\catalog\resolution\catalog_resolution_service.dart                             43       variantName: request.variantName,                                       
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\catalog\services\atlas_catalog_service.dart                                    59     String? variantName,                                                      
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\catalog\services\atlas_catalog_service.dart                                    70       variantName: variantName,                                               
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\collection\actions\atlas_collector_action.dart                                  7   reviewVariantSticker,                                                       
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\collection\actions\atlas_collector_action_engine.dart                          49           type: AtlasCollectorActionType.reviewVariantSticker,                
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\completion\engine\atlas_completion_engine.dart                                221       product.variantName ?? '',                                              
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\completion\models\atlas_completion_item.dart                                   82   String? get variantName {                                                   
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\completion\models\atlas_completion_item.dart                                   83     return catalogProduct.variantName;                                        
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\completion\models\atlas_completion_result.dart                                147           item.variantName ?? '',                                             
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\completion\services\atlas_completion_service.dart                             405       product.variantName ?? '',                                              
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\intelligence\engines\atlas_scan_intelligence_engine.dart                      331     if (!session.hasVariantResolution) {                                      
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\intelligence\engines\atlas_scan_intelligence_engine.dart                      335     if (session.requiresVariantConfirmation) {                                
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\intelligence\identity\identity_review_service.dart                             25       possibleVariants: _groupsFor(                                           
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\intelligence\identity\identity_review_service.dart                             27         IdentityRelationship.possibleVariant,                                 
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\intelligence\identity\identity_review_service.dart                            322       return IdentityRelationship.possibleVariant;                            
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\intelligence\identity\identity_review_service.dart                            354       case IdentityRelationship.possibleVariant:                              
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\intelligence\identity\identity_review_service.dart                            384       case IdentityRelationship.possibleVariant:                              
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\intelligence\identity\identity_review_service.dart                            445       case IdentityRelationship.possibleVariant:                              
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\intelligence\models\identity_review_models.dart                                 5   possibleVariant,                                                            
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\intelligence\models\identity_review_models.dart                                73     this.possibleVariants = const <IdentityReviewGroup>[],                    
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\intelligence\models\identity_review_models.dart                                86   final List<IdentityReviewGroup> possibleVariants;                           
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\intelligence\models\identity_review_models.dart                               100     return possibleVariants.length +                                          
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\intelligence\models\identity_review_models.dart                               121       ...possibleVariants,                                                    
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\authenticity\atlas_authenticity_rules.dart                               168     final bool hasStructuredVariantSticker = inspection.observations.any(     
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\authenticity\atlas_authenticity_rules.dart                               170           observation.category == AtlasEvidenceCategory.variantSticker,       
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\authenticity\atlas_authenticity_rules.dart                               185     if (inspection.hasStickerEvidence && !hasStructuredVariantSticker) {      
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\authenticity\atlas_authenticity_rules.dart                               208             category: AtlasEvidenceCategory.variantSticker,                   
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\authenticity\atlas_authenticity_rules.dart                               220             id: 'sticker-classified',                                         
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\authenticity\atlas_authenticity_rules.dart                               230           session.resolvedProduct?.variantName?.trim() ?? '';                 
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\authenticity\atlas_authenticity_rules.dart                               249             category: AtlasEvidenceCategory.variantSticker,                   
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\authenticity\atlas_authenticity_rules.dart                               270             category: AtlasEvidenceCategory.variantSticker,                   
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\authenticity\atlas_authenticity_rules.dart                               323     if (!hasStructuredVariantSticker) {                                       
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\authenticity\atlas_authenticity_rules.dart                               328         category: AtlasEvidenceCategory.variantSticker,                       
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\authenticity\atlas_authenticity_rules.dart                               341         category: AtlasEvidenceCategory.variantSticker,                       
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\authenticity\atlas_authenticity_rules.dart                               490         case AtlasEvidenceCategory.variantSticker:                            
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\authenticity\atlas_authenticity_rules.dart                               492               observation.attributes['criticalReferenceMismatch'] == true;    
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\authenticity\atlas_authenticity_rules.dart                               537               observation.attributes['criticalReferenceMismatch'] == true;    
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\authenticity\atlas_authenticity_rules.dart                               693     if (resolved.variantName != null &&                                       
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\authenticity\atlas_authenticity_rules.dart                               694         resolved.variantName!.trim().isNotEmpty) {                            
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\authenticity\atlas_authenticity_rules.dart                               695       variants.add(resolved.variantName!.trim());                             
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\authenticity\atlas_visual_inspection_service.dart                         25       expectedResolvedVariant: session.resolvedProduct?.variantName,          
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\authenticity\engines\atlas_packaging_consistency_engine.dart              45     final bool criticalReferenceMismatch =                                    
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\authenticity\engines\atlas_packaging_consistency_engine.dart              72           if (criticalReferenceMismatch) 'criticalReferenceMismatch': true,   
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\authenticity\engines\atlas_sticker_variant_inspection_engine.dart         36     final bool criticalReferenceMismatch =                                    
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\authenticity\engines\atlas_sticker_variant_inspection_engine.dart         53         category: AtlasEvidenceCategory.variantSticker,                       
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\authenticity\engines\atlas_sticker_variant_inspection_engine.dart         76           if (criticalReferenceMismatch) 'criticalReferenceMismatch': true,   
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\authenticity\models\atlas_authenticity_evidence.dart                      13   variantSticker,                                                             
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\briefing\atlas_scan_briefing_engine.dart                                  27       session.variantResolution,                                              
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\briefing\atlas_scan_briefing_engine.dart                                 143     if (session.requiresVariantConfirmation) {                                
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\briefing\atlas_scan_briefing_engine.dart                                 258       ScanVariantResolution? resolution,                                      
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\capabilities\standard_scan_capability_registry.dart                      120         'producesContribution': 'ProductResolutionContribution',              
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\contributions\product_resolution_contribution.dart                         9 final class ProductResolutionContribution                                     
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\contributions\product_resolution_contribution.dart                        11   ProductResolutionContribution({                                             
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\contributions\product_resolution_contribution.dart                        46     return 'ProductResolutionContribution('                                   
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\engine\identity_intelligence_engine.dart                                 186     final String? variantName =                                               
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\engine\identity_intelligence_engine.dart                                 202       variantName: variantName,                                               
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\engine\identity_intelligence_engine.dart                                 236         variantName,                                                          
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\engine\identity_intelligence_engine.dart                                 249         variantName: variantName,                                             
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\engine\identity_intelligence_engine.dart                                 267           variantName != null,                                                
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\engine\identity_intelligence_engine.dart                                 326     required String? variantName,                                             
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\engine\identity_intelligence_engine.dart                                 344     if (variantName != null) {                                                
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\engine\identity_intelligence_engine.dart                                 345       parts.add(variantName);                                                 
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\engine\product_resolution_engine.dart                                     85       variantName: hypothesis.variantName,                                    
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\engine\product_resolution_engine.dart                                    146     final ProductResolutionContribution                                       
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\engine\product_resolution_engine.dart                                    148     ProductResolutionContribution(                                            
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\engine\product_resolution_engine.dart                                    173       <ProductResolutionContribution>[                                        
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\identity\identity_hypothesis.dart                                         16     this.variantName,                                                         
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\identity\identity_hypothesis.dart                                         41   final String? variantName;                                                  
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\identity\identity_hypothesis.dart                                         76   bool get hasVariantName {                                                   
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\identity\identity_hypothesis.dart                                         77     return variantName?.trim().isNotEmpty ?? false;                           
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\identity\identity_hypothesis.dart                                        115         'variantName: $variantName, '                                         
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\models\scan_session.dart                                                  55     this.variantResolution,                                                   
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\models\scan_session.dart                                                  99   final ScanVariantResolution? variantResolution;                             
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\models\scan_session.dart                                                 139   bool get hasVariantResolution {                                             
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\models\scan_session.dart                                                 140     return variantResolution != null;                                         
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\models\scan_session.dart                                                 167   bool get requiresVariantConfirmation {                                      
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\models\scan_session.dart                                                 168     return variantResolution?.requiresConfirmation ?? false;                  
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\models\scan_session.dart                                                 200         requiresVariantConfirmation;                                          
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\models\scan_session.dart                                                 249     ScanVariantResolution? variantResolution,                                 
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\models\scan_session.dart                                                 274       variantResolution: variantResolution ?? this.variantResolution,         
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\projection\scan_session_projector.dart                                    47     final ProductResolutionContribution? resolutionContribution =             
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\projection\scan_session_projector.dart                                    48     contributions.latestOfType<ProductResolutionContribution>();              
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\resolution\resolution_evidence.dart                                       11     List<ProductResolutionContribution> contributions =                       
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\resolution\resolution_evidence.dart                                       12     const <ProductResolutionContribution>[],                                  
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\resolution\resolution_evidence.dart                                       14   List<ProductResolutionContribution>.unmodifiable(                           
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\resolution\resolution_evidence.dart                                       18   final List<ProductResolutionContribution> contributions;                    
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\resolution\resolution_evidence.dart                                       32   ProductResolutionContribution? get primaryContribution {                    
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\resolution\resolution_evidence_builder.dart                               25           .ofType<ProductResolutionContribution>()                            
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\resolution\resolved_product_snapshot.dart                                 20     String? variantName,                                                      
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\resolution\resolved_product_snapshot.dart                                 33         variantName = _normalizeOptionalText(variantName),                    
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\resolution\resolved_product_snapshot.dart                                 53       variantName: product.variantName,                                       
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\resolution\resolved_product_snapshot.dart                                 75   final String? variantName;                                                  
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\resolution\resolved_product_snapshot.dart                                 83   bool get hasVariant => variantName != null;                                 
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\resolution\resolved_product_snapshot.dart                                126       variantName: variantName,                                               
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\results\scan_variant_status.dart                                          11 class ScanVariantResolution {                                                 
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\results\scan_variant_status.dart                                          12   const ScanVariantResolution({                                               
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\results\scan_variant_status.dart                                          45   ScanVariantResolution copyWith({                                            
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\results\scan_variant_status.dart                                          52     return ScanVariantResolution(                                             
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\taxonomy\engines\atlas_taxonomy_engine.dart                                   304         if (product.variantName != null)                                      
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\taxonomy\engines\atlas_taxonomy_engine.dart                                   305           'variantName':                                                      
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\taxonomy\engines\atlas_taxonomy_engine.dart                                   306           product.variantName,                                                
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\taxonomy\engines\atlas_taxonomy_engine.dart                                   620       product.variantName,                                                    
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\screens\catalog\funko_catalog_screen.dart                                           129       product.variantName ?? '',                                              
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\screens\catalog\funko_catalog_screen.dart                                           151       if ((product.variantName ?? '').trim().isNotEmpty)                      
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\screens\catalog\funko_catalog_screen.dart                                           152         product.variantName!.trim(),                                          
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\screens\scanner\atlas_scan_result_screen.dart                                       782             case AtlasCollectorActionType.reviewVariantSticker:               
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\screens\scanner\atlas_scan_result_screen.dart                                       825               case AtlasCollectorActionType.reviewVariantSticker:             
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\screens\scanner\atlas_scan_result_screen.dart                                       967               case AtlasCollectorActionType.reviewVariantSticker:             
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\screens\scanner\atlas_scan_result_screen.dart                                      1100     _addOptionalRow(rows: rows, label: 'Variant', value: product.variantName);
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\screens\scanner\atlas_scan_result_screen.dart                                      1224             if (session.requiresVariantConfirmation) ...[                     
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\screens\vault\possible_duplicates_screen.dart                                        85     final possibleVariantGroups = duplicateReport.possibleVariantGroups;      
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\screens\vault\possible_duplicates_screen.dart                                        90     final showPossibleVariants = _filter == _DuplicateReviewFilter.all ||     
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\screens\vault\possible_duplicates_screen.dart                                        91         _filter == _DuplicateReviewFilter.possibleVariants;                   
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\screens\vault\possible_duplicates_screen.dart                                       201               if (showPossibleVariants) ...[                                  
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\screens\vault\possible_duplicates_screen.dart                                       209                   groups: possibleVariantGroups,                              
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\screens\vault\possible_duplicates_screen.dart                                       226   possibleVariants,                                                           
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\screens\vault\possible_duplicates_screen.dart                                       271                 selectedFilter == _DuplicateReviewFilter.possibleVariants,    
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\screens\vault\possible_duplicates_screen.dart                                       273                     onChanged(_DuplicateReviewFilter.possibleVariants),       
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\services\duplicate_review_service.dart                                               24     final possibleVariantGroups = identityResult.allGroups                    
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\services\duplicate_review_service.dart                                               34       possibleVariantGroups: possibleVariantGroups,                           
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\services\duplicate_review_service.dart                                               57     required this.possibleVariantGroups,                                      
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\services\duplicate_review_service.dart                                               68   final List<DuplicateReviewGroup> possibleVariantGroups;                     
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\services\duplicate_review_service.dart                                               74     return sameIdentityGroups.length + possibleVariantGroups.length;          
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\services\duplicate_review_service.dart                                               79   int get reviewGroupCount => possibleVariantGroups.length;                   
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\services\duplicate_review_service.dart                                               85   bool get hasReviewGroups => possibleVariantGroups.isNotEmpty;               
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\widgets\atlas\completion\atlas_completion_card.dart                                 469         item.variantName?.trim() ?? '';                                       
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\widgets\atlas\completion\atlas_completion_loader.dart                               340       variantName:                                                            
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\widgets\scanner\atlas_collector_action_bar.dart                                     149       case AtlasCollectorActionType.reviewVariantSticker:                     
+C:\Users\Arthur Sabala\Documents\funkovault2\test\atlas\catalog\services\atlas_pop_factory_test.dart                                  18       variantName: 'Metallic',                                                
+C:\Users\Arthur Sabala\Documents\funkovault2\test\atlas\scan\authenticity\atlas_authenticity_engine_test.dart                        223           category: AtlasEvidenceCategory.variantSticker,                     
+C:\Users\Arthur Sabala\Documents\funkovault2\test\atlas\scan\authenticity\atlas_authenticity_engine_test.dart                        228             'criticalReferenceMismatch': true,                                
+C:\Users\Arthur Sabala\Documents\funkovault2\test\atlas\scan\authenticity\atlas_authenticity_foundation_test.dart                     27       category: AtlasEvidenceCategory.variantSticker,                         
+C:\Users\Arthur Sabala\Documents\funkovault2\test\atlas\scan\authenticity\atlas_high_signal_inspection_pipeline_test.dart             54     expect(observations.single.category,                                      
+                                                                                                                                         AtlasEvidenceCategory.variantSticker);                                        
+C:\Users\Arthur Sabala\Documents\funkovault2\test\atlas\scan\authenticity\atlas_high_signal_inspection_pipeline_test.dart             56       observations.single.attributes['criticalReferenceMismatch'],            
+C:\Users\Arthur Sabala\Documents\funkovault2\test\atlas\scan\authenticity\atlas_high_signal_inspection_pipeline_test.dart             76         observations.single.attributes['criticalReferenceMismatch'],          
+C:\Users\Arthur Sabala\Documents\funkovault2\test\atlas\scan\authenticity\atlas_high_signal_inspection_pipeline_test.dart            101       observations.single.attributes['criticalReferenceMismatch'],            
+C:\Users\Arthur Sabala\Documents\funkovault2\test\atlas\scan\authenticity\atlas_high_signal_inspection_pipeline_test.dart            123         observations.single.attributes['criticalReferenceMismatch'],          
+C:\Users\Arthur Sabala\Documents\funkovault2\test\atlas\scan\authenticity\atlas_high_signal_inspection_pipeline_test.dart            182         observations.single.attributes['criticalReferenceMismatch'],          
+C:\Users\Arthur Sabala\Documents\funkovault2\test\atlas\scan\authenticity\atlas_high_signal_inspection_pipeline_test.dart            210     expect(observations.single.attributes['criticalReferenceMismatch'],       
+                                                                                                                                         isTrue);                                                                      
+C:\Users\Arthur Sabala\Documents\funkovault2\test\atlas\scan\authenticity\atlas_high_signal_inspection_pipeline_test.dart            228             observation.attributes['criticalReferenceMismatch'] != true,      
+
+
+

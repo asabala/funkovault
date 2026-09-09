@@ -1,0 +1,1164 @@
+SCANNER 6A - VERIFIED CORE SOURCES
+Generated: 09/03/2026 11:54:06
+
+
+============================================================
+FILE: .\lib\atlas\scan\tracking\atlas_object_track.dart
+============================================================
+import '../../scan/models/scan_code.dart';
+import 'atlas_scan_observation.dart';
+
+enum AtlasObjectTrackState { tentative, confirmed, cooldown }
+
+class AtlasTrackedBarcodeEvidence {
+  const AtlasTrackedBarcodeEvidence({
+    required this.key,
+    required this.latestCode,
+    required this.hitCount,
+  });
+
+  final String key;
+  final ScanCode latestCode;
+  final int hitCount;
+
+  AtlasTrackedBarcodeEvidence addHit(ScanCode code) {
+    return AtlasTrackedBarcodeEvidence(
+      key: key,
+      latestCode: code,
+      hitCount: hitCount + 1,
+    );
+  }
+}
+
+class AtlasObjectTrack {
+  AtlasObjectTrack({
+    required this.trackId,
+    required this.state,
+    required this.firstSeenAt,
+    required this.lastSeenAt,
+    required this.observationCount,
+    required this.latestObservation,
+    required this.centroid,
+    required this.normalizedBounds,
+    required Map<String, AtlasTrackedBarcodeEvidence> barcodeEvidenceByKey,
+    this.cooldownStartedAt,
+  }) : barcodeEvidenceByKey =
+           Map<String, AtlasTrackedBarcodeEvidence>.unmodifiable(
+             barcodeEvidenceByKey,
+           );
+
+  factory AtlasObjectTrack.createInitial({
+    required String trackId,
+    required AtlasScanObservation observation,
+  }) {
+    return AtlasObjectTrack(
+      trackId: trackId,
+      state: AtlasObjectTrackState.tentative,
+      firstSeenAt: observation.capturedAt,
+      lastSeenAt: observation.capturedAt,
+      observationCount: 1,
+      latestObservation: observation,
+      centroid: observation.centroid,
+      normalizedBounds: observation.normalizedBounds,
+      barcodeEvidenceByKey: _barcodeEvidenceForObservation(observation),
+    );
+  }
+
+  final String trackId;
+  final AtlasObjectTrackState state;
+  final DateTime firstSeenAt;
+  final DateTime lastSeenAt;
+  final int observationCount;
+  final AtlasScanObservation latestObservation;
+  final AtlasNormalizedPoint? centroid;
+  final AtlasNormalizedBounds? normalizedBounds;
+  final Map<String, AtlasTrackedBarcodeEvidence> barcodeEvidenceByKey;
+  final DateTime? cooldownStartedAt;
+
+  bool get isTentative => state == AtlasObjectTrackState.tentative;
+  bool get isConfirmed => state == AtlasObjectTrackState.confirmed;
+  bool get isCooldown => state == AtlasObjectTrackState.cooldown;
+
+  int get usableBarcodeHitCount => barcodeEvidenceByKey.values.fold<int>(
+    0,
+    (int total, AtlasTrackedBarcodeEvidence evidence) =>
+        total + evidence.hitCount,
+  );
+
+  AtlasObjectTrack incorporateObservation(
+    AtlasScanObservation observation, {
+    double centroidSmoothingAlpha = 0.30,
+  }) {
+    if (!centroidSmoothingAlpha.isFinite ||
+        centroidSmoothingAlpha < 0.0 ||
+        centroidSmoothingAlpha > 1.0) {
+      throw ArgumentError.value(
+        centroidSmoothingAlpha,
+        'centroidSmoothingAlpha',
+        'centroidSmoothingAlpha must be between 0.0 and 1.0.',
+      );
+    }
+
+    final Map<String, AtlasTrackedBarcodeEvidence> updatedEvidence =
+        Map<String, AtlasTrackedBarcodeEvidence>.from(barcodeEvidenceByKey);
+
+    final ScanCode? observedCode = observation.code;
+    if (observation.hasUsableProductBarcode && observedCode != null) {
+      final String key = barcodeEvidenceKey(observedCode);
+      final AtlasTrackedBarcodeEvidence? existingEvidence =
+          updatedEvidence[key];
+      updatedEvidence[key] = existingEvidence == null
+          ? AtlasTrackedBarcodeEvidence(
+              key: key,
+              latestCode: observedCode,
+              hitCount: 1,
+            )
+          : existingEvidence.addHit(observedCode);
+    }
+
+    final AtlasNormalizedPoint? observationCentroid = observation.centroid;
+    final AtlasNormalizedPoint? updatedCentroid = _smoothedCentroid(
+      current: centroid,
+      observation: observationCentroid,
+      alpha: centroidSmoothingAlpha,
+    );
+
+    return AtlasObjectTrack(
+      trackId: trackId,
+      state: state,
+      firstSeenAt: firstSeenAt,
+      lastSeenAt: observation.capturedAt,
+      observationCount: observationCount + 1,
+      latestObservation: observation,
+      centroid: updatedCentroid,
+      normalizedBounds: observation.normalizedBounds ?? normalizedBounds,
+      barcodeEvidenceByKey: updatedEvidence,
+      cooldownStartedAt: cooldownStartedAt,
+    );
+  }
+
+  AtlasObjectTrack confirm() {
+    if (!isTentative) return this;
+
+    return AtlasObjectTrack(
+      trackId: trackId,
+      state: AtlasObjectTrackState.confirmed,
+      firstSeenAt: firstSeenAt,
+      lastSeenAt: lastSeenAt,
+      observationCount: observationCount,
+      latestObservation: latestObservation,
+      centroid: centroid,
+      normalizedBounds: normalizedBounds,
+      barcodeEvidenceByKey: barcodeEvidenceByKey,
+      cooldownStartedAt: cooldownStartedAt,
+    );
+  }
+
+  AtlasObjectTrack startCooldown(DateTime startedAt) {
+    return AtlasObjectTrack(
+      trackId: trackId,
+      state: AtlasObjectTrackState.cooldown,
+      firstSeenAt: firstSeenAt,
+      lastSeenAt: lastSeenAt,
+      observationCount: observationCount,
+      latestObservation: latestObservation,
+      centroid: centroid,
+      normalizedBounds: normalizedBounds,
+      barcodeEvidenceByKey: barcodeEvidenceByKey,
+      cooldownStartedAt: startedAt,
+    );
+  }
+
+  static String barcodeEvidenceKey(ScanCode code) {
+    return '${code.format.name}|${code.normalizedValue.trim()}';
+  }
+
+  static Map<String, AtlasTrackedBarcodeEvidence>
+  _barcodeEvidenceForObservation(AtlasScanObservation observation) {
+    final ScanCode? code = observation.code;
+    if (!observation.hasUsableProductBarcode || code == null) {
+      return const <String, AtlasTrackedBarcodeEvidence>{};
+    }
+
+    final String key = barcodeEvidenceKey(code);
+    return <String, AtlasTrackedBarcodeEvidence>{
+      key: AtlasTrackedBarcodeEvidence(key: key, latestCode: code, hitCount: 1),
+    };
+  }
+
+  static AtlasNormalizedPoint? _smoothedCentroid({
+    required AtlasNormalizedPoint? current,
+    required AtlasNormalizedPoint? observation,
+    required double alpha,
+  }) {
+    if (observation == null) return current;
+    if (current == null) return observation;
+
+    return AtlasNormalizedPoint(
+      x: (current.x * (1.0 - alpha)) + (observation.x * alpha),
+      y: (current.y * (1.0 - alpha)) + (observation.y * alpha),
+    );
+  }
+}
+
+============================================================
+FILE: .\lib\atlas\scan\tracking\atlas_scan_observation.dart
+============================================================
+import 'dart:math' as math;
+
+import '../../scan/models/scan_code.dart';
+
+class AtlasNormalizedPoint {
+  AtlasNormalizedPoint({required this.x, required this.y}) {
+    _validateCoordinate(x, 'x');
+    _validateCoordinate(y, 'y');
+  }
+
+  final double x;
+  final double y;
+
+  double distanceTo(AtlasNormalizedPoint other) {
+    final double dx = x - other.x;
+    final double dy = y - other.y;
+    return math.sqrt((dx * dx) + (dy * dy));
+  }
+
+  static void _validateCoordinate(double value, String fieldName) {
+    if (!value.isFinite || value < 0.0 || value > 1.0) {
+      throw ArgumentError.value(
+        value,
+        fieldName,
+        '$fieldName must be between 0.0 and 1.0.',
+      );
+    }
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is AtlasNormalizedPoint &&
+          runtimeType == other.runtimeType &&
+          x == other.x &&
+          y == other.y;
+
+  @override
+  int get hashCode => Object.hash(x, y);
+}
+
+class AtlasNormalizedBounds {
+  AtlasNormalizedBounds({
+    required this.left,
+    required this.top,
+    required this.right,
+    required this.bottom,
+  }) {
+    AtlasNormalizedPoint._validateCoordinate(left, 'left');
+    AtlasNormalizedPoint._validateCoordinate(top, 'top');
+    AtlasNormalizedPoint._validateCoordinate(right, 'right');
+    AtlasNormalizedPoint._validateCoordinate(bottom, 'bottom');
+
+    if (right < left) {
+      throw ArgumentError.value(
+        right,
+        'right',
+        'right cannot be less than left.',
+      );
+    }
+    if (bottom < top) {
+      throw ArgumentError.value(
+        bottom,
+        'bottom',
+        'bottom cannot be less than top.',
+      );
+    }
+  }
+
+  final double left;
+  final double top;
+  final double right;
+  final double bottom;
+
+  double get width => right - left;
+  double get height => bottom - top;
+
+  AtlasNormalizedPoint get centroid =>
+      AtlasNormalizedPoint(x: left + (width / 2), y: top + (height / 2));
+}
+
+class AtlasScanObservation {
+  AtlasScanObservation({
+    required this.observationId,
+    required this.capturedAt,
+    this.code,
+    List<AtlasNormalizedPoint> cornerPoints = const <AtlasNormalizedPoint>[],
+    this.confidence = 1.0,
+  }) : cornerPoints = List<AtlasNormalizedPoint>.unmodifiable(cornerPoints) {
+    if (observationId.trim().isEmpty) {
+      throw ArgumentError.value(
+        observationId,
+        'observationId',
+        'observationId cannot be empty.',
+      );
+    }
+
+    if (!confidence.isFinite || confidence < 0.0 || confidence > 1.0) {
+      throw ArgumentError.value(
+        confidence,
+        'confidence',
+        'confidence must be between 0.0 and 1.0.',
+      );
+    }
+  }
+
+  final String observationId;
+  final DateTime capturedAt;
+  final ScanCode? code;
+  final List<AtlasNormalizedPoint> cornerPoints;
+  final double confidence;
+
+  bool get hasGeometry => cornerPoints.isNotEmpty;
+  bool get hasCode => code != null;
+
+  bool get hasUsableProductBarcode {
+    final ScanCode? observedCode = code;
+    return observedCode != null &&
+        observedCode.isValid &&
+        observedCode.isProductBarcode &&
+        observedCode.normalizedValue.trim().isNotEmpty;
+  }
+
+  AtlasNormalizedPoint? get centroid {
+    if (cornerPoints.isEmpty) return null;
+
+    double sumX = 0.0;
+    double sumY = 0.0;
+
+    for (final AtlasNormalizedPoint point in cornerPoints) {
+      sumX += point.x;
+      sumY += point.y;
+    }
+
+    return AtlasNormalizedPoint(
+      x: sumX / cornerPoints.length,
+      y: sumY / cornerPoints.length,
+    );
+  }
+
+  AtlasNormalizedBounds? get normalizedBounds {
+    if (cornerPoints.isEmpty) return null;
+
+    double minX = cornerPoints.first.x;
+    double maxX = cornerPoints.first.x;
+    double minY = cornerPoints.first.y;
+    double maxY = cornerPoints.first.y;
+
+    for (final AtlasNormalizedPoint point in cornerPoints.skip(1)) {
+      minX = math.min(minX, point.x);
+      maxX = math.max(maxX, point.x);
+      minY = math.min(minY, point.y);
+      maxY = math.max(maxY, point.y);
+    }
+
+    return AtlasNormalizedBounds(
+      left: minX,
+      top: minY,
+      right: maxX,
+      bottom: maxY,
+    );
+  }
+}
+
+============================================================
+FILE: .\lib\atlas\scan\acquisition\atlas_evidence_accumulator.dart
+============================================================
+import '../../scan/models/scan_code.dart';
+import '../tracking/atlas_object_track.dart';
+
+class AtlasEvidenceAccumulatorConfig {
+  const AtlasEvidenceAccumulatorConfig({
+    this.minBarcodeHits = 3,
+    this.dominantBarcodeThreshold = 0.75,
+  });
+
+  final int minBarcodeHits;
+  final double dominantBarcodeThreshold;
+}
+
+class AtlasAccumulatedEvidence {
+  const AtlasAccumulatedEvidence({
+    required this.trackId,
+    required this.stableCode,
+    required this.agreementConfidence,
+    required this.totalBarcodeHits,
+    required this.dominantBarcodeHits,
+    required this.isReadyForResolution,
+  });
+
+  final String trackId;
+  final ScanCode stableCode;
+  final double agreementConfidence;
+  final int totalBarcodeHits;
+  final int dominantBarcodeHits;
+  final bool isReadyForResolution;
+}
+
+class AtlasEvidenceAccumulator {
+  AtlasEvidenceAccumulator({
+    this.config = const AtlasEvidenceAccumulatorConfig(),
+  }) {
+    _validateConfig(config);
+  }
+
+  final AtlasEvidenceAccumulatorConfig config;
+
+  AtlasAccumulatedEvidence? evaluateTrack(AtlasObjectTrack track) {
+    if (track.isCooldown || track.barcodeEvidenceByKey.isEmpty) {
+      return null;
+    }
+
+    final int totalBarcodeHits = track.usableBarcodeHitCount;
+    if (totalBarcodeHits == 0) return null;
+
+    AtlasTrackedBarcodeEvidence? dominantEvidence;
+
+    for (final AtlasTrackedBarcodeEvidence evidence
+        in track.barcodeEvidenceByKey.values) {
+      final AtlasTrackedBarcodeEvidence? currentDominant = dominantEvidence;
+
+      if (currentDominant == null ||
+          evidence.hitCount > currentDominant.hitCount ||
+          (evidence.hitCount == currentDominant.hitCount &&
+              evidence.latestCode.capturedAt.isAfter(
+                currentDominant.latestCode.capturedAt,
+              ))) {
+        dominantEvidence = evidence;
+      }
+    }
+
+    if (dominantEvidence == null) return null;
+
+    final double agreementConfidence =
+        dominantEvidence.hitCount / totalBarcodeHits;
+
+    final bool isReadyForResolution =
+        track.isConfirmed &&
+        totalBarcodeHits >= config.minBarcodeHits &&
+        agreementConfidence >= config.dominantBarcodeThreshold;
+
+    return AtlasAccumulatedEvidence(
+      trackId: track.trackId,
+      stableCode: dominantEvidence.latestCode,
+      agreementConfidence: agreementConfidence,
+      totalBarcodeHits: totalBarcodeHits,
+      dominantBarcodeHits: dominantEvidence.hitCount,
+      isReadyForResolution: isReadyForResolution,
+    );
+  }
+
+  static void _validateConfig(AtlasEvidenceAccumulatorConfig config) {
+    if (config.minBarcodeHits < 1) {
+      throw ArgumentError.value(
+        config.minBarcodeHits,
+        'minBarcodeHits',
+        'minBarcodeHits must be at least 1.',
+      );
+    }
+
+    if (!config.dominantBarcodeThreshold.isFinite ||
+        config.dominantBarcodeThreshold <= 0.0 ||
+        config.dominantBarcodeThreshold > 1.0) {
+      throw ArgumentError.value(
+        config.dominantBarcodeThreshold,
+        'dominantBarcodeThreshold',
+        'dominantBarcodeThreshold must be greater than 0.0 and at most 1.0.',
+      );
+    }
+  }
+}
+
+============================================================
+FILE: .\lib\atlas\scan\acquisition\atlas_mobile_scanner_observation_adapter.dart
+============================================================
+import 'dart:ui';
+
+import 'package:mobile_scanner/mobile_scanner.dart';
+
+import '../models/scan_code.dart';
+import '../tracking/atlas_scan_observation.dart';
+
+/// Adapts mobile_scanner capture data into Atlas acquisition observations.
+///
+/// This is intentionally the plugin boundary. The tracking domain remains
+/// independent from Flutter camera/plugin geometry.
+abstract final class AtlasMobileScannerObservationAdapter {
+  static List<AtlasScanObservation> fromCapture(
+    BarcodeCapture capture, {
+    required DateTime capturedAt,
+  }) {
+    final List<AtlasScanObservation> observations = <AtlasScanObservation>[];
+
+    final Size captureSize = capture.size;
+    final bool hasUsableCaptureSize =
+        captureSize.width.isFinite &&
+        captureSize.height.isFinite &&
+        captureSize.width > 0.0 &&
+        captureSize.height > 0.0;
+
+    int observationSequence = 0;
+
+    for (final Barcode barcode in capture.barcodes) {
+      final String rawValue = barcode.rawValue?.trim() ?? '';
+
+      if (rawValue.isEmpty) {
+        continue;
+      }
+
+      final ScanCodeFormat format = _mapBarcodeFormat(barcode.format);
+
+      final ScanCode scanCode = ScanCode(
+        rawValue: rawValue,
+        normalizedValue: _normalizeCodeValue(rawValue),
+        format: format,
+        source: ScanCodeSource.camera,
+        capturedAt: capturedAt,
+        isValid: format != ScanCodeFormat.unknown,
+        confidence: 1.0,
+      );
+
+      final List<AtlasNormalizedPoint> normalizedCorners = hasUsableCaptureSize
+          ? _normalizeCorners(barcode.corners, captureSize)
+          : const <AtlasNormalizedPoint>[];
+
+      observations.add(
+        AtlasScanObservation(
+          observationId: _createObservationId(
+            capturedAt: capturedAt,
+            sequence: observationSequence,
+            code: scanCode,
+          ),
+          capturedAt: capturedAt,
+          code: scanCode,
+          cornerPoints: normalizedCorners,
+          confidence: scanCode.confidence,
+        ),
+      );
+
+      observationSequence++;
+    }
+
+    return List<AtlasScanObservation>.unmodifiable(observations);
+  }
+
+  static List<AtlasNormalizedPoint> _normalizeCorners(
+    List<Offset> corners,
+    Size captureSize,
+  ) {
+    if (corners.isEmpty) {
+      return const <AtlasNormalizedPoint>[];
+    }
+
+    final List<AtlasNormalizedPoint> normalized = <AtlasNormalizedPoint>[];
+
+    for (final Offset corner in corners) {
+      if (!corner.dx.isFinite || !corner.dy.isFinite) {
+        continue;
+      }
+
+      normalized.add(
+        AtlasNormalizedPoint(
+          x: _normalizeCoordinate(corner.dx, captureSize.width),
+          y: _normalizeCoordinate(corner.dy, captureSize.height),
+        ),
+      );
+    }
+
+    return List<AtlasNormalizedPoint>.unmodifiable(normalized);
+  }
+
+  static double _normalizeCoordinate(double value, double extent) {
+    if (!value.isFinite || !extent.isFinite || extent <= 0.0) {
+      return 0.0;
+    }
+
+    return (value / extent).clamp(0.0, 1.0).toDouble();
+  }
+
+  static ScanCodeFormat _mapBarcodeFormat(BarcodeFormat format) {
+    return switch (format) {
+      BarcodeFormat.upcA => ScanCodeFormat.upcA,
+      BarcodeFormat.upcE => ScanCodeFormat.upcE,
+      BarcodeFormat.ean8 => ScanCodeFormat.ean8,
+      BarcodeFormat.ean13 => ScanCodeFormat.ean13,
+      BarcodeFormat.qrCode => ScanCodeFormat.qrCode,
+      _ => ScanCodeFormat.unknown,
+    };
+  }
+
+  static String _normalizeCodeValue(String rawValue) {
+    return rawValue.trim();
+  }
+
+  static String _createObservationId({
+    required DateTime capturedAt,
+    required int sequence,
+    required ScanCode code,
+  }) {
+    final int codeHash = code.normalizedValue.hashCode.abs();
+
+    return 'obs_'
+        '${capturedAt.microsecondsSinceEpoch}_'
+        '${sequence}_'
+        '$codeHash';
+  }
+}
+
+============================================================
+FILE: .\test\atlas\scan\tracking\atlas_object_tracker_test.dart
+============================================================
+import 'package:flutter_test/flutter_test.dart';
+import 'package:funkovault2/atlas/scan/acquisition/atlas_evidence_accumulator.dart';
+import 'package:funkovault2/atlas/scan/models/scan_code.dart';
+import 'package:funkovault2/atlas/scan/tracking/atlas_object_track.dart';
+import 'package:funkovault2/atlas/scan/tracking/atlas_object_tracker.dart';
+import 'package:funkovault2/atlas/scan/tracking/atlas_scan_observation.dart';
+
+void main() {
+  group('AtlasObjectTracker', () {
+    test('two observations in the same frame cannot claim the same track', () {
+      final AtlasObjectTracker tracker = AtlasObjectTracker(
+        config: const AtlasObjectTrackerConfig(
+          maxMatchDistance: 0.20,
+          confirmationMinHits: 2,
+        ),
+      );
+
+      final DateTime t0 = DateTime.utc(2026, 8, 27, 12);
+
+      tracker.processFrame(
+        observations: <AtlasScanObservation>[
+          _observation(
+            id: 'obs_1',
+            capturedAt: t0,
+            barcode: '889698111111',
+            centerX: 0.50,
+            centerY: 0.50,
+          ),
+        ],
+        timestamp: t0,
+      );
+
+      final List<AtlasObjectTrack> tracks = tracker.processFrame(
+        observations: <AtlasScanObservation>[
+          _observation(
+            id: 'obs_2',
+            capturedAt: t0.add(const Duration(milliseconds: 100)),
+            barcode: '889698111111',
+            centerX: 0.49,
+            centerY: 0.50,
+          ),
+          _observation(
+            id: 'obs_3',
+            capturedAt: t0.add(const Duration(milliseconds: 100)),
+            barcode: '889698111111',
+            centerX: 0.51,
+            centerY: 0.50,
+          ),
+        ],
+        timestamp: t0.add(const Duration(milliseconds: 100)),
+      );
+
+      expect(tracks, hasLength(2));
+      expect(
+        tracks.map((AtlasObjectTrack track) => track.observationCount),
+        containsAll(<int>[2, 1]),
+      );
+    });
+
+    test(
+      'two physical objects may share the same UPC and remain separate tracks',
+      () {
+        final AtlasObjectTracker tracker = AtlasObjectTracker(
+          config: const AtlasObjectTrackerConfig(
+            maxMatchDistance: 0.08,
+            confirmationMinHits: 2,
+          ),
+        );
+
+        final DateTime t0 = DateTime.utc(2026, 8, 27, 12);
+
+        List<AtlasObjectTrack> tracks = tracker.processFrame(
+          observations: <AtlasScanObservation>[
+            _observation(
+              id: 'left_1',
+              capturedAt: t0,
+              barcode: '889698222222',
+              centerX: 0.25,
+              centerY: 0.50,
+            ),
+            _observation(
+              id: 'right_1',
+              capturedAt: t0,
+              barcode: '889698222222',
+              centerX: 0.75,
+              centerY: 0.50,
+            ),
+          ],
+          timestamp: t0,
+        );
+
+        expect(tracks, hasLength(2));
+
+        tracks = tracker.processFrame(
+          observations: <AtlasScanObservation>[
+            _observation(
+              id: 'left_2',
+              capturedAt: t0.add(const Duration(milliseconds: 100)),
+              barcode: '889698222222',
+              centerX: 0.26,
+              centerY: 0.50,
+            ),
+            _observation(
+              id: 'right_2',
+              capturedAt: t0.add(const Duration(milliseconds: 100)),
+              barcode: '889698222222',
+              centerX: 0.74,
+              centerY: 0.50,
+            ),
+          ],
+          timestamp: t0.add(const Duration(milliseconds: 100)),
+        );
+
+        expect(tracks, hasLength(2));
+        expect(
+          tracks.every((AtlasObjectTrack track) => track.isConfirmed),
+          isTrue,
+        );
+        expect(
+          tracks.every(
+            (AtlasObjectTrack track) =>
+                track.barcodeEvidenceByKey.length == 1 &&
+                track.usableBarcodeHitCount == 2,
+          ),
+          isTrue,
+        );
+      },
+    );
+
+    test('tentative track confirms after configured hit threshold', () {
+      final AtlasObjectTracker tracker = AtlasObjectTracker(
+        config: const AtlasObjectTrackerConfig(confirmationMinHits: 3),
+      );
+
+      final DateTime t0 = DateTime.utc(2026, 8, 27, 12);
+
+      List<AtlasObjectTrack> tracks = tracker.processFrame(
+        observations: <AtlasScanObservation>[
+          _observation(
+            id: 'confirm_1',
+            capturedAt: t0,
+            barcode: '889698333333',
+          ),
+        ],
+        timestamp: t0,
+      );
+
+      expect(tracks.single.isTentative, isTrue);
+
+      tracks = tracker.processFrame(
+        observations: <AtlasScanObservation>[
+          _observation(
+            id: 'confirm_2',
+            capturedAt: t0.add(const Duration(milliseconds: 100)),
+            barcode: '889698333333',
+          ),
+        ],
+        timestamp: t0.add(const Duration(milliseconds: 100)),
+      );
+
+      expect(tracks.single.isTentative, isTrue);
+
+      tracks = tracker.processFrame(
+        observations: <AtlasScanObservation>[
+          _observation(
+            id: 'confirm_3',
+            capturedAt: t0.add(const Duration(milliseconds: 200)),
+            barcode: '889698333333',
+          ),
+        ],
+        timestamp: t0.add(const Duration(milliseconds: 200)),
+      );
+
+      expect(tracks.single.isConfirmed, isTrue);
+      expect(tracks.single.observationCount, 3);
+    });
+
+    test('stale tracks expire using elapsed time', () {
+      final AtlasObjectTracker tracker = AtlasObjectTracker(
+        config: const AtlasObjectTrackerConfig(
+          tentativeTtl: Duration(milliseconds: 500),
+          confirmedTtl: Duration(seconds: 2),
+          confirmationMinHits: 3,
+        ),
+      );
+
+      final DateTime t0 = DateTime.utc(2026, 8, 27, 12);
+
+      tracker.processFrame(
+        observations: <AtlasScanObservation>[
+          _observation(id: 'stale_1', capturedAt: t0, barcode: '889698444444'),
+        ],
+        timestamp: t0,
+      );
+
+      expect(tracker.tracks, hasLength(1));
+
+      tracker.processFrame(
+        observations: const <AtlasScanObservation>[],
+        timestamp: t0.add(const Duration(milliseconds: 499)),
+      );
+
+      expect(tracker.tracks, hasLength(1));
+
+      tracker.processFrame(
+        observations: const <AtlasScanObservation>[],
+        timestamp: t0.add(const Duration(milliseconds: 501)),
+      );
+
+      expect(tracker.tracks, isEmpty);
+    });
+
+    test(
+      'cooldown track keeps claiming the same visible object without spawning duplicates',
+      () {
+        final AtlasObjectTracker tracker = AtlasObjectTracker(
+          config: const AtlasObjectTrackerConfig(
+            confirmationMinHits: 1,
+            cooldownDuration: Duration(seconds: 4),
+          ),
+        );
+
+        final DateTime t0 = DateTime.utc(2026, 8, 27, 12);
+
+        final AtlasObjectTrack initial = tracker
+            .processFrame(
+              observations: <AtlasScanObservation>[
+                _observation(
+                  id: 'cooldown_visible_1',
+                  capturedAt: t0,
+                  barcode: '889698555550',
+                ),
+              ],
+              timestamp: t0,
+            )
+            .single;
+
+        tracker.markCooldown(trackId: initial.trackId, startedAt: t0);
+
+        final List<AtlasObjectTrack> tracks = tracker.processFrame(
+          observations: <AtlasScanObservation>[
+            _observation(
+              id: 'cooldown_visible_2',
+              capturedAt: t0.add(const Duration(milliseconds: 100)),
+              barcode: '889698555550',
+              centerX: 0.51,
+            ),
+          ],
+          timestamp: t0.add(const Duration(milliseconds: 100)),
+        );
+
+        expect(tracks, hasLength(1));
+        expect(tracks.single.trackId, initial.trackId);
+        expect(tracks.single.isCooldown, isTrue);
+        expect(
+          tracks.single.lastSeenAt,
+          t0.add(const Duration(milliseconds: 100)),
+        );
+      },
+    );
+
+    test(
+      'cooldown expires only after the object has been absent for the TTL',
+      () {
+        final AtlasObjectTracker tracker = AtlasObjectTracker(
+          config: const AtlasObjectTrackerConfig(
+            confirmationMinHits: 1,
+            cooldownDuration: Duration(seconds: 4),
+          ),
+        );
+
+        final DateTime t0 = DateTime.utc(2026, 8, 27, 12);
+
+        final AtlasObjectTrack initial = tracker
+            .processFrame(
+              observations: <AtlasScanObservation>[
+                _observation(
+                  id: 'cooldown_absent_1',
+                  capturedAt: t0,
+                  barcode: '889698555551',
+                ),
+              ],
+              timestamp: t0,
+            )
+            .single;
+
+        tracker.markCooldown(trackId: initial.trackId, startedAt: t0);
+
+        tracker.processFrame(
+          observations: <AtlasScanObservation>[
+            _observation(
+              id: 'cooldown_absent_2',
+              capturedAt: t0.add(const Duration(seconds: 3)),
+              barcode: '889698555551',
+            ),
+          ],
+          timestamp: t0.add(const Duration(seconds: 3)),
+        );
+
+        tracker.processFrame(
+          observations: const <AtlasScanObservation>[],
+          timestamp: t0.add(const Duration(seconds: 6, milliseconds: 999)),
+        );
+        expect(tracker.tracks, hasLength(1));
+
+        tracker.processFrame(
+          observations: const <AtlasScanObservation>[],
+          timestamp: t0.add(const Duration(seconds: 7, milliseconds: 1)),
+        );
+        expect(tracker.tracks, isEmpty);
+      },
+    );
+
+    test('cooldown preserves camera lastSeenAt', () {
+      final AtlasObjectTracker tracker = AtlasObjectTracker(
+        config: const AtlasObjectTrackerConfig(confirmationMinHits: 1),
+      );
+
+      final DateTime seenAt = DateTime.utc(2026, 8, 27, 12);
+      final DateTime cooldownAt = seenAt.add(const Duration(seconds: 1));
+
+      final AtlasObjectTrack track = tracker
+          .processFrame(
+            observations: <AtlasScanObservation>[
+              _observation(
+                id: 'cooldown_1',
+                capturedAt: seenAt,
+                barcode: '889698555555',
+              ),
+            ],
+            timestamp: seenAt,
+          )
+          .single;
+
+      expect(track.isConfirmed, isTrue);
+
+      final bool changed = tracker.markCooldown(
+        trackId: track.trackId,
+        startedAt: cooldownAt,
+      );
+
+      expect(changed, isTrue);
+
+      final AtlasObjectTrack cooledTrack = tracker.trackForId(track.trackId)!;
+
+      expect(cooledTrack.isCooldown, isTrue);
+      expect(cooledTrack.lastSeenAt, seenAt);
+      expect(cooledTrack.cooldownStartedAt, cooldownAt);
+    });
+  });
+
+  group('AtlasEvidenceAccumulator', () {
+    test(
+      'agreement confidence uses usable barcode hits rather than all observations',
+      () {
+        final AtlasEvidenceAccumulator accumulator = AtlasEvidenceAccumulator(
+          config: const AtlasEvidenceAccumulatorConfig(
+            minBarcodeHits: 3,
+            dominantBarcodeThreshold: 0.75,
+          ),
+        );
+
+        final DateTime t0 = DateTime.utc(2026, 8, 27, 12);
+
+        AtlasObjectTrack track = AtlasObjectTrack.createInitial(
+          trackId: 'track_confidence',
+          observation: _observation(
+            id: 'evidence_1',
+            capturedAt: t0,
+            barcode: '889698666666',
+          ),
+        );
+
+        track = track.incorporateObservation(
+          _observation(
+            id: 'evidence_2',
+            capturedAt: t0.add(const Duration(milliseconds: 100)),
+            barcode: '889698666666',
+          ),
+        );
+
+        track = track.incorporateObservation(
+          _observation(
+            id: 'evidence_3',
+            capturedAt: t0.add(const Duration(milliseconds: 200)),
+            barcode: '889698666666',
+          ),
+        );
+
+        track = track.incorporateObservation(
+          _observation(
+            id: 'evidence_4',
+            capturedAt: t0.add(const Duration(milliseconds: 300)),
+            barcode: '889698666666',
+          ),
+        );
+
+        track = track.incorporateObservation(
+          _observation(
+            id: 'evidence_5',
+            capturedAt: t0.add(const Duration(milliseconds: 400)),
+            barcode: '889698777777',
+          ),
+        );
+
+        track = track.incorporateObservation(
+          _observationWithoutBarcode(
+            id: 'visual_only_1',
+            capturedAt: t0.add(const Duration(milliseconds: 500)),
+          ),
+        );
+
+        track = track.incorporateObservation(
+          _observationWithoutBarcode(
+            id: 'visual_only_2',
+            capturedAt: t0.add(const Duration(milliseconds: 600)),
+          ),
+        );
+
+        track = track.incorporateObservation(
+          _observationWithoutBarcode(
+            id: 'visual_only_3',
+            capturedAt: t0.add(const Duration(milliseconds: 700)),
+          ),
+        );
+
+        track = track.confirm();
+
+        final AtlasAccumulatedEvidence? evidence = accumulator.evaluateTrack(
+          track,
+        );
+
+        expect(evidence, isNotNull);
+        expect(evidence!.totalBarcodeHits, 5);
+        expect(evidence.dominantBarcodeHits, 4);
+        expect(evidence.agreementConfidence, closeTo(0.80, 0.0001));
+        expect(evidence.isReadyForResolution, isTrue);
+        expect(evidence.stableCode.normalizedValue, '889698666666');
+      },
+    );
+  });
+}
+
+AtlasScanObservation _observation({
+  required String id,
+  required DateTime capturedAt,
+  required String barcode,
+  double centerX = 0.50,
+  double centerY = 0.50,
+}) {
+  return AtlasScanObservation(
+    observationId: id,
+    capturedAt: capturedAt,
+    code: ScanCode(
+      rawValue: barcode,
+      normalizedValue: barcode,
+      format: ScanCodeFormat.upcA,
+      source: ScanCodeSource.camera,
+      capturedAt: capturedAt,
+      isValid: true,
+      confidence: 1.0,
+    ),
+    cornerPoints: _boxAround(centerX: centerX, centerY: centerY),
+  );
+}
+
+AtlasScanObservation _observationWithoutBarcode({
+  required String id,
+  required DateTime capturedAt,
+}) {
+  return AtlasScanObservation(
+    observationId: id,
+    capturedAt: capturedAt,
+    cornerPoints: _boxAround(centerX: 0.50, centerY: 0.50),
+  );
+}
+
+List<AtlasNormalizedPoint> _boxAround({
+  required double centerX,
+  required double centerY,
+}) {
+  const double halfWidth = 0.02;
+  const double halfHeight = 0.03;
+
+  return <AtlasNormalizedPoint>[
+    AtlasNormalizedPoint(x: centerX - halfWidth, y: centerY - halfHeight),
+    AtlasNormalizedPoint(x: centerX + halfWidth, y: centerY - halfHeight),
+    AtlasNormalizedPoint(x: centerX + halfWidth, y: centerY + halfHeight),
+    AtlasNormalizedPoint(x: centerX - halfWidth, y: centerY + halfHeight),
+  ];
+}
+
+============================================================
+MOBILE SCANNER INTEGRATION POINTS
+============================================================
+
+Path                                                                                                                  LineNumber Line                                                                          
+----                                                                                                                  ---------- ----                                                                          
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\acquisition\atlas_continuous_scan_coordinator.dart               335           'scannerType': ScannerType.mobileScanner.name,                      
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\acquisition\atlas_continuous_scan_coordinator.dart               348         scannerType: ScannerType.mobileScanner,                               
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\acquisition\atlas_evidence_accumulator.dart                        4 class AtlasEvidenceAccumulatorConfig {                                        
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\acquisition\atlas_evidence_accumulator.dart                        5   const AtlasEvidenceAccumulatorConfig({                                      
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\acquisition\atlas_evidence_accumulator.dart                       32 class AtlasEvidenceAccumulator {                                              
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\acquisition\atlas_evidence_accumulator.dart                       33   AtlasEvidenceAccumulator({                                                  
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\acquisition\atlas_evidence_accumulator.dart                       34     this.config = const AtlasEvidenceAccumulatorConfig(),                     
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\acquisition\atlas_evidence_accumulator.dart                       39   final AtlasEvidenceAccumulatorConfig config;                                
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\acquisition\atlas_evidence_accumulator.dart                       41   AtlasAccumulatedEvidence? evaluateTrack(AtlasObjectTrack track) {           
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\acquisition\atlas_evidence_accumulator.dart                       85   static void _validateConfig(AtlasEvidenceAccumulatorConfig config) {        
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\acquisition\atlas_mobile_scanner_observation_adapter.dart         12 abstract final class AtlasMobileScannerObservationAdapter {                   
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\acquisition\atlas_mobile_scanner_observation_adapter.dart         13   static List<AtlasScanObservation> fromCapture(                              
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\acquisition\atlas_mobile_scanner_observation_adapter.dart         14     BarcodeCapture capture, {                                                 
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\acquisition\atlas_mobile_scanner_observation_adapter.dart         17     final List<AtlasScanObservation> observations = <AtlasScanObservation>[]; 
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\acquisition\atlas_mobile_scanner_observation_adapter.dart         28     for (final Barcode barcode in capture.barcodes) {                         
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\acquisition\atlas_mobile_scanner_observation_adapter.dart         52         AtlasScanObservation(                                                 
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\acquisition\atlas_mobile_scanner_observation_adapter.dart         68     return List<AtlasScanObservation>.unmodifiable(observations);             
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\models\scanner_type.dart                                           7   mobileScanner,                                                              
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\models\scanner_type.dart                                          20       case ScannerType.mobileScanner:                                         
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\models\scanner_type.dart                                          38     return this == ScannerType.mobileScanner ||                               
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\tracking\atlas_object_track.dart                                  45     required AtlasScanObservation observation,                                
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\tracking\atlas_object_track.dart                                  65   final AtlasScanObservation latestObservation;                               
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\tracking\atlas_object_track.dart                                  82     AtlasScanObservation observation, {                                       
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\tracking\atlas_object_track.dart                                 170   _barcodeEvidenceForObservation(AtlasScanObservation observation) {          
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\tracking\atlas_object_tracker.dart                                36   List<AtlasObjectTrack> processFrame({                                       
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\tracking\atlas_object_tracker.dart                                37     required List<AtlasScanObservation> observations,                         
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\tracking\atlas_object_tracker.dart                                49       final AtlasScanObservation observation = observations[observationIndex];
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\tracking\atlas_object_tracker.dart                                86       final AtlasScanObservation observation =                                
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\tracking\atlas_object_tracker.dart                               111       final AtlasScanObservation observation = observations[observationIndex];
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\tracking\atlas_object_tracker.dart                               130   bool markCooldown({required String trackId, required DateTime startedAt}) { 
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\tracking\atlas_scan_observation.dart                              82 class AtlasScanObservation {                                                  
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\atlas\scan\tracking\atlas_scan_observation.dart                              83   AtlasScanObservation({                                                      
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\navigation\atlas_navigation_shell.dart                                       43       // This prevents MobileScanner from initializing the camera when        
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\screens\scanner\scan_screen.dart                                             26   final MobileScannerController _scannerController = MobileScannerController( 
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\screens\scanner\scan_screen.dart                                             38   final AtlasEvidenceAccumulator _evidenceAccumulator =                       
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\screens\scanner\scan_screen.dart                                             39       AtlasEvidenceAccumulator();                                             
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\screens\scanner\scan_screen.dart                                             70   void _handleDetection(BarcodeCapture capture) {                             
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\screens\scanner\scan_screen.dart                                             73     final List<AtlasScanObservation> observations =                           
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\screens\scanner\scan_screen.dart                                             74         AtlasMobileScannerObservationAdapter.fromCapture(                     
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\screens\scanner\scan_screen.dart                                             83     final List<AtlasScanObservation> trackableObservations = observations     
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\screens\scanner\scan_screen.dart                                             84         .where((AtlasScanObservation observation) => observation.hasGeometry) 
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\screens\scanner\scan_screen.dart                                             91     final List<AtlasObjectTrack> tracks = _objectTracker.processFrame(        
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\screens\scanner\scan_screen.dart                                            100           .evaluateTrack(track);                                              
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\screens\scanner\scan_screen.dart                                            112         _objectTracker.markCooldown(                                          
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\screens\scanner\scan_screen.dart                                            213                 MobileScanner(                                                
+C:\Users\Arthur Sabala\Documents\funkovault2\lib\screens\scanner\scan_screen.dart                                            215                   onDetect: _handleDetection,                                 
+
+
+
