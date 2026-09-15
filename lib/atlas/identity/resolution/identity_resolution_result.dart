@@ -9,9 +9,7 @@ import 'identity_resolution_session.dart';
 // The result preserves the completed resolution session while exposing
 // convenient accessors for the canonical identities that Atlas should use.
 class IdentityResolutionResult {
-  IdentityResolutionResult({
-    required this.session,
-  });
+  IdentityResolutionResult({required this.session});
 
   // Completed resolution session.
   final IdentityResolutionSession session;
@@ -101,12 +99,8 @@ class IdentityResolutionResult {
     return session.executionDuration;
   }
 
-  IdentityResolutionResult copyWith({
-    IdentityResolutionSession? session,
-  }) {
-    return IdentityResolutionResult(
-      session: session ?? this.session,
-    );
+  IdentityResolutionResult copyWith({IdentityResolutionSession? session}) {
+    return IdentityResolutionResult(session: session ?? this.session);
   }
 
   @override

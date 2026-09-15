@@ -12,24 +12,16 @@ import '../../widgets/vault/components/vault_pop_tile.dart';
 import '../../widgets/vault/vault_scroll_view.dart';
 
 class WishlistScreen extends StatelessWidget {
-  const WishlistScreen({
-    super.key,
-  });
+  const WishlistScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final AppState appState =
-    context.watch<AppState>();
+    final AppState appState = context.watch<AppState>();
 
-    final List<Pop> wishlistPops =
-        appState.wishlistPops;
+    final List<Pop> wishlistPops = appState.wishlistPops;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Wishlist',
-        ),
-      ),
+      appBar: AppBar(title: const Text('Wishlist')),
       body: VaultScrollView(
         children: [
           AtlasGlassCard(
@@ -39,37 +31,30 @@ class WishlistScreen extends StatelessWidget {
               subtitle: wishlistPops.isEmpty
                   ? 'Save collectibles you want to hunt for later.'
                   : '${wishlistPops.length} '
-                  'wishlist '
-                  '${wishlistPops.length == 1 ? 'item' : 'items'} '
-                  'currently tracked.',
+                        'wishlist '
+                        '${wishlistPops.length == 1 ? 'item' : 'items'} '
+                        'currently tracked.',
               icon: Icons.favorite_border_rounded,
               accentColor: AtlasColors.vaultGold,
             ),
           ),
 
-          const SizedBox(
-            height: AtlasSpacing.lg,
-          ),
+          const SizedBox(height: AtlasSpacing.lg),
 
           if (wishlistPops.isEmpty)
             const AtlasEmptyState(
               eyebrow: 'Wishlist',
               title: 'No Wishlist Items',
               message:
-              'Tap the heart on a collectible to add it to your wishlist.',
+                  'Tap the heart on a collectible to add it to your wishlist.',
               icon: Icons.favorite_border_rounded,
               compact: true,
             )
           else
             ...wishlistPops.map(
-                  (Pop pop) => Padding(
-                padding: const EdgeInsets.only(
-                  bottom: AtlasSpacing.sm,
-                ),
-                child: VaultPopTile(
-                  pop: pop,
-                  showImage: true,
-                ),
+              (Pop pop) => Padding(
+                padding: const EdgeInsets.only(bottom: AtlasSpacing.sm),
+                child: VaultPopTile(pop: pop, showImage: true),
               ),
             ),
         ],

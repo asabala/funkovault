@@ -25,25 +25,16 @@ class CollectorDnaCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Collector DNA',
-            style: AtlasTypography.headingSmall,
-          ),
+          Text('Collector DNA', style: AtlasTypography.headingSmall),
           const SizedBox(height: AtlasSpacing.md),
           Row(
             children: [
               Expanded(
-                child: _DnaTraitTile(
-                  label: 'Primary',
-                  value: primaryTrait,
-                ),
+                child: _DnaTraitTile(label: 'Primary', value: primaryTrait),
               ),
               const SizedBox(width: AtlasSpacing.sm),
               Expanded(
-                child: _DnaTraitTile(
-                  label: 'Secondary',
-                  value: secondaryTrait,
-                ),
+                child: _DnaTraitTile(label: 'Secondary', value: secondaryTrait),
               ),
             ],
           ),
@@ -55,9 +46,7 @@ class CollectorDnaCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: AtlasSpacing.sm),
-          LinearProgressIndicator(
-            value: (confidence / 100).clamp(0.0, 1.0),
-          ),
+          LinearProgressIndicator(value: (confidence / 100).clamp(0.0, 1.0)),
           const SizedBox(height: AtlasSpacing.md),
           Text(
             summary,
@@ -72,10 +61,7 @@ class CollectorDnaCard extends StatelessWidget {
 }
 
 class _DnaTraitTile extends StatelessWidget {
-  const _DnaTraitTile({
-    required this.label,
-    required this.value,
-  });
+  const _DnaTraitTile({required this.label, required this.value});
 
   final String label;
   final String value;

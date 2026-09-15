@@ -7,12 +7,8 @@ import 'identity_hypothesis.dart';
 // ContributionCollection or depending directly on individual identity engines.
 final class IdentityEvidence {
   IdentityEvidence({
-    List<IdentityContribution> contributions =
-    const <IdentityContribution>[],
-  }) : contributions =
-  List<IdentityContribution>.unmodifiable(
-    contributions,
-  );
+    List<IdentityContribution> contributions = const <IdentityContribution>[],
+  }) : contributions = List<IdentityContribution>.unmodifiable(contributions);
 
   // Identity contributions ordered by their appearance in the scan session.
   final List<IdentityContribution> contributions;
@@ -30,11 +26,9 @@ final class IdentityEvidence {
   }
 
   Iterable<IdentityHypothesis> get hypotheses {
-    return contributions.expand(
-          (IdentityContribution contribution) {
-        return contribution.hypotheses;
-      },
-    );
+    return contributions.expand((IdentityContribution contribution) {
+      return contribution.hypotheses;
+    });
   }
 
   int get hypothesisCount {
@@ -58,10 +52,8 @@ final class IdentityEvidence {
   }
 
   IdentityHypothesis? get primaryHypothesis {
-    for (final IdentityContribution contribution
-    in contributions) {
-      final IdentityHypothesis? hypothesis =
-          contribution.primaryHypothesis;
+    for (final IdentityContribution contribution in contributions) {
+      final IdentityHypothesis? hypothesis = contribution.primaryHypothesis;
 
       if (hypothesis != null) {
         return hypothesis;
@@ -72,8 +64,7 @@ final class IdentityEvidence {
   }
 
   Iterable<IdentityHypothesis> get alternativeHypotheses {
-    final IdentityHypothesis? primary =
-        primaryHypothesis;
+    final IdentityHypothesis? primary = primaryHypothesis;
 
     if (primary == null) {
       return const Iterable<IdentityHypothesis>.empty();
@@ -81,17 +72,14 @@ final class IdentityEvidence {
 
     bool primarySkipped = false;
 
-    return hypotheses.where(
-          (IdentityHypothesis hypothesis) {
-        if (!primarySkipped &&
-            identical(hypothesis, primary)) {
-          primarySkipped = true;
-          return false;
-        }
+    return hypotheses.where((IdentityHypothesis hypothesis) {
+      if (!primarySkipped && identical(hypothesis, primary)) {
+        primarySkipped = true;
+        return false;
+      }
 
-        return true;
-      },
-    );
+      return true;
+    });
   }
 
   bool get requiresReview {
@@ -99,8 +87,7 @@ final class IdentityEvidence {
       return true;
     }
 
-    for (final IdentityContribution contribution
-    in contributions) {
+    for (final IdentityContribution contribution in contributions) {
       if (contribution.requiresReview) {
         return true;
       }
@@ -110,50 +97,36 @@ final class IdentityEvidence {
   }
 
   double? get primaryConfidence {
-    return primaryHypothesis?.confidence ??
-        primaryContribution?.confidence;
+    return primaryHypothesis?.confidence ?? primaryContribution?.confidence;
   }
 
   Iterable<String> get supportingContributionIds {
-    return hypotheses.expand(
-          (IdentityHypothesis hypothesis) {
-        return hypothesis.supportingContributionIds;
-      },
-    );
+    return hypotheses.expand((IdentityHypothesis hypothesis) {
+      return hypothesis.supportingContributionIds;
+    });
   }
 
-  bool containsHypothesis(
-      String hypothesisId,
-      ) {
-    final String normalizedId =
-    hypothesisId.trim();
+  bool containsHypothesis(String hypothesisId) {
+    final String normalizedId = hypothesisId.trim();
 
     if (normalizedId.isEmpty) {
       return false;
     }
 
-    return hypotheses.any(
-          (IdentityHypothesis hypothesis) {
-        return hypothesis.hypothesisId ==
-            normalizedId;
-      },
-    );
+    return hypotheses.any((IdentityHypothesis hypothesis) {
+      return hypothesis.hypothesisId == normalizedId;
+    });
   }
 
-  IdentityHypothesis? hypothesisById(
-      String hypothesisId,
-      ) {
-    final String normalizedId =
-    hypothesisId.trim();
+  IdentityHypothesis? hypothesisById(String hypothesisId) {
+    final String normalizedId = hypothesisId.trim();
 
     if (normalizedId.isEmpty) {
       return null;
     }
 
-    for (final IdentityHypothesis hypothesis
-    in hypotheses) {
-      if (hypothesis.hypothesisId ==
-          normalizedId) {
+    for (final IdentityHypothesis hypothesis in hypotheses) {
+      if (hypothesis.hypothesisId == normalizedId) {
         return hypothesis;
       }
     }

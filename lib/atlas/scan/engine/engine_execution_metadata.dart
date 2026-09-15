@@ -10,8 +10,7 @@ class EngineExecutionMetadata {
     required DateTime completedAt,
     required Duration duration,
     bool usedCache = false,
-    Map<String, Object?> attributes =
-    const <String, Object?>{},
+    Map<String, Object?> attributes = const <String, Object?>{},
   }) {
     return EngineExecutionMetadata._(
       engineId: engineId.trim(),
@@ -20,9 +19,7 @@ class EngineExecutionMetadata {
       completedAt: completedAt,
       duration: duration,
       usedCache: usedCache,
-      attributes: Map<String, Object?>.unmodifiable(
-        attributes,
-      ),
+      attributes: Map<String, Object?>.unmodifiable(attributes),
     );
   }
 

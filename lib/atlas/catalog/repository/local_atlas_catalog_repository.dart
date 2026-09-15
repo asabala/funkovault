@@ -5,8 +5,7 @@ import 'package:funkovault2/atlas/catalog/models/atlas_catalog_product.dart';
 import 'package:funkovault2/atlas/catalog/repository/atlas_catalog_repository.dart';
 import 'package:funkovault2/atlas/identity/product/atlas_product_id.dart';
 
-final class LocalAtlasCatalogRepository
-    implements AtlasCatalogRepository {
+final class LocalAtlasCatalogRepository implements AtlasCatalogRepository {
   Future<AtlasCatalogIndex>? _indexFuture;
 
   Future<AtlasCatalogIndex> _getIndex() {
@@ -14,166 +13,120 @@ final class LocalAtlasCatalogRepository
   }
 
   Future<AtlasCatalogIndex> _loadIndex() async {
-    debugPrint(
-      'ATLAS CATALOG: Starting catalog load...',
-    );
+    debugPrint('ATLAS CATALOG: Starting catalog load...');
 
-    final Stopwatch stopwatch = Stopwatch()
-      ..start();
+    final Stopwatch stopwatch = Stopwatch()..start();
 
     final List<AtlasCatalogProduct> products =
-    await AtlasCatalogLoader.loadPopVinylCatalog();
+        await AtlasCatalogLoader.loadPopVinylCatalog();
 
     final int productsWithBarcodes = products
-        .where(
-          (AtlasCatalogProduct product) =>
-      product.barcodes.isNotEmpty,
-    )
+        .where((AtlasCatalogProduct product) => product.barcodes.isNotEmpty)
         .length;
 
-    final int totalBarcodes = products.fold<int>(
-      0,
-          (
-          int total,
-          AtlasCatalogProduct product,
-          ) {
-        return total + product.barcodes.length;
-      },
-    );
+    final int totalBarcodes = products.fold<int>(0, (
+      int total,
+      AtlasCatalogProduct product,
+    ) {
+      return total + product.barcodes.length;
+    });
 
-    final AtlasCatalogIndex index = AtlasCatalogIndex(
-      products: products,
-    );
+    final AtlasCatalogIndex index = AtlasCatalogIndex(products: products);
 
     stopwatch.stop();
 
-    debugPrint(
-      'ATLAS CATALOG: Loaded ${products.length} products.',
-    );
+    debugPrint('ATLAS CATALOG: Loaded ${products.length} products.');
 
-    debugPrint(
-      'ATLAS CATALOG: $productsWithBarcodes products have barcodes.',
-    );
+    debugPrint('ATLAS CATALOG: $productsWithBarcodes products have barcodes.');
 
-    debugPrint(
-      'ATLAS CATALOG: $totalBarcodes total barcode entries.',
-    );
+    debugPrint('ATLAS CATALOG: $totalBarcodes total barcode entries.');
 
     debugPrint(
       'ATLAS CATALOG: Index contains '
-          '${index.byBarcode.length} unique barcode keys.',
+      '${index.byBarcode.length} unique barcode keys.',
     );
 
     debugPrint(
       'ATLAS CATALOG: Catalog load completed in '
-          '${stopwatch.elapsedMilliseconds} ms.',
+      '${stopwatch.elapsedMilliseconds} ms.',
     );
 
     return index;
   }
 
   @override
-  Future<AtlasCatalogProduct?> findByProductId(
-      AtlasProductId productId,
-      ) async {
+  Future<AtlasCatalogProduct?> findByProductId(AtlasProductId productId) async {
     final AtlasCatalogIndex index = await _getIndex();
 
-    return index.findByAtlasProductId(
-      productId,
-    );
+    return index.findByAtlasProductId(productId);
   }
 
   @override
-  Future<List<AtlasCatalogProduct>> findByBarcode(
-      String barcode,
-      ) async {
+  Future<List<AtlasCatalogProduct>> findByBarcode(String barcode) async {
     final AtlasCatalogIndex index = await _getIndex();
 
-    final String normalizedBarcode =
-    _normalizeBarcode(
-      barcode,
-    );
+    final String normalizedBarcode = _normalizeBarcode(barcode);
 
-    debugPrint(
-      'ATLAS BARCODE: Raw value "$barcode".',
-    );
+    debugPrint('ATLAS BARCODE: Raw value "$barcode".');
 
     debugPrint(
       'ATLAS BARCODE: Searching for '
-          '"$normalizedBarcode".',
+      '"$normalizedBarcode".',
     );
 
     if (normalizedBarcode.isEmpty) {
-      debugPrint(
-        'ATLAS BARCODE: Search value was empty.',
-      );
+      debugPrint('ATLAS BARCODE: Search value was empty.');
 
       return const <AtlasCatalogProduct>[];
     }
 
-    final Set<String> candidateBarcodes =
-    _barcodeCandidates(
-      normalizedBarcode,
-    );
+    final Set<String> candidateBarcodes = _barcodeCandidates(normalizedBarcode);
 
     debugPrint(
       'ATLAS BARCODE: Candidate values '
-          '${candidateBarcodes.join(', ')}.',
+      '${candidateBarcodes.join(', ')}.',
     );
 
-    final List<AtlasCatalogProduct> matches =
-    <AtlasCatalogProduct>[];
+    final List<AtlasCatalogProduct> matches = <AtlasCatalogProduct>[];
 
-    final Set<String> matchedProductIds =
-    <String>{};
+    final Set<String> matchedProductIds = <String>{};
 
-    for (final String candidate
-    in candidateBarcodes) {
-      final List<AtlasCatalogProduct>
-      candidateMatches =
-      index.findByBarcode(
+    for (final String candidate in candidateBarcodes) {
+      final List<AtlasCatalogProduct> candidateMatches = index.findByBarcode(
         candidate,
       );
 
       debugPrint(
         'ATLAS BARCODE: Candidate "$candidate" '
-            'returned ${candidateMatches.length} match(es).',
+        'returned ${candidateMatches.length} match(es).',
       );
 
-      for (final AtlasCatalogProduct product
-      in candidateMatches) {
-        if (matchedProductIds.add(
-          product.productId.value,
-        )) {
+      for (final AtlasCatalogProduct product in candidateMatches) {
+        if (matchedProductIds.add(product.productId.value)) {
           matches.add(product);
         }
       }
     }
 
     if (matches.isNotEmpty) {
-      for (final AtlasCatalogProduct product
-      in matches) {
+      for (final AtlasCatalogProduct product in matches) {
         debugPrint(
           'ATLAS BARCODE MATCH: '
-              '${product.displayName} '
-              '${product.barcodes}.',
+          '${product.displayName} '
+          '${product.barcodes}.',
         );
       }
 
-      return List<AtlasCatalogProduct>.unmodifiable(
-        matches,
-      );
+      return List<AtlasCatalogProduct>.unmodifiable(matches);
     }
 
     debugPrint(
       'ATLAS BARCODE: Indexed lookup returned '
-          'no matches. Running direct catalog check.',
+      'no matches. Running direct catalog check.',
     );
 
-    for (final AtlasCatalogProduct product
-    in index.products) {
-      final bool matchesCandidate =
-      candidateBarcodes.any(
+    for (final AtlasCatalogProduct product in index.products) {
+      final bool matchesCandidate = candidateBarcodes.any(
         product.matchesBarcode,
       );
 
@@ -181,32 +134,27 @@ final class LocalAtlasCatalogRepository
         continue;
       }
 
-      if (matchedProductIds.add(
-        product.productId.value,
-      )) {
+      if (matchedProductIds.add(product.productId.value)) {
         matches.add(product);
       }
     }
 
     debugPrint(
       'ATLAS BARCODE: Direct catalog check returned '
-          '${matches.length} match(es).',
+      '${matches.length} match(es).',
     );
 
     if (matches.isNotEmpty) {
-      for (final AtlasCatalogProduct product
-      in matches) {
+      for (final AtlasCatalogProduct product in matches) {
         debugPrint(
           'ATLAS BARCODE DIRECT MATCH: '
-              '${product.displayName} '
-              '${product.barcodes}.',
+          '${product.displayName} '
+          '${product.barcodes}.',
         );
       }
     }
 
-    return List<AtlasCatalogProduct>.unmodifiable(
-      matches,
-    );
+    return List<AtlasCatalogProduct>.unmodifiable(matches);
   }
 
   @override
@@ -227,48 +175,25 @@ final class LocalAtlasCatalogRepository
 
     final AtlasCatalogIndex index = await _getIndex();
 
-    final String normalizedQuery = _normalizeText(
-      query,
-    );
+    final String normalizedQuery = _normalizeText(query);
 
-    final String normalizedCategoryCode =
-    _normalizeText(
-      categoryCode,
-    );
+    final String normalizedCategoryCode = _normalizeText(categoryCode);
 
-    final String normalizedBrand = _normalizeText(
-      brand,
-    );
+    final String normalizedBrand = _normalizeText(brand);
 
-    final String normalizedProductLine =
-    _normalizeText(
-      productLine,
-    );
+    final String normalizedProductLine = _normalizeText(productLine);
 
-    final String normalizedSeries = _normalizeText(
-      series,
-    );
+    final String normalizedSeries = _normalizeText(series);
 
-    final String normalizedCharacterName =
-    _normalizeText(
-      characterName,
-    );
+    final String normalizedCharacterName = _normalizeText(characterName);
 
-    final String normalizedProductNumber =
-    _normalizeText(
-      productNumber,
-    );
+    final String normalizedProductNumber = _normalizeText(productNumber);
 
-    final String normalizedVariantName =
-    _normalizeText(
-      variantName,
-    );
+    final String normalizedVariantName = _normalizeText(variantName);
 
-    final List<AtlasCatalogProduct> matches =
-    <AtlasCatalogProduct>[];
+    final List<AtlasCatalogProduct> matches = <AtlasCatalogProduct>[];
 
-    for (final AtlasCatalogProduct product
-    in index.products) {
+    for (final AtlasCatalogProduct product in index.products) {
       if (!_matchesOptionalField(
         value: product.categoryCode,
         filter: normalizedCategoryCode,
@@ -318,10 +243,7 @@ final class LocalAtlasCatalogRepository
         continue;
       }
 
-      if (!_matchesQuery(
-        product: product,
-        query: normalizedQuery,
-      )) {
+      if (!_matchesQuery(product: product, query: normalizedQuery)) {
         continue;
       }
 
@@ -332,9 +254,7 @@ final class LocalAtlasCatalogRepository
       }
     }
 
-    return List<AtlasCatalogProduct>.unmodifiable(
-      matches,
-    );
+    return List<AtlasCatalogProduct>.unmodifiable(matches);
   }
 
   static bool _matchesQuery({
@@ -345,8 +265,7 @@ final class LocalAtlasCatalogRepository
       return true;
     }
 
-    final Iterable<String?> searchableValues =
-    <String?>[
+    final Iterable<String?> searchableValues = <String?>[
       product.productId.value,
       product.displayName,
       product.categoryCode,
@@ -359,8 +278,7 @@ final class LocalAtlasCatalogRepository
       ...product.barcodes,
     ];
 
-    for (final String? value
-    in searchableValues) {
+    for (final String? value in searchableValues) {
       if (_normalizeText(value).contains(query)) {
         return true;
       }
@@ -380,41 +298,25 @@ final class LocalAtlasCatalogRepository
     return _normalizeText(value) == filter;
   }
 
-  static Set<String> _barcodeCandidates(
-      String barcode,
-      ) {
-    final Set<String> candidates = <String>{
-      barcode,
-    };
+  static Set<String> _barcodeCandidates(String barcode) {
+    final Set<String> candidates = <String>{barcode};
 
-    if (barcode.length == 13 &&
-        barcode.startsWith('0')) {
-      candidates.add(
-        barcode.substring(1),
-      );
+    if (barcode.length == 13 && barcode.startsWith('0')) {
+      candidates.add(barcode.substring(1));
     }
 
     if (barcode.length == 12) {
-      candidates.add(
-        '0$barcode',
-      );
+      candidates.add('0$barcode');
     }
 
     return candidates;
   }
 
-  static String _normalizeBarcode(
-      String value,
-      ) {
-    return value.replaceAll(
-      RegExp(r'[^0-9A-Za-z]'),
-      '',
-    );
+  static String _normalizeBarcode(String value) {
+    return value.replaceAll(RegExp(r'[^0-9A-Za-z]'), '');
   }
 
-  static String _normalizeText(
-      String? value,
-      ) {
+  static String _normalizeText(String? value) {
     return value?.trim().toLowerCase() ?? '';
   }
 }

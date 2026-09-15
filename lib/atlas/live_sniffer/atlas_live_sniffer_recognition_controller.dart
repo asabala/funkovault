@@ -58,6 +58,7 @@ final class AtlasLiveSnifferRecognitionController extends ChangeNotifier {
   int _lastDetectedCount = 0;
   bool _sessionActive = false;
   bool _ocrProjectionInFlight = false;
+  bool _selectedEvidenceResolutionPending = false;
   int _sessionGeneration = 0;
   DateTime? _lastFrameAt;
   int _lastFrameSequence = 0;
@@ -65,6 +66,12 @@ final class AtlasLiveSnifferRecognitionController extends ChangeNotifier {
   AtlasLiveSnifferTargetState _targetState = AtlasLiveSnifferTargetState.none;
   double? _targetX;
   double? _targetY;
+  double? _selectionAnchorX;
+  double? _selectionAnchorY;
+  final _StaticClutterTracker _staticClutterTracker = _StaticClutterTracker();
+  String? _turnoverCandidateNumber;
+  int _turnoverCandidateHits = 0;
+  bool _automaticTurnoverInFlight = false;
 
   AtlasLiveSnifferHudSnapshot get hud => _hud;
   bool get sessionActive => _sessionActive;
@@ -99,14 +106,19 @@ final class AtlasLiveSnifferRecognitionController extends ChangeNotifier {
     _targetState = AtlasLiveSnifferTargetState.none;
     _targetX = null;
     _targetY = null;
+    _selectionAnchorX = null;
+    _selectionAnchorY = null;
+    _staticClutterTracker.reset();
+    _resetTurnoverDetector();
     _ocrProjectionInFlight = false;
+    _selectedEvidenceResolutionPending = false;
     _sessionModeLocked = _scanMode != AtlasLiveSnifferScanMode.automatic;
     _awaitingModeChoice = false;
     _multiCandidateStreak = 0;
     _lastDetectedCount = 0;
     _hud = AtlasLiveSnifferHudSnapshot(
       state: AtlasLiveSnifferHudState.listening,
-      title: 'Auction Fast Mode',
+      title: 'LiveLens Auction Mode',
       statusLabel: switch (_scanMode) {
         AtlasLiveSnifferScanMode.automatic => 'Auto Detect',
         AtlasLiveSnifferScanMode.featured => 'Featured Pop',
@@ -147,7 +159,12 @@ final class AtlasLiveSnifferRecognitionController extends ChangeNotifier {
     _targetState = AtlasLiveSnifferTargetState.none;
     _targetX = null;
     _targetY = null;
+    _selectionAnchorX = null;
+    _selectionAnchorY = null;
+    _staticClutterTracker.reset();
+    _resetTurnoverDetector();
     _ocrProjectionInFlight = false;
+    _selectedEvidenceResolutionPending = false;
     _sessionModeLocked = false;
     _awaitingModeChoice = false;
     _multiCandidateStreak = 0;
@@ -165,6 +182,7 @@ final class AtlasLiveSnifferRecognitionController extends ChangeNotifier {
       return;
     }
     if (payloadType != 'frame') return;
+    if (_automaticTurnoverInFlight) return;
 
     AtlasLiveSnifferNativeFrame frame = AtlasLiveSnifferNativeFrame.fromMap(
       payload,
@@ -213,6 +231,7 @@ final class AtlasLiveSnifferRecognitionController extends ChangeNotifier {
       // Native crop ownership is authoritative. When a physical tracker ID is
       // available, reject any OCR/barcode token that is not stamped with it.
       frame = frame.scopedToLockedTrack();
+      frame = _filterStaticClutter(frame);
     }
 
     // UPC/EAN remains bonus evidence and still crosses the canonical 6A ->
@@ -228,10 +247,69 @@ final class AtlasLiveSnifferRecognitionController extends ChangeNotifier {
 
     _expireTemporalEvidence(frame.capturedAt);
     final List<AtlasLiveSnifferBoxCandidate> extracted = _candidateExtractor
-        .extract(frame, focusX: _targetX, focusY: _targetY);
+        .extract(
+          frame,
+          focusX: _selectionAnchorX ?? _targetX,
+          focusY: _selectionAnchorY ?? _targetY,
+        );
 
     if (extracted.isEmpty) {
       if (frame.isSingleTargetFrame) {
+        // A dedicated header/nameplate OCR pass may contain useful words but no
+        // product number. Once this selection already has numbered evidence,
+        // retain those scoped words so the next catalog projection can use the
+        // character/release name seen on another face of the rotating box.
+        final String evidenceKey = 'selection:$_activeSelectionGeneration';
+        final _TemporalBoxEvidence? existing = _temporalEvidence[evidenceKey];
+        if (existing != null) {
+          final String supplementalText = _candidateExtractor
+              .extractSupplementalText(
+                frame,
+                focusX: _selectionAnchorX ?? _targetX,
+                focusY: _selectionAnchorY ?? _targetY,
+              );
+          if (supplementalText.isNotEmpty) {
+            final _TemporalBoxEvidence updatedEvidence = existing
+                .addSupplementalText(supplementalText, frame.capturedAt);
+            _temporalEvidence[evidenceKey] = updatedEvidence;
+
+            // Number -> name handoff: a rotating box often exposes the number
+            // and title on different faces. As soon as name-only OCR arrives,
+            // immediately re-run the catalog partition using the preserved
+            // number plus the newly accumulated name/series evidence. Do not
+            // wait for another frame that happens to contain the number again.
+            if (!_ocrProjectionInFlight) {
+              _ocrProjectionInFlight = true;
+              final int generation = _sessionGeneration;
+              unawaited(
+                _resolveAuctionCandidates(
+                  <AtlasLiveSnifferBoxCandidate>[updatedEvidence.toCandidate()],
+                  generation,
+                  selectionGeneration: frame.selectionGeneration,
+                ),
+              );
+            } else {
+              // Do not lose a name that arrived while the prior catalog lookup
+              // was still running. The resolver's finally block immediately
+              // consumes the newest selected-target evidence next.
+              _selectedEvidenceResolutionPending = true;
+            }
+
+            _hud = AtlasLiveSnifferHudSnapshot(
+              state: _hud.state,
+              title: _hud.title,
+              statusLabel: 'Resolving selected Pop...',
+              detail: 'Combining the locked number with the box name...',
+              cachedValue: _hud.cachedValue,
+              matchConfidence: _hud.matchConfidence,
+              items: _hud.items,
+            );
+            unawaited(_publishHud());
+            notifyListeners();
+            return;
+          }
+        }
+
         // No text during a turntable rotation is not a target loss. Preserve the
         // last good identity result and wait for another readable face.
         _hud = AtlasLiveSnifferHudSnapshot(
@@ -297,10 +375,11 @@ final class AtlasLiveSnifferRecognitionController extends ChangeNotifier {
 
     final List<AtlasLiveSnifferBoxCandidate> selected;
     if (effectiveMode == AtlasLiveSnifferScanMode.featured) {
-      // In a physical target lifecycle, native tracking already chose the object
-      // and cropped OCR to that object. Do not let Dart reselect a background Pop.
+      // Tracking associates evidence with a physical region; it does not own
+      // identity. Rank OCR candidates against the user's selected foreground
+      // anchor so a sharp, static shelf number cannot beat the auction item.
       final AtlasLiveSnifferBoxCandidate featured = frame.isSingleTargetFrame
-          ? plausible.first
+          ? _bestForegroundCandidate(plausible)
           : _targetX != null && _targetY != null
           ? _closestToTarget(plausible, _targetX!, _targetY!)
           : plausible.first;
@@ -309,12 +388,27 @@ final class AtlasLiveSnifferRecognitionController extends ChangeNotifier {
       selected = plausible.take(12).toList(growable: false);
     }
 
+    if (frame.isSingleTargetFrame &&
+        selected.isNotEmpty &&
+        _shouldRestartForContradictoryNumber(selected.first)) {
+      _requestAutomaticTurnover();
+      return;
+    }
+
+    final String selectedSupplementalText = frame.isSingleTargetFrame
+        ? _candidateExtractor.extractSupplementalText(
+            frame,
+            focusX: _selectionAnchorX ?? _targetX,
+            focusY: _selectionAnchorY ?? _targetY,
+          )
+        : '';
+
     final List<AtlasLiveSnifferBoxCandidate> accumulated = selected
         .map((AtlasLiveSnifferBoxCandidate candidate) {
           final String evidenceKey = frame.isSingleTargetFrame
               ? 'selection:$_activeSelectionGeneration'
               : candidate.candidateId;
-          final _TemporalBoxEvidence evidence = _temporalEvidence.update(
+          _TemporalBoxEvidence evidence = _temporalEvidence.update(
             evidenceKey,
             (existing) => existing.add(candidate, frame.capturedAt),
             ifAbsent: () => _TemporalBoxEvidence.fromCandidate(
@@ -323,6 +417,14 @@ final class AtlasLiveSnifferRecognitionController extends ChangeNotifier {
               candidateIdOverride: evidenceKey,
             ),
           );
+          if (frame.isSingleTargetFrame &&
+              selectedSupplementalText.isNotEmpty) {
+            evidence = evidence.addSupplementalText(
+              selectedSupplementalText,
+              frame.capturedAt,
+            );
+            _temporalEvidence[evidenceKey] = evidence;
+          }
           return evidence.toCandidate();
         })
         .toList(growable: false);
@@ -345,6 +447,8 @@ final class AtlasLiveSnifferRecognitionController extends ChangeNotifier {
   bool _handleTargetLifecycleWithoutEvidence(
     AtlasLiveSnifferNativeFrame frame,
   ) {
+    final bool hasEvidence =
+        frame.textBlocks.isNotEmpty || frame.barcodes.isNotEmpty;
     switch (frame.targetState) {
       case AtlasLiveSnifferTargetState.awaitingSelection:
         _hud = const AtlasLiveSnifferHudSnapshot(
@@ -357,12 +461,15 @@ final class AtlasLiveSnifferRecognitionController extends ChangeNotifier {
         notifyListeners();
         return true;
       case AtlasLiveSnifferTargetState.coasting:
+        // Fix 6.4: physical tracking no longer gates recognition. If the native
+        // foreground footprint still produced OCR/barcode evidence, let that
+        // evidence continue to identity resolution during the short coast.
+        if (hasEvidence) return false;
         _hud = AtlasLiveSnifferHudSnapshot(
           state: _hud.state,
           title: _hud.title,
           statusLabel: 'Tracking selected Pop...',
-          detail:
-              'Box turned or was briefly obscured. Holding the same target.',
+          detail: 'Brief visual gap. Holding the foreground identity.',
           cachedValue: _hud.cachedValue,
           matchConfidence: _hud.matchConfidence,
           items: _hud.items,
@@ -371,11 +478,14 @@ final class AtlasLiveSnifferRecognitionController extends ChangeNotifier {
         notifyListeners();
         return true;
       case AtlasLiveSnifferTargetState.reacquiring:
+        // Reacquiring is also evidence-capable. A readable foreground number or
+        // name is more useful than waiting for ML Kit to declare a perfect lock.
+        if (hasEvidence) return false;
         _hud = AtlasLiveSnifferHudSnapshot(
           state: _hud.state,
           title: _hud.title,
           statusLabel: 'Reacquiring selected Pop...',
-          detail: 'Atlas will not switch to a background box.',
+          detail: 'Watching the foreground footprint for readable evidence.',
           cachedValue: _hud.cachedValue,
           matchConfidence: _hud.matchConfidence,
           items: _hud.items,
@@ -384,14 +494,39 @@ final class AtlasLiveSnifferRecognitionController extends ChangeNotifier {
         notifyListeners();
         return true;
       case AtlasLiveSnifferTargetState.lost:
-        _hud = AtlasLiveSnifferHudSnapshot(
-          state: _hud.state,
-          title: _hud.title,
-          statusLabel: 'Target lost',
-          detail: 'Tap the Atlas HUD, then tap the Pop again to reacquire it.',
-          cachedValue: _hud.cachedValue,
-          matchConfidence: _hud.matchConfidence,
-          items: _hud.items,
+        final bool manuallySelectedTarget =
+            _activeSelectionGeneration > 0 &&
+            _selectionAnchorX != null &&
+            _selectionAnchorY != null;
+        if (manuallySelectedTarget) {
+          // Native track loss does not revoke a user's tap. Preserve the selected
+          // generation and all accumulated temporal identity evidence. If the
+          // stable foreground ROI still produced OCR/barcode evidence, continue
+          // through normal identity resolution.
+          if (hasEvidence) return false;
+          _hud = AtlasLiveSnifferHudSnapshot(
+            state: _hud.state,
+            title: _hud.title,
+            statusLabel: 'Reacquiring selected Pop...',
+            detail:
+                'Holding your selected Pop while LiveLens reacquires the tracker.',
+            cachedValue: _hud.cachedValue,
+            matchConfidence: _hud.matchConfidence,
+            items: _hud.items,
+          );
+          unawaited(_publishHud());
+          notifyListeners();
+          return true;
+        }
+        _projectedTrackIds.clear();
+        _temporalEvidence.clear();
+        _staticClutterTracker.reset();
+        _hud = const AtlasLiveSnifferHudSnapshot(
+          state: AtlasLiveSnifferHudState.listening,
+          title: 'Target lost',
+          statusLabel: 'Watching for the next Pop...',
+          detail:
+              'Atlas LiveLens will reacquire a persistent replacement automatically.',
         );
         unawaited(_publishHud());
         notifyListeners();
@@ -414,8 +549,7 @@ final class AtlasLiveSnifferRecognitionController extends ChangeNotifier {
       );
       if (!_sessionActive || generation != _sessionGeneration) return;
       if (selectionGeneration > 0 &&
-          (selectionGeneration != _activeSelectionGeneration ||
-              _targetState == AtlasLiveSnifferTargetState.lost)) {
+          selectionGeneration != _activeSelectionGeneration) {
         return;
       }
 
@@ -442,6 +576,26 @@ final class AtlasLiveSnifferRecognitionController extends ChangeNotifier {
     } finally {
       if (generation == _sessionGeneration) {
         _ocrProjectionInFlight = false;
+
+        if (_selectedEvidenceResolutionPending &&
+            _sessionActive &&
+            selectionGeneration > 0 &&
+            selectionGeneration == _activeSelectionGeneration) {
+          final String evidenceKey = 'selection:$_activeSelectionGeneration';
+          final _TemporalBoxEvidence? latestEvidence =
+              _temporalEvidence[evidenceKey];
+          _selectedEvidenceResolutionPending = false;
+          if (latestEvidence != null) {
+            _ocrProjectionInFlight = true;
+            unawaited(
+              _resolveAuctionCandidates(
+                <AtlasLiveSnifferBoxCandidate>[latestEvidence.toCandidate()],
+                generation,
+                selectionGeneration: selectionGeneration,
+              ),
+            );
+          }
+        }
       }
     }
   }
@@ -471,12 +625,18 @@ final class AtlasLiveSnifferRecognitionController extends ChangeNotifier {
       _targetState = AtlasLiveSnifferTargetState.awaitingSelection;
       _targetX = null;
       _targetY = null;
+      _selectionAnchorX = null;
+      _selectionAnchorY = null;
+      _staticClutterTracker.reset();
       _scanMode = AtlasLiveSnifferScanMode.featured;
       _sessionModeLocked = true;
       _awaitingModeChoice = false;
       _multiCandidateStreak = 0;
+      _resetTurnoverDetector();
+      _projectedTrackIds.clear();
       _temporalEvidence.clear();
       _ocrProjectionInFlight = false;
+      _selectedEvidenceResolutionPending = false;
       _sessionGeneration++;
       _hud = const AtlasLiveSnifferHudSnapshot(
         state: AtlasLiveSnifferHudState.listening,
@@ -497,21 +657,59 @@ final class AtlasLiveSnifferRecognitionController extends ChangeNotifier {
       _targetState = AtlasLiveSnifferTargetState.acquiring;
       _targetX = x;
       _targetY = y;
+      _selectionAnchorX = x;
+      _selectionAnchorY = y;
+      _staticClutterTracker.reset();
       _scanMode = AtlasLiveSnifferScanMode.featured;
       _sessionModeLocked = true;
       _awaitingModeChoice = false;
       _multiCandidateStreak = 0;
       // The tap starts a new physical-target generation. Old catalog/OCR work
       // can never carry across this boundary.
+      _resetTurnoverDetector();
+      _projectedTrackIds.clear();
       _temporalEvidence.clear();
       _ocrProjectionInFlight = false;
+      _selectedEvidenceResolutionPending = false;
       _sessionGeneration++;
       _hud = const AtlasLiveSnifferHudSnapshot(
         state: AtlasLiveSnifferHudState.listening,
-        title: 'Target selected',
-        statusLabel: 'Finding physical track...',
+        title: 'Selected Pop',
+        statusLabel: 'Scanning selected area...',
         detail:
-            'Atlas will scan only this target until you retarget or Scan All.',
+            'Rotate the box slowly. Atlas will scan only this target until you retarget or Scan All.',
+      );
+      unawaited(_publishHud());
+      notifyListeners();
+      return;
+    }
+
+    if (action == 'targetGenerationRolled' ||
+        action == 'sceneDiscontinuity' ||
+        action == 'automaticTurnover') {
+      if (controlGeneration <= 0) return;
+      _activeSelectionGeneration = controlGeneration;
+      _targetState = AtlasLiveSnifferTargetState.acquiring;
+      _scanMode = AtlasLiveSnifferScanMode.featured;
+      _sessionModeLocked = true;
+      _awaitingModeChoice = false;
+      _multiCandidateStreak = 0;
+      _resetTurnoverDetector();
+      _staticClutterTracker.reset();
+      _projectedTrackIds.clear();
+      _temporalEvidence.clear();
+      _ocrProjectionInFlight = false;
+      _selectedEvidenceResolutionPending = false;
+      _sessionGeneration++;
+      _hud = AtlasLiveSnifferHudSnapshot(
+        state: AtlasLiveSnifferHudState.listening,
+        title: switch (action) {
+          'sceneDiscontinuity' => 'New auction scene',
+          'automaticTurnover' => 'New Pop detected',
+          _ => 'New target detected',
+        },
+        statusLabel: 'Reading fresh identity...',
+        detail: 'Old Pop evidence was cleared before scanning this target.',
       );
       unawaited(_publishHud());
       notifyListeners();
@@ -523,6 +721,9 @@ final class AtlasLiveSnifferRecognitionController extends ChangeNotifier {
       _targetState = AtlasLiveSnifferTargetState.none;
       _targetX = null;
       _targetY = null;
+      _selectionAnchorX = null;
+      _selectionAnchorY = null;
+      _staticClutterTracker.reset();
       _scanMode = AtlasLiveSnifferScanMode.allVisible;
     } else if (action == 'featured') {
       _scanMode = AtlasLiveSnifferScanMode.featured;
@@ -546,6 +747,83 @@ final class AtlasLiveSnifferRecognitionController extends ChangeNotifier {
     );
     unawaited(_publishHud());
     notifyListeners();
+  }
+
+  AtlasLiveSnifferNativeFrame _filterStaticClutter(
+    AtlasLiveSnifferNativeFrame frame,
+  ) {
+    if (!frame.isSingleTargetFrame || frame.textBlocks.isEmpty) return frame;
+    final double anchorX = _selectionAnchorX ?? _targetX ?? 0.5;
+    final double anchorY = _selectionAnchorY ?? _targetY ?? 0.55;
+    final List<AtlasLiveSnifferNativeTextBlock> filtered = _staticClutterTracker
+        .filter(
+          frame.textBlocks,
+          capturedAt: frame.capturedAt,
+          anchorX: anchorX,
+          anchorY: anchorY,
+        );
+    if (filtered.length == frame.textBlocks.length) return frame;
+    return AtlasLiveSnifferNativeFrame(
+      capturedAt: frame.capturedAt,
+      barcodes: frame.barcodes,
+      textBlocks: filtered,
+      recognizedText: filtered.map((block) => block.text).join(' '),
+      frameSequence: frame.frameSequence,
+      selectionGeneration: frame.selectionGeneration,
+      nativeTimestampMs: frame.nativeTimestampMs,
+      lockedTrackId: frame.lockedTrackId,
+      targetState: frame.targetState,
+      trackedBoundingBox: frame.trackedBoundingBox,
+      activeTracks: frame.activeTracks,
+    );
+  }
+
+  AtlasLiveSnifferBoxCandidate _bestForegroundCandidate(
+    List<AtlasLiveSnifferBoxCandidate> candidates,
+  ) {
+    final double anchorX = _selectionAnchorX ?? _targetX ?? 0.5;
+    final double anchorY = _selectionAnchorY ?? _targetY ?? 0.58;
+    return candidates.reduce((a, b) {
+      return _foregroundCandidateScore(b, anchorX, anchorY) >
+              _foregroundCandidateScore(a, anchorX, anchorY)
+          ? b
+          : a;
+    });
+  }
+
+  double _foregroundCandidateScore(
+    AtlasLiveSnifferBoxCandidate candidate,
+    double anchorX,
+    double anchorY,
+  ) {
+    final double dx = candidate.centerX - anchorX;
+    final double dy = candidate.centerY - anchorY;
+    final double distanceSq = dx * dx + dy * dy;
+    final double proximity = (1.0 - distanceSq / 0.20)
+        .clamp(0.0, 1.0)
+        .toDouble();
+    final double area =
+        ((candidate.right - candidate.left).abs() *
+                (candidate.bottom - candidate.top).abs())
+            .clamp(0.0, 1.0)
+            .toDouble();
+    final double areaSignal = (area / 0.10).clamp(0.0, 1.0).toDouble();
+    final double centerSignal = (1.0 - ((candidate.centerX - 0.5).abs() / 0.5))
+        .clamp(0.0, 1.0)
+        .toDouble();
+    final double lowerCenterSignal =
+        (1.0 - ((candidate.centerY - 0.58).abs() / 0.58))
+            .clamp(0.0, 1.0)
+            .toDouble();
+    final double upperBackgroundPenalty = candidate.top < 0.22
+        ? ((0.22 - candidate.top) / 0.22).clamp(0.0, 1.0).toDouble() * 0.20
+        : 0.0;
+    return candidate.featuredScore * 0.44 +
+        proximity * 0.30 +
+        areaSignal * 0.10 +
+        centerSignal * 0.07 +
+        lowerCenterSignal * 0.09 -
+        upperBackgroundPenalty;
   }
 
   AtlasLiveSnifferBoxCandidate _closestToTarget(
@@ -665,7 +943,7 @@ final class AtlasLiveSnifferRecognitionController extends ChangeNotifier {
     _hud = AtlasLiveSnifferHudSnapshot(
       state: AtlasLiveSnifferHudState.listening,
       title: '${items.length} Pops detected',
-      statusLabel: 'Auction Fast Mode — All Visible',
+      statusLabel: 'LiveLens Auction Mode — All Visible',
       detail: 'Results refine while the screen stays full size.',
       items: List<AtlasLiveSnifferHudItem>.unmodifiable(items),
     );
@@ -683,7 +961,7 @@ final class AtlasLiveSnifferRecognitionController extends ChangeNotifier {
       collectionPops: _collectionPops,
       ownedWishlistIdentityKeys: _ownedWishlistIdentityKeys,
       collectionName: _collectionName,
-      source: 'Atlas Live Sniffer Auction OCR',
+      source: 'Atlas LiveLens Auction OCR',
     );
 
     final String catalogIdentity = resolved.catalogPop.collectibleIdentityKey
@@ -766,6 +1044,89 @@ final class AtlasLiveSnifferRecognitionController extends ChangeNotifier {
     return number.isEmpty
         ? product.displayName
         : '${product.displayName} #$number';
+  }
+
+  bool _shouldRestartForContradictoryNumber(
+    AtlasLiveSnifferBoxCandidate candidate,
+  ) {
+    if (_automaticTurnoverInFlight || _activeSelectionGeneration <= 0) {
+      return false;
+    }
+    final String evidenceKey = 'selection:$_activeSelectionGeneration';
+    final _TemporalBoxEvidence? existing = _temporalEvidence[evidenceKey];
+    if (existing == null || existing.hits < 2) {
+      _turnoverCandidateNumber = null;
+      _turnoverCandidateHits = 0;
+      return false;
+    }
+
+    final String oldNumber = existing.productNumber.trim();
+    final String newNumber = candidate.productNumber.trim();
+    if (oldNumber.isEmpty || newNumber.isEmpty || oldNumber == newNumber) {
+      _turnoverCandidateNumber = null;
+      _turnoverCandidateHits = 0;
+      return false;
+    }
+
+    // Only a strong, repeated contradiction may overturn an established
+    // selected-target identity. This protects against one-frame shelf/UI OCR.
+    if (candidate.featuredScore < 0.42) {
+      return false;
+    }
+    if (_turnoverCandidateNumber == newNumber) {
+      _turnoverCandidateHits += 1;
+    } else {
+      _turnoverCandidateNumber = newNumber;
+      _turnoverCandidateHits = 1;
+    }
+
+    final int requiredHits = candidate.featuredScore >= 0.62 ? 2 : 3;
+    return _turnoverCandidateHits >= requiredHits;
+  }
+
+  void _requestAutomaticTurnover() {
+    if (_automaticTurnoverInFlight) return;
+    _automaticTurnoverInFlight = true;
+    _projectedTrackIds.clear();
+    _temporalEvidence.clear();
+    _ocrProjectionInFlight = false;
+    _selectedEvidenceResolutionPending = false;
+    _sessionGeneration++;
+    _hud = const AtlasLiveSnifferHudSnapshot(
+      state: AtlasLiveSnifferHudState.listening,
+      title: 'New Pop detected',
+      statusLabel: 'Resetting target...',
+      detail:
+          'LiveLens is clearing the previous identity and acquiring this Pop.',
+    );
+    unawaited(_publishHud());
+    notifyListeners();
+    unawaited(_restartSelectedTargetAfterContradiction());
+  }
+
+  Future<void> _restartSelectedTargetAfterContradiction() async {
+    final AtlasLiveSnifferRecognitionPlatform platform = _platform;
+    final bool restarted =
+        platform is AtlasLiveSnifferRecognitionTurnoverPlatform
+        ? await (platform as AtlasLiveSnifferRecognitionTurnoverPlatform)
+              .restartSelectedTarget()
+        : false;
+    if (restarted || !_sessionActive) return;
+    _automaticTurnoverInFlight = false;
+    _hud = const AtlasLiveSnifferHudSnapshot(
+      state: AtlasLiveSnifferHudState.needsReview,
+      title: 'Fresh target needed',
+      statusLabel: 'Tap LiveLens once',
+      detail: 'Automatic turnover could not restart the native target.',
+    );
+    unawaited(_publishHud());
+    notifyListeners();
+  }
+
+  void _resetTurnoverDetector() {
+    _turnoverCandidateNumber = null;
+    _turnoverCandidateHits = 0;
+    _automaticTurnoverInFlight = false;
   }
 
   void _expireTemporalEvidence(DateTime now) {
@@ -884,6 +1245,64 @@ final class AtlasLiveSnifferRecognitionController extends ChangeNotifier {
   }
 }
 
+final class _StaticClutterTracker {
+  final Map<String, _StaticClutterObservation> _observations =
+      <String, _StaticClutterObservation>{};
+
+  void reset() => _observations.clear();
+
+  List<AtlasLiveSnifferNativeTextBlock> filter(
+    List<AtlasLiveSnifferNativeTextBlock> blocks, {
+    required DateTime capturedAt,
+    required double anchorX,
+    required double anchorY,
+  }) {
+    final Set<String> seen = <String>{};
+    final List<AtlasLiveSnifferNativeTextBlock> result =
+        <AtlasLiveSnifferNativeTextBlock>[];
+    for (final AtlasLiveSnifferNativeTextBlock block in blocks) {
+      final String normalized = block.text
+          .toLowerCase()
+          .replaceAll(RegExp(r'[^a-z0-9]+'), ' ')
+          .trim();
+      if (normalized.isEmpty) continue;
+      final String key =
+          '$normalized:${(block.centerX * 24).round()}:${(block.centerY * 24).round()}';
+      seen.add(key);
+      final _StaticClutterObservation? previous = _observations[key];
+      final bool consecutive =
+          previous != null &&
+          capturedAt.difference(previous.lastSeen).abs() <=
+              const Duration(milliseconds: 850);
+      final int hits = consecutive ? previous.hits + 1 : 1;
+      _observations[key] = _StaticClutterObservation(
+        hits: hits,
+        lastSeen: capturedAt,
+      );
+
+      final bool insideForegroundCore =
+          (block.centerX - anchorX).abs() <= 0.20 &&
+          (block.centerY - anchorY).abs() <= 0.24;
+      final bool numberHeavy = RegExp(
+        r'(^|\D)\d{1,4}(\D|$)',
+      ).hasMatch(normalized);
+      final bool suppress = !insideForegroundCore && hits >= 2 && numberHeavy;
+      if (!suppress) result.add(block);
+    }
+    _observations.removeWhere((String key, _StaticClutterObservation value) {
+      return !seen.contains(key) &&
+          capturedAt.difference(value.lastSeen) > const Duration(seconds: 2);
+    });
+    return List<AtlasLiveSnifferNativeTextBlock>.unmodifiable(result);
+  }
+}
+
+final class _StaticClutterObservation {
+  const _StaticClutterObservation({required this.hits, required this.lastSeen});
+  final int hits;
+  final DateTime lastSeen;
+}
+
 final class _TemporalBoxEvidence {
   const _TemporalBoxEvidence({
     required this.candidateId,
@@ -964,6 +1383,24 @@ final class _TemporalBoxEvidence {
       bottom: candidate.bottom,
       featuredScore: candidate.featuredScore,
       hits: hits + 1,
+      lastSeenAt: at,
+    );
+  }
+
+  _TemporalBoxEvidence addSupplementalText(String value, DateTime at) {
+    final Set<String> parts = <String>{...text.split(' '), ...value.split(' ')}
+      ..removeWhere((String item) => item.trim().isEmpty);
+    return _TemporalBoxEvidence(
+      candidateId: candidateId,
+      productNumber: productNumber,
+      numberVotes: numberVotes,
+      text: parts.join(' '),
+      left: left,
+      top: top,
+      right: right,
+      bottom: bottom,
+      featuredScore: featuredScore,
+      hits: hits,
       lastSeenAt: at,
     );
   }

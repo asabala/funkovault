@@ -37,47 +37,36 @@ class PopActivitySummaryEngine {
     required String popName,
     required String popNumber,
     required List<Activity> activities,
-    List<AtlasTimelineEvent> timeline =
-    const <AtlasTimelineEvent>[],
+    List<AtlasTimelineEvent> timeline = const <AtlasTimelineEvent>[],
   }) {
-    final matchingActivities = activities
-        .where(
-          (activity) => _matchesPop(
-        activity: activity,
-        popId: popId,
-        popName: popName,
-        popNumber: popNumber,
-      ),
-    )
-        .toList()
-      ..sort(
-            (a, b) => b.timestamp.compareTo(a.timestamp),
-      );
+    final matchingActivities =
+        activities
+            .where(
+              (activity) => _matchesPop(
+                activity: activity,
+                popId: popId,
+                popName: popName,
+                popNumber: popNumber,
+              ),
+            )
+            .toList()
+          ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
 
-    final matchingTimeline = timeline
-        .where(
-          (event) {
-        final eventPopId = event.popId.trim();
-        final cleanPopId = popId.trim();
+    final matchingTimeline = timeline.where((event) {
+      final eventPopId = event.popId.trim();
+      final cleanPopId = popId.trim();
 
-        if (eventPopId.isEmpty || cleanPopId.isEmpty) {
-          return true;
-        }
+      if (eventPopId.isEmpty || cleanPopId.isEmpty) {
+        return true;
+      }
 
-        return eventPopId == cleanPopId;
-      },
-    )
-        .toList()
-      ..sort(
-            (a, b) => b.occurredAt.compareTo(a.occurredAt),
-      );
+      return eventPopId == cleanPopId;
+    }).toList()..sort((a, b) => b.occurredAt.compareTo(a.occurredAt));
 
-    if (matchingActivities.isEmpty &&
-        matchingTimeline.isEmpty) {
+    if (matchingActivities.isEmpty && matchingTimeline.isEmpty) {
       return const PopActivitySummary(
         title: 'No History Yet',
-        summary:
-        'Atlas has not recorded any changes for this collectible yet.',
+        summary: 'Atlas has not recorded any changes for this collectible yet.',
         activityCount: 0,
         latestActivity: null,
       );
@@ -86,18 +75,11 @@ class PopActivitySummaryEngine {
     final summaryParts = <String>[];
 
     final timelineValueUpdates = matchingTimeline
-        .where(
-          (event) =>
-      event.type ==
-          AtlasTimelineEventType.valueUpdated,
-    )
+        .where((event) => event.type == AtlasTimelineEventType.valueUpdated)
         .length;
 
     final legacyValueUpdates = matchingActivities
-        .where(
-          (activity) =>
-      activity.action == 'value_updated',
-    )
+        .where((activity) => activity.action == 'value_updated')
         .length;
 
     // Timeline is authoritative for value updates whenever
@@ -110,50 +92,33 @@ class PopActivitySummaryEngine {
     final quantityUpdates = matchingActivities
         .where(
           (activity) =>
-      activity.action == 'quantity_updated' ||
-          activity.action == 'quantity_increased',
-    )
+              activity.action == 'quantity_updated' ||
+              activity.action == 'quantity_increased',
+        )
         .length;
 
     final movedToWishlist = matchingActivities.any(
-          (activity) =>
-      activity.action == 'wishlist_added',
+      (activity) => activity.action == 'wishlist_added',
     );
 
     final movedToOwned = matchingActivities.any(
-          (activity) =>
-      activity.action == 'wishlist_removed',
+      (activity) => activity.action == 'wishlist_removed',
     );
 
     final detailUpdates = matchingActivities
-        .where(
-          (activity) =>
-      activity.action == 'pop_updated',
-    )
+        .where((activity) => activity.action == 'pop_updated')
         .length;
 
     final addedToVaultEvents = matchingTimeline
-        .where(
-          (event) =>
-      event.type ==
-          AtlasTimelineEventType.addedToVault,
-    )
+        .where((event) => event.type == AtlasTimelineEventType.addedToVault)
         .length;
 
     final collectorMoments = matchingTimeline
-        .where(
-          (event) =>
-      event.type ==
-          AtlasTimelineEventType.collectorMoment,
-    )
+        .where((event) => event.type == AtlasTimelineEventType.collectorMoment)
         .length;
 
     final atlasInsights = matchingTimeline
-        .where(
-          (event) =>
-      event.type ==
-          AtlasTimelineEventType.aiInsight,
-    )
+        .where((event) => event.type == AtlasTimelineEventType.aiInsight)
         .length;
 
     if (addedToVaultEvents > 0) {
@@ -163,53 +128,33 @@ class PopActivitySummaryEngine {
     }
 
     if (valueUpdates == 1) {
-      summaryParts.add(
-        'The estimated value was updated once.',
-      );
+      summaryParts.add('The estimated value was updated once.');
     } else if (valueUpdates > 1) {
-      summaryParts.add(
-        'The estimated value was updated $valueUpdates times.',
-      );
+      summaryParts.add('The estimated value was updated $valueUpdates times.');
     }
 
     if (quantityUpdates == 1) {
-      summaryParts.add(
-        'The quantity was adjusted once.',
-      );
+      summaryParts.add('The quantity was adjusted once.');
     } else if (quantityUpdates > 1) {
-      summaryParts.add(
-        'The quantity was adjusted $quantityUpdates times.',
-      );
+      summaryParts.add('The quantity was adjusted $quantityUpdates times.');
     }
 
     if (movedToWishlist && movedToOwned) {
-      summaryParts.add(
-        'It moved between the wishlist and owned collection.',
-      );
+      summaryParts.add('It moved between the wishlist and owned collection.');
     } else if (movedToWishlist) {
-      summaryParts.add(
-        'It was moved to the wishlist.',
-      );
+      summaryParts.add('It was moved to the wishlist.');
     } else if (movedToOwned) {
-      summaryParts.add(
-        'It was moved to the owned collection.',
-      );
+      summaryParts.add('It was moved to the owned collection.');
     }
 
     if (detailUpdates == 1) {
-      summaryParts.add(
-        'Collector details were updated once.',
-      );
+      summaryParts.add('Collector details were updated once.');
     } else if (detailUpdates > 1) {
-      summaryParts.add(
-        'Collector details were updated $detailUpdates times.',
-      );
+      summaryParts.add('Collector details were updated $detailUpdates times.');
     }
 
     if (collectorMoments == 1) {
-      summaryParts.add(
-        'One collector moment is part of its history.',
-      );
+      summaryParts.add('One collector moment is part of its history.');
     } else if (collectorMoments > 1) {
       summaryParts.add(
         '$collectorMoments collector moments are part of its history.',
@@ -217,19 +162,15 @@ class PopActivitySummaryEngine {
     }
 
     if (atlasInsights == 1) {
-      summaryParts.add(
-        'Atlas has generated one intelligence insight.',
-      );
+      summaryParts.add('Atlas has generated one intelligence insight.');
     } else if (atlasInsights > 1) {
       summaryParts.add(
         'Atlas has generated $atlasInsights intelligence insights.',
       );
     }
 
-    final includedLegacyActivities =
-    matchingActivities.where((activity) {
-      if (activity.action == 'value_updated' &&
-          timelineValueUpdates > 0) {
+    final includedLegacyActivities = matchingActivities.where((activity) {
+      if (activity.action == 'value_updated' && timelineValueUpdates > 0) {
         return false;
       }
 
@@ -237,14 +178,13 @@ class PopActivitySummaryEngine {
     }).toList();
 
     final totalHistoryEvents =
-        matchingTimeline.length +
-            includedLegacyActivities.length;
+        matchingTimeline.length + includedLegacyActivities.length;
 
     if (summaryParts.isEmpty) {
       summaryParts.add(
         'Atlas recorded $totalHistoryEvents '
-            '${totalHistoryEvents == 1 ? 'event' : 'events'} '
-            'for this collectible.',
+        '${totalHistoryEvents == 1 ? 'event' : 'events'} '
+        'for this collectible.',
       );
     }
 
@@ -257,8 +197,7 @@ class PopActivitySummaryEngine {
         activities: includedLegacyActivities,
       ),
       timelineEventCount: matchingTimeline.length,
-      legacyActivityCount:
-      includedLegacyActivities.length,
+      legacyActivityCount: includedLegacyActivities.length,
     );
   }
 
@@ -275,8 +214,7 @@ class PopActivitySummaryEngine {
     if (activities.isNotEmpty) {
       final latestLegacy = activities.first.timestamp;
 
-      if (latest == null ||
-          latestLegacy.isAfter(latest)) {
+      if (latest == null || latestLegacy.isAfter(latest)) {
         latest = latestLegacy;
       }
     }
@@ -290,31 +228,24 @@ class PopActivitySummaryEngine {
     required String popName,
     required String popNumber,
   }) {
-    final cleanActivityPopId =
-    activity.popId.trim();
+    final cleanActivityPopId = activity.popId.trim();
     final cleanPopId = popId.trim();
 
-    if (cleanActivityPopId.isNotEmpty &&
-        cleanPopId.isNotEmpty) {
+    if (cleanActivityPopId.isNotEmpty && cleanPopId.isNotEmpty) {
       return cleanActivityPopId == cleanPopId;
     }
 
-    final cleanActivityName =
-    activity.popName.trim().toLowerCase();
-    final cleanPopName =
-    popName.trim().toLowerCase();
+    final cleanActivityName = activity.popName.trim().toLowerCase();
+    final cleanPopName = popName.trim().toLowerCase();
 
     if (cleanActivityName != cleanPopName) {
       return false;
     }
 
-    final cleanActivityNumber =
-    activity.popNumber.trim().toLowerCase();
-    final cleanPopNumber =
-    popNumber.trim().toLowerCase();
+    final cleanActivityNumber = activity.popNumber.trim().toLowerCase();
+    final cleanPopNumber = popNumber.trim().toLowerCase();
 
-    if (cleanActivityNumber.isEmpty ||
-        cleanPopNumber.isEmpty) {
+    if (cleanActivityNumber.isEmpty || cleanPopNumber.isEmpty) {
       return true;
     }
 

@@ -25,7 +25,7 @@ class KeywordHeroRule extends AtlasHeroRule {
     final searchableText = _buildSearchableText(pop);
 
     return keywords.any(
-          (keyword) => searchableText.contains(_normalize(keyword)),
+      (keyword) => searchableText.contains(_normalize(keyword)),
     );
   }
 

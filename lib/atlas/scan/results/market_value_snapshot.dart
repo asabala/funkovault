@@ -1,19 +1,8 @@
 // Describes the direction of a collectible's recent market movement.
-enum MarketTrendDirection {
-  rising,
-  falling,
-  stable,
-  unknown,
-}
+enum MarketTrendDirection { rising, falling, stable, unknown }
 
 // Identifies the confidence Atlas has in a market value estimate.
-enum MarketValueConfidence {
-  low,
-  medium,
-  high,
-  verified,
-  unknown,
-}
+enum MarketValueConfidence { low, medium, high, verified, unknown }
 
 // Immutable pricing snapshot returned for a collectible.
 //
@@ -98,22 +87,15 @@ class MarketValueSnapshot {
   }) {
     return MarketValueSnapshot(
       currencyCode: currencyCode ?? this.currencyCode,
-      estimatedValue:
-      estimatedValue ?? this.estimatedValue,
+      estimatedValue: estimatedValue ?? this.estimatedValue,
       retailPrice: retailPrice ?? this.retailPrice,
-      recentSaleLow:
-      recentSaleLow ?? this.recentSaleLow,
-      recentSaleHigh:
-      recentSaleHigh ?? this.recentSaleHigh,
-      lastSalePrice:
-      lastSalePrice ?? this.lastSalePrice,
-      trendPercentage:
-      trendPercentage ?? this.trendPercentage,
-      trendDirection:
-      trendDirection ?? this.trendDirection,
+      recentSaleLow: recentSaleLow ?? this.recentSaleLow,
+      recentSaleHigh: recentSaleHigh ?? this.recentSaleHigh,
+      lastSalePrice: lastSalePrice ?? this.lastSalePrice,
+      trendPercentage: trendPercentage ?? this.trendPercentage,
+      trendDirection: trendDirection ?? this.trendDirection,
       confidence: confidence ?? this.confidence,
-      recentSalesCount:
-      recentSalesCount ?? this.recentSalesCount,
+      recentSalesCount: recentSalesCount ?? this.recentSalesCount,
       lastUpdated: lastUpdated ?? this.lastUpdated,
       sourceNames: sourceNames ?? this.sourceNames,
     );

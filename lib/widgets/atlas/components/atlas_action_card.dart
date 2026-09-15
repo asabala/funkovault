@@ -45,15 +45,10 @@ class AtlasActionCard extends StatelessWidget {
             width: 46,
             height: 46,
             decoration: BoxDecoration(
-              color: accentColor.withValues(
-                alpha: 0.14,
-              ),
+              color: accentColor.withValues(alpha: 0.14),
               borderRadius: BorderRadius.circular(16),
             ),
-            child: Icon(
-              icon,
-              color: accentColor,
-            ),
+            child: Icon(icon, color: accentColor),
           ),
           const SizedBox(width: AtlasSpacing.md),
           Expanded(
@@ -96,10 +91,7 @@ class AtlasActionCard extends StatelessWidget {
             trailing!,
           ] else if (_isTappable && showNavigationChevron) ...[
             const SizedBox(width: AtlasSpacing.sm),
-            Icon(
-              Icons.chevron_right_rounded,
-              color: accentColor,
-            ),
+            Icon(Icons.chevron_right_rounded, color: accentColor),
           ],
         ],
       ),

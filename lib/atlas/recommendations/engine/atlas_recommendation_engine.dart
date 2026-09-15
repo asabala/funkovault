@@ -19,18 +19,13 @@ class AtlasRecommendationEngine {
     final recommendations = <AtlasRecommendation>[];
     final addedIds = <String>{};
 
-    void addRecommendation(
-        AtlasRecommendation recommendation,
-        ) {
+    void addRecommendation(AtlasRecommendation recommendation) {
       if (addedIds.add(recommendation.id)) {
         recommendations.add(recommendation);
       }
     }
 
-    _addValueRecommendation(
-      pop: pop,
-      addRecommendation: addRecommendation,
-    );
+    _addValueRecommendation(pop: pop, addRecommendation: addRecommendation);
 
     if (pop.imageUrl.trim().isEmpty) {
       addRecommendation(
@@ -39,10 +34,9 @@ class AtlasRecommendationEngine {
           type: AtlasRecommendationType.addImage,
           priority: AtlasRecommendationPriority.medium,
           title: 'Add a collectible image',
-          description:
-          'Photograph or add an image of this collectible.',
+          description: 'Photograph or add an image of this collectible.',
           reason:
-          'An image improves identification, presentation, and future comparison workflows.',
+              'An image improves identification, presentation, and future comparison workflows.',
           actionLabel: 'Add Image',
         ),
       );
@@ -55,10 +49,9 @@ class AtlasRecommendationEngine {
           type: AtlasRecommendationType.addReleaseDate,
           priority: AtlasRecommendationPriority.low,
           title: 'Add the release date',
-          description:
-          'Record when this collectible was originally released.',
+          description: 'Record when this collectible was originally released.',
           reason:
-          'Release dates improve historical context and future age-based intelligence.',
+              'Release dates improve historical context and future age-based intelligence.',
           actionLabel: 'Add Release Date',
         ),
       );
@@ -71,10 +64,9 @@ class AtlasRecommendationEngine {
           type: AtlasRecommendationType.addCatalogIdentity,
           priority: AtlasRecommendationPriority.high,
           title: 'Add catalog identification',
-          description:
-          'Add a UPC, source catalog ID, or collectible ID.',
+          description: 'Add a UPC, source catalog ID, or collectible ID.',
           reason:
-          'Catalog identifiers strengthen duplicate review, release matching, and import accuracy.',
+              'Catalog identifiers strengthen duplicate review, release matching, and import accuracy.',
           actionLabel: 'Add Catalog Details',
         ),
       );
@@ -87,10 +79,9 @@ class AtlasRecommendationEngine {
           type: AtlasRecommendationType.addItemCondition,
           priority: AtlasRecommendationPriority.medium,
           title: 'Record item condition',
-          description:
-          'Document the physical condition of the collectible.',
+          description: 'Document the physical condition of the collectible.',
           reason:
-          'Condition is important for value, display, sale, and insurance analysis.',
+              'Condition is important for value, display, sale, and insurance analysis.',
           actionLabel: 'Add Item Condition',
         ),
       );
@@ -103,10 +94,9 @@ class AtlasRecommendationEngine {
           type: AtlasRecommendationType.addBoxCondition,
           priority: AtlasRecommendationPriority.medium,
           title: 'Record box condition',
-          description:
-          'Document the current condition of the packaging.',
+          description: 'Document the current condition of the packaging.',
           reason:
-          'Box condition can materially affect collector interest and estimated value.',
+              'Box condition can materially affect collector interest and estimated value.',
           actionLabel: 'Add Box Condition',
         ),
       );
@@ -117,14 +107,13 @@ class AtlasRecommendationEngine {
       addRecommendation(
         const AtlasRecommendation(
           id: 'authenticate-signature',
-          type:
-          AtlasRecommendationType.authenticateSignature,
+          type: AtlasRecommendationType.authenticateSignature,
           priority: AtlasRecommendationPriority.high,
           title: 'Add autograph authentication',
           description:
-          'Record the authentication provider or certificate number.',
+              'Record the authentication provider or certificate number.',
           reason:
-          'Authentication documentation strengthens confidence in a signed collectible.',
+              'Authentication documentation strengthens confidence in a signed collectible.',
           actionLabel: 'Add Authentication',
         ),
       );
@@ -134,16 +123,15 @@ class AtlasRecommendationEngine {
       addRecommendation(
         AtlasRecommendation(
           id: 'review-for-insurance',
-          type:
-          AtlasRecommendationType.reviewForInsurance,
+          type: AtlasRecommendationType.reviewForInsurance,
           priority: pop.value >= 500
               ? AtlasRecommendationPriority.high
               : AtlasRecommendationPriority.medium,
           title: 'Review insurance documentation',
           description:
-          'Consider whether this collectible should be included in your insured collection records.',
+              'Consider whether this collectible should be included in your insured collection records.',
           reason:
-          'Its value, score, or documented collector traits make it worth reviewing.',
+              'Its value, score, or documented collector traits make it worth reviewing.',
           actionLabel: 'Review Documentation',
         ),
       );
@@ -153,14 +141,13 @@ class AtlasRecommendationEngine {
       addRecommendation(
         const AtlasRecommendation(
           id: 'display-collectible',
-          type:
-          AtlasRecommendationType.displayCollectible,
+          type: AtlasRecommendationType.displayCollectible,
           priority: AtlasRecommendationPriority.low,
           title: 'Consider this as a display piece',
           description:
-          'This collectible has visual or collector traits that may make it suitable for display.',
+              'This collectible has visual or collector traits that may make it suitable for display.',
           reason:
-          'Atlas detected a strong score or visually distinctive release identity.',
+              'Atlas detected a strong score or visually distinctive release identity.',
           actionLabel: 'Review Display Details',
         ),
       );
@@ -170,18 +157,15 @@ class AtlasRecommendationEngine {
       addRecommendation(
         AtlasRecommendation(
           id: 'improve-market-readiness',
-          type:
-          AtlasRecommendationType.improveMarketReadiness,
-          priority:
-          collectibilitySummary.marketReadiness ==
-              'Needs Details'
+          type: AtlasRecommendationType.improveMarketReadiness,
+          priority: collectibilitySummary.marketReadiness == 'Needs Details'
               ? AtlasRecommendationPriority.high
               : AtlasRecommendationPriority.medium,
           title: 'Improve market readiness',
           description:
-          'Complete the missing value, image, identity, and condition information.',
+              'Complete the missing value, image, identity, and condition information.',
           reason:
-          'Complete records make future sale, comparison, valuation, and insurance workflows more reliable.',
+              'Complete records make future sale, comparison, valuation, and insurance workflows more reliable.',
           actionLabel: 'Complete Record',
         ),
       );
@@ -189,20 +173,18 @@ class AtlasRecommendationEngine {
 
     if (_shouldPreserveDocumentation(
       pop: pop,
-      collectibilitySummary:
-      collectibilitySummary,
+      collectibilitySummary: collectibilitySummary,
     )) {
       addRecommendation(
         const AtlasRecommendation(
           id: 'preserve-documentation',
-          type:
-          AtlasRecommendationType.preserveDocumentation,
+          type: AtlasRecommendationType.preserveDocumentation,
           priority: AtlasRecommendationPriority.medium,
           title: 'Preserve supporting documentation',
           description:
-          'Keep certificates, receipts, grading records, and related provenance together.',
+              'Keep certificates, receipts, grading records, and related provenance together.',
           reason:
-          'Documented provenance strengthens future authentication, insurance, and sale records.',
+              'Documented provenance strengthens future authentication, insurance, and sale records.',
           actionLabel: 'Review Documentation',
         ),
       );
@@ -211,31 +193,26 @@ class AtlasRecommendationEngine {
     recommendations.sort(_compareRecommendations);
 
     return AtlasRecommendationSummary(
-      recommendations:
-      List<AtlasRecommendation>.unmodifiable(
-        recommendations,
-      ),
+      recommendations: List<AtlasRecommendation>.unmodifiable(recommendations),
     );
   }
 
   void _addValueRecommendation({
     required Pop pop,
-    required void Function(
-        AtlasRecommendation recommendation,
-        ) addRecommendation,
+    required void Function(AtlasRecommendation recommendation)
+    addRecommendation,
   }) {
     if (pop.value <= 0) {
       addRecommendation(
         const AtlasRecommendation(
           id: 'add-current-value',
-          type:
-          AtlasRecommendationType.addCurrentValue,
+          type: AtlasRecommendationType.addCurrentValue,
           priority: AtlasRecommendationPriority.high,
           title: 'Add a current estimated value',
           description:
-          'Record the latest estimated value for this collectible.',
+              'Record the latest estimated value for this collectible.',
           reason:
-          'Value is required for collection totals, insurance review, trends, and market analysis.',
+              'Value is required for collection totals, insurance review, trends, and market analysis.',
           actionLabel: 'Add Current Value',
         ),
       );
@@ -247,14 +224,13 @@ class AtlasRecommendationEngine {
       addRecommendation(
         const AtlasRecommendation(
           id: 'update-current-value',
-          type:
-          AtlasRecommendationType.updateCurrentValue,
+          type: AtlasRecommendationType.updateCurrentValue,
           priority: AtlasRecommendationPriority.medium,
           title: 'Review the current value',
           description:
-          'Confirm that the saved estimated value is still current.',
+              'Confirm that the saved estimated value is still current.',
           reason:
-          'The recorded value may be outdated based on the last update date.',
+              'The recorded value may be outdated based on the last update date.',
           actionLabel: 'Update Current Value',
         ),
       );
@@ -262,15 +238,13 @@ class AtlasRecommendationEngine {
   }
 
   bool _isValuePossiblyStale(Pop pop) {
-    final parsedDate =
-    DateTime.tryParse(pop.lastUpdated.trim());
+    final parsedDate = DateTime.tryParse(pop.lastUpdated.trim());
 
     if (parsedDate == null) {
       return true;
     }
 
-    return DateTime.now().difference(parsedDate).inDays >=
-        180;
+    return DateTime.now().difference(parsedDate).inDays >= 180;
   }
 
   bool _hasCatalogIdentity(Pop pop) {
@@ -280,16 +254,13 @@ class AtlasRecommendationEngine {
   }
 
   bool _hasAuthenticationDetails(Pop pop) {
-    return _hasMeaningfulValue(
-      pop.authenticationProvider,
-    ) ||
+    return _hasMeaningfulValue(pop.authenticationProvider) ||
         _hasMeaningfulValue(pop.authenticityNumber);
   }
 
   bool _shouldPreserveDocumentation({
     required Pop pop,
-    required AtlasCollectibilitySummary
-    collectibilitySummary,
+    required AtlasCollectibilitySummary collectibilitySummary,
   }) {
     return _hasAuthenticationDetails(pop) ||
         _hasMeaningfulValue(pop.gradingCompany) ||
@@ -322,11 +293,10 @@ class AtlasRecommendationEngine {
   }
 
   int _compareRecommendations(
-      AtlasRecommendation first,
-      AtlasRecommendation second,
-      ) {
-    final priorityComparison =
-    second.priority.weight.compareTo(
+    AtlasRecommendation first,
+    AtlasRecommendation second,
+  ) {
+    final priorityComparison = second.priority.weight.compareTo(
       first.priority.weight,
     );
 

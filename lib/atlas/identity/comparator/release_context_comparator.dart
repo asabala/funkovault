@@ -30,11 +30,13 @@ class ReleaseContextComparator implements IdentityComparator {
     required IdentityProfile right,
     required IdentityPolicy policy,
   }) {
-    final List<IdentityAttribute> leftAttributes =
-    left.attributesByRole(IdentityRole.releaseContext);
+    final List<IdentityAttribute> leftAttributes = left.attributesByRole(
+      IdentityRole.releaseContext,
+    );
 
-    final List<IdentityAttribute> rightAttributes =
-    right.attributesByRole(IdentityRole.releaseContext);
+    final List<IdentityAttribute> rightAttributes = right.attributesByRole(
+      IdentityRole.releaseContext,
+    );
 
     return leftAttributes.isNotEmpty || rightAttributes.isNotEmpty;
   }
@@ -46,22 +48,18 @@ class ReleaseContextComparator implements IdentityComparator {
     required IdentityPolicy policy,
   }) {
     final List<IdentityAttribute> leftAttributes =
-    _usableReleaseContextAttributes(
-      profile: left,
-      policy: policy,
-    );
+        _usableReleaseContextAttributes(profile: left, policy: policy);
 
     final List<IdentityAttribute> rightAttributes =
-    _usableReleaseContextAttributes(
-      profile: right,
-      policy: policy,
+        _usableReleaseContextAttributes(profile: right, policy: policy);
+
+    final Map<String, IdentityAttribute> leftByKey = _attributesByKey(
+      leftAttributes,
     );
 
-    final Map<String, IdentityAttribute> leftByKey =
-    _attributesByKey(leftAttributes);
-
-    final Map<String, IdentityAttribute> rightByKey =
-    _attributesByKey(rightAttributes);
+    final Map<String, IdentityAttribute> rightByKey = _attributesByKey(
+      rightAttributes,
+    );
 
     final Set<String> attributeKeys = <String>{
       ...leftByKey.keys,
@@ -80,7 +78,7 @@ class ReleaseContextComparator implements IdentityComparator {
           weight: _releaseContextWeight,
           confidence: 0.0,
           reason:
-          'Neither identity profile contains usable release-context '
+              'Neither identity profile contains usable release-context '
               'evidence.',
           tags: _evidenceTags(
             attributeKey: 'role.release_context',
@@ -108,34 +106,34 @@ class ReleaseContextComparator implements IdentityComparator {
     }
 
     final bool hasConflict = evidence.any(
-          (IdentityEvidence item) => item.isConflict,
+      (IdentityEvidence item) => item.isConflict,
     );
 
-    final bool hasUncertainEvidence = evidence.any(
-          (IdentityEvidence item) {
-        return item.outcome == IdentityEvidenceOutcome.uncertain;
-      },
-    );
+    final bool hasUncertainEvidence = evidence.any((IdentityEvidence item) {
+      return item.outcome == IdentityEvidenceOutcome.uncertain;
+    });
 
     final bool hasMissingEvidence = evidence.any(
-          (IdentityEvidence item) => item.isMissing,
+      (IdentityEvidence item) => item.isMissing,
     );
 
     final bool hasMatchEvidence = evidence.any(
-          (IdentityEvidence item) => item.supportsMatch,
+      (IdentityEvidence item) => item.supportsMatch,
     );
 
-    final bool releaseContextRequired =
-    policy.requiresRole(IdentityRole.releaseContext);
+    final bool releaseContextRequired = policy.requiresRole(
+      IdentityRole.releaseContext,
+    );
 
     final bool missingEvidenceBlocksMatch =
         releaseContextRequired &&
-            hasMissingEvidence &&
-            !policy.allowPartialMatches;
+        hasMissingEvidence &&
+        !policy.allowPartialMatches;
 
     final double confidence = _calculateConfidence(evidence);
 
-    final bool isMatch = hasMatchEvidence &&
+    final bool isMatch =
+        hasMatchEvidence &&
         !hasConflict &&
         !hasUncertainEvidence &&
         !missingEvidenceBlocksMatch &&
@@ -156,14 +154,14 @@ class ReleaseContextComparator implements IdentityComparator {
     if (missingEvidenceBlocksMatch) {
       notes.add(
         'Required release-context evidence is missing from one or both '
-            'profiles.',
+        'profiles.',
       );
     }
 
     if (confidence < policy.minimumConfidence) {
       notes.add(
         'Release-context confidence is below the policy minimum of '
-            '${policy.minimumConfidence.toStringAsFixed(2)}.',
+        '${policy.minimumConfidence.toStringAsFixed(2)}.',
       );
     }
 
@@ -185,36 +183,31 @@ class ReleaseContextComparator implements IdentityComparator {
   }) {
     return profile
         .attributesByRole(IdentityRole.releaseContext)
-        .where(
-          (IdentityAttribute attribute) {
-        if (!attribute.contributesToIdentity) {
-          return false;
-        }
+        .where((IdentityAttribute attribute) {
+          if (!attribute.contributesToIdentity) {
+            return false;
+          }
 
-        if (policy.requiredClassifications.isNotEmpty &&
-            !policy.includesClassification(
-              attribute.classification,
-            )) {
-          return false;
-        }
+          if (policy.requiredClassifications.isNotEmpty &&
+              !policy.includesClassification(attribute.classification)) {
+            return false;
+          }
 
-        return attribute.hasResolvedValue || attribute.hasConflict;
-      },
-    ).toList(growable: false);
+          return attribute.hasResolvedValue || attribute.hasConflict;
+        })
+        .toList(growable: false);
   }
 
   Map<String, IdentityAttribute> _attributesByKey(
-      List<IdentityAttribute> attributes,
-      ) {
-    final Map<String, IdentityAttribute> result =
-    <String, IdentityAttribute>{};
+    List<IdentityAttribute> attributes,
+  ) {
+    final Map<String, IdentityAttribute> result = <String, IdentityAttribute>{};
 
     for (final IdentityAttribute attribute in attributes) {
       final IdentityAttribute? existing = result[attribute.key];
 
       if (existing == null ||
-          attribute.resolutionConfidence >
-              existing.resolutionConfidence) {
+          attribute.resolutionConfidence > existing.resolutionConfidence) {
         result[attribute.key] = attribute;
       }
     }
@@ -245,12 +238,9 @@ class ReleaseContextComparator implements IdentityComparator {
         rightValue: rightValue,
         outcome: IdentityEvidenceOutcome.uncertain,
         weight: _releaseContextWeight,
-        confidence: _combinedConfidence(
-          leftAttribute,
-          rightAttribute,
-        ),
+        confidence: _combinedConfidence(leftAttribute, rightAttribute),
         reason:
-        'One or both profiles contain unresolved internal evidence '
+            'One or both profiles contain unresolved internal evidence '
             'for release-context attribute $attributeKey.',
         tags: <String, String>{
           ...tags,
@@ -267,7 +257,7 @@ class ReleaseContextComparator implements IdentityComparator {
         weight: _releaseContextWeight,
         confidence: 0.0,
         reason:
-        'Both profiles are missing a resolved value for release-context '
+            'Both profiles are missing a resolved value for release-context '
             'attribute $attributeKey.',
         tags: tags,
       );
@@ -282,7 +272,7 @@ class ReleaseContextComparator implements IdentityComparator {
         weight: _releaseContextWeight,
         confidence: rightAttribute?.resolutionConfidence ?? 0.0,
         reason:
-        'The left profile is missing release-context attribute '
+            'The left profile is missing release-context attribute '
             '$attributeKey while the right profile contains a value.',
         tags: tags,
       );
@@ -297,7 +287,7 @@ class ReleaseContextComparator implements IdentityComparator {
         weight: _releaseContextWeight,
         confidence: leftAttribute?.resolutionConfidence ?? 0.0,
         reason:
-        'The right profile is missing release-context attribute '
+            'The right profile is missing release-context attribute '
             '$attributeKey while the left profile contains a value.',
         tags: tags,
       );
@@ -321,7 +311,7 @@ class ReleaseContextComparator implements IdentityComparator {
         weight: _releaseContextWeight,
         confidence: confidence,
         reason:
-        'Both profiles contain the same normalized release-context '
+            'Both profiles contain the same normalized release-context '
             'value for $attributeKey.',
         tags: tags,
       );
@@ -336,7 +326,7 @@ class ReleaseContextComparator implements IdentityComparator {
       weight: _releaseContextWeight,
       confidence: confidence,
       reason:
-      'The profiles contain different release-context values for '
+          'The profiles contain different release-context values for '
           '$attributeKey.',
       tags: <String, String>{
         ...tags,
@@ -345,9 +335,7 @@ class ReleaseContextComparator implements IdentityComparator {
     );
   }
 
-  String? _resolvedValue(
-      IdentityAttribute? attribute,
-      ) {
+  String? _resolvedValue(IdentityAttribute? attribute) {
     if (attribute == null || !attribute.hasResolvedValue) {
       return null;
     }
@@ -387,9 +375,9 @@ class ReleaseContextComparator implements IdentityComparator {
   }
 
   double _combinedConfidence(
-      IdentityAttribute? left,
-      IdentityAttribute? right,
-      ) {
+    IdentityAttribute? left,
+    IdentityAttribute? right,
+  ) {
     final List<double> values = <double>[
       if (left != null) left.resolutionConfidence,
       if (right != null) right.resolutionConfidence,
@@ -401,18 +389,15 @@ class ReleaseContextComparator implements IdentityComparator {
 
     final double total = values.fold<double>(
       0.0,
-          (double sum, double value) => sum + value,
+      (double sum, double value) => sum + value,
     );
 
     return total / values.length;
   }
 
-  double _calculateConfidence(
-      List<IdentityEvidence> evidence,
-      ) {
-    final Iterable<IdentityEvidence> participating =
-    evidence.where(
-          (IdentityEvidence item) => item.participatesInDecision,
+  double _calculateConfidence(List<IdentityEvidence> evidence) {
+    final Iterable<IdentityEvidence> participating = evidence.where(
+      (IdentityEvidence item) => item.participatesInDecision,
     );
 
     double totalWeight = 0.0;
@@ -437,8 +422,7 @@ class ReleaseContextComparator implements IdentityComparator {
     required String attributeKey,
     required IdentityPolicy policy,
   }) {
-    final bool isRequired =
-    policy.requiresRole(IdentityRole.releaseContext);
+    final bool isRequired = policy.requiresRole(IdentityRole.releaseContext);
 
     return <String, String>{
       'comparator': id,

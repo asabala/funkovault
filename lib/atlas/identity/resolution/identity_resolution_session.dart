@@ -13,44 +13,33 @@ class IdentityResolutionSession {
     required this.sessionId,
     required this.startedAt,
     this.completedAt,
-    List<KnowledgeRecord> sourceRecords =
-    const <KnowledgeRecord>[],
-    List<KnowledgeMapperResult> mapperResults =
-    const <KnowledgeMapperResult>[],
-    List<IdentityProfile> candidateProfiles =
-    const <IdentityProfile>[],
+    List<KnowledgeRecord> sourceRecords = const <KnowledgeRecord>[],
+    List<KnowledgeMapperResult> mapperResults = const <KnowledgeMapperResult>[],
+    List<IdentityProfile> candidateProfiles = const <IdentityProfile>[],
     List<IdentityComparisonResult> comparisons =
-    const <IdentityComparisonResult>[],
-    List<IdentityProfile> canonicalProfiles =
-    const <IdentityProfile>[],
+        const <IdentityComparisonResult>[],
+    List<IdentityProfile> canonicalProfiles = const <IdentityProfile>[],
     List<String> notes = const <String>[],
-    Map<String, String> metadata =
-    const <String, String>{},
-  })  : assert(
-  sessionId.trim().isNotEmpty,
-  'Resolution session ID cannot be empty.',
-  ),
-        assert(
-        completedAt == null || !completedAt.isBefore(startedAt),
-        'Completion time cannot be before the session start time.',
-        ),
-        sourceRecords = List<KnowledgeRecord>.unmodifiable(
-          sourceRecords,
-        ),
-        mapperResults = List<KnowledgeMapperResult>.unmodifiable(
-          mapperResults,
-        ),
-        candidateProfiles = List<IdentityProfile>.unmodifiable(
-          candidateProfiles,
-        ),
-        comparisons = List<IdentityComparisonResult>.unmodifiable(
-          comparisons,
-        ),
-        canonicalProfiles = List<IdentityProfile>.unmodifiable(
-          canonicalProfiles,
-        ),
-        notes = List<String>.unmodifiable(notes),
-        metadata = Map<String, String>.unmodifiable(metadata);
+    Map<String, String> metadata = const <String, String>{},
+  }) : assert(
+         sessionId.trim().isNotEmpty,
+         'Resolution session ID cannot be empty.',
+       ),
+       assert(
+         completedAt == null || !completedAt.isBefore(startedAt),
+         'Completion time cannot be before the session start time.',
+       ),
+       sourceRecords = List<KnowledgeRecord>.unmodifiable(sourceRecords),
+       mapperResults = List<KnowledgeMapperResult>.unmodifiable(mapperResults),
+       candidateProfiles = List<IdentityProfile>.unmodifiable(
+         candidateProfiles,
+       ),
+       comparisons = List<IdentityComparisonResult>.unmodifiable(comparisons),
+       canonicalProfiles = List<IdentityProfile>.unmodifiable(
+         canonicalProfiles,
+       ),
+       notes = List<String>.unmodifiable(notes),
+       metadata = Map<String, String>.unmodifiable(metadata);
 
   // Stable identifier for this resolution operation.
   final String sessionId;
@@ -132,73 +121,42 @@ class IdentityResolutionSession {
     return IdentityResolutionSession(
       sessionId: sessionId ?? this.sessionId,
       startedAt: startedAt ?? this.startedAt,
-      completedAt: clearCompletedAt
-          ? null
-          : completedAt ?? this.completedAt,
+      completedAt: clearCompletedAt ? null : completedAt ?? this.completedAt,
       sourceRecords: sourceRecords ?? this.sourceRecords,
       mapperResults: mapperResults ?? this.mapperResults,
-      candidateProfiles:
-      candidateProfiles ?? this.candidateProfiles,
+      candidateProfiles: candidateProfiles ?? this.candidateProfiles,
       comparisons: comparisons ?? this.comparisons,
-      canonicalProfiles:
-      canonicalProfiles ?? this.canonicalProfiles,
+      canonicalProfiles: canonicalProfiles ?? this.canonicalProfiles,
       notes: notes ?? this.notes,
       metadata: metadata ?? this.metadata,
     );
   }
 
-  IdentityResolutionSession addSourceRecord(
-      KnowledgeRecord record,
-      ) {
+  IdentityResolutionSession addSourceRecord(KnowledgeRecord record) {
+    return copyWith(sourceRecords: <KnowledgeRecord>[...sourceRecords, record]);
+  }
+
+  IdentityResolutionSession addMapperResult(KnowledgeMapperResult result) {
     return copyWith(
-      sourceRecords: <KnowledgeRecord>[
-        ...sourceRecords,
-        record,
-      ],
+      mapperResults: <KnowledgeMapperResult>[...mapperResults, result],
     );
   }
 
-  IdentityResolutionSession addMapperResult(
-      KnowledgeMapperResult result,
-      ) {
+  IdentityResolutionSession addCandidateProfile(IdentityProfile profile) {
     return copyWith(
-      mapperResults: <KnowledgeMapperResult>[
-        ...mapperResults,
-        result,
-      ],
+      candidateProfiles: <IdentityProfile>[...candidateProfiles, profile],
     );
   }
 
-  IdentityResolutionSession addCandidateProfile(
-      IdentityProfile profile,
-      ) {
+  IdentityResolutionSession addComparison(IdentityComparisonResult comparison) {
     return copyWith(
-      candidateProfiles: <IdentityProfile>[
-        ...candidateProfiles,
-        profile,
-      ],
+      comparisons: <IdentityComparisonResult>[...comparisons, comparison],
     );
   }
 
-  IdentityResolutionSession addComparison(
-      IdentityComparisonResult comparison,
-      ) {
+  IdentityResolutionSession addCanonicalProfile(IdentityProfile profile) {
     return copyWith(
-      comparisons: <IdentityComparisonResult>[
-        ...comparisons,
-        comparison,
-      ],
-    );
-  }
-
-  IdentityResolutionSession addCanonicalProfile(
-      IdentityProfile profile,
-      ) {
-    return copyWith(
-      canonicalProfiles: <IdentityProfile>[
-        ...canonicalProfiles,
-        profile,
-      ],
+      canonicalProfiles: <IdentityProfile>[...canonicalProfiles, profile],
     );
   }
 
@@ -209,12 +167,7 @@ class IdentityResolutionSession {
       return this;
     }
 
-    return copyWith(
-      notes: <String>[
-        ...notes,
-        normalizedNote,
-      ],
-    );
+    return copyWith(notes: <String>[...notes, normalizedNote]);
   }
 
   IdentityResolutionSession complete({
@@ -225,8 +178,7 @@ class IdentityResolutionSession {
   }) {
     return copyWith(
       completedAt: completedAt,
-      canonicalProfiles:
-      canonicalProfiles ?? this.canonicalProfiles,
+      canonicalProfiles: canonicalProfiles ?? this.canonicalProfiles,
       notes: notes ?? this.notes,
       metadata: metadata ?? this.metadata,
     );

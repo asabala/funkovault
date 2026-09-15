@@ -13,14 +13,14 @@ class AtlasResult<T> {
     this.output,
     this.errors = const <String>[],
     this.warnings = const <String>[],
-  })  : assert(
-  status.hasUsableOutput || output == null,
-  'Failure results should not contain usable output.',
-  ),
-        assert(
-        status.hasUsableOutput || errors.isNotEmpty,
-        'Failure results should contain at least one error.',
-        );
+  }) : assert(
+         status.hasUsableOutput || output == null,
+         'Failure results should not contain usable output.',
+       ),
+       assert(
+         status.hasUsableOutput || errors.isNotEmpty,
+         'Failure results should contain at least one error.',
+       );
 
   // Overall outcome of the engine execution.
   final AtlasResultStatus status;
@@ -65,7 +65,7 @@ class AtlasResult<T> {
     if (currentOutput == null) {
       throw StateError(
         'AtlasResult does not contain output. '
-            'Status: ${status.serializedValue}',
+        'Status: ${status.serializedValue}',
       );
     }
 
@@ -99,9 +99,7 @@ class AtlasResult<T> {
       status: AtlasResultStatus.success,
       output: output,
       warnings: List<String>.unmodifiable(warnings),
-      metadata: metadata.copyWith(
-        warningCount: warnings.length,
-      ),
+      metadata: metadata.copyWith(warningCount: warnings.length),
     );
   }
 
@@ -117,9 +115,7 @@ class AtlasResult<T> {
       output: output,
       warnings: List<String>.unmodifiable(warnings),
       errors: List<String>.unmodifiable(errors),
-      metadata: metadata.copyWith(
-        warningCount: warnings.length,
-      ),
+      metadata: metadata.copyWith(warningCount: warnings.length),
     );
   }
 
@@ -133,9 +129,7 @@ class AtlasResult<T> {
       status: AtlasResultStatus.validationFailure,
       errors: List<String>.unmodifiable(errors),
       warnings: List<String>.unmodifiable(warnings),
-      metadata: metadata.copyWith(
-        warningCount: warnings.length,
-      ),
+      metadata: metadata.copyWith(warningCount: warnings.length),
     );
   }
 
@@ -149,9 +143,7 @@ class AtlasResult<T> {
       status: AtlasResultStatus.policyFailure,
       errors: List<String>.unmodifiable(errors),
       warnings: List<String>.unmodifiable(warnings),
-      metadata: metadata.copyWith(
-        warningCount: warnings.length,
-      ),
+      metadata: metadata.copyWith(warningCount: warnings.length),
     );
   }
 
@@ -165,9 +157,7 @@ class AtlasResult<T> {
       status: AtlasResultStatus.missingData,
       errors: List<String>.unmodifiable(errors),
       warnings: List<String>.unmodifiable(warnings),
-      metadata: metadata.copyWith(
-        warningCount: warnings.length,
-      ),
+      metadata: metadata.copyWith(warningCount: warnings.length),
     );
   }
 
@@ -181,9 +171,7 @@ class AtlasResult<T> {
       status: AtlasResultStatus.conflictingEvidence,
       errors: List<String>.unmodifiable(errors),
       warnings: List<String>.unmodifiable(warnings),
-      metadata: metadata.copyWith(
-        warningCount: warnings.length,
-      ),
+      metadata: metadata.copyWith(warningCount: warnings.length),
     );
   }
 
@@ -197,9 +185,7 @@ class AtlasResult<T> {
       status: AtlasResultStatus.executionFailure,
       errors: List<String>.unmodifiable(errors),
       warnings: List<String>.unmodifiable(warnings),
-      metadata: metadata.copyWith(
-        warningCount: warnings.length,
-      ),
+      metadata: metadata.copyWith(warningCount: warnings.length),
     );
   }
 
@@ -222,20 +208,16 @@ class AtlasResult<T> {
   //
   // Generic output requires a parser supplied by the caller.
   factory AtlasResult.fromJson(
-      Map<String, dynamic> json, {
-        required T Function(Object? json) outputFromJson,
-      }) {
+    Map<String, dynamic> json, {
+    required T Function(Object? json) outputFromJson,
+  }) {
     final Object? rawOutput = json['output'];
 
     return AtlasResult<T>(
-      status: AtlasResultStatus.fromSerializedValue(
-        json['status'] as String,
-      ),
+      status: AtlasResultStatus.fromSerializedValue(json['status'] as String),
       output: rawOutput == null ? null : outputFromJson(rawOutput),
       errors: List<String>.unmodifiable(
-        List<String>.from(
-          json['errors'] as List<dynamic>? ?? const <String>[],
-        ),
+        List<String>.from(json['errors'] as List<dynamic>? ?? const <String>[]),
       ),
       warnings: List<String>.unmodifiable(
         List<String>.from(
@@ -243,9 +225,7 @@ class AtlasResult<T> {
         ),
       ),
       metadata: AtlasExecutionMetadata.fromJson(
-        Map<String, dynamic>.from(
-          json['metadata'] as Map<dynamic, dynamic>,
-        ),
+        Map<String, dynamic>.from(json['metadata'] as Map<dynamic, dynamic>),
       ),
     );
   }

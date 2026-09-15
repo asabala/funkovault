@@ -4,11 +4,7 @@ import '../../../theme/atlas_colors.dart';
 import '../../../theme/atlas_symbols.dart';
 import 'atlas_insight_panel.dart';
 
-enum AtlasLoadingStateTone {
-  intelligence,
-  recommendation,
-  neutral,
-}
+enum AtlasLoadingStateTone { intelligence, recommendation, neutral }
 
 class AtlasLoadingState extends StatelessWidget {
   const AtlasLoadingState({
@@ -21,9 +17,9 @@ class AtlasLoadingState extends StatelessWidget {
     this.progressLabel,
     this.compact = false,
   }) : assert(
-  progress == null || (progress >= 0 && progress <= 1),
-  'AtlasLoadingState progress must be between 0 and 1.',
-  );
+         progress == null || (progress >= 0 && progress <= 1),
+         'AtlasLoadingState progress must be between 0 and 1.',
+       );
 
   final String title;
   final String message;
@@ -39,12 +35,9 @@ class AtlasLoadingState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Color accentColor = switch (tone) {
-      AtlasLoadingStateTone.intelligence =>
-      AtlasColors.intelligenceBlue,
-      AtlasLoadingStateTone.recommendation =>
-      AtlasColors.vaultGold,
-      AtlasLoadingStateTone.neutral =>
-      AtlasColors.textSecondary,
+      AtlasLoadingStateTone.intelligence => AtlasColors.intelligenceBlue,
+      AtlasLoadingStateTone.recommendation => AtlasColors.vaultGold,
+      AtlasLoadingStateTone.neutral => AtlasColors.textSecondary,
     };
 
     return AtlasInsightPanel(
@@ -71,12 +64,10 @@ class AtlasLoadingState extends StatelessWidget {
 
   AtlasInsightPanelTone get _insightTone {
     return switch (tone) {
-      AtlasLoadingStateTone.intelligence =>
-      AtlasInsightPanelTone.intelligence,
+      AtlasLoadingStateTone.intelligence => AtlasInsightPanelTone.intelligence,
       AtlasLoadingStateTone.recommendation =>
-      AtlasInsightPanelTone.recommendation,
-      AtlasLoadingStateTone.neutral =>
-      AtlasInsightPanelTone.neutral,
+        AtlasInsightPanelTone.recommendation,
+      AtlasLoadingStateTone.neutral => AtlasInsightPanelTone.neutral,
     };
   }
 }

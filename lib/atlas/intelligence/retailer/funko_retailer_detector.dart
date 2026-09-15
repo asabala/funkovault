@@ -8,11 +8,8 @@ import 'funko_retailer_evidence.dart';
 import 'funko_retailer_evidence_source.dart';
 
 // Detects retailers and contributes them to the shared identity analysis.
-final class FunkoRetailerDetector
-    implements AtlasIdentityDetector {
-  const FunkoRetailerDetector({
-    required this.lookup,
-  });
+final class FunkoRetailerDetector implements AtlasIdentityDetector {
+  const FunkoRetailerDetector({required this.lookup});
 
   final AtlasIdentityLookup lookup;
 
@@ -21,16 +18,11 @@ final class FunkoRetailerDetector
     required List<AtlasIdentityPhrase> phrases,
     required AtlasIdentityAnalysis analysis,
   }) {
-    final Map<FunkoRetailer, FunkoRetailerEvidence>
-    evidence =
-    <FunkoRetailer, FunkoRetailerEvidence>{};
+    final Map<FunkoRetailer, FunkoRetailerEvidence> evidence =
+        <FunkoRetailer, FunkoRetailerEvidence>{};
 
-    for (final AtlasIdentityPhrase phrase
-    in phrases) {
-      final FunkoRetailer? retailer =
-      lookup.retailer(
-        phrase.normalizedText,
-      );
+    for (final AtlasIdentityPhrase phrase in phrases) {
+      final FunkoRetailer? retailer = lookup.retailer(phrase.normalizedText);
 
       if (retailer == null) {
         continue;
@@ -38,25 +30,19 @@ final class FunkoRetailerDetector
 
       evidence.putIfAbsent(
         retailer,
-            () => FunkoRetailerEvidence(
+        () => FunkoRetailerEvidence(
           retailer: retailer,
           confidence: 1.0,
-          source:
-          FunkoRetailerEvidenceSource.rule,
+          source: FunkoRetailerEvidenceSource.rule,
           rawValue: phrase.text,
-          normalizedValue:
-          phrase.normalizedText,
+          normalizedValue: phrase.normalizedText,
         ),
       );
     }
 
     return analysis.copyWith(
-      retailerResult:
-      FunkoRetailerDetectionResult(
-        evidence:
-        List<FunkoRetailerEvidence>.unmodifiable(
-          evidence.values,
-        ),
+      retailerResult: FunkoRetailerDetectionResult(
+        evidence: List<FunkoRetailerEvidence>.unmodifiable(evidence.values),
       ),
     );
   }

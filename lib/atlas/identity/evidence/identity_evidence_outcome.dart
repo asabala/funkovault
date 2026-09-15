@@ -34,9 +34,7 @@ extension IdentityEvidenceOutcomeX on IdentityEvidenceOutcome {
 
   // Whether the evidence requires additional review.
   bool get requiresReview {
-    return isConflict ||
-        isMissing ||
-        this == IdentityEvidenceOutcome.uncertain;
+    return isConflict || isMissing || this == IdentityEvidenceOutcome.uncertain;
   }
 
   String get serializedValue {
@@ -51,9 +49,7 @@ extension IdentityEvidenceOutcomeX on IdentityEvidenceOutcome {
     };
   }
 
-  static IdentityEvidenceOutcome fromSerializedValue(
-      String value,
-      ) {
+  static IdentityEvidenceOutcome fromSerializedValue(String value) {
     return switch (value.trim().toLowerCase()) {
       'matched' => IdentityEvidenceOutcome.matched,
       'conflicted' => IdentityEvidenceOutcome.conflicted,

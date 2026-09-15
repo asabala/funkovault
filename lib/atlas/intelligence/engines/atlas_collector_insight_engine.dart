@@ -12,12 +12,9 @@ import 'atlas_scan_intelligence_engine.dart';
 
 class AtlasCollectorInsightEngine {
   const AtlasCollectorInsightEngine({
-    this.collectorStateEngine =
-    const AtlasCollectorStateEngine(),
-    this.collectorActionEngine =
-    const AtlasCollectorActionEngine(),
-    this.scanIntelligenceEngine =
-    const AtlasScanIntelligenceEngine(),
+    this.collectorStateEngine = const AtlasCollectorStateEngine(),
+    this.collectorActionEngine = const AtlasCollectorActionEngine(),
+    this.scanIntelligenceEngine = const AtlasScanIntelligenceEngine(),
   });
 
   final AtlasCollectorStateEngine collectorStateEngine;
@@ -30,41 +27,35 @@ class AtlasCollectorInsightEngine {
     required String scannedBarcode,
     required List<Pop> collectionPops,
     required String collectionName,
-    Set<String> ownedWishlistIdentityKeys =
-    const <String>{},
+    Set<String> ownedWishlistIdentityKeys = const <String>{},
     AtlasScanIntelligence? precomputedIntelligence,
   }) {
-    final AtlasCollectorState collectorState =
-    collectorStateEngine.evaluate(
+    final AtlasCollectorState collectorState = collectorStateEngine.evaluate(
       product: product,
       scannedBarcode: scannedBarcode,
       collectionPops: collectionPops,
-      ownedWishlistIdentityKeys:
-      ownedWishlistIdentityKeys,
+      ownedWishlistIdentityKeys: ownedWishlistIdentityKeys,
     );
 
     final AtlasCollectorSummary collectorSummary =
-    AtlasCollectorSummary.buildFromState(
-      product: product,
-      collectorState: collectorState,
-      collectionName: collectionName,
-    );
+        AtlasCollectorSummary.buildFromState(
+          product: product,
+          collectorState: collectorState,
+          collectionName: collectionName,
+        );
 
     final AtlasScanIntelligence scanIntelligence =
         precomputedIntelligence ??
-            scanIntelligenceEngine.processChecked(
-              session,
-            );
+        scanIntelligenceEngine.processChecked(session);
 
-    final List<AtlasCollectorAction> actions =
-    collectorActionEngine.buildActions(
-      AtlasCollectorActionContext(
-        isOwned: collectorState.isOwned,
-        isWishlisted: collectorState.isWishlisted,
-        canViewExistingItem:
-        collectorState.primaryOwnedMatch != null,
-      ),
-    );
+    final List<AtlasCollectorAction> actions = collectorActionEngine
+        .buildActions(
+          AtlasCollectorActionContext(
+            isOwned: collectorState.isOwned,
+            isWishlisted: collectorState.isWishlisted,
+            canViewExistingItem: collectorState.primaryOwnedMatch != null,
+          ),
+        );
 
     return AtlasCollectorInsight(
       state: collectorState,
@@ -72,12 +63,8 @@ class AtlasCollectorInsightEngine {
       intelligence: scanIntelligence,
       actions: actions,
       generatedAt: scanIntelligence.generatedAt,
-      confidence: _normalizeConfidence(
-        session.confidence,
-      ),
-      source: _scanSourceLabel(
-        session,
-      ),
+      confidence: _normalizeConfidence(session.confidence),
+      source: _scanSourceLabel(session),
       diagnostics: _buildScanDiagnostics(
         session: session,
         scannedBarcode: scannedBarcode,
@@ -90,35 +77,31 @@ class AtlasCollectorInsightEngine {
     required Pop product,
     required List<Pop> collectionPops,
     required String collectionName,
-    Set<String> ownedWishlistIdentityKeys =
-    const <String>{},
+    Set<String> ownedWishlistIdentityKeys = const <String>{},
     String source = 'Atlas Search',
   }) {
-    final AtlasCollectorState collectorState =
-    collectorStateEngine.evaluate(
+    final AtlasCollectorState collectorState = collectorStateEngine.evaluate(
       product: product,
       collectionPops: collectionPops,
-      ownedWishlistIdentityKeys:
-      ownedWishlistIdentityKeys,
+      ownedWishlistIdentityKeys: ownedWishlistIdentityKeys,
     );
 
     final AtlasCollectorSummary collectorSummary =
-    AtlasCollectorSummary.buildFromState(
-      product: product,
-      collectorState: collectorState,
-      collectionName: collectionName,
-    );
+        AtlasCollectorSummary.buildFromState(
+          product: product,
+          collectorState: collectorState,
+          collectionName: collectionName,
+        );
 
-    final List<AtlasCollectorAction> actions =
-    collectorActionEngine.buildActions(
-      AtlasCollectorActionContext(
-        isOwned: collectorState.isOwned,
-        isWishlisted: collectorState.isWishlisted,
-        canViewExistingItem:
-        collectorState.primaryOwnedMatch != null,
-        includeScanAnother: false,
-      ),
-    );
+    final List<AtlasCollectorAction> actions = collectorActionEngine
+        .buildActions(
+          AtlasCollectorActionContext(
+            isOwned: collectorState.isOwned,
+            isWishlisted: collectorState.isWishlisted,
+            canViewExistingItem: collectorState.primaryOwnedMatch != null,
+            includeScanAnother: false,
+          ),
+        );
 
     final DateTime generatedAt = DateTime.now();
 
@@ -126,15 +109,12 @@ class AtlasCollectorInsightEngine {
       state: collectorState,
       summary: collectorSummary,
       intelligence: AtlasScanIntelligence(
-        sessionId:
-        'product-${generatedAt.microsecondsSinceEpoch}',
+        sessionId: 'product-${generatedAt.microsecondsSinceEpoch}',
         generatedAt: generatedAt,
       ),
       actions: actions,
       generatedAt: generatedAt,
-      confidence: _productConfidence(
-        product,
-      ),
+      confidence: _productConfidence(product),
       source: source,
       diagnostics: _buildProductDiagnostics(
         product: product,
@@ -143,32 +123,22 @@ class AtlasCollectorInsightEngine {
     );
   }
 
-  double _normalizeConfidence(
-      double confidence,
-      ) {
+  double _normalizeConfidence(double confidence) {
     if (!confidence.isFinite || confidence <= 0) {
       return 0;
     }
 
-    final double normalizedConfidence =
-    confidence > 1
+    final double normalizedConfidence = confidence > 1
         ? confidence / 100
         : confidence;
 
-    return normalizedConfidence.clamp(
-      0.0,
-      1.0,
-    );
+    return normalizedConfidence.clamp(0.0, 1.0);
   }
 
-  double _productConfidence(
-      Pop product,
-      ) {
+  double _productConfidence(Pop product) {
     var evidenceScore = 0;
 
-    if (product.collectibleIdentityKey
-        .trim()
-        .isNotEmpty) {
+    if (product.collectibleIdentityKey.trim().isNotEmpty) {
       evidenceScore += 40;
     }
 
@@ -181,8 +151,7 @@ class AtlasCollectorInsightEngine {
       evidenceScore += 15;
     }
 
-    if (product.name.trim().isNotEmpty &&
-        product.number.trim().isNotEmpty) {
+    if (product.name.trim().isNotEmpty && product.number.trim().isNotEmpty) {
       evidenceScore += 10;
     }
 
@@ -191,15 +160,10 @@ class AtlasCollectorInsightEngine {
       evidenceScore += 10;
     }
 
-    return (evidenceScore / 100).clamp(
-      0.0,
-      1.0,
-    );
+    return (evidenceScore / 100).clamp(0.0, 1.0);
   }
 
-  String _scanSourceLabel(
-      ScanSession session,
-      ) {
+  String _scanSourceLabel(ScanSession session) {
     if (session.isOffline) {
       return 'Atlas Offline Scan';
     }
@@ -218,22 +182,15 @@ class AtlasCollectorInsightEngine {
   }) {
     final List<String> diagnostics = <String>[];
 
-    final String normalizedBarcode =
-    scannedBarcode.trim();
+    final String normalizedBarcode = scannedBarcode.trim();
 
     if (normalizedBarcode.isNotEmpty) {
-      diagnostics.add(
-        'Barcode: $normalizedBarcode',
-      );
+      diagnostics.add('Barcode: $normalizedBarcode');
     }
 
-    diagnostics.add(
-      'Resolution: ${session.resolutionStatus.name}',
-    );
+    diagnostics.add('Resolution: ${session.resolutionStatus.name}');
 
-    diagnostics.add(
-      'Owned matches: ${collectorState.ownedMatches.length}',
-    );
+    diagnostics.add('Owned matches: ${collectorState.ownedMatches.length}');
 
     diagnostics.add(
       'Wishlist matches: ${collectorState.wishlistMatches.length}',
@@ -243,13 +200,9 @@ class AtlasCollectorInsightEngine {
       'Owned wishlist overlay: ${collectorState.isOwnedWishlisted}',
     );
 
-    diagnostics.add(
-      'Related matches: ${collectorState.relatedMatches.length}',
-    );
+    diagnostics.add('Related matches: ${collectorState.relatedMatches.length}');
 
-    diagnostics.add(
-      'Evidence contributions: ${session.contributionCount}',
-    );
+    diagnostics.add('Evidence contributions: ${session.contributionCount}');
 
     for (final String warning in session.warnings) {
       final String cleanedWarning = warning.trim();
@@ -258,14 +211,10 @@ class AtlasCollectorInsightEngine {
         continue;
       }
 
-      diagnostics.add(
-        'Warning: $cleanedWarning',
-      );
+      diagnostics.add('Warning: $cleanedWarning');
     }
 
-    return List<String>.unmodifiable(
-      diagnostics,
-    );
+    return List<String>.unmodifiable(diagnostics);
   }
 
   List<String> _buildProductDiagnostics({
@@ -280,44 +229,30 @@ class AtlasCollectorInsightEngine {
       'Related matches: ${collectorState.relatedMatches.length}',
     ];
 
-    final String upc =
-    product.sourceUpc.trim();
+    final String upc = product.sourceUpc.trim();
 
     if (upc.isNotEmpty) {
-      diagnostics.add(
-        'UPC: $upc',
-      );
+      diagnostics.add('UPC: $upc');
     }
 
-    final String catalogId =
-    product.sourceCatalogId.trim();
+    final String catalogId = product.sourceCatalogId.trim();
 
     if (catalogId.isNotEmpty) {
-      diagnostics.add(
-        'Catalog ID: $catalogId',
-      );
+      diagnostics.add('Catalog ID: $catalogId');
     }
 
-    final String collectibleId =
-    product.sourceCollectibleId.trim();
+    final String collectibleId = product.sourceCollectibleId.trim();
 
     if (collectibleId.isNotEmpty) {
-      diagnostics.add(
-        'Collectible ID: $collectibleId',
-      );
+      diagnostics.add('Collectible ID: $collectibleId');
     }
 
-    final String identityKey =
-    product.collectibleIdentityKey.trim();
+    final String identityKey = product.collectibleIdentityKey.trim();
 
     if (identityKey.isNotEmpty) {
-      diagnostics.add(
-        'Identity key available',
-      );
+      diagnostics.add('Identity key available');
     }
 
-    return List<String>.unmodifiable(
-      diagnostics,
-    );
+    return List<String>.unmodifiable(diagnostics);
   }
 }

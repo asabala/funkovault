@@ -9,22 +9,18 @@ import 'atlas_engine_configuration.dart';
 // AtlasEngine exposes configured platform capabilities without requiring
 // application code to manually assemble engines or dependency graphs.
 class AtlasEngine {
-  const AtlasEngine({
-    required this.configuration,
-  });
+  const AtlasEngine({required this.configuration});
 
   // Platform configuration.
   final AtlasEngineConfiguration configuration;
 
   // Returns all configured identity resolution presets.
-  IdentityResolutionPresetRegistry
-  get identityResolutionPresets {
+  IdentityResolutionPresetRegistry get identityResolutionPresets {
     return configuration.identityResolutionPresets;
   }
 
   // Returns the configured default identity resolution preset.
-  IdentityResolutionPreset get
-  defaultIdentityResolutionPreset {
+  IdentityResolutionPreset get defaultIdentityResolutionPreset {
     final IdentityResolutionPreset? preset =
         configuration.defaultIdentityResolutionPreset;
 
@@ -45,23 +41,15 @@ class AtlasEngine {
   }
 
   // Creates a resolver using a specific preset identifier.
-  IdentityResolver createIdentityResolverByPreset(
-      String presetId,
-      ) {
-    final IdentityResolutionPreset? preset =
-    configuration.identityResolutionPresetById(
-      presetId,
-    );
+  IdentityResolver createIdentityResolverByPreset(String presetId) {
+    final IdentityResolutionPreset? preset = configuration
+        .identityResolutionPresetById(presetId);
 
     if (preset == null) {
-      throw StateError(
-        'Unknown identity resolution preset: $presetId',
-      );
+      throw StateError('Unknown identity resolution preset: $presetId');
     }
 
-    return IdentityResolverFactory.fromPreset(
-      preset: preset,
-    );
+    return IdentityResolverFactory.fromPreset(preset: preset);
   }
 
   @override

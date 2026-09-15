@@ -35,7 +35,7 @@ class AtlasTimelineFactory {
       occurredAt: occurredAt,
       title: 'Value Updated',
       description:
-      '\$${previousValue.toStringAsFixed(2)} → \$${newValue.toStringAsFixed(2)}',
+          '\$${previousValue.toStringAsFixed(2)} → \$${newValue.toStringAsFixed(2)}',
       createdBy: AtlasTimelineEvent.systemCreatedBy,
       metadata: {
         'previousValue': previousValue,

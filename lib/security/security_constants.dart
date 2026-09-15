@@ -5,11 +5,9 @@ class SecurityConstants {
 
   static const int maxLoginAttempts = 5;
 
-  static const Duration sessionWarningDuration =
-  Duration(minutes: 5);
+  static const Duration sessionWarningDuration = Duration(minutes: 5);
 
-  static const Duration defaultSessionDuration =
-  Duration(days: 30);
+  static const Duration defaultSessionDuration = Duration(days: 30);
 
   static const String basicTier = 'basic';
 

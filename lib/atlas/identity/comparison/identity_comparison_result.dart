@@ -17,9 +17,9 @@ class IdentityComparisonResult {
     this.missingAttributes = const <String>[],
     this.notes = const <String>[],
   }) : assert(
-  confidence >= 0.0 && confidence <= 1.0,
-  'Confidence must be between 0.0 and 1.0.',
-  );
+         confidence >= 0.0 && confidence <= 1.0,
+         'Confidence must be between 0.0 and 1.0.',
+       );
 
   // Whether the compared identities matched.
   final bool isMatch;
@@ -49,8 +49,7 @@ class IdentityComparisonResult {
   final List<String> notes;
 
   bool get hasConflicts {
-    return conflictingRoles.isNotEmpty ||
-        conflictingAttributes.isNotEmpty;
+    return conflictingRoles.isNotEmpty || conflictingAttributes.isNotEmpty;
   }
 
   bool get hasMissingRoles => missingRoles.isNotEmpty;
@@ -106,15 +105,12 @@ class IdentityComparisonResult {
       isMatch: isMatch ?? this.isMatch,
       confidence: confidence ?? this.confidence,
       matchedRoles: matchedRoles ?? this.matchedRoles,
-      conflictingRoles:
-      conflictingRoles ?? this.conflictingRoles,
+      conflictingRoles: conflictingRoles ?? this.conflictingRoles,
       missingRoles: missingRoles ?? this.missingRoles,
-      matchedAttributes:
-      matchedAttributes ?? this.matchedAttributes,
+      matchedAttributes: matchedAttributes ?? this.matchedAttributes,
       conflictingAttributes:
-      conflictingAttributes ?? this.conflictingAttributes,
-      missingAttributes:
-      missingAttributes ?? this.missingAttributes,
+          conflictingAttributes ?? this.conflictingAttributes,
+      missingAttributes: missingAttributes ?? this.missingAttributes,
       notes: notes ?? this.notes,
     );
   }
@@ -140,23 +136,11 @@ class IdentityComparisonResult {
             isMatch == other.isMatch &&
             confidence == other.confidence &&
             _setsEqual(matchedRoles, other.matchedRoles) &&
-            _setsEqual(
-              conflictingRoles,
-              other.conflictingRoles,
-            ) &&
+            _setsEqual(conflictingRoles, other.conflictingRoles) &&
             _setsEqual(missingRoles, other.missingRoles) &&
-            _listsEqual(
-              matchedAttributes,
-              other.matchedAttributes,
-            ) &&
-            _listsEqual(
-              conflictingAttributes,
-              other.conflictingAttributes,
-            ) &&
-            _listsEqual(
-              missingAttributes,
-              other.missingAttributes,
-            ) &&
+            _listsEqual(matchedAttributes, other.matchedAttributes) &&
+            _listsEqual(conflictingAttributes, other.conflictingAttributes) &&
+            _listsEqual(missingAttributes, other.missingAttributes) &&
             _listsEqual(notes, other.notes);
   }
 
@@ -175,10 +159,7 @@ class IdentityComparisonResult {
     );
   }
 
-  static bool _setsEqual<T>(
-      Set<T> first,
-      Set<T> second,
-      ) {
+  static bool _setsEqual<T>(Set<T> first, Set<T> second) {
     if (identical(first, second)) {
       return true;
     }
@@ -190,10 +171,7 @@ class IdentityComparisonResult {
     return first.containsAll(second);
   }
 
-  static bool _listsEqual<T>(
-      List<T> first,
-      List<T> second,
-      ) {
+  static bool _listsEqual<T>(List<T> first, List<T> second) {
     if (identical(first, second)) {
       return true;
     }

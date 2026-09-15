@@ -12,7 +12,7 @@ class AcademyPremiumInsightCard extends StatelessWidget {
     super.key,
     this.title = 'Premium Insight',
     this.message =
-    'Atlas Premium can connect this topic to deeper collector intelligence, personalization, value context, and smarter collection decisions.',
+        'Atlas Premium can connect this topic to deeper collector intelligence, personalization, value context, and smarter collection decisions.',
   });
 
   final String title;
@@ -29,18 +29,13 @@ class AcademyPremiumInsightCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           AtlasSectionHeader(
-            title: cleanedTitle.isEmpty
-                ? 'Premium Insight'
-                : cleanedTitle,
-            subtitle:
-            'Advanced Academy intelligence for Atlas Premium.',
+            title: cleanedTitle.isEmpty ? 'Premium Insight' : cleanedTitle,
+            subtitle: 'Advanced Academy intelligence for Atlas Premium.',
             icon: Icons.workspace_premium_rounded,
             accentColor: AtlasColors.vaultGold,
             badge: const PremiumBadge(),
           ),
-          const SizedBox(
-            height: AtlasSpacing.md,
-          ),
+          const SizedBox(height: AtlasSpacing.md),
           AtlasInfoBanner(
             icon: Icons.auto_awesome_rounded,
             title: 'Premium Intelligence',

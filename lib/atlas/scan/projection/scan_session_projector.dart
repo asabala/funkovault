@@ -44,8 +44,8 @@ abstract final class ScanSessionProjector {
     required double currentConfidence,
     required bool isOffline,
   }) {
-    final ProductResolutionContribution? resolutionContribution =
-    contributions.latestOfType<ProductResolutionContribution>();
+    final ProductResolutionContribution? resolutionContribution = contributions
+        .latestOfType<ProductResolutionContribution>();
 
     if (resolutionContribution == null) {
       return ScanSessionProjection(
@@ -53,22 +53,17 @@ abstract final class ScanSessionProjector {
         resolutionStatus: currentResolutionStatus,
         atlasProductId: currentAtlasProductId,
         resolvedProduct: currentResolvedProduct,
-        confidence: _normalizeConfidence(
-          currentConfidence,
-        ),
+        confidence: _normalizeConfidence(currentConfidence),
       );
     }
 
     final resolution = resolutionContribution.resolution;
-    final double confidence = _normalizeConfidence(
-      resolution.matchConfidence,
-    );
+    final double confidence = _normalizeConfidence(resolution.matchConfidence);
 
     if (resolution.requiresReview) {
       return ScanSessionProjection(
         status: ScanSessionStatus.awaitingConfirmation,
-        resolutionStatus:
-        IdentityResolutionStatus.ambiguous,
+        resolutionStatus: IdentityResolutionStatus.ambiguous,
         atlasProductId: resolution.productId,
         resolvedProduct: resolution.resolvedProduct,
         confidence: confidence,

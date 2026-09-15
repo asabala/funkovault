@@ -14,38 +14,18 @@ final class CatalogResolutionRequest {
     String? variantName,
     Iterable<String> barcodes = const <String>[],
     double sourceConfidence = 0.0,
-    Map<String, Object?> attributes =
-    const <String, Object?>{},
-  })  : displayName = _requireText(
-    displayName,
-    'displayName',
-  ),
-        categoryCode = _normalizeOptionalCode(
-          categoryCode,
-        ),
-        brand = _normalizeOptionalText(brand),
-        productLine = _normalizeOptionalText(
-          productLine,
-        ),
-        series = _normalizeOptionalText(series),
-        characterName = _normalizeOptionalText(
-          characterName,
-        ),
-        productNumber = _normalizeOptionalText(
-          productNumber,
-        ),
-        variantName = _normalizeOptionalText(
-          variantName,
-        ),
-        barcodes = List.unmodifiable(
-          _normalizeBarcodes(barcodes),
-        ),
-        sourceConfidence = _normalizeConfidence(
-          sourceConfidence,
-        ),
-        attributes = Map.unmodifiable(
-          Map<String, Object?>.from(attributes),
-        );
+    Map<String, Object?> attributes = const <String, Object?>{},
+  }) : displayName = _requireText(displayName, 'displayName'),
+       categoryCode = _normalizeOptionalCode(categoryCode),
+       brand = _normalizeOptionalText(brand),
+       productLine = _normalizeOptionalText(productLine),
+       series = _normalizeOptionalText(series),
+       characterName = _normalizeOptionalText(characterName),
+       productNumber = _normalizeOptionalText(productNumber),
+       variantName = _normalizeOptionalText(variantName),
+       barcodes = List.unmodifiable(_normalizeBarcodes(barcodes)),
+       sourceConfidence = _normalizeConfidence(sourceConfidence),
+       attributes = Map.unmodifiable(Map<String, Object?>.from(attributes));
 
   final String displayName;
 
@@ -85,9 +65,7 @@ final class CatalogResolutionRequest {
     return categoryCode != null;
   }
 
-  T? attribute<T>(
-      String key,
-      ) {
+  T? attribute<T>(String key) {
     final Object? value = attributes[key];
 
     if (value is T) {
@@ -97,16 +75,11 @@ final class CatalogResolutionRequest {
     return null;
   }
 
-  bool hasAttribute(
-      String key,
-      ) {
+  bool hasAttribute(String key) {
     return attributes.containsKey(key);
   }
 
-  static String _requireText(
-      String value,
-      String parameterName,
-      ) {
+  static String _requireText(String value, String parameterName) {
     final String normalized = value.trim();
 
     if (normalized.isEmpty) {
@@ -120,9 +93,7 @@ final class CatalogResolutionRequest {
     return normalized;
   }
 
-  static String? _normalizeOptionalText(
-      String? value,
-      ) {
+  static String? _normalizeOptionalText(String? value) {
     final String normalized = value?.trim() ?? '';
 
     if (normalized.isEmpty) {
@@ -132,11 +103,8 @@ final class CatalogResolutionRequest {
     return normalized;
   }
 
-  static String? _normalizeOptionalCode(
-      String? value,
-      ) {
-    final String normalized =
-        value?.trim().toUpperCase() ?? '';
+  static String? _normalizeOptionalCode(String? value) {
+    final String normalized = value?.trim().toUpperCase() ?? '';
 
     if (normalized.isEmpty) {
       return null;
@@ -145,33 +113,21 @@ final class CatalogResolutionRequest {
     return normalized;
   }
 
-  static List<String> _normalizeBarcodes(
-      Iterable<String> values,
-      ) {
+  static List<String> _normalizeBarcodes(Iterable<String> values) {
     final Set<String> normalized = <String>{};
 
     for (final String value in values) {
-      final String barcode = value.replaceAll(
-        RegExp(r'[^0-9A-Za-z]'),
-        '',
-      );
+      final String barcode = value.replaceAll(RegExp(r'[^0-9A-Za-z]'), '');
 
       if (barcode.isNotEmpty) {
         normalized.add(barcode);
       }
     }
 
-    return normalized.toList(
-      growable: false,
-    );
+    return normalized.toList(growable: false);
   }
 
-  static double _normalizeConfidence(
-      double value,
-      ) {
-    return value.clamp(
-      0.0,
-      1.0,
-    );
+  static double _normalizeConfidence(double value) {
+    return value.clamp(0.0, 1.0);
   }
 }

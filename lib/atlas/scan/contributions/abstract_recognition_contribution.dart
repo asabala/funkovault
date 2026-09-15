@@ -17,8 +17,7 @@ abstract base class AbstractRecognitionContribution
     super.attributes,
     this.passedValidation = true,
     String? validationMessage,
-  }) : validationMessage =
-  _normalizeValidationMessage(validationMessage);
+  }) : validationMessage = _normalizeValidationMessage(validationMessage);
 
   @override
   ContributionCategory get category {
@@ -40,9 +39,7 @@ abstract base class AbstractRecognitionContribution
   bool get isTrusted {
     final double? value = confidence;
 
-    return passedValidation &&
-        value != null &&
-        value >= 0.75;
+    return passedValidation && value != null && value >= 0.75;
   }
 
   bool get isLowConfidence {
@@ -56,14 +53,10 @@ abstract base class AbstractRecognitionContribution
   }
 
   bool get shouldReview {
-    return failedValidation ||
-        hasUnknownConfidence ||
-        isLowConfidence;
+    return failedValidation || hasUnknownConfidence || isLowConfidence;
   }
 
-  static String? _normalizeValidationMessage(
-      String? value,
-      ) {
+  static String? _normalizeValidationMessage(String? value) {
     final String? normalized = value?.trim();
 
     if (normalized == null || normalized.isEmpty) {

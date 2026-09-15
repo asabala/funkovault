@@ -53,12 +53,8 @@ class AtlasRecommendationTile extends StatelessWidget {
                     ),
                     const SizedBox(width: AtlasSpacing.sm),
                     AtlasStatusChip(
-                      label: _formatEnumName(
-                        recommendation.priority.name,
-                      ),
-                      icon: _iconForPriority(
-                        recommendation.priority.name,
-                      ),
+                      label: _formatEnumName(recommendation.priority.name),
+                      icon: _iconForPriority(recommendation.priority.name),
                       accentColor: AtlasColors.vaultGold,
                       size: AtlasStatusChipSize.compact,
                     ),

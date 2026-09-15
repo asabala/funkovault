@@ -13,11 +13,8 @@ final class ProductResolution {
     required this.matchConfidence,
     required this.resolvedProduct,
     this.requiresReview = false,
-    Map<String, Object?> attributes =
-    const <String, Object?>{},
-  }) : attributes = Map<String, Object?>.unmodifiable(
-    attributes,
-  );
+    Map<String, Object?> attributes = const <String, Object?>{},
+  }) : attributes = Map<String, Object?>.unmodifiable(attributes);
 
   /// Canonical Atlas product identifier.
   final AtlasProductId productId;
@@ -42,8 +39,7 @@ final class ProductResolution {
   }
 
   bool get isMediumConfidence {
-    return matchConfidence >= 0.80 &&
-        matchConfidence < 0.95;
+    return matchConfidence >= 0.80 && matchConfidence < 0.95;
   }
 
   bool get isLowConfidence {

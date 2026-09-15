@@ -3,9 +3,7 @@ import 'atlas_variant_type.dart';
 
 // Represents the result of variant detection for a single item.
 final class AtlasVariantDetectionResult {
-  const AtlasVariantDetectionResult({
-    required this.evidence,
-  });
+  const AtlasVariantDetectionResult({required this.evidence});
 
   final List<AtlasVariantEvidence> evidence;
 
@@ -17,11 +15,7 @@ final class AtlasVariantDetectionResult {
     );
   }
 
-  bool contains(
-      AtlasVariantType variant,
-      ) {
-    return evidence.any(
-          (item) => item.type == variant,
-    );
+  bool contains(AtlasVariantType variant) {
+    return evidence.any((item) => item.type == variant);
   }
 }

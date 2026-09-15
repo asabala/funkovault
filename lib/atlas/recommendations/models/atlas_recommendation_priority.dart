@@ -1,12 +1,6 @@
-enum AtlasRecommendationPriority {
-  low,
-  medium,
-  high,
-  critical,
-}
+enum AtlasRecommendationPriority { low, medium, high, critical }
 
-extension AtlasRecommendationPriorityX
-on AtlasRecommendationPriority {
+extension AtlasRecommendationPriorityX on AtlasRecommendationPriority {
   String get label {
     switch (this) {
       case AtlasRecommendationPriority.low:

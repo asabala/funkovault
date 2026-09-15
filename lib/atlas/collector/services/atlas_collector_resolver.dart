@@ -14,71 +14,53 @@ final class AtlasCollectorResolver {
     AtlasCollectorStateEngine? collectorStateEngine,
     AtlasCollectorInsightEngine? collectorInsightEngine,
     AtlasTaxonomyService? taxonomyService,
-  })  : _collectorStateEngine =
-      collectorStateEngine ??
-          const AtlasCollectorStateEngine(),
-        _collectorInsightEngine =
-            collectorInsightEngine ??
-                const AtlasCollectorInsightEngine(),
-        _taxonomyService =
-            taxonomyService ??
-                AtlasTaxonomyService.instance;
+  }) : _collectorStateEngine =
+           collectorStateEngine ?? const AtlasCollectorStateEngine(),
+       _collectorInsightEngine =
+           collectorInsightEngine ?? const AtlasCollectorInsightEngine(),
+       _taxonomyService = taxonomyService ?? AtlasTaxonomyService.instance;
 
-  static final AtlasCollectorResolver instance =
-  AtlasCollectorResolver();
+  static final AtlasCollectorResolver instance = AtlasCollectorResolver();
 
-  final AtlasCollectorStateEngine
-  _collectorStateEngine;
+  final AtlasCollectorStateEngine _collectorStateEngine;
 
-  final AtlasCollectorInsightEngine
-  _collectorInsightEngine;
+  final AtlasCollectorInsightEngine _collectorInsightEngine;
 
-  final AtlasTaxonomyService
-  _taxonomyService;
+  final AtlasTaxonomyService _taxonomyService;
 
   AtlasResolvedProduct resolve({
     required AtlasCatalogProduct catalogProduct,
     required List<Pop> collectionPops,
-    Set<String> ownedWishlistIdentityKeys =
-    const <String>{},
-    String collectionName =
-    'All Atlas Collections',
-    String source =
-    'Atlas Collector Resolver',
+    Set<String> ownedWishlistIdentityKeys = const <String>{},
+    String collectionName = 'All Atlas Collections',
+    String source = 'Atlas Collector Resolver',
     String scannedBarcode = '',
     DateTime? conversionTimestamp,
   }) {
-    final Pop catalogPop =
-    AtlasCatalogConverter.toPop(
+    final Pop catalogPop = AtlasCatalogConverter.toPop(
       catalogProduct,
       owner: 'Atlas Catalog',
       quantity: 1,
       timestamp: conversionTimestamp,
     );
 
-    final AtlasCollectorState collectorState =
-    _collectorStateEngine.evaluate(
+    final AtlasCollectorState collectorState = _collectorStateEngine.evaluate(
       product: catalogPop,
       collectionPops: collectionPops,
       scannedBarcode: scannedBarcode,
-      ownedWishlistIdentityKeys:
-      ownedWishlistIdentityKeys,
+      ownedWishlistIdentityKeys: ownedWishlistIdentityKeys,
     );
 
-    final AtlasTaxonomy taxonomy =
-    _taxonomyService.resolve(
-      catalogProduct,
-    );
+    final AtlasTaxonomy taxonomy = _taxonomyService.resolve(catalogProduct);
 
-    final AtlasCollectorInsight insight =
-    _collectorInsightEngine.evaluateProduct(
-      product: catalogPop,
-      collectionPops: collectionPops,
-      collectionName: collectionName,
-      ownedWishlistIdentityKeys:
-      ownedWishlistIdentityKeys,
-      source: source,
-    );
+    final AtlasCollectorInsight insight = _collectorInsightEngine
+        .evaluateProduct(
+          product: catalogPop,
+          collectionPops: collectionPops,
+          collectionName: collectionName,
+          ownedWishlistIdentityKeys: ownedWishlistIdentityKeys,
+          source: source,
+        );
 
     return AtlasResolvedProduct(
       catalogProduct: catalogProduct,
@@ -90,40 +72,29 @@ final class AtlasCollectorResolver {
   }
 
   List<AtlasResolvedProduct> resolveAll({
-    required Iterable<AtlasCatalogProduct>
-    catalogProducts,
+    required Iterable<AtlasCatalogProduct> catalogProducts,
     required List<Pop> collectionPops,
-    Set<String> ownedWishlistIdentityKeys =
-    const <String>{},
-    String collectionName =
-    'All Atlas Collections',
-    String source =
-    'Atlas Collector Resolver',
+    Set<String> ownedWishlistIdentityKeys = const <String>{},
+    String collectionName = 'All Atlas Collections',
+    String source = 'Atlas Collector Resolver',
   }) {
-    final DateTime batchTimestamp =
-    DateTime.now();
+    final DateTime batchTimestamp = DateTime.now();
 
-    final List<AtlasResolvedProduct>
-    resolvedProducts =
-    <AtlasResolvedProduct>[];
+    final List<AtlasResolvedProduct> resolvedProducts =
+        <AtlasResolvedProduct>[];
 
     int productIndex = 0;
 
-    for (final AtlasCatalogProduct catalogProduct
-    in catalogProducts) {
+    for (final AtlasCatalogProduct catalogProduct in catalogProducts) {
       resolvedProducts.add(
         resolve(
           catalogProduct: catalogProduct,
           collectionPops: collectionPops,
-          ownedWishlistIdentityKeys:
-          ownedWishlistIdentityKeys,
+          ownedWishlistIdentityKeys: ownedWishlistIdentityKeys,
           collectionName: collectionName,
           source: source,
-          conversionTimestamp:
-          batchTimestamp.add(
-            Duration(
-              microseconds: productIndex,
-            ),
+          conversionTimestamp: batchTimestamp.add(
+            Duration(microseconds: productIndex),
           ),
         ),
       );
@@ -131,27 +102,21 @@ final class AtlasCollectorResolver {
       productIndex++;
     }
 
-    return List<AtlasResolvedProduct>.unmodifiable(
-      resolvedProducts,
-    );
+    return List<AtlasResolvedProduct>.unmodifiable(resolvedProducts);
   }
 
   AtlasResolvedProduct resolveForBarcode({
     required AtlasCatalogProduct catalogProduct,
     required String scannedBarcode,
     required List<Pop> collectionPops,
-    Set<String> ownedWishlistIdentityKeys =
-    const <String>{},
-    String collectionName =
-    'All Atlas Collections',
-    String source =
-    'Atlas Barcode Resolver',
+    Set<String> ownedWishlistIdentityKeys = const <String>{},
+    String collectionName = 'All Atlas Collections',
+    String source = 'Atlas Barcode Resolver',
   }) {
     return resolve(
       catalogProduct: catalogProduct,
       collectionPops: collectionPops,
-      ownedWishlistIdentityKeys:
-      ownedWishlistIdentityKeys,
+      ownedWishlistIdentityKeys: ownedWishlistIdentityKeys,
       collectionName: collectionName,
       source: source,
       scannedBarcode: scannedBarcode,

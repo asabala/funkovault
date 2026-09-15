@@ -126,8 +126,7 @@ class VaultStatusSection extends StatelessWidget {
                   ),
                   Expanded(
                     child: AtlasStatTile(
-                      value:
-                      '\$${currentValue.toStringAsFixed(0)}',
+                      value: '\$${currentValue.toStringAsFixed(0)}',
                       label: 'Value',
                     ),
                   ),
@@ -136,9 +135,7 @@ class VaultStatusSection extends StatelessWidget {
                       value: showDuplicateGroups
                           ? '$duplicateGroupCount'
                           : '$missingValueCount',
-                      label: showDuplicateGroups
-                          ? 'Groups'
-                          : 'Need Value',
+                      label: showDuplicateGroups ? 'Groups' : 'Need Value',
                     ),
                   ),
                 ],

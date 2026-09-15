@@ -23,12 +23,7 @@ class LabeledDropdown extends StatelessWidget {
         border: const OutlineInputBorder(),
       ),
       items: options
-          .map(
-            (option) => DropdownMenuItem(
-          value: option,
-          child: Text(option),
-        ),
-      )
+          .map((option) => DropdownMenuItem(value: option, child: Text(option)))
           .toList(),
       onChanged: (value) {
         if (value != null) {

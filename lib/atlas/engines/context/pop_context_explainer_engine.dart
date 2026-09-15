@@ -36,24 +36,15 @@ class PopContextExplainerEngine {
     );
 
     if (_asksAboutValue(normalizedQuestion)) {
-      return _buildValueAnswer(
-        pop: pop,
-        activities: activities,
-      );
+      return _buildValueAnswer(pop: pop, activities: activities);
     }
 
     if (_asksAboutQuantity(normalizedQuestion)) {
-      return _buildQuantityAnswer(
-        pop: pop,
-        activities: activities,
-      );
+      return _buildQuantityAnswer(pop: pop, activities: activities);
     }
 
     if (_asksAboutOwnership(normalizedQuestion)) {
-      return _buildOwnershipAnswer(
-        pop: pop,
-        activities: activities,
-      );
+      return _buildOwnershipAnswer(pop: pop, activities: activities);
     }
 
     if (_asksAboutIdentity(normalizedQuestion)) {
@@ -66,8 +57,8 @@ class PopContextExplainerEngine {
         answer: activitySummary.summary,
         atlasTip: activitySummary.hasActivity
             ? 'Atlas found ${activitySummary.activityCount} recorded '
-            '${activitySummary.activityCount == 1 ? 'event' : 'events'} '
-            'for this collectible.'
+                  '${activitySummary.activityCount == 1 ? 'event' : 'events'} '
+                  'for this collectible.'
             : 'Future value, quantity, ownership, and detail changes will appear here.',
         suggestedQuestions: _defaultSuggestedQuestions,
       );
@@ -80,7 +71,7 @@ class PopContextExplainerEngine {
         activitySummary: activitySummary.summary,
       ),
       atlasTip:
-      'Atlas is currently answering from trusted Vault data and recorded activity only.',
+          'Atlas is currently answering from trusted Vault data and recorded activity only.',
       suggestedQuestions: _defaultSuggestedQuestions,
     );
   }
@@ -95,15 +86,13 @@ class PopContextExplainerEngine {
     );
 
     final valueUpdates = matchingActivities
-        .where(
-          (activity) => activity.action == 'value_updated',
-    )
+        .where((activity) => activity.action == 'value_updated')
         .toList();
 
     final currentValueLabel = pop.value <= 0
         ? 'No estimated value is currently saved.'
         : 'The current estimated value is '
-        '\$${pop.value.toStringAsFixed(2)}.';
+              '\$${pop.value.toStringAsFixed(2)}.';
 
     final historyLabel = valueUpdates.isEmpty
         ? 'Atlas has not recorded a value change for this collectible yet.'
@@ -137,9 +126,9 @@ class PopContextExplainerEngine {
     final quantityUpdates = matchingActivities
         .where(
           (activity) =>
-      activity.action == 'quantity_updated' ||
-          activity.action == 'quantity_increased',
-    )
+              activity.action == 'quantity_updated' ||
+              activity.action == 'quantity_increased',
+        )
         .length;
 
     final updateLabel = quantityUpdates == 0
@@ -151,9 +140,9 @@ class PopContextExplainerEngine {
     return PopContextAnswer(
       title: 'Quantity Intelligence',
       answer:
-      'Your collection currently lists ${pop.quantity} ${pop.quantity == 1 ? 'copy' : 'copies'} of ${pop.name}. $updateLabel',
+          'Your collection currently lists ${pop.quantity} ${pop.quantity == 1 ? 'copy' : 'copies'} of ${pop.name}. $updateLabel',
       atlasTip:
-      'Quantity should represent identical copies only. Different variants, stickers, exclusives, or signed editions should remain separate records.',
+          'Quantity should represent identical copies only. Different variants, stickers, exclusives, or signed editions should remain separate records.',
       suggestedQuestions: const [
         'What changed with this Pop?',
         'Was this moved to the wishlist?',
@@ -172,33 +161,32 @@ class PopContextExplainerEngine {
     );
 
     final movedToWishlist = matchingActivities.any(
-          (activity) => activity.action == 'wishlist_added',
+      (activity) => activity.action == 'wishlist_added',
     );
 
     final movedToOwned = matchingActivities.any(
-          (activity) => activity.action == 'wishlist_removed',
+      (activity) => activity.action == 'wishlist_removed',
     );
 
     String historyLabel;
 
     if (movedToWishlist && movedToOwned) {
       historyLabel =
-      'Atlas recorded movement between the wishlist and owned collection.';
+          'Atlas recorded movement between the wishlist and owned collection.';
     } else if (movedToWishlist) {
       historyLabel = 'Atlas recorded a move to the wishlist.';
     } else if (movedToOwned) {
       historyLabel = 'Atlas recorded a move to the owned collection.';
     } else {
-      historyLabel =
-      'Atlas has not recorded an ownership-status change yet.';
+      historyLabel = 'Atlas has not recorded an ownership-status change yet.';
     }
 
     return PopContextAnswer(
       title: 'Ownership Status',
       answer:
-      '${pop.name} is currently marked as ${pop.isWishlist ? 'Wishlist' : 'Owned'} for ${pop.owner}. $historyLabel',
+          '${pop.name} is currently marked as ${pop.isWishlist ? 'Wishlist' : 'Owned'} for ${pop.owner}. $historyLabel',
       atlasTip:
-      'Wishlist status changes availability, but it does not remove the collectible record or its saved identity details.',
+          'Wishlist status changes availability, but it does not remove the collectible record or its saved identity details.',
       suggestedQuestions: const [
         'What changed with this Pop?',
         'What is its current value?',
@@ -253,7 +241,7 @@ class PopContextExplainerEngine {
       title: 'Collector Identity',
       answer: identityLabel,
       atlasTip:
-      'Variant, sticker, exclusive, limited-edition, and signature details help Atlas avoid treating different releases as duplicates.',
+          'Variant, sticker, exclusive, limited-edition, and signature details help Atlas avoid treating different releases as duplicates.',
       suggestedQuestions: const [
         'What changed with this Pop?',
         'What is its current value?',
@@ -282,25 +270,15 @@ class PopContextExplainerEngine {
     required List<Activity> activities,
   }) {
     final matchingActivities = activities
-        .where(
-          (activity) => _matchesPop(
-        activity: activity,
-        pop: pop,
-      ),
-    )
+        .where((activity) => _matchesPop(activity: activity, pop: pop))
         .toList();
 
-    matchingActivities.sort(
-          (a, b) => b.timestamp.compareTo(a.timestamp),
-    );
+    matchingActivities.sort((a, b) => b.timestamp.compareTo(a.timestamp));
 
     return matchingActivities;
   }
 
-  bool _matchesPop({
-    required Activity activity,
-    required Pop pop,
-  }) {
+  bool _matchesPop({required Activity activity, required Pop pop}) {
     final activityPopId = activity.popId.trim();
     final popId = pop.id.trim();
 
@@ -326,11 +304,11 @@ class PopContextExplainerEngine {
   }
 
   void _addMeaningfulIdentity(
-      List<String> parts, {
-        required String label,
-        required String value,
-        required List<String> ignoredValues,
-      }) {
+    List<String> parts, {
+    required String label,
+    required String value,
+    required List<String> ignoredValues,
+  }) {
     final cleaned = value.trim();
     final normalized = cleaned.toLowerCase();
 

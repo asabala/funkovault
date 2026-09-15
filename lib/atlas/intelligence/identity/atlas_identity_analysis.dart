@@ -10,20 +10,16 @@ import '../variant/atlas_variant_evidence.dart';
 // Represents the complete analysis of a collector item.
 final class AtlasIdentityAnalysis {
   const AtlasIdentityAnalysis({
-    this.variantResult =
-    const AtlasVariantDetectionResult(
+    this.variantResult = const AtlasVariantDetectionResult(
       evidence: <AtlasVariantEvidence>[],
     ),
-    this.retailerResult =
-    const FunkoRetailerDetectionResult(
+    this.retailerResult = const FunkoRetailerDetectionResult(
       evidence: <FunkoRetailerEvidence>[],
     ),
-    this.stickerResult =
-    const FunkoStickerDetectionResult(
+    this.stickerResult = const FunkoStickerDetectionResult(
       evidence: <FunkoStickerEvidence>[],
     ),
-    this.eventResult =
-    const FunkoEventDetectionResult(
+    this.eventResult = const FunkoEventDetectionResult(
       evidence: <FunkoEventEvidence>[],
     ),
   });
@@ -50,14 +46,10 @@ final class AtlasIdentityAnalysis {
     FunkoEventDetectionResult? eventResult,
   }) {
     return AtlasIdentityAnalysis(
-      variantResult:
-      variantResult ?? this.variantResult,
-      retailerResult:
-      retailerResult ?? this.retailerResult,
-      stickerResult:
-      stickerResult ?? this.stickerResult,
-      eventResult:
-      eventResult ?? this.eventResult,
+      variantResult: variantResult ?? this.variantResult,
+      retailerResult: retailerResult ?? this.retailerResult,
+      stickerResult: stickerResult ?? this.stickerResult,
+      eventResult: eventResult ?? this.eventResult,
     );
   }
 }

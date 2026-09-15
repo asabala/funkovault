@@ -11,12 +11,7 @@ enum AtlasScanInsightType {
 }
 
 /// The importance of an Atlas scan insight.
-enum AtlasScanInsightPriority {
-  low,
-  normal,
-  high,
-  critical,
-}
+enum AtlasScanInsightPriority { low, normal, high, critical }
 
 /// Identifies the system that produced an Atlas insight.
 enum AtlasScanInsightSource {
@@ -164,10 +159,7 @@ class AtlasScanInsight {
             priorityWeight == other.priorityWeight &&
             source == other.source &&
             requiresOnline == other.requiresOnline &&
-            listEquals(
-              details,
-              other.details,
-            ) &&
+            listEquals(details, other.details) &&
             recommendation == other.recommendation;
   }
 
@@ -211,9 +203,7 @@ class AtlasScanIntelligence {
     List<AtlasScanInsight> insights = const <AtlasScanInsight>[],
   }) : insights = List<AtlasScanInsight>.unmodifiable(insights);
 
-  factory AtlasScanIntelligence.empty({
-    required String sessionId,
-  }) {
+  factory AtlasScanIntelligence.empty({required String sessionId}) {
     return AtlasScanIntelligence(
       sessionId: sessionId,
       generatedAt: DateTime.now(),
@@ -239,34 +229,26 @@ class AtlasScanIntelligence {
   }
 
   bool get hasHighPriorityInsights {
-    return insights.any(
-          (AtlasScanInsight insight) {
-        return insight.priority == AtlasScanInsightPriority.high ||
-            insight.priority == AtlasScanInsightPriority.critical;
-      },
-    );
+    return insights.any((AtlasScanInsight insight) {
+      return insight.priority == AtlasScanInsightPriority.high ||
+          insight.priority == AtlasScanInsightPriority.critical;
+    });
   }
 
   List<AtlasScanInsight> get recommendations {
     return List<AtlasScanInsight>.unmodifiable(
-      insights.where(
-            (AtlasScanInsight insight) {
-          return insight.type == AtlasScanInsightType.recommendation ||
-              insight.hasRecommendation;
-        },
-      ),
+      insights.where((AtlasScanInsight insight) {
+        return insight.type == AtlasScanInsightType.recommendation ||
+            insight.hasRecommendation;
+      }),
     );
   }
 
-  List<AtlasScanInsight> insightsOfType(
-      AtlasScanInsightType type,
-      ) {
+  List<AtlasScanInsight> insightsOfType(AtlasScanInsightType type) {
     return List<AtlasScanInsight>.unmodifiable(
-      insights.where(
-            (AtlasScanInsight insight) {
-          return insight.type == type;
-        },
-      ),
+      insights.where((AtlasScanInsight insight) {
+        return insight.type == type;
+      }),
     );
   }
 
@@ -283,64 +265,44 @@ class AtlasScanIntelligence {
   }
 
   List<AtlasScanInsight> get prioritizedInsights {
-    final List<AtlasScanInsight> sorted =
-    List<AtlasScanInsight>.from(
-      insights,
-    );
+    final List<AtlasScanInsight> sorted = List<AtlasScanInsight>.from(insights);
 
-    sorted.sort(
-          (
-          AtlasScanInsight first,
-          AtlasScanInsight second,
-          ) {
-        return first.effectivePriorityWeight.compareTo(
-          second.effectivePriorityWeight,
-        );
-      },
-    );
+    sorted.sort((AtlasScanInsight first, AtlasScanInsight second) {
+      return first.effectivePriorityWeight.compareTo(
+        second.effectivePriorityWeight,
+      );
+    });
 
-    return List<AtlasScanInsight>.unmodifiable(
-      sorted,
-    );
+    return List<AtlasScanInsight>.unmodifiable(sorted);
   }
 
-  List<AtlasScanInsight> topInsights({
-    int limit = 3,
-  }) {
+  List<AtlasScanInsight> topInsights({int limit = 3}) {
     if (limit <= 0) {
       return const <AtlasScanInsight>[];
     }
 
-    return List<AtlasScanInsight>.unmodifiable(
-      prioritizedInsights.take(limit),
-    );
+    return List<AtlasScanInsight>.unmodifiable(prioritizedInsights.take(limit));
   }
 
-  List<AtlasScanInsight> compactInsights({
-    int limit = 3,
-  }) {
+  List<AtlasScanInsight> compactInsights({int limit = 3}) {
     if (limit <= 0) {
       return const <AtlasScanInsight>[];
     }
 
     return List<AtlasScanInsight>.unmodifiable(
       prioritizedInsights
-          .where(
-            (AtlasScanInsight insight) {
-          return insight.isCompactDisplayCandidate;
-        },
-      )
+          .where((AtlasScanInsight insight) {
+            return insight.isCompactDisplayCandidate;
+          })
           .take(limit),
     );
   }
 
   List<AtlasScanInsight> get offlineInsights {
     return List<AtlasScanInsight>.unmodifiable(
-      prioritizedInsights.where(
-            (AtlasScanInsight insight) {
-          return insight.isOfflineSafe;
-        },
-      ),
+      prioritizedInsights.where((AtlasScanInsight insight) {
+        return insight.isOfflineSafe;
+      }),
     );
   }
 
@@ -356,11 +318,7 @@ class AtlasScanIntelligence {
 
   @override
   int get hashCode {
-    return Object.hash(
-      sessionId,
-      generatedAt,
-      Object.hashAll(insights),
-    );
+    return Object.hash(sessionId, generatedAt, Object.hashAll(insights));
   }
 
   @override

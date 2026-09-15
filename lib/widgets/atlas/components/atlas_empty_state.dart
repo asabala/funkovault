@@ -6,11 +6,7 @@ import '../../../theme/atlas_symbols.dart';
 import '../../../theme/atlas_typography.dart';
 import '../atlas_glass_card.dart';
 
-enum AtlasEmptyStateTone {
-  intelligence,
-  recommendation,
-  neutral,
-}
+enum AtlasEmptyStateTone { intelligence, recommendation, neutral }
 
 class AtlasEmptyState extends StatelessWidget {
   const AtlasEmptyState({
@@ -25,9 +21,9 @@ class AtlasEmptyState extends StatelessWidget {
     this.onAction,
     this.compact = false,
   }) : assert(
-  icon == null || symbol == null,
-  'Use either icon or symbol, not both.',
-  );
+         icon == null || symbol == null,
+         'Use either icon or symbol, not both.',
+       );
 
   final IconData? icon;
   final String? symbol;
@@ -44,30 +40,24 @@ class AtlasEmptyState extends StatelessWidget {
   final bool compact;
 
   bool get _hasAction {
-    return actionLabel?.trim().isNotEmpty == true &&
-        onAction != null;
+    return actionLabel?.trim().isNotEmpty == true && onAction != null;
   }
 
   Color get _accentColor {
     return switch (tone) {
-      AtlasEmptyStateTone.intelligence =>
-      AtlasColors.intelligenceBlue,
-      AtlasEmptyStateTone.recommendation =>
-      AtlasColors.vaultGold,
-      AtlasEmptyStateTone.neutral =>
-      AtlasColors.textSecondary,
+      AtlasEmptyStateTone.intelligence => AtlasColors.intelligenceBlue,
+      AtlasEmptyStateTone.recommendation => AtlasColors.vaultGold,
+      AtlasEmptyStateTone.neutral => AtlasColors.textSecondary,
     };
   }
 
   IconData get _resolvedIcon {
     return icon ??
         switch (tone) {
-          AtlasEmptyStateTone.intelligence =>
-          Icons.search_rounded,
+          AtlasEmptyStateTone.intelligence => Icons.search_rounded,
           AtlasEmptyStateTone.recommendation =>
-          Icons.add_circle_outline_rounded,
-          AtlasEmptyStateTone.neutral =>
-          Icons.inbox_outlined,
+            Icons.add_circle_outline_rounded,
+          AtlasEmptyStateTone.neutral => Icons.inbox_outlined,
         };
   }
 
@@ -90,11 +80,7 @@ class AtlasEmptyState extends StatelessWidget {
             accentColor: _accentColor,
             compact: compact,
           ),
-          SizedBox(
-            height: compact
-                ? AtlasSpacing.sm
-                : AtlasSpacing.md,
-          ),
+          SizedBox(height: compact ? AtlasSpacing.sm : AtlasSpacing.md),
           if (eyebrow?.trim().isNotEmpty == true) ...[
             Text(
               eyebrow!.trim().toUpperCase(),
@@ -104,9 +90,7 @@ class AtlasEmptyState extends StatelessWidget {
                 letterSpacing: 0.6,
               ),
             ),
-            const SizedBox(
-              height: AtlasSpacing.xs,
-            ),
+            const SizedBox(height: AtlasSpacing.xs),
           ],
           Text(
             title,
@@ -115,35 +99,24 @@ class AtlasEmptyState extends StatelessWidget {
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(
-            height: AtlasSpacing.xs,
-          ),
+          const SizedBox(height: AtlasSpacing.xs),
           Text(
             message,
             maxLines: compact ? 2 : null,
-            overflow: compact
-                ? TextOverflow.ellipsis
-                : TextOverflow.visible,
+            overflow: compact ? TextOverflow.ellipsis : TextOverflow.visible,
             style: AtlasTypography.bodyMedium.copyWith(
               color: AtlasColors.textSecondary,
               height: 1.35,
             ),
           ),
           if (_hasAction) ...[
-            const SizedBox(
-              height: AtlasSpacing.md,
-            ),
+            const SizedBox(height: AtlasSpacing.md),
             Align(
               alignment: Alignment.centerLeft,
               child: OutlinedButton.icon(
                 onPressed: onAction,
-                icon: Icon(
-                  _actionIcon,
-                  color: _accentColor,
-                ),
-                label: Text(
-                  actionLabel!.trim(),
-                ),
+                icon: Icon(_actionIcon, color: _accentColor),
+                label: Text(actionLabel!.trim()),
               ),
             ),
           ],
@@ -154,12 +127,9 @@ class AtlasEmptyState extends StatelessWidget {
 
   IconData get _actionIcon {
     return switch (tone) {
-      AtlasEmptyStateTone.intelligence =>
-      Icons.search_rounded,
-      AtlasEmptyStateTone.recommendation =>
-      Icons.add_circle_outline_rounded,
-      AtlasEmptyStateTone.neutral =>
-      Icons.refresh_rounded,
+      AtlasEmptyStateTone.intelligence => Icons.search_rounded,
+      AtlasEmptyStateTone.recommendation => Icons.add_circle_outline_rounded,
+      AtlasEmptyStateTone.neutral => Icons.refresh_rounded,
     };
   }
 }
@@ -192,30 +162,13 @@ class _EmptyStateIdentity extends StatelessWidget {
       height: size,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: accentColor.withValues(
-          alpha: 0.10,
-        ),
-        borderRadius: BorderRadius.circular(
-          compact ? 13 : 16,
-        ),
-        border: Border.all(
-          color: accentColor.withValues(
-            alpha: 0.24,
-          ),
-        ),
+        color: accentColor.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(compact ? 13 : 16),
+        border: Border.all(color: accentColor.withValues(alpha: 0.24)),
       ),
       child: symbol != null
-          ? Text(
-        resolvedSymbol,
-        style: TextStyle(
-          fontSize: compact ? 18 : 21,
-        ),
-      )
-          : Icon(
-        resolvedIcon,
-        color: accentColor,
-        size: compact ? 21 : 26,
-      ),
+          ? Text(resolvedSymbol, style: TextStyle(fontSize: compact ? 18 : 21))
+          : Icon(resolvedIcon, color: accentColor, size: compact ? 21 : 26),
     );
   }
 }

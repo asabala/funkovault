@@ -15,20 +15,15 @@ import 'atlas_catalog_sync_service.dart';
 /// Catalog synchronization should be triggered intentionally rather than during
 /// ordinary catalog searches or barcode scans.
 final class AtlasCatalogBootstrapService {
-  const AtlasCatalogBootstrapService({
-    required this.syncService,
-  });
+  const AtlasCatalogBootstrapService({required this.syncService});
 
   final AtlasCatalogSyncService syncService;
 
   /// Loads the bundled Pop Vinyl catalog and synchronizes it with Supabase.
   Future<AtlasCatalogSyncResult> syncBundledPopVinylCatalog() async {
     final List<AtlasCatalogProduct> products =
-    await AtlasCatalogLoader.loadPopVinylCatalog();
+        await AtlasCatalogLoader.loadPopVinylCatalog();
 
-    return syncService.syncProducts(
-      sourceType: 'tcgcsv',
-      products: products,
-    );
+    return syncService.syncProducts(sourceType: 'tcgcsv', products: products);
   }
 }

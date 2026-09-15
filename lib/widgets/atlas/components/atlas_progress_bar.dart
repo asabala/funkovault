@@ -17,9 +17,9 @@ class AtlasProgressBar extends StatelessWidget {
     this.showPercentage = false,
     this.animationDuration = AtlasMotion.progressDuration,
   }) : assert(
-  value >= 0 && value <= 1,
-  'AtlasProgressBar value must be between 0 and 1.',
-  );
+         value >= 0 && value <= 1,
+         'AtlasProgressBar value must be between 0 and 1.',
+       );
 
   /// Normalized progress between 0 and 1.
   final double value;
@@ -38,21 +38,17 @@ class AtlasProgressBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double safeValue = value.clamp(
-      0,
-      1,
-    );
+    final double safeValue = value.clamp(0, 1);
 
     final String resolvedTrailingLabel =
-    trailingLabel?.trim().isNotEmpty == true
+        trailingLabel?.trim().isNotEmpty == true
         ? trailingLabel!.trim()
         : showPercentage
         ? '${(safeValue * 100).round()}%'
         : '';
 
     final bool showHeader =
-        label?.trim().isNotEmpty == true ||
-            resolvedTrailingLabel.isNotEmpty;
+        label?.trim().isNotEmpty == true || resolvedTrailingLabel.isNotEmpty;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -84,52 +80,38 @@ class AtlasProgressBar extends StatelessWidget {
                 ),
             ],
           ),
-          const SizedBox(
-            height: AtlasSpacing.sm,
-          ),
+          const SizedBox(height: AtlasSpacing.sm),
         ],
         ClipRRect(
-          borderRadius: BorderRadius.circular(
-            999,
-          ),
+          borderRadius: BorderRadius.circular(999),
           child: Container(
             height: height,
             color: backgroundColor,
             alignment: Alignment.centerLeft,
             child: TweenAnimationBuilder<double>(
-              tween: Tween<double>(
-                begin: 0,
-                end: safeValue,
-              ),
+              tween: Tween<double>(begin: 0, end: safeValue),
               duration: animationDuration,
               curve: AtlasMotion.progressCurve,
-              builder: (
-                  BuildContext context,
-                  double animatedValue,
-                  Widget? child,
-                  ) {
-                return FractionallySizedBox(
-                  widthFactor: animatedValue,
-                  alignment: Alignment.centerLeft,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: accentColor,
-                      borderRadius: BorderRadius.circular(
-                        999,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: accentColor.withValues(
-                            alpha: 0.24,
-                          ),
-                          blurRadius: 10,
+              builder:
+                  (BuildContext context, double animatedValue, Widget? child) {
+                    return FractionallySizedBox(
+                      widthFactor: animatedValue,
+                      alignment: Alignment.centerLeft,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: accentColor,
+                          borderRadius: BorderRadius.circular(999),
+                          boxShadow: [
+                            BoxShadow(
+                              color: accentColor.withValues(alpha: 0.24),
+                              blurRadius: 10,
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                    child: const SizedBox.expand(),
-                  ),
-                );
-              },
+                        child: const SizedBox.expand(),
+                      ),
+                    );
+                  },
             ),
           ),
         ),

@@ -23,10 +23,7 @@ class VaultHealthCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Vault Health',
-            style: AtlasTypography.headingSmall,
-          ),
+          Text('Vault Health', style: AtlasTypography.headingSmall),
           const SizedBox(height: AtlasSpacing.md),
           Text(
             '${safeHealth.toStringAsFixed(0)}%',
@@ -35,9 +32,7 @@ class VaultHealthCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: AtlasSpacing.sm),
-          LinearProgressIndicator(
-            value: safeHealth / 100,
-          ),
+          LinearProgressIndicator(value: safeHealth / 100),
           const SizedBox(height: AtlasSpacing.md),
           Text(
             message,

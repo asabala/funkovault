@@ -30,11 +30,9 @@ class AtlasIntelligenceCenter extends StatelessWidget {
 
     final pops = repository.allPops(appState);
 
-    final duplicateCount =
-        repository.duplicatePopGroups(appState).length;
+    final duplicateCount = repository.duplicatePopGroups(appState).length;
 
-    final missingValueCount =
-        pops.where((pop) => pop.value <= 0).length;
+    final missingValueCount = pops.where((pop) => pop.value <= 0).length;
 
     final health = _calculateVaultHealth(
       totalPops: pops.length,
@@ -50,9 +48,7 @@ class AtlasIntelligenceCenter extends StatelessWidget {
     );
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Atlas Intelligence Center'),
-      ),
+      appBar: AppBar(title: const Text('Atlas Intelligence Center')),
       body: VaultScrollView(
         children: [
           const CollectorHeader(
@@ -68,9 +64,7 @@ class AtlasIntelligenceCenter extends StatelessWidget {
             onHealthTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (_) => const VaultHealthScreen(),
-                ),
+                MaterialPageRoute(builder: (_) => const VaultHealthScreen()),
               );
             },
             onConfidenceTap: () {
@@ -144,11 +138,9 @@ class AtlasIntelligenceCenter extends StatelessWidget {
       return 100;
     }
 
-    final issueCount =
-        duplicateCount + missingValueCount;
+    final issueCount = duplicateCount + missingValueCount;
 
-    final score =
-        100 - ((issueCount / totalPops) * 100);
+    final score = 100 - ((issueCount / totalPops) * 100);
 
     return score.clamp(0, 100);
   }

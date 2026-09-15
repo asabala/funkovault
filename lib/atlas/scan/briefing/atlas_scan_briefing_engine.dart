@@ -8,61 +8,37 @@ import 'atlas_scan_briefing.dart';
 class AtlasScanBriefingEngine {
   const AtlasScanBriefingEngine._();
 
-  static AtlasScanBriefing build(
-      ScanSession session,
-      ) {
+  static AtlasScanBriefing build(ScanSession session) {
     final List<String> highlights = <String>[];
 
-    _addConfidenceHighlight(
-      session,
-      highlights,
-    );
+    _addConfidenceHighlight(session, highlights);
 
-    _addCollectorHighlights(
-      session.collectorStatus,
-      highlights,
-    );
+    _addCollectorHighlights(session.collectorStatus, highlights);
 
-    _addVariantHighlights(
-      session.variantResolution,
-      highlights,
-    );
+    _addVariantHighlights(session.variantResolution, highlights);
 
-    _addMarketHighlights(
-      session.marketSnapshot,
-      highlights,
-    );
+    _addMarketHighlights(session.marketSnapshot, highlights);
 
-    _addSessionHighlights(
-      session,
-      highlights,
-    );
+    _addSessionHighlights(session, highlights);
 
     return AtlasScanBriefing(
       priority: _priorityFor(session),
       title: _titleFor(session),
       summary: _summaryFor(session),
-      highlights: List<String>.unmodifiable(
-        highlights,
-      ),
+      highlights: List<String>.unmodifiable(highlights),
       recommendation: _recommendationFor(session),
     );
   }
 
-  static AtlasScanBriefingPriority _priorityFor(
-      ScanSession session,
-      ) {
-    if (session.resolutionStatus ==
-        IdentityResolutionStatus.failed ||
+  static AtlasScanBriefingPriority _priorityFor(ScanSession session) {
+    if (session.resolutionStatus == IdentityResolutionStatus.failed ||
         session.status == ScanSessionStatus.failed) {
       return AtlasScanBriefingPriority.critical;
     }
 
     if (session.requiresUserAction ||
-        session.resolutionStatus ==
-            IdentityResolutionStatus.ambiguous ||
-        session.resolutionStatus ==
-            IdentityResolutionStatus.unresolved) {
+        session.resolutionStatus == IdentityResolutionStatus.ambiguous ||
+        session.resolutionStatus == IdentityResolutionStatus.unresolved) {
       return AtlasScanBriefingPriority.warning;
     }
 
@@ -73,9 +49,7 @@ class AtlasScanBriefingEngine {
     return AtlasScanBriefingPriority.information;
   }
 
-  static String _titleFor(
-      ScanSession session,
-      ) {
+  static String _titleFor(ScanSession session) {
     switch (session.resolutionStatus) {
       case IdentityResolutionStatus.failed:
         return 'Atlas Could Not Resolve This Product';
@@ -101,9 +75,7 @@ class AtlasScanBriefingEngine {
     }
   }
 
-  static String _summaryFor(
-      ScanSession session,
-      ) {
+  static String _summaryFor(ScanSession session) {
     switch (session.resolutionStatus) {
       case IdentityResolutionStatus.failed:
         return 'Atlas could not confidently identify this collectible from the available scan evidence.';
@@ -131,11 +103,8 @@ class AtlasScanBriefingEngine {
     }
   }
 
-  static String _recommendationFor(
-      ScanSession session,
-      ) {
-    if (session.resolutionStatus ==
-        IdentityResolutionStatus.failed ||
+  static String _recommendationFor(ScanSession session) {
+    if (session.resolutionStatus == IdentityResolutionStatus.failed ||
         session.status == ScanSessionStatus.failed) {
       return 'Try scanning the product barcode again or search the Atlas catalog manually.';
     }
@@ -144,18 +113,15 @@ class AtlasScanBriefingEngine {
       return 'Confirm the sticker, finish, exclusive, packaging, and other variant traits before adding this collectible.';
     }
 
-    if (session.resolutionStatus ==
-        IdentityResolutionStatus.ambiguous) {
+    if (session.resolutionStatus == IdentityResolutionStatus.ambiguous) {
       return 'Review each possible catalog match and select the exact physical release.';
     }
 
-    if (session.resolutionStatus ==
-        IdentityResolutionStatus.unresolved) {
+    if (session.resolutionStatus == IdentityResolutionStatus.unresolved) {
       return 'Search the broader catalog or enter the product manually.';
     }
 
-    final CollectorItemStatus? collectorStatus =
-        session.collectorStatus;
+    final CollectorItemStatus? collectorStatus = session.collectorStatus;
 
     if (collectorStatus?.hasPossibleDuplicates ?? false) {
       return 'Review the possible duplicate records before adding another copy.';
@@ -177,62 +143,47 @@ class AtlasScanBriefingEngine {
   }
 
   static void _addConfidenceHighlight(
-      ScanSession session,
-      List<String> highlights,
-      ) {
-    final int? confidencePercent =
-    _confidencePercent(session.confidence);
+    ScanSession session,
+    List<String> highlights,
+  ) {
+    final int? confidencePercent = _confidencePercent(session.confidence);
 
     if (confidencePercent == null) {
       return;
     }
 
-    highlights.add(
-      'Atlas confidence: $confidencePercent%',
-    );
+    highlights.add('Atlas confidence: $confidencePercent%');
   }
 
   static void _addCollectorHighlights(
-      CollectorItemStatus? status,
-      List<String> highlights,
-      ) {
+    CollectorItemStatus? status,
+    List<String> highlights,
+  ) {
     if (status == null) {
       return;
     }
 
     switch (status.relationship) {
       case CollectorItemRelationship.notInVault:
-        highlights.add(
-          'This release is not currently in your Vault.',
-        );
+        highlights.add('This release is not currently in your Vault.');
 
       case CollectorItemRelationship.owned:
-        highlights.add(
-          _ownedQuantityMessage(status.ownedQuantity),
-        );
+        highlights.add(_ownedQuantityMessage(status.ownedQuantity));
 
       case CollectorItemRelationship.wishlisted:
-        highlights.add(
-          'This release is currently on your wishlist.',
-        );
+        highlights.add('This release is currently on your wishlist.');
 
       case CollectorItemRelationship.ownedAndWishlisted:
         highlights
-          ..add(
-            _ownedQuantityMessage(status.ownedQuantity),
-          )
-          ..add(
-            'This release is also on your wishlist.',
-          );
+          ..add(_ownedQuantityMessage(status.ownedQuantity))
+          ..add('This release is also on your wishlist.');
 
       case CollectorItemRelationship.unknown:
         break;
     }
 
     if (status.collectionNames.isNotEmpty) {
-      highlights.add(
-        'Vault location: ${status.collectionNames.join(', ')}',
-      );
+      highlights.add('Vault location: ${status.collectionNames.join(', ')}');
     }
 
     if (status.hasPossibleDuplicates) {
@@ -244,9 +195,7 @@ class AtlasScanBriefingEngine {
     }
   }
 
-  static String _ownedQuantityMessage(
-      int quantity,
-      ) {
+  static String _ownedQuantityMessage(int quantity) {
     if (quantity <= 1) {
       return 'You already own this release.';
     }
@@ -255,27 +204,22 @@ class AtlasScanBriefingEngine {
   }
 
   static void _addVariantHighlights(
-      ScanVariantResolution? resolution,
-      List<String> highlights,
-      ) {
+    ScanVariantResolution? resolution,
+    List<String> highlights,
+  ) {
     if (resolution == null) {
       return;
     }
 
     switch (resolution.status) {
       case ScanVariantStatus.exactMatch:
-        highlights.add(
-          'The exact physical variant was identified.',
-        );
+        highlights.add('The exact physical variant was identified.');
 
       case ScanVariantStatus.likelyMatch:
-        highlights.add(
-          'Atlas found a likely variant match.',
-        );
+        highlights.add('Atlas found a likely variant match.');
 
       case ScanVariantStatus.multipleCandidates:
-        final int count =
-            resolution.candidateProductIds.length;
+        final int count = resolution.candidateProductIds.length;
 
         highlights.add(
           count > 1
@@ -284,9 +228,7 @@ class AtlasScanBriefingEngine {
         );
 
       case ScanVariantStatus.visualConfirmationRequired:
-        highlights.add(
-          'Visual variant confirmation is required.',
-        );
+        highlights.add('Visual variant confirmation is required.');
 
       case ScanVariantStatus.unknown:
         break;
@@ -304,58 +246,41 @@ class AtlasScanBriefingEngine {
       );
     }
 
-    final int? confidencePercent =
-    _confidencePercent(resolution.confidence);
+    final int? confidencePercent = _confidencePercent(resolution.confidence);
 
     if (confidencePercent != null) {
-      highlights.add(
-        'Variant confidence: $confidencePercent%',
-      );
+      highlights.add('Variant confidence: $confidencePercent%');
     }
   }
 
   static void _addMarketHighlights(
-      MarketValueSnapshot? snapshot,
-      List<String> highlights,
-      ) {
-    if (snapshot == null ||
-        !snapshot.hasMarketEvidence) {
+    MarketValueSnapshot? snapshot,
+    List<String> highlights,
+  ) {
+    if (snapshot == null || !snapshot.hasMarketEvidence) {
       return;
     }
 
     if (snapshot.hasEstimatedValue) {
       highlights.add(
-        'Estimated value: ${_formatMoney(
-          snapshot.estimatedValue!,
-          snapshot.currencyCode,
-        )}',
+        'Estimated value: ${_formatMoney(snapshot.estimatedValue!, snapshot.currencyCode)}',
       );
     }
 
     if (snapshot.hasRecentRange) {
       highlights.add(
         'Recent sale range: '
-            '${_formatMoney(
-          snapshot.recentSaleLow!,
-          snapshot.currencyCode,
-        )}–'
-            '${_formatMoney(
-          snapshot.recentSaleHigh!,
-          snapshot.currencyCode,
-        )}',
+        '${_formatMoney(snapshot.recentSaleLow!, snapshot.currencyCode)}–'
+        '${_formatMoney(snapshot.recentSaleHigh!, snapshot.currencyCode)}',
       );
     } else if (snapshot.hasLastSale) {
       highlights.add(
-        'Last recorded sale: ${_formatMoney(
-          snapshot.lastSalePrice!,
-          snapshot.currencyCode,
-        )}',
+        'Last recorded sale: ${_formatMoney(snapshot.lastSalePrice!, snapshot.currencyCode)}',
       );
     }
 
     if (snapshot.hasTrend) {
-      final double percentage =
-      snapshot.trendPercentage!.abs();
+      final double percentage = snapshot.trendPercentage!.abs();
 
       switch (snapshot.trendDirection) {
         case MarketTrendDirection.rising:
@@ -369,9 +294,7 @@ class AtlasScanBriefingEngine {
           );
 
         case MarketTrendDirection.stable:
-          highlights.add(
-            'Market trend: stable',
-          );
+          highlights.add('Market trend: stable');
 
         case MarketTrendDirection.unknown:
           highlights.add(
@@ -381,26 +304,20 @@ class AtlasScanBriefingEngine {
     }
 
     if (snapshot.isStale) {
-      highlights.add(
-        'Market information may be outdated.',
-      );
+      highlights.add('Market information may be outdated.');
     }
   }
 
   static void _addSessionHighlights(
-      ScanSession session,
-      List<String> highlights,
-      ) {
+    ScanSession session,
+    List<String> highlights,
+  ) {
     if (session.isOffline) {
-      highlights.add(
-        'This scan was processed offline.',
-      );
+      highlights.add('This scan was processed offline.');
     }
 
     if (session.requiresSync) {
-      highlights.add(
-        'Additional intelligence is waiting to sync.',
-      );
+      highlights.add('Additional intelligence is waiting to sync.');
     }
 
     if (session.contributionCount > 0) {
@@ -420,25 +337,18 @@ class AtlasScanBriefingEngine {
     }
   }
 
-  static int? _confidencePercent(
-      double confidence,
-      ) {
+  static int? _confidencePercent(double confidence) {
     if (!confidence.isFinite || confidence <= 0) {
       return null;
     }
 
-    final double normalized =
-    confidence <= 1 ? confidence * 100 : confidence;
+    final double normalized = confidence <= 1 ? confidence * 100 : confidence;
 
     return normalized.round().clamp(0, 100);
   }
 
-  static String _formatMoney(
-      double value,
-      String currencyCode,
-      ) {
-    final String normalizedCurrency =
-    currencyCode.trim().toUpperCase();
+  static String _formatMoney(double value, String currencyCode) {
+    final String normalizedCurrency = currencyCode.trim().toUpperCase();
 
     final String symbol;
 
@@ -456,9 +366,7 @@ class AtlasScanBriefingEngine {
         symbol = '€';
 
       default:
-        symbol = normalizedCurrency.isEmpty
-            ? ''
-            : '$normalizedCurrency ';
+        symbol = normalizedCurrency.isEmpty ? '' : '$normalizedCurrency ';
     }
 
     return '$symbol${value.toStringAsFixed(2)}';

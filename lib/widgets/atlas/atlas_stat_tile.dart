@@ -5,10 +5,7 @@ import '../../theme/atlas_spacing.dart';
 import '../../theme/atlas_typography.dart';
 import 'atlas_glass_panel.dart';
 
-enum AtlasStatTileLayout {
-  centered,
-  leading,
-}
+enum AtlasStatTileLayout { centered, leading }
 
 class AtlasStatTile extends StatelessWidget {
   const AtlasStatTile({
@@ -49,19 +46,17 @@ class AtlasStatTile extends StatelessWidget {
 
     final interactiveContent = _isTappable
         ? InkWell(
-      borderRadius: BorderRadius.circular(16),
-      onTap: onTap,
-      child: content,
-    )
+            borderRadius: BorderRadius.circular(16),
+            onTap: onTap,
+            child: content,
+          )
         : content;
 
     if (!showPanel) {
       return interactiveContent;
     }
 
-    return AtlasGlassPanel(
-      child: interactiveContent,
-    );
+    return AtlasGlassPanel(child: interactiveContent);
   }
 
   Widget _buildCentered() {
@@ -69,18 +64,15 @@ class AtlasStatTile extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         if (icon != null) ...[
-          Icon(
-            icon,
-            size: 24,
-            color: accentColor,
-          ),
+          Icon(icon, size: 24, color: accentColor),
           const SizedBox(height: AtlasSpacing.sm),
         ],
         Text(
           value,
           maxLines: maxValueLines,
           overflow: TextOverflow.ellipsis,
-          style: valueStyle ??
+          style:
+              valueStyle ??
               AtlasTypography.headingSmall.copyWith(
                 color: valueColor ?? accentColor,
               ),
@@ -106,19 +98,10 @@ class AtlasStatTile extends StatelessWidget {
       children: [
         Row(
           children: [
-            if (icon != null)
-              Icon(
-                icon,
-                size: 20,
-                color: accentColor,
-              ),
+            if (icon != null) Icon(icon, size: 20, color: accentColor),
             if (_isTappable) ...[
               const Spacer(),
-              Icon(
-                Icons.chevron_right_rounded,
-                color: accentColor,
-                size: 20,
-              ),
+              Icon(Icons.chevron_right_rounded, color: accentColor, size: 20),
             ],
           ],
         ),
@@ -127,7 +110,8 @@ class AtlasStatTile extends StatelessWidget {
           value,
           maxLines: maxValueLines,
           overflow: TextOverflow.ellipsis,
-          style: valueStyle ??
+          style:
+              valueStyle ??
               AtlasTypography.headingSmall.copyWith(
                 color: valueColor ?? AtlasColors.textPrimary,
               ),

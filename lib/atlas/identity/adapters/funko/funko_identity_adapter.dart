@@ -236,18 +236,16 @@ class FunkoIdentityAdapter {
       value: releaseYear,
     );
 
-    return IdentityProfile(
-      attributes: attributes,
-    );
+    return IdentityProfile(attributes: attributes);
   }
 
   void _addOptional(
-      List<IdentityAttribute> attributes, {
-        required String key,
-        required IdentityRole role,
-        required IdentityClassification classification,
-        required String? value,
-      }) {
+    List<IdentityAttribute> attributes, {
+    required String key,
+    required IdentityRole role,
+    required IdentityClassification classification,
+    required String? value,
+  }) {
     final normalizedValue = value?.trim();
 
     if (normalizedValue == null || normalizedValue.isEmpty) {
@@ -284,33 +282,21 @@ class FunkoIdentityAdapter {
     final normalizedFinish = finish?.trim().toLowerCase();
 
     return switch (normalizedFinish) {
-      'glow' ||
-      'glow in the dark' ||
-      'gitd' =>
-      FunkoIdentityKeys.finishGlow,
+      'glow' || 'glow in the dark' || 'gitd' => FunkoIdentityKeys.finishGlow,
       'metallic' => FunkoIdentityKeys.finishMetallic,
       'flocked' => FunkoIdentityKeys.finishFlocked,
-      'diamond' ||
-      'diamond collection' =>
-      FunkoIdentityKeys.finishDiamond,
+      'diamond' || 'diamond collection' => FunkoIdentityKeys.finishDiamond,
       'glitter' => FunkoIdentityKeys.finishGlitter,
       'chrome' ||
       'gold chrome' ||
       'silver chrome' ||
       'red chrome' ||
-      'blue chrome' =>
-      FunkoIdentityKeys.finishChrome,
-      'translucent' ||
-      'clear' =>
-      FunkoIdentityKeys.finishTranslucent,
-      'blood splatter' ||
-      'bloody' =>
-      FunkoIdentityKeys.finishBloodSplatter,
+      'blue chrome' => FunkoIdentityKeys.finishChrome,
+      'translucent' || 'clear' => FunkoIdentityKeys.finishTranslucent,
+      'blood splatter' || 'bloody' => FunkoIdentityKeys.finishBloodSplatter,
       'patina' => FunkoIdentityKeys.finishPatina,
       'bronze' => FunkoIdentityKeys.finishBronze,
-      'wood deco' ||
-      'wood' =>
-      FunkoIdentityKeys.finishWoodDeco,
+      'wood deco' || 'wood' => FunkoIdentityKeys.finishWoodDeco,
       _ => 'funko.identity.finish.other',
     };
   }

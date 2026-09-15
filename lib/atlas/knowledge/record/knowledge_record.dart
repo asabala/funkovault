@@ -9,37 +9,19 @@ class KnowledgeRecord {
     this.category,
     this.title,
     this.externalId,
-    Map<String, String> identifiers =
-    const <String, String>{},
-    Map<String, Object?> attributes =
-    const <String, Object?>{},
-    Map<String, String> metadata =
-    const <String, String>{},
+    Map<String, String> identifiers = const <String, String>{},
+    Map<String, Object?> attributes = const <String, Object?>{},
+    Map<String, String> metadata = const <String, String>{},
     this.confidence = 1.0,
-  })  : assert(
-  recordId.trim().isNotEmpty,
-  'Record ID must not be empty.',
-  ),
-        assert(
-        sourceId.trim().isNotEmpty,
-        'Source ID must not be empty.',
-        ),
-        assert(
-        confidence >= 0.0 && confidence <= 1.0,
-        'Confidence must be between 0.0 and 1.0.',
-        ),
-        identifiers =
-        Map<String, String>.unmodifiable(
-          identifiers,
-        ),
-        attributes =
-        Map<String, Object?>.unmodifiable(
-          attributes,
-        ),
-        metadata =
-        Map<String, String>.unmodifiable(
-          metadata,
-        );
+  }) : assert(recordId.trim().isNotEmpty, 'Record ID must not be empty.'),
+       assert(sourceId.trim().isNotEmpty, 'Source ID must not be empty.'),
+       assert(
+         confidence >= 0.0 && confidence <= 1.0,
+         'Confidence must be between 0.0 and 1.0.',
+       ),
+       identifiers = Map<String, String>.unmodifiable(identifiers),
+       attributes = Map<String, Object?>.unmodifiable(attributes),
+       metadata = Map<String, String>.unmodifiable(metadata);
 
   // Stable identifier for this record within its source.
   final String recordId;
@@ -171,34 +153,25 @@ class KnowledgeRecord {
       title,
       externalId,
       Object.hashAll(
-        identifiers.entries.map(
-              (MapEntry<String, String> entry) {
-            return Object.hash(entry.key, entry.value);
-          },
-        ),
+        identifiers.entries.map((MapEntry<String, String> entry) {
+          return Object.hash(entry.key, entry.value);
+        }),
       ),
       Object.hashAll(
-        attributes.entries.map(
-              (MapEntry<String, Object?> entry) {
-            return Object.hash(entry.key, entry.value);
-          },
-        ),
+        attributes.entries.map((MapEntry<String, Object?> entry) {
+          return Object.hash(entry.key, entry.value);
+        }),
       ),
       Object.hashAll(
-        metadata.entries.map(
-              (MapEntry<String, String> entry) {
-            return Object.hash(entry.key, entry.value);
-          },
-        ),
+        metadata.entries.map((MapEntry<String, String> entry) {
+          return Object.hash(entry.key, entry.value);
+        }),
       ),
       confidence,
     );
   }
 
-  static bool _mapsEqual<K, V>(
-      Map<K, V> first,
-      Map<K, V> second,
-      ) {
+  static bool _mapsEqual<K, V>(Map<K, V> first, Map<K, V> second) {
     if (identical(first, second)) {
       return true;
     }
@@ -208,8 +181,7 @@ class KnowledgeRecord {
     }
 
     for (final MapEntry<K, V> entry in first.entries) {
-      if (!second.containsKey(entry.key) ||
-          second[entry.key] != entry.value) {
+      if (!second.containsKey(entry.key) || second[entry.key] != entry.value) {
         return false;
       }
     }

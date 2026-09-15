@@ -6,9 +6,7 @@ import 'supabase_auth_service.dart';
 
 class AuthProvider extends ChangeNotifier {
   AuthProvider()
-      : _controller = AuthController(
-    authService: const SupabaseAuthService(),
-  );
+    : _controller = AuthController(authService: const SupabaseAuthService());
 
   final AuthController _controller;
 
@@ -24,29 +22,19 @@ class AuthProvider extends ChangeNotifier {
     final userId = _controller.state.userId;
 
     if (_controller.isLoggedIn && userId != null) {
-      await RevenueCatSubscriptionService.logIn(
-        userId,
-      );
+      await RevenueCatSubscriptionService.logIn(userId);
     }
 
     notifyListeners();
   }
 
-  Future<void> signIn({
-    required String email,
-    required String password,
-  }) async {
-    await _controller.signIn(
-      email: email,
-      password: password,
-    );
+  Future<void> signIn({required String email, required String password}) async {
+    await _controller.signIn(email: email, password: password);
 
     final userId = _controller.state.userId;
 
     if (_controller.isLoggedIn && userId != null) {
-      await RevenueCatSubscriptionService.logIn(
-        userId,
-      );
+      await RevenueCatSubscriptionService.logIn(userId);
     }
 
     notifyListeners();

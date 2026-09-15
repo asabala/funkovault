@@ -14,19 +14,14 @@ class KnowledgeMapperResult {
     required List<IdentityProfile> profiles,
     required this.confidence,
     List<String> notes = const <String>[],
-    Map<String, String> metadata =
-    const <String, String>{},
-  })  : assert(
-  confidence >= 0.0 && confidence <= 1.0,
-  'Confidence must be between 0.0 and 1.0.',
-  ),
-        profiles = List<IdentityProfile>.unmodifiable(
-          profiles,
-        ),
-        notes = List<String>.unmodifiable(notes),
-        metadata = Map<String, String>.unmodifiable(
-          metadata,
-        );
+    Map<String, String> metadata = const <String, String>{},
+  }) : assert(
+         confidence >= 0.0 && confidence <= 1.0,
+         'Confidence must be between 0.0 and 1.0.',
+       ),
+       profiles = List<IdentityProfile>.unmodifiable(profiles),
+       notes = List<String>.unmodifiable(notes),
+       metadata = Map<String, String>.unmodifiable(metadata);
 
   final String mapperId;
 
@@ -76,10 +71,8 @@ class KnowledgeMapperResult {
     return KnowledgeMapperResult(
       mapperId: mapperId ?? this.mapperId,
       mapperName: mapperName ?? this.mapperName,
-      mapperVersion:
-      mapperVersion ?? this.mapperVersion,
-      sourceRecord:
-      sourceRecord ?? this.sourceRecord,
+      mapperVersion: mapperVersion ?? this.mapperVersion,
+      sourceRecord: sourceRecord ?? this.sourceRecord,
       profiles: profiles ?? this.profiles,
       confidence: confidence ?? this.confidence,
       notes: notes ?? this.notes,

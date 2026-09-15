@@ -25,9 +25,7 @@ class CountryDropdown extends StatelessWidget {
       items: CountryRegistry.all.map((country) {
         return DropdownMenuItem(
           value: country,
-          child: Text(
-            '${country.flag} ${country.name}',
-          ),
+          child: Text('${country.flag} ${country.name}'),
         );
       }).toList(),
       onChanged: (country) {

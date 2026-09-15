@@ -34,25 +34,19 @@ class TimelineHealthAnalyzer {
 
     if (valueEventCount == 0) {
       missingInformation.add('Value history');
-      recommendations.add(
-        'Record the first estimated value.',
-      );
+      recommendations.add('Record the first estimated value.');
       healthScore -= 25;
       confidenceScore -= 20;
     }
 
     if (!hasCollectorNotes) {
-      recommendations.add(
-        'Add a collector note or memory.',
-      );
+      recommendations.add('Add a collector note or memory.');
       healthScore -= 5;
     }
 
     if (timelineEventCount == 0) {
       missingInformation.add('Timeline events');
-      recommendations.add(
-        'Begin recording Timeline events.',
-      );
+      recommendations.add('Begin recording Timeline events.');
       healthScore -= 35;
       confidenceScore -= 25;
     }
@@ -65,10 +59,8 @@ class TimelineHealthAnalyzer {
       valueEventCount: valueEventCount,
       healthScore: healthScore,
       confidenceScore: confidenceScore,
-      missingInformation:
-      List<String>.unmodifiable(missingInformation),
-      recommendations:
-      List<String>.unmodifiable(recommendations),
+      missingInformation: List<String>.unmodifiable(missingInformation),
+      recommendations: List<String>.unmodifiable(recommendations),
     );
   }
 }

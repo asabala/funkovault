@@ -2,12 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import 'recommendation_evidence.dart';
 
-enum AnalysisFindingSeverity {
-  info,
-  positive,
-  warning,
-  critical,
-}
+enum AnalysisFindingSeverity { info, positive, warning, critical }
 
 @immutable
 class AnalysisFinding {
@@ -19,10 +14,10 @@ class AnalysisFinding {
     required this.confidence,
     this.evidence = const <RecommendationEvidence>[],
     this.metadata = const <String, Object?>{},
-  })  : assert(
-  confidence >= 0 && confidence <= 1,
-  'confidence must be between 0 and 1',
-  );
+  }) : assert(
+         confidence >= 0 && confidence <= 1,
+         'confidence must be between 0 and 1',
+       );
 
   // Stable framework identifier.
   //
@@ -111,9 +106,7 @@ class AnalysisFinding {
       confidence,
       Object.hashAll(evidence),
       Object.hashAll(
-        metadata.entries.map(
-              (entry) => Object.hash(entry.key, entry.value),
-        ),
+        metadata.entries.map((entry) => Object.hash(entry.key, entry.value)),
       ),
     );
   }

@@ -63,8 +63,7 @@ final class AtlasCollectorSummary {
   }
 
   bool get hasTrend {
-    return trendPercent != null &&
-        trendPercent!.isFinite;
+    return trendPercent != null && trendPercent!.isFinite;
   }
 
   bool get isOwned {
@@ -138,8 +137,7 @@ final class AtlasCollectorSummary {
     required String collectionName,
     bool isWishlisted = false,
   }) {
-    final AtlasCollectorState collectorState =
-    AtlasCollectorState(
+    final AtlasCollectorState collectorState = AtlasCollectorState(
       ownedMatches: exactMatches,
       wishlistMatches: const <Pop>[],
       relatedMatches: relatedMatches,
@@ -158,17 +156,13 @@ final class AtlasCollectorSummary {
     required AtlasCollectorState collectorState,
     required String collectionName,
   }) {
-    const PopIdentityEngine identityEngine =
-    PopIdentityEngine();
+    const PopIdentityEngine identityEngine = PopIdentityEngine();
 
-    const AtlasCollectorRecommendationEngine
-    recommendationEngine =
-    AtlasCollectorRecommendationEngine();
+    const AtlasCollectorRecommendationEngine recommendationEngine =
+        AtlasCollectorRecommendationEngine();
 
-    final List<PopIdentityBadgeData> identityBadges =
-    identityEngine.buildBadges(
-      product,
-    );
+    final List<PopIdentityBadgeData> identityBadges = identityEngine
+        .buildBadges(product);
 
     final double? marketValue = _resolveMarketValue(
       product: product,
@@ -181,15 +175,14 @@ final class AtlasCollectorSummary {
     );
 
     final List<AtlasCollectorRecommendation> recommendations =
-    recommendationEngine.buildAll(
-      product: product,
-      collectorState: collectorState,
-      marketValue: marketValue,
-      trendPercent: trendPercent,
-    );
+        recommendationEngine.buildAll(
+          product: product,
+          collectorState: collectorState,
+          marketValue: marketValue,
+          trendPercent: trendPercent,
+        );
 
-    final AtlasCollectorRecommendation recommendation =
-        recommendations.first;
+    final AtlasCollectorRecommendation recommendation = recommendations.first;
 
     return AtlasCollectorSummary(
       productName: product.name.trim().isEmpty
@@ -197,15 +190,11 @@ final class AtlasCollectorSummary {
           : product.name.trim(),
       productNumber: product.number.trim(),
       variantLabel: product.collectorLabel,
-      identityBadges:
-      List<PopIdentityBadgeData>.unmodifiable(
-        identityBadges,
-      ),
+      identityBadges: List<PopIdentityBadgeData>.unmodifiable(identityBadges),
       marketValue: marketValue,
       trendPercent: trendPercent,
       ownedQuantity: collectorState.ownedQuantity,
-      collectionName:
-      collectionName.trim().isEmpty
+      collectionName: collectionName.trim().isEmpty
           ? 'Selected Collection'
           : collectionName.trim(),
       recommendation: recommendation,
@@ -227,17 +216,10 @@ final class AtlasCollectorSummary {
       }
     }
 
-    final List<double> historyValues =
-    product.valueHistory
-        .map(
-          (entry) => entry.value,
-    )
-        .where(
-          (double value) => value > 0,
-    )
-        .toList(
-      growable: false,
-    );
+    final List<double> historyValues = product.valueHistory
+        .map((entry) => entry.value)
+        .where((double value) => value > 0)
+        .toList(growable: false);
 
     if (historyValues.isEmpty) {
       return null;
@@ -256,34 +238,24 @@ final class AtlasCollectorSummary {
     );
 
     final history = trendSource.valueHistory
-        .where(
-          (entry) => entry.value > 0,
-    )
+        .where((entry) => entry.value > 0)
         .toList();
 
     if (history.length < 2) {
       return null;
     }
 
-    history.sort(
-          (a, b) => a.recordedAt.compareTo(
-        b.recordedAt,
-      ),
-    );
+    history.sort((a, b) => a.recordedAt.compareTo(b.recordedAt));
 
-    final double previousValue =
-        history[history.length - 2].value;
+    final double previousValue = history[history.length - 2].value;
 
-    final double currentValue =
-        history.last.value;
+    final double currentValue = history.last.value;
 
     if (previousValue <= 0) {
       return null;
     }
 
-    return ((currentValue - previousValue) /
-        previousValue) *
-        100;
+    return ((currentValue - previousValue) / previousValue) * 100;
   }
 
   static Pop _bestTrendSource({
@@ -293,8 +265,7 @@ final class AtlasCollectorSummary {
     Pop bestSource = product;
 
     for (final Pop match in exactMatches) {
-      if (match.valueHistory.length >
-          bestSource.valueHistory.length) {
+      if (match.valueHistory.length > bestSource.valueHistory.length) {
         bestSource = match;
       }
     }

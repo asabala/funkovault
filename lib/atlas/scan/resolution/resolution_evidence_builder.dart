@@ -8,20 +8,15 @@ import 'resolution_evidence.dart';
 // Downstream intelligence engines should consume ResolutionEvidence rather
 // than querying ContributionCollection directly.
 abstract final class ResolutionEvidenceBuilder {
-  static ResolutionEvidence fromSession(
-      ScanSession session,
-      ) {
-    return fromContributions(
-      session.contributions,
-    );
+  static ResolutionEvidence fromSession(ScanSession session) {
+    return fromContributions(session.contributions);
   }
 
   static ResolutionEvidence fromContributions(
-      ContributionCollection contributions,
-      ) {
+    ContributionCollection contributions,
+  ) {
     return ResolutionEvidence(
-      contributions:
-      contributions
+      contributions: contributions
           .ofType<ProductResolutionContribution>()
           .toList(growable: false),
     );

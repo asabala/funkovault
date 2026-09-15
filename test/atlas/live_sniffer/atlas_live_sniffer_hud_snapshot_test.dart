@@ -12,7 +12,7 @@ void main() {
 
     expect(
       snapshot.toOverlayText(),
-      'ATLAS LIVE\nFreddy Funko #01\nOWNED x1\nCached Value: \$85',
+      'ATLAS LIVELENS\nFreddy Funko #01\nPPG: \$85\nHave: YES',
     );
   });
 
@@ -26,7 +26,8 @@ void main() {
 
     final String text = snapshot.toOverlayText();
 
-    expect(text, contains('POSSIBLE VARIANT'));
+    expect(text, contains('Have: REVIEW'));
+    expect(text, contains('Status: Review variant'));
     expect(text, isNot(contains('Target')));
     expect(text, isNot(contains('Current Bid')));
   });

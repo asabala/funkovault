@@ -79,8 +79,9 @@ class AtlasIntelligence {
     }
 
     final missingValues = pops.where((pop) => pop.value <= 0).length;
-    final missingCategories =
-        pops.where((pop) => pop.category.trim().isEmpty).length;
+    final missingCategories = pops
+        .where((pop) => pop.category.trim().isEmpty)
+        .length;
 
     final valueScore = 100 - ((missingValues / pops.length) * 70);
     final categoryScore = 100 - ((missingCategories / pops.length) * 30);
@@ -96,8 +97,9 @@ class AtlasIntelligence {
     }
 
     final missingValues = pops.where((pop) => pop.value <= 0).length;
-    final missingCategories =
-        pops.where((pop) => pop.category.trim().isEmpty).length;
+    final missingCategories = pops
+        .where((pop) => pop.category.trim().isEmpty)
+        .length;
 
     if (missingCategories > 0) {
       return 'Add missing categories so Atlas can organize your Vault Rooms better.';

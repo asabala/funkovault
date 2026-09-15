@@ -61,13 +61,15 @@ class AtlasHeroCard extends StatelessWidget {
                 color: colorScheme.primary,
               ),
               const SizedBox(height: 10),
-              ...summary.scoreReasons.take(4).map(
+              ...summary.scoreReasons
+                  .take(4)
+                  .map(
                     (reason) => _HeroDetailRow(
-                  icon: Icons.add_circle_outline_rounded,
-                  text: reason,
-                  iconColor: colorScheme.primary,
-                ),
-              ),
+                      icon: Icons.add_circle_outline_rounded,
+                      text: reason,
+                      iconColor: colorScheme.primary,
+                    ),
+                  ),
             ],
             if (summary.hasImprovementSuggestions) ...[
               const SizedBox(height: 20),
@@ -77,13 +79,15 @@ class AtlasHeroCard extends StatelessWidget {
                 color: colorScheme.secondary,
               ),
               const SizedBox(height: 10),
-              ...summary.improvementSuggestions.take(3).map(
+              ...summary.improvementSuggestions
+                  .take(3)
+                  .map(
                     (suggestion) => _HeroDetailRow(
-                  icon: Icons.arrow_circle_up_rounded,
-                  text: suggestion,
-                  iconColor: colorScheme.secondary,
-                ),
-              ),
+                      icon: Icons.arrow_circle_up_rounded,
+                      text: suggestion,
+                      iconColor: colorScheme.secondary,
+                    ),
+                  ),
             ],
             if (onViewScoreDetails != null) ...[
               const SizedBox(height: 16),
@@ -91,10 +95,7 @@ class AtlasHeroCard extends StatelessWidget {
                 alignment: Alignment.centerRight,
                 child: TextButton.icon(
                   onPressed: onViewScoreDetails,
-                  icon: const Icon(
-                    Icons.analytics_outlined,
-                    size: 18,
-                  ),
+                  icon: const Icon(Icons.analytics_outlined, size: 18),
                   label: const Text('View score details'),
                 ),
               ),
@@ -133,10 +134,7 @@ class _HeroHeader extends StatelessWidget {
             color: colorScheme.primaryContainer,
             borderRadius: BorderRadius.circular(14),
           ),
-          child: Text(
-            emoji,
-            style: const TextStyle(fontSize: 25),
-          ),
+          child: Text(emoji, style: const TextStyle(fontSize: 25)),
         ),
         const SizedBox(width: 14),
         Expanded(
@@ -246,11 +244,7 @@ class _SectionLabel extends StatelessWidget {
 
     return Row(
       children: [
-        Icon(
-          icon,
-          size: 18,
-          color: color,
-        ),
+        Icon(icon, size: 18, color: color),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
@@ -288,11 +282,7 @@ class _HeroDetailRow extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.only(top: 2),
-            child: Icon(
-              icon,
-              size: 17,
-              color: iconColor,
-            ),
+            child: Icon(icon, size: 17, color: iconColor),
           ),
           const SizedBox(width: 9),
           Expanded(

@@ -26,88 +26,54 @@ class AtlasIntelligenceFeed extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    final List<AtlasCollectorRecommendation>
-    sortedRecommendations =
-    List<AtlasCollectorRecommendation>.from(
-      recommendations,
-    )..sort(
-          (
+    final List<AtlasCollectorRecommendation> sortedRecommendations =
+        List<AtlasCollectorRecommendation>.from(recommendations)..sort((
           AtlasCollectorRecommendation first,
           AtlasCollectorRecommendation second,
-          ) {
-        final int priorityComparison =
-        first.priority.compareTo(
-          second.priority,
-        );
+        ) {
+          final int priorityComparison = first.priority.compareTo(
+            second.priority,
+          );
 
-        if (priorityComparison != 0) {
-          return priorityComparison;
-        }
+          if (priorityComparison != 0) {
+            return priorityComparison;
+          }
 
-        return first.title.compareTo(
-          second.title,
-        );
-      },
-    );
+          return first.title.compareTo(second.title);
+        });
 
-    final int visibleCount =
-    maxVisibleRecommendations == null
+    final int visibleCount = maxVisibleRecommendations == null
         ? sortedRecommendations.length
-        : maxVisibleRecommendations!.clamp(
-      0,
-      sortedRecommendations.length,
-    );
+        : maxVisibleRecommendations!.clamp(0, sortedRecommendations.length);
 
-    final List<AtlasCollectorRecommendation>
-    visibleRecommendations =
-    sortedRecommendations
-        .take(
-      visibleCount,
-    )
-        .toList(
-      growable: false,
-    );
+    final List<AtlasCollectorRecommendation> visibleRecommendations =
+        sortedRecommendations.take(visibleCount).toList(growable: false);
 
     return AtlasGlassPanel(
       accentColor: AtlasColors.intelligenceBlue,
-      padding: const EdgeInsets.all(
-        AtlasSpacing.md,
-      ),
+      padding: const EdgeInsets.all(AtlasSpacing.md),
       child: Column(
-        crossAxisAlignment:
-        CrossAxisAlignment.stretch,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _FeedHeader(
-            title: title,
-            count: recommendations.length,
-          ),
-          const SizedBox(
-            height: AtlasSpacing.md,
-          ),
+          _FeedHeader(title: title, count: recommendations.length),
+          const SizedBox(height: AtlasSpacing.md),
           for (
-          int index = 0;
-          index < visibleRecommendations.length;
-          index++
+            int index = 0;
+            index < visibleRecommendations.length;
+            index++
           ) ...[
             _RecommendationFeedItem(
-              recommendation:
-              visibleRecommendations[index],
+              recommendation: visibleRecommendations[index],
               showPriority: showPriority,
             ),
-            if (index <
-                visibleRecommendations.length - 1)
-              const Divider(
-                height: AtlasSpacing.xl,
-              ),
+            if (index < visibleRecommendations.length - 1)
+              const Divider(height: AtlasSpacing.xl),
           ],
-          if (visibleRecommendations.length <
-              recommendations.length) ...[
-            const SizedBox(
-              height: AtlasSpacing.sm,
-            ),
+          if (visibleRecommendations.length < recommendations.length) ...[
+            const SizedBox(height: AtlasSpacing.sm),
             Text(
               '${recommendations.length - visibleRecommendations.length} additional '
-                  '${recommendations.length - visibleRecommendations.length == 1 ? 'insight' : 'insights'} available',
+              '${recommendations.length - visibleRecommendations.length == 1 ? 'insight' : 'insights'} available',
               style: AtlasTypography.bodySmall.copyWith(
                 color: AtlasColors.textSecondary,
               ),
@@ -121,10 +87,7 @@ class AtlasIntelligenceFeed extends StatelessWidget {
 }
 
 class _FeedHeader extends StatelessWidget {
-  const _FeedHeader({
-    required this.title,
-    required this.count,
-  });
+  const _FeedHeader({required this.title, required this.count});
 
   final String title;
   final int count;
@@ -133,31 +96,15 @@ class _FeedHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Expanded(
-          child: Text(
-            title,
-            style: AtlasTypography.headingSmall,
-          ),
-        ),
+        Expanded(child: Text(title, style: AtlasTypography.headingSmall)),
         Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 10,
-            vertical: 5,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(
-              999,
-            ),
+            borderRadius: BorderRadius.circular(999),
             border: Border.all(
-              color: AtlasColors.intelligenceBlue
-                  .withValues(
-                alpha: 0.35,
-              ),
+              color: AtlasColors.intelligenceBlue.withValues(alpha: 0.35),
             ),
-            color: AtlasColors.intelligenceBlue
-                .withValues(
-              alpha: 0.10,
-            ),
+            color: AtlasColors.intelligenceBlue.withValues(alpha: 0.10),
           ),
           child: Text(
             '$count',
@@ -183,47 +130,27 @@ class _RecommendationFeedItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color accentColor =
-    _accentColorForSeverity(
-      recommendation.severity,
-    );
+    final Color accentColor = _accentColorForSeverity(recommendation.severity);
 
-    final IconData icon =
-    _iconForType(
-      recommendation.type,
-    );
+    final IconData icon = _iconForType(recommendation.type);
 
     return Row(
-      crossAxisAlignment:
-      CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
           width: 42,
           height: 42,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: accentColor.withValues(
-              alpha: 0.14,
-            ),
-            border: Border.all(
-              color: accentColor.withValues(
-                alpha: 0.35,
-              ),
-            ),
+            color: accentColor.withValues(alpha: 0.14),
+            border: Border.all(color: accentColor.withValues(alpha: 0.35)),
           ),
-          child: Icon(
-            icon,
-            color: accentColor,
-            size: 22,
-          ),
+          child: Icon(icon, color: accentColor, size: 22),
         ),
-        const SizedBox(
-          width: AtlasSpacing.md,
-        ),
+        const SizedBox(width: AtlasSpacing.md),
         Expanded(
           child: Column(
-            crossAxisAlignment:
-            CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 recommendation.categoryLabel.toUpperCase(),
@@ -234,71 +161,45 @@ class _RecommendationFeedItem extends StatelessWidget {
                   fontSize: 11,
                 ),
               ),
-              const SizedBox(
-                height: AtlasSpacing.xs,
-              ),
+              const SizedBox(height: AtlasSpacing.xs),
               Row(
-                crossAxisAlignment:
-                CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
                     child: Text(
                       recommendation.title,
-                      style: AtlasTypography
-                          .headingSmall
-                          .copyWith(
+                      style: AtlasTypography.headingSmall.copyWith(
                         fontSize: 16,
                       ),
                     ),
                   ),
                   if (showPriority)
                     _PriorityBadge(
-                      priority:
-                      recommendation.priority,
+                      priority: recommendation.priority,
                       accentColor: accentColor,
                     ),
                 ],
               ),
-              const SizedBox(
-                height: AtlasSpacing.xs,
-              ),
-              Text(
-                recommendation.message,
-                style: AtlasTypography.bodyMedium,
-              ),
+              const SizedBox(height: AtlasSpacing.xs),
+              Text(recommendation.message, style: AtlasTypography.bodyMedium),
               if (recommendation.hasDetails) ...[
-                const SizedBox(
-                  height: AtlasSpacing.sm,
-                ),
-                for (final String detail
-                in recommendation.details)
+                const SizedBox(height: AtlasSpacing.sm),
+                for (final String detail in recommendation.details)
                   Padding(
-                    padding: const EdgeInsets.only(
-                      bottom: AtlasSpacing.xs,
-                    ),
+                    padding: const EdgeInsets.only(bottom: AtlasSpacing.xs),
                     child: Row(
-                      crossAxisAlignment:
-                      CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           '•',
-                          style: AtlasTypography
-                              .bodyMedium
-                              .copyWith(
+                          style: AtlasTypography.bodyMedium.copyWith(
                             color: accentColor,
-                            fontWeight:
-                            FontWeight.bold,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(
-                          width: AtlasSpacing.sm,
-                        ),
+                        const SizedBox(width: AtlasSpacing.sm),
                         Expanded(
-                          child: Text(
-                            detail,
-                            style:
-                            AtlasTypography.bodySmall,
-                          ),
+                          child: Text(detail, style: AtlasTypography.bodySmall),
                         ),
                       ],
                     ),
@@ -311,60 +212,44 @@ class _RecommendationFeedItem extends StatelessWidget {
     );
   }
 
-  Color _accentColorForSeverity(
-      AtlasCollectorRecommendationSeverity severity,
-      ) {
+  Color _accentColorForSeverity(AtlasCollectorRecommendationSeverity severity) {
     switch (severity) {
-      case AtlasCollectorRecommendationSeverity
-          .informational:
+      case AtlasCollectorRecommendationSeverity.informational:
         return AtlasColors.intelligenceBlue;
 
-      case AtlasCollectorRecommendationSeverity
-          .positive:
+      case AtlasCollectorRecommendationSeverity.positive:
         return AtlasColors.success;
 
-      case AtlasCollectorRecommendationSeverity
-          .caution:
+      case AtlasCollectorRecommendationSeverity.caution:
         return AtlasColors.warning;
 
-      case AtlasCollectorRecommendationSeverity
-          .warning:
+      case AtlasCollectorRecommendationSeverity.warning:
         return AtlasColors.warning;
 
-      case AtlasCollectorRecommendationSeverity
-          .critical:
+      case AtlasCollectorRecommendationSeverity.critical:
         return AtlasColors.danger;
     }
   }
 
-  IconData _iconForType(
-      AtlasCollectorRecommendationType type,
-      ) {
+  IconData _iconForType(AtlasCollectorRecommendationType type) {
     switch (type) {
-      case AtlasCollectorRecommendationType
-          .alreadyOwned:
+      case AtlasCollectorRecommendationType.alreadyOwned:
         return Icons.inventory_2_rounded;
 
-      case AtlasCollectorRecommendationType
-          .reviewVariant:
+      case AtlasCollectorRecommendationType.reviewVariant:
         return Icons.manage_search_rounded;
 
-      case AtlasCollectorRecommendationType
-          .marketValueUnavailable:
+      case AtlasCollectorRecommendationType.marketValueUnavailable:
         return Icons.query_stats_rounded;
 
-      case AtlasCollectorRecommendationType
-          .newToVault:
+      case AtlasCollectorRecommendationType.newToVault:
         return Icons.auto_awesome_rounded;
     }
   }
 }
 
 class _PriorityBadge extends StatelessWidget {
-  const _PriorityBadge({
-    required this.priority,
-    required this.accentColor,
-  });
+  const _PriorityBadge({required this.priority, required this.accentColor});
 
   final int priority;
   final Color accentColor;
@@ -372,25 +257,12 @@ class _PriorityBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(
-        left: AtlasSpacing.sm,
-      ),
-      padding: const EdgeInsets.symmetric(
-        horizontal: 8,
-        vertical: 3,
-      ),
+      margin: const EdgeInsets.only(left: AtlasSpacing.sm),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(
-          999,
-        ),
-        color: accentColor.withValues(
-          alpha: 0.10,
-        ),
-        border: Border.all(
-          color: accentColor.withValues(
-            alpha: 0.30,
-          ),
-        ),
+        borderRadius: BorderRadius.circular(999),
+        color: accentColor.withValues(alpha: 0.10),
+        border: Border.all(color: accentColor.withValues(alpha: 0.30)),
       ),
       child: Text(
         'P$priority',

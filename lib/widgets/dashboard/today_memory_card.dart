@@ -26,17 +26,11 @@ class TodayMemoryCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: AtlasTypography.headingSmall,
-          ),
+          Text(title, style: AtlasTypography.headingSmall),
 
           const SizedBox(height: AtlasSpacing.sm),
 
-          Text(
-            message,
-            style: AtlasTypography.bodyMedium,
-          ),
+          Text(message, style: AtlasTypography.bodyMedium),
 
           const SizedBox(height: AtlasSpacing.md),
 

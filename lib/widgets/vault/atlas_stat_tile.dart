@@ -25,23 +25,15 @@ class AtlasStatTile extends StatelessWidget {
     return Expanded(
       child: Card(
         child: InkWell(
-          borderRadius: BorderRadius.circular(
-            AtlasRadius.lg,
-          ),
+          borderRadius: BorderRadius.circular(AtlasRadius.lg),
           onTap: onTap,
           child: AnimatedContainer(
             duration: AtlasAnimation.fast,
             curve: AtlasAnimation.standardCurve,
-            padding: const EdgeInsets.all(
-              AtlasSpacing.lg,
-            ),
+            padding: const EdgeInsets.all(AtlasSpacing.lg),
             child: Column(
               children: [
-                Icon(
-                  icon,
-                  size: 28,
-                  color: AtlasColors.vaultGold,
-                ),
+                Icon(icon, size: 28, color: AtlasColors.vaultGold),
                 const SizedBox(height: AtlasSpacing.md),
                 Text(
                   value,

@@ -83,14 +83,10 @@ class AtlasCollectibilityCard extends StatelessWidget {
                 .take(maxSignals)
                 .map(
                   (signal) => Padding(
-                padding: const EdgeInsets.only(
-                  bottom: AtlasSpacing.sm,
+                    padding: const EdgeInsets.only(bottom: AtlasSpacing.sm),
+                    child: _CollectibilitySignalPanel(signal: signal),
+                  ),
                 ),
-                child: _CollectibilitySignalPanel(
-                  signal: signal,
-                ),
-              ),
-            ),
           ],
           if (showStrengths && summary.strengths.isNotEmpty) ...[
             const SizedBox(height: AtlasSpacing.md),
@@ -118,13 +114,8 @@ class AtlasCollectibilityCard extends StatelessWidget {
               alignment: Alignment.centerRight,
               child: TextButton.icon(
                 onPressed: onViewDetails,
-                icon: const Icon(
-                  Icons.analytics_outlined,
-                  size: 18,
-                ),
-                label: const Text(
-                  'View Collectibility Details',
-                ),
+                icon: const Icon(Icons.analytics_outlined, size: 18),
+                label: const Text('View Collectibility Details'),
               ),
             ),
           ],
@@ -194,9 +185,7 @@ class _CollectibilityOverview extends StatelessWidget {
   }
 }
 
-String _buildCollapsedSubtitle(
-    AtlasCollectibilitySummary summary,
-    ) {
+String _buildCollapsedSubtitle(AtlasCollectibilitySummary summary) {
   final signalCount = summary.signals.length;
   final signalLabel = _buildSignalCountLabel(signalCount);
 

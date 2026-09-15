@@ -54,9 +54,7 @@ class _FakeAuthService implements AuthService {
   }
 
   @override
-  Future<void> sendPasswordResetEmail(
-      String email,
-      ) async {
+  Future<void> sendPasswordResetEmail(String email) async {
     passwordResetEmail = email;
   }
 
@@ -72,12 +70,10 @@ class _FakeAuthService implements AuthService {
 void main() {
   test(
     'registration keeps Atlas logged out when service returns guest',
-        () async {
+    () async {
       final authService = _FakeAuthService();
 
-      final controller = AuthController(
-        authService: authService,
-      );
+      final controller = AuthController(authService: authService);
 
       await controller.register(
         displayName: 'Arthur',
@@ -85,167 +81,103 @@ void main() {
         password: 'password123',
       );
 
-      expect(
-        authService.registeredDisplayName,
-        'Arthur',
-      );
+      expect(authService.registeredDisplayName, 'Arthur');
 
-      expect(
-        authService.registeredEmail,
-        'arthur@example.com',
-      );
+      expect(authService.registeredEmail, 'arthur@example.com');
 
-      expect(
-        authService.registeredPassword,
-        'password123',
-      );
+      expect(authService.registeredPassword, 'password123');
 
-      expect(
-        controller.state.status,
-        AuthStatus.guest,
-      );
+      expect(controller.state.status, AuthStatus.guest);
 
-      expect(
-        controller.isLoggedIn,
-        isFalse,
-      );
+      expect(controller.isLoggedIn, isFalse);
 
       controller.dispose();
     },
   );
-  test(
-    'loadCurrentUser restores authenticated session',
-        () async {
-      final authService = _FakeAuthService()
-        ..currentUserResult = const AuthState(
-          status: AuthStatus.authenticated,
-          email: 'arthur@example.com',
-          displayName: 'Arthur',
-          isPremium: false,
-          emailVerified: true,
-        );
-
-      final controller = AuthController(
-        authService: authService,
-      );
-
-      await controller.loadCurrentUser();
-
-      expect(
-        controller.isLoggedIn,
-        isTrue,
-      );
-
-      expect(
-        controller.state.email,
-        'arthur@example.com',
-      );
-
-      controller.dispose();
-    },
-  );
-
-  test(
-    'signIn updates controller to authenticated state',
-        () async {
-      final authService = _FakeAuthService()
-        ..signInResult = const AuthState(
-          status: AuthStatus.authenticated,
-          email: 'arthur@example.com',
-          displayName: 'Arthur',
-          isPremium: false,
-          emailVerified: true,
-        );
-
-      final controller = AuthController(
-        authService: authService,
-      );
-
-      await controller.signIn(
+  test('loadCurrentUser restores authenticated session', () async {
+    final authService = _FakeAuthService()
+      ..currentUserResult = const AuthState(
+        status: AuthStatus.authenticated,
         email: 'arthur@example.com',
-        password: 'password123',
+        displayName: 'Arthur',
+        isPremium: false,
+        emailVerified: true,
       );
 
-      expect(
-        authService.signedInEmail,
-        'arthur@example.com',
-      );
+    final controller = AuthController(authService: authService);
 
-      expect(
-        controller.isLoggedIn,
-        isTrue,
-      );
+    await controller.loadCurrentUser();
 
-      controller.dispose();
-    },
-  );
+    expect(controller.isLoggedIn, isTrue);
 
-  test(
-    'signOut resets controller to guest',
-        () async {
-      final authService = _FakeAuthService()
-        ..signInResult = const AuthState(
-          status: AuthStatus.authenticated,
-          email: 'arthur@example.com',
-          displayName: 'Arthur',
-          isPremium: false,
-          emailVerified: true,
-        );
+    expect(controller.state.email, 'arthur@example.com');
 
-      final controller = AuthController(
-        authService: authService,
-      );
+    controller.dispose();
+  });
 
-      await controller.signIn(
+  test('signIn updates controller to authenticated state', () async {
+    final authService = _FakeAuthService()
+      ..signInResult = const AuthState(
+        status: AuthStatus.authenticated,
         email: 'arthur@example.com',
-        password: 'password123',
+        displayName: 'Arthur',
+        isPremium: false,
+        emailVerified: true,
       );
 
-      expect(
-        controller.isLoggedIn,
-        isTrue,
+    final controller = AuthController(authService: authService);
+
+    await controller.signIn(
+      email: 'arthur@example.com',
+      password: 'password123',
+    );
+
+    expect(authService.signedInEmail, 'arthur@example.com');
+
+    expect(controller.isLoggedIn, isTrue);
+
+    controller.dispose();
+  });
+
+  test('signOut resets controller to guest', () async {
+    final authService = _FakeAuthService()
+      ..signInResult = const AuthState(
+        status: AuthStatus.authenticated,
+        email: 'arthur@example.com',
+        displayName: 'Arthur',
+        isPremium: false,
+        emailVerified: true,
       );
 
-      await controller.signOut();
+    final controller = AuthController(authService: authService);
 
-      expect(
-        authService.signOutCalled,
-        isTrue,
-      );
+    await controller.signIn(
+      email: 'arthur@example.com',
+      password: 'password123',
+    );
 
-      expect(
-        controller.state.status,
-        AuthStatus.guest,
-      );
+    expect(controller.isLoggedIn, isTrue);
 
-      expect(
-        controller.isLoggedIn,
-        isFalse,
-      );
+    await controller.signOut();
 
-      controller.dispose();
-    },
-  );
+    expect(authService.signOutCalled, isTrue);
 
-  test(
-    'password reset is forwarded to auth service',
-        () async {
-      final authService = _FakeAuthService();
+    expect(controller.state.status, AuthStatus.guest);
 
-      final controller = AuthController(
-        authService: authService,
-      );
+    expect(controller.isLoggedIn, isFalse);
 
-      await controller.sendPasswordResetEmail(
-        'arthur@example.com',
-      );
+    controller.dispose();
+  });
 
-      expect(
-        authService.passwordResetEmail,
-        'arthur@example.com',
-      );
+  test('password reset is forwarded to auth service', () async {
+    final authService = _FakeAuthService();
 
-      controller.dispose();
-    },
-  );
+    final controller = AuthController(authService: authService);
+
+    await controller.sendPasswordResetEmail('arthur@example.com');
+
+    expect(authService.passwordResetEmail, 'arthur@example.com');
+
+    controller.dispose();
+  });
 }

@@ -10,10 +10,7 @@ import 'package:funkovault2/widgets/atlas/components/atlas_section_header.dart';
 import 'package:funkovault2/widgets/atlas/components/atlas_status_chip.dart';
 
 class AtlasCollectorSummaryCard extends StatelessWidget {
-  const AtlasCollectorSummaryCard({
-    required this.summary,
-    super.key,
-  });
+  const AtlasCollectorSummaryCard({required this.summary, super.key});
 
   final AtlasCollectorSummary summary;
 
@@ -70,9 +67,9 @@ class AtlasCollectorSummaryCard extends StatelessWidget {
                 : 'Not currently in this collection',
             message: summary.isOwned
                 ? 'Atlas found this collectible in ${summary.collectionName}. '
-                'Use the actions below to review the existing item or manage its collection state.'
+                      'Use the actions below to review the existing item or manage its collection state.'
                 : 'Atlas did not find this collectible in ${summary.collectionName}. '
-                'Use the available actions below if you want to add or track it.',
+                      'Use the available actions below if you want to add or track it.',
             icon: summary.isOwned
                 ? Icons.verified_user_rounded
                 : Icons.travel_explore_rounded,

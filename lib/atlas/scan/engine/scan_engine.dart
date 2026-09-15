@@ -12,8 +12,5 @@ abstract interface class ScanEngine {
 
   String get displayName;
 
-  Future<EngineResult> process(
-      ScanSession session,
-      EngineContext context,
-      );
+  Future<EngineResult> process(ScanSession session, EngineContext context);
 }

@@ -19,10 +19,7 @@ import '../../widgets/vault/components/vault_pop_tile.dart';
 import '../pop/edit_pop_screen.dart';
 
 class MultipleCopiesScreen extends StatelessWidget {
-  const MultipleCopiesScreen({
-    super.key,
-    this.collectionName,
-  });
+  const MultipleCopiesScreen({super.key, this.collectionName});
 
   final String? collectionName;
 
@@ -32,33 +29,25 @@ class MultipleCopiesScreen extends StatelessWidget {
 
     const repository = VaultRepository();
 
-    final multipleCopyPops = repository
-        .pops(
-      appState,
-      collectionName: collectionName,
-    )
-        .where(
-          (pop) => pop.quantity > 1,
-    )
-        .toList()
-      ..sort(
-            (a, b) => b.quantity.compareTo(a.quantity),
-      );
+    final multipleCopyPops =
+        repository
+            .pops(appState, collectionName: collectionName)
+            .where((pop) => pop.quantity > 1)
+            .toList()
+          ..sort((a, b) => b.quantity.compareTo(a.quantity));
 
     final totalCopies = multipleCopyPops.fold<int>(
       0,
-          (total, pop) => total + pop.quantity,
+      (total, pop) => total + pop.quantity,
     );
 
     final extraCopies = multipleCopyPops.fold<int>(
       0,
-          (total, pop) => total + (pop.quantity - 1),
+      (total, pop) => total + (pop.quantity - 1),
     );
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Multiple Copies'),
-      ),
+      appBar: AppBar(title: const Text('Multiple Copies')),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(
@@ -77,7 +66,7 @@ class MultipleCopiesScreen extends StatelessWidget {
                     const AtlasSectionHeader(
                       title: 'Multiple Copies Review',
                       subtitle:
-                      'Review collectibles that represent more than one physical copy.',
+                          'Review collectibles that represent more than one physical copy.',
                       icon: Icons.layers_rounded,
                       titleStyle: AtlasTypography.headingLarge,
                     ),
@@ -114,7 +103,7 @@ class MultipleCopiesScreen extends StatelessWidget {
                 icon: Icons.info_outline_rounded,
                 title: 'How Quantity Works',
                 message:
-                'Atlas keeps identical copies under one collectible record. '
+                    'Atlas keeps identical copies under one collectible record. '
                     'Quantity 2 means one primary copy plus one extra copy. '
                     'Edit the quantity only when the physical count is incorrect.',
               ),
@@ -124,22 +113,17 @@ class MultipleCopiesScreen extends StatelessWidget {
                   icon: Icons.inventory_2_outlined,
                   title: 'No Multiple-Copy Records',
                   message:
-                  'Every collectible currently has a quantity of one. '
+                      'Every collectible currently has a quantity of one. '
                       'No consolidated copies need review.',
                 )
               else
                 ...multipleCopyPops.map(
-                      (pop) => Padding(
-                    padding: const EdgeInsets.only(
-                      bottom: AtlasSpacing.md,
-                    ),
+                  (pop) => Padding(
+                    padding: const EdgeInsets.only(bottom: AtlasSpacing.md),
                     child: _MultipleCopyCard(
                       pop: pop,
                       onEdit: () {
-                        _openEditor(
-                          context,
-                          pop,
-                        );
+                        _openEditor(context, pop);
                       },
                     ),
                   ),
@@ -151,24 +135,16 @@ class MultipleCopiesScreen extends StatelessWidget {
     );
   }
 
-  Future<void> _openEditor(
-      BuildContext context,
-      Pop pop,
-      ) async {
+  Future<void> _openEditor(BuildContext context, Pop pop) async {
     final appState = context.read<AppState>();
 
-    String? targetCollectionName =
-        collectionName;
+    String? targetCollectionName = collectionName;
 
     if (targetCollectionName == null) {
-      final collectionNames =
-      appState.collectionNamesContainingPop(
-        pop,
-      );
+      final collectionNames = appState.collectionNamesContainingPop(pop);
 
       if (collectionNames.length != 1) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
               'Could not edit this Pop because its collection could not be resolved safely.',
@@ -179,15 +155,11 @@ class MultipleCopiesScreen extends StatelessWidget {
         return;
       }
 
-      targetCollectionName =
-          collectionNames.single;
+      targetCollectionName = collectionNames.single;
     }
 
-    if (!appState.hasCollection(
-      targetCollectionName,
-    )) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
+    if (!appState.hasCollection(targetCollectionName)) {
+      ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
             'Could not edit this Pop because its collection no longer exists.',
@@ -201,21 +173,15 @@ class MultipleCopiesScreen extends StatelessWidget {
     await Navigator.push<Pop>(
       context,
       MaterialPageRoute(
-        builder: (_) => EditPopScreen(
-          pop: pop,
-          collectionName:
-          targetCollectionName,
-        ),
+        builder: (_) =>
+            EditPopScreen(pop: pop, collectionName: targetCollectionName),
       ),
     );
   }
 }
 
 class _MultipleCopyCard extends StatelessWidget {
-  const _MultipleCopyCard({
-    required this.pop,
-    required this.onEdit,
-  });
+  const _MultipleCopyCard({required this.pop, required this.onEdit});
 
   final Pop pop;
   final VoidCallback onEdit;
@@ -260,16 +226,13 @@ class _MultipleCopyCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AtlasSpacing.md),
-          VaultPopTile(
-            pop: pop,
-            showImage: true,
-          ),
+          VaultPopTile(pop: pop, showImage: true),
           const SizedBox(height: AtlasSpacing.md),
           AtlasInfoBanner(
             icon: Icons.add_box_outlined,
             title: 'Extra Copies',
             message:
-            '$extraCopyCount extra '
+                '$extraCopyCount extra '
                 '${extraCopyCount == 1 ? 'copy is' : 'copies are'} '
                 'represented by this record.',
           ),
@@ -277,7 +240,7 @@ class _MultipleCopyCard extends StatelessWidget {
           AtlasActionRow(
             title: 'Edit Quantity',
             description:
-            'Update the physical copy count represented by this collectible record.',
+                'Update the physical copy count represented by this collectible record.',
             icon: Icons.edit_outlined,
             accentColor: AtlasColors.vaultGold,
             onTap: onEdit,

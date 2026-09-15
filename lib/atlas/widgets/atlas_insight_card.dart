@@ -28,15 +28,11 @@ class AtlasInsightCard extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: Column(
-                crossAxisAlignment:
-                CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
                     'Atlas Insight',
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontSize: 13,
-                    ),
+                    style: TextStyle(color: Colors.grey, fontSize: 13),
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -48,8 +44,7 @@ class AtlasInsightCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(message),
-                  if (actionText != null &&
-                      onActionPressed != null) ...[
+                  if (actionText != null && onActionPressed != null) ...[
                     const SizedBox(height: 12),
                     Align(
                       alignment: Alignment.centerRight,

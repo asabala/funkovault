@@ -28,42 +28,30 @@ class AtlasKnowledge {
 class AtlasKnowledgeEngine {
   const AtlasKnowledgeEngine();
 
-  AtlasKnowledge analyze(
-      List<Pop> pops,
-      ) {
+  AtlasKnowledge analyze(List<Pop> pops) {
     final totalPops = pops.length;
 
-    final totalValue = pops.fold<double>(
-      0,
-          (sum, pop) => sum + pop.value,
-    );
+    final totalValue = pops.fold<double>(0, (sum, pop) => sum + pop.value);
 
-    final averageValue =
-    totalPops == 0
-        ? 0.0
-        : totalValue / totalPops;
+    final averageValue = totalPops == 0 ? 0.0 : totalValue / totalPops;
 
     final highestValue = pops.isEmpty
         ? 0.0
-        : pops
-        .map((p) => p.value)
-        .reduce((a, b) => a > b ? a : b)
-        .toDouble();
+        : pops.map((p) => p.value).reduce((a, b) => a > b ? a : b).toDouble();
 
-    final signedCount =
-        pops.where((p) => p.signature != 'Unsigned').length;
+    final signedCount = pops.where((p) => p.signature != 'Unsigned').length;
 
-    final chaseCount =
-        pops.where((p) => p.variant == 'Chase').length;
+    final chaseCount = pops.where((p) => p.variant == 'Chase').length;
 
-    final limitedEditionCount =
-        pops.where((p) => p.limitedEdition != 'None').length;
+    final limitedEditionCount = pops
+        .where((p) => p.limitedEdition != 'None')
+        .length;
 
-    final exclusiveCount =
-        pops.where((p) => p.retailExclusive != 'None').length;
+    final exclusiveCount = pops
+        .where((p) => p.retailExclusive != 'None')
+        .length;
 
-    final wishlistCount =
-        pops.where((p) => p.isWishlist).length;
+    final wishlistCount = pops.where((p) => p.isWishlist).length;
 
     return AtlasKnowledge(
       totalPops: totalPops,

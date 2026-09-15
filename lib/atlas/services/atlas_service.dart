@@ -26,16 +26,13 @@ import '../models/atlas_response.dart';
 class AtlasService {
   AtlasService._();
 
-  static final AtlasService instance =
-  AtlasService._();
+  static final AtlasService instance = AtlasService._();
 
   // Atlas Version
-  static const String version =
-      '0.1.0 Alpha';
+  static const String version = '0.1.0 Alpha';
 
   // Atlas Motto
-  static const String motto =
-      'Every scan makes Atlas smarter.';
+  static const String motto = 'Every scan makes Atlas smarter.';
 
   // Returns Atlas status.
   Future<String> status() async {
@@ -43,31 +40,26 @@ class AtlasService {
   }
 
   // Future barcode lookup.
-  Future<void> lookupBarcode(
-      String barcode,
-      ) async {}
+  Future<void> lookupBarcode(String barcode) async {}
 
-// Atlas command processor.
-//
-// Every request to Atlas comes through here.
-//
-// Future:
-//
-// "Do I own Batman #84?"
-//
-// "How many Pops do I own?"
-//
-// "Scan this barcode."
-//
-// "Show my duplicates."
-//
-// For now we support a handful of built-in commands.
+  // Atlas command processor.
+  //
+  // Every request to Atlas comes through here.
+  //
+  // Future:
+  //
+  // "Do I own Batman #84?"
+  //
+  // "How many Pops do I own?"
+  //
+  // "Scan this barcode."
+  //
+  // "Show my duplicates."
+  //
+  // For now we support a handful of built-in commands.
 
-  Future<AtlasResponse> ask(
-      String question,
-      ) async {
-    final command =
-    question.trim().toLowerCase();
+  Future<AtlasResponse> ask(String question) async {
+    final command = question.trim().toLowerCase();
 
     log('Command: $command');
 
@@ -88,33 +80,25 @@ class AtlasService {
         );
 
       case 'version':
-        return AtlasResponse.success(
-          title: 'Atlas Version',
-          message: version,
-        );
+        return AtlasResponse.success(title: 'Atlas Version', message: version);
 
       case 'motto':
-        return AtlasResponse.success(
-          title: 'Atlas Motto',
-          message: motto,
-        );
+        return AtlasResponse.success(title: 'Atlas Motto', message: motto);
 
       case 'help':
         return AtlasResponse.success(
           title: 'Available Commands',
-          message:
-          'status\nversion\nmotto\nhelp',
+          message: 'status\nversion\nmotto\nhelp',
         );
 
       default:
         return AtlasResponse.failure(
-          message:
-          'Unknown command: "$question"',
-          suggestedAction:
-          'Type "help" to view available commands.',
+          message: 'Unknown command: "$question"',
+          suggestedAction: 'Type "help" to view available commands.',
         );
     }
   }
+
   // Future learning engine.
   Future<void> learn() async {}
 
@@ -133,11 +117,7 @@ class AtlasService {
   // Future synchronization.
   Future<void> sync() async {}
 
-  void log(
-      String message,
-      ) {
-    debugPrint(
-      '[ATLAS] $message',
-    );
+  void log(String message) {
+    debugPrint('[ATLAS] $message');
   }
 }

@@ -47,8 +47,7 @@ class AtlasExpandableSection extends StatefulWidget {
   }
 }
 
-class _AtlasExpandableSectionState
-    extends State<AtlasExpandableSection> {
+class _AtlasExpandableSectionState extends State<AtlasExpandableSection> {
   late bool _isExpanded;
 
   @override
@@ -59,27 +58,20 @@ class _AtlasExpandableSectionState
   }
 
   @override
-  void didUpdateWidget(
-      covariant AtlasExpandableSection oldWidget,
-      ) {
+  void didUpdateWidget(covariant AtlasExpandableSection oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    if (oldWidget.initiallyExpanded !=
-        widget.initiallyExpanded) {
+    if (oldWidget.initiallyExpanded != widget.initiallyExpanded) {
       _isExpanded = widget.initiallyExpanded;
     }
   }
 
   void _toggleExpanded() {
-    setState(
-          () {
-        _isExpanded = !_isExpanded;
-      },
-    );
+    setState(() {
+      _isExpanded = !_isExpanded;
+    });
 
-    widget.onExpandedChanged?.call(
-      _isExpanded,
-    );
+    widget.onExpandedChanged?.call(_isExpanded);
   }
 
   @override
@@ -93,37 +85,33 @@ class _AtlasExpandableSectionState
             button: true,
             expanded: _isExpanded,
             label:
-            '${widget.title}, '
+                '${widget.title}, '
                 '${_isExpanded ? 'expanded' : 'collapsed'}',
             child: Material(
               color: Colors.transparent,
               child: InkWell(
                 onTap: _toggleExpanded,
-                borderRadius: BorderRadius.circular(
-                  AtlasSpacing.lg,
-                ),
+                borderRadius: BorderRadius.circular(AtlasSpacing.lg),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
                     vertical: AtlasSpacing.xs,
                   ),
                   child: LayoutBuilder(
-                    builder: (
-                        BuildContext context,
-                        BoxConstraints constraints,
-                        ) {
-                      final bool useCompactHeader =
-                          constraints.maxWidth < 430;
+                    builder:
+                        (BuildContext context, BoxConstraints constraints) {
+                          final bool useCompactHeader =
+                              constraints.maxWidth < 430;
 
-                      return _ExpandableHeader(
-                        title: widget.title,
-                        subtitle: widget.subtitle,
-                        icon: widget.icon,
-                        badge: widget.badge,
-                        accentColor: widget.accentColor,
-                        isExpanded: _isExpanded,
-                        useCompactHeader: useCompactHeader,
-                      );
-                    },
+                          return _ExpandableHeader(
+                            title: widget.title,
+                            subtitle: widget.subtitle,
+                            icon: widget.icon,
+                            badge: widget.badge,
+                            accentColor: widget.accentColor,
+                            isExpanded: _isExpanded,
+                            useCompactHeader: useCompactHeader,
+                          );
+                        },
                   ),
                 ),
               ),
@@ -136,15 +124,10 @@ class _AtlasExpandableSectionState
               alignment: Alignment.topCenter,
               child: _isExpanded
                   ? Padding(
-                padding: const EdgeInsets.only(
-                  top: AtlasSpacing.lg,
-                ),
-                child: widget.child,
-              )
-                  : const SizedBox(
-                width: double.infinity,
-                height: 0,
-              ),
+                      padding: const EdgeInsets.only(top: AtlasSpacing.lg),
+                      child: widget.child,
+                    )
+                  : const SizedBox(width: double.infinity, height: 0),
             ),
           ),
         ],
@@ -178,13 +161,8 @@ class _ExpandableHeader extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (icon != null) ...[
-          _ExpandableIcon(
-            icon: icon!,
-            accentColor: accentColor,
-          ),
-          const SizedBox(
-            width: AtlasSpacing.md,
-          ),
+          _ExpandableIcon(icon: icon!, accentColor: accentColor),
+          const SizedBox(width: AtlasSpacing.md),
         ],
         Expanded(
           child: Column(
@@ -198,11 +176,8 @@ class _ExpandableHeader extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              if (subtitle != null &&
-                  subtitle!.trim().isNotEmpty) ...[
-                const SizedBox(
-                  height: AtlasSpacing.xs,
-                ),
+              if (subtitle != null && subtitle!.trim().isNotEmpty) ...[
+                const SizedBox(height: AtlasSpacing.xs),
                 Text(
                   subtitle!,
                   maxLines: isExpanded ? null : 2,
@@ -215,42 +190,27 @@ class _ExpandableHeader extends StatelessWidget {
                   ),
                 ),
               ],
-              if (useCompactHeader &&
-                  badge != null) ...[
-                const SizedBox(
-                  height: AtlasSpacing.sm,
-                ),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: badge!,
-                ),
+              if (useCompactHeader && badge != null) ...[
+                const SizedBox(height: AtlasSpacing.sm),
+                Align(alignment: Alignment.centerLeft, child: badge!),
               ],
             ],
           ),
         ),
-        if (!useCompactHeader &&
-            badge != null) ...[
-          const SizedBox(
-            width: AtlasSpacing.sm,
-          ),
+        if (!useCompactHeader && badge != null) ...[
+          const SizedBox(width: AtlasSpacing.sm),
           badge!,
         ],
-        const SizedBox(
-          width: AtlasSpacing.sm,
-        ),
+        const SizedBox(width: AtlasSpacing.sm),
         Padding(
-          padding: const EdgeInsets.only(
-            top: 7,
-          ),
+          padding: const EdgeInsets.only(top: 7),
           child: AnimatedRotation(
             turns: isExpanded ? 0.5 : 0,
             duration: AtlasMotion.expandDuration,
             curve: AtlasMotion.expandCurve,
             child: Icon(
               Icons.keyboard_arrow_down_rounded,
-              color: isExpanded
-                  ? accentColor
-                  : AtlasColors.textSecondary,
+              color: isExpanded ? accentColor : AtlasColors.textSecondary,
               size: 28,
             ),
           ),
@@ -261,10 +221,7 @@ class _ExpandableHeader extends StatelessWidget {
 }
 
 class _ExpandableIcon extends StatelessWidget {
-  const _ExpandableIcon({
-    required this.icon,
-    required this.accentColor,
-  });
+  const _ExpandableIcon({required this.icon, required this.accentColor});
 
   final IconData icon;
   final Color accentColor;
@@ -276,23 +233,11 @@ class _ExpandableIcon extends StatelessWidget {
       height: 42,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: accentColor.withValues(
-          alpha: 0.12,
-        ),
-        borderRadius: BorderRadius.circular(
-          14,
-        ),
-        border: Border.all(
-          color: accentColor.withValues(
-            alpha: 0.22,
-          ),
-        ),
+        color: accentColor.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: accentColor.withValues(alpha: 0.22)),
       ),
-      child: Icon(
-        icon,
-        color: accentColor,
-        size: 22,
-      ),
+      child: Icon(icon, color: accentColor, size: 22),
     );
   }
 }
@@ -318,30 +263,16 @@ class AtlasExpandableBadge extends StatelessWidget {
         vertical: 6,
       ),
       decoration: BoxDecoration(
-        color: color.withValues(
-          alpha: 0.10,
-        ),
-        borderRadius: BorderRadius.circular(
-          999,
-        ),
-        border: Border.all(
-          color: color.withValues(
-            alpha: 0.28,
-          ),
-        ),
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.28)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (icon != null) ...[
-            Icon(
-              icon,
-              size: 15,
-              color: color,
-            ),
-            const SizedBox(
-              width: AtlasSpacing.xs,
-            ),
+            Icon(icon, size: 15, color: color),
+            const SizedBox(width: AtlasSpacing.xs),
           ],
           Text(
             label,

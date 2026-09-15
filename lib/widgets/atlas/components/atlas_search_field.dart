@@ -34,9 +34,7 @@ class AtlasSearchField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool showClear =
-        showClearButton &&
-            controller.text.isNotEmpty;
+    final bool showClear = showClearButton && controller.text.isNotEmpty;
 
     return TextField(
       controller: controller,
@@ -48,17 +46,13 @@ class AtlasSearchField extends StatelessWidget {
       textInputAction: textInputAction,
       decoration: InputDecoration(
         hintText: hintText,
-        prefixIcon: const Icon(
-          Icons.search_rounded,
-        ),
+        prefixIcon: const Icon(Icons.search_rounded),
         suffixIcon: showClear
             ? IconButton(
-          tooltip: 'Clear Search',
-          onPressed: onClear,
-          icon: const Icon(
-            Icons.close_rounded,
-          ),
-        )
+                tooltip: 'Clear Search',
+                onPressed: onClear,
+                icon: const Icon(Icons.close_rounded),
+              )
             : null,
         filled: true,
         contentPadding: const EdgeInsets.symmetric(
@@ -66,24 +60,16 @@ class AtlasSearchField extends StatelessWidget {
           vertical: AtlasSpacing.md,
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(
-            18,
-          ),
+          borderRadius: BorderRadius.circular(18),
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(
-            18,
-          ),
+          borderRadius: BorderRadius.circular(18),
           borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(
-            18,
-          ),
-          borderSide: BorderSide(
-            color: Theme.of(context).colorScheme.primary,
-          ),
+          borderRadius: BorderRadius.circular(18),
+          borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
         ),
       ),
     );

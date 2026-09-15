@@ -1,7 +1,1 @@
-enum SubscriptionStatus {
-  inactive,
-  active,
-  trialing,
-  pastDue,
-  canceled,
-}
+enum SubscriptionStatus { inactive, active, trialing, pastDue, canceled }

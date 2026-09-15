@@ -60,9 +60,7 @@ class _PopAskAtlasSheetState extends State<_PopAskAtlasSheet> {
   void initState() {
     super.initState();
 
-    _questionController = TextEditingController(
-      text: widget.initialQuestion,
-    );
+    _questionController = TextEditingController(text: widget.initialQuestion);
 
     _answer = _buildAnswer(widget.initialQuestion);
   }
@@ -153,15 +151,11 @@ class _PopAskAtlasSheetState extends State<_PopAskAtlasSheet> {
                   decoration: InputDecoration(
                     labelText: 'Ask about this collectible',
                     hintText: 'What changed with this Pop?',
-                    prefixIcon: const Icon(
-                      Icons.chat_bubble_outline_rounded,
-                    ),
+                    prefixIcon: const Icon(Icons.chat_bubble_outline_rounded),
                     suffixIcon: IconButton(
                       tooltip: 'Ask Atlas',
                       onPressed: _submitQuestion,
-                      icon: const Icon(
-                        Icons.arrow_upward_rounded,
-                      ),
+                      icon: const Icon(Icons.arrow_upward_rounded),
                     ),
                     border: const OutlineInputBorder(),
                   ),
@@ -189,10 +183,7 @@ class _PopAskAtlasSheetState extends State<_PopAskAtlasSheet> {
                       ],
                     ),
                     const SizedBox(height: AtlasSpacing.md),
-                    Text(
-                      _answer.answer,
-                      style: AtlasTypography.bodyMedium,
-                    ),
+                    Text(_answer.answer, style: AtlasTypography.bodyMedium),
                     const SizedBox(height: AtlasSpacing.lg),
                     Text(
                       'Atlas Tip',
@@ -212,10 +203,7 @@ class _PopAskAtlasSheetState extends State<_PopAskAtlasSheet> {
                 ),
               ),
               const SizedBox(height: AtlasSpacing.lg),
-              Text(
-                'Suggested Questions',
-                style: AtlasTypography.headingSmall,
-              ),
+              Text('Suggested Questions', style: AtlasTypography.headingSmall),
               const SizedBox(height: AtlasSpacing.sm),
               Wrap(
                 spacing: AtlasSpacing.sm,
@@ -223,16 +211,16 @@ class _PopAskAtlasSheetState extends State<_PopAskAtlasSheet> {
                 children: _answer.suggestedQuestions
                     .map(
                       (question) => ActionChip(
-                    avatar: const Icon(
-                      Icons.auto_awesome_rounded,
-                      size: 18,
-                    ),
-                    label: Text(question),
-                    onPressed: () {
-                      _askSuggestedQuestion(question);
-                    },
-                  ),
-                )
+                        avatar: const Icon(
+                          Icons.auto_awesome_rounded,
+                          size: 18,
+                        ),
+                        label: Text(question),
+                        onPressed: () {
+                          _askSuggestedQuestion(question);
+                        },
+                      ),
+                    )
                     .toList(),
               ),
               const SizedBox(height: AtlasSpacing.lg),

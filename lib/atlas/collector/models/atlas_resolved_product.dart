@@ -30,28 +30,20 @@ final class AtlasResolvedProduct {
   /// Collector recommendation.
   final AtlasCollectorInsight insight;
 
-  bool get isOwned =>
-      collectorState.isOwned;
+  bool get isOwned => collectorState.isOwned;
 
-  bool get isWishlisted =>
-      collectorState.isWishlisted;
+  bool get isWishlisted => collectorState.isWishlisted;
 
-  bool get hasRelatedVariants =>
-      collectorState.hasRelatedMatches;
+  bool get hasRelatedVariants => collectorState.hasRelatedMatches;
 
-  int get ownedQuantity =>
-      collectorState.ownedQuantity;
+  int get ownedQuantity => collectorState.ownedQuantity;
 
-  Pop? get primaryOwnedMatch =>
-      collectorState.primaryOwnedMatch;
+  Pop? get primaryOwnedMatch => collectorState.primaryOwnedMatch;
 
-  Pop? get primaryWishlistMatch =>
-      collectorState.primaryWishlistMatch;
+  Pop? get primaryWishlistMatch => collectorState.primaryWishlistMatch;
 
   Pop get preferredDisplayPop {
-    return primaryOwnedMatch ??
-        primaryWishlistMatch ??
-        catalogPop;
+    return primaryOwnedMatch ?? primaryWishlistMatch ?? catalogPop;
   }
 
   @override

@@ -17,27 +17,19 @@ class AtlasTrendReport {
 class AtlasTrendEngine {
   const AtlasTrendEngine();
 
-  AtlasTrendReport analyze(
-      List<Pop> pops,
-      ) {
+  AtlasTrendReport analyze(List<Pop> pops) {
     final totalPops = pops.length;
 
-    final totalValue = pops.fold<double>(
-      0,
-          (total, pop) => total + pop.value,
-    );
+    final totalValue = pops.fold<double>(0, (total, pop) => total + pop.value);
 
-    final double averageValue =
-    totalPops == 0
-        ? 0.0
-        : totalValue / totalPops;
+    final double averageValue = totalPops == 0 ? 0.0 : totalValue / totalPops;
 
     final double highestValue = pops.isEmpty
         ? 0.0
         : pops
-        .map((pop) => pop.value)
-        .reduce((a, b) => a > b ? a : b)
-        .toDouble();
+              .map((pop) => pop.value)
+              .reduce((a, b) => a > b ? a : b)
+              .toDouble();
 
     return AtlasTrendReport(
       totalPops: totalPops,

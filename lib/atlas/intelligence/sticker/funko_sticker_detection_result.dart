@@ -3,9 +3,7 @@ import 'funko_sticker_type.dart';
 
 // Contains all sticker evidence detected during identity analysis.
 final class FunkoStickerDetectionResult {
-  const FunkoStickerDetectionResult({
-    required this.evidence,
-  });
+  const FunkoStickerDetectionResult({required this.evidence});
 
   final List<FunkoStickerEvidence> evidence;
 
@@ -15,19 +13,11 @@ final class FunkoStickerDetectionResult {
 
   List<FunkoStickerType> get stickers {
     return List<FunkoStickerType>.unmodifiable(
-      evidence.map(
-            (FunkoStickerEvidence item) =>
-        item.sticker,
-      ),
+      evidence.map((FunkoStickerEvidence item) => item.sticker),
     );
   }
 
-  bool contains(
-      FunkoStickerType sticker,
-      ) {
-    return evidence.any(
-          (FunkoStickerEvidence item) =>
-      item.sticker == sticker,
-    );
+  bool contains(FunkoStickerType sticker) {
+    return evidence.any((FunkoStickerEvidence item) => item.sticker == sticker);
   }
 }

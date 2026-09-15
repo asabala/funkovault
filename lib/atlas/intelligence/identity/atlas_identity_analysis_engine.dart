@@ -24,37 +24,24 @@ final class AtlasIdentityAnalysisEngine {
   AtlasIdentityAnalysisEngine({
     required AtlasIdentityLookup lookup,
     this.tokenizer = const AtlasIdentityTokenizer(),
-    this.phraseTokenizer =
-    const AtlasIdentityPhraseTokenizer(),
+    this.phraseTokenizer = const AtlasIdentityPhraseTokenizer(),
     List<AtlasIdentityDetector>? detectors,
-  })  : lookup = lookup,
-        detectors =
-            detectors ??
-                <AtlasIdentityDetector>[
-                  AtlasVariantDetector(
-                    lookup: lookup,
-                  ),
-                  FunkoRetailerDetector(
-                    lookup: lookup,
-                  ),
-                  FunkoStickerDetector(
-                    lookup: lookup,
-                  ),
-                  FunkoEventDetector(
-                    lookup: lookup,
-                  ),
-                ];
+  }) : lookup = lookup,
+       detectors =
+           detectors ??
+           <AtlasIdentityDetector>[
+             AtlasVariantDetector(lookup: lookup),
+             FunkoRetailerDetector(lookup: lookup),
+             FunkoStickerDetector(lookup: lookup),
+             FunkoEventDetector(lookup: lookup),
+           ];
 
   factory AtlasIdentityAnalysisEngine.create() {
-    final registry =
-    const AtlasRegistryBootstrap().build();
+    final registry = const AtlasRegistryBootstrap().build();
 
-    final lookup =
-    AtlasIdentityLookup(registry);
+    final lookup = AtlasIdentityLookup(registry);
 
-    return AtlasIdentityAnalysisEngine(
-      lookup: lookup,
-    );
+    return AtlasIdentityAnalysisEngine(lookup: lookup);
   }
 
   final AtlasIdentityLookup lookup;
@@ -65,24 +52,15 @@ final class AtlasIdentityAnalysisEngine {
 
   final List<AtlasIdentityDetector> detectors;
 
-  AtlasIdentityAnalysis analyze(
-      String? text,
-      ) {
-    final tokens =
-    tokenizer.tokenize(text);
+  AtlasIdentityAnalysis analyze(String? text) {
+    final tokens = tokenizer.tokenize(text);
 
-    final phrases =
-    phraseTokenizer.tokenize(tokens);
+    final phrases = phraseTokenizer.tokenize(tokens);
 
-    AtlasIdentityAnalysis analysis =
-    const AtlasIdentityAnalysis();
+    AtlasIdentityAnalysis analysis = const AtlasIdentityAnalysis();
 
-    for (final AtlasIdentityDetector detector
-    in detectors) {
-      analysis = detector.detect(
-        phrases: phrases,
-        analysis: analysis,
-      );
+    for (final AtlasIdentityDetector detector in detectors) {
+      analysis = detector.detect(phrases: phrases, analysis: analysis);
     }
 
     return analysis;

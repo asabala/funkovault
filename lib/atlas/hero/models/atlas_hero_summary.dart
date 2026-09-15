@@ -41,8 +41,7 @@ class AtlasHeroSummary {
 
   bool get hasScoreReasons => scoreReasons.isNotEmpty;
 
-  bool get hasImprovementSuggestions =>
-      improvementSuggestions.isNotEmpty;
+  bool get hasImprovementSuggestions => improvementSuggestions.isNotEmpty;
 
   String get scoreLabel {
     if (normalizedScore >= 90) {

@@ -133,10 +133,7 @@ void main() {
     final state = _TestAppState();
     await pumpScreen(tester, state);
 
-    expect(
-      find.byKey(const ValueKey('collections-grid')),
-      findsOneWidget,
-    );
+    expect(find.byKey(const ValueKey('collections-grid')), findsOneWidget);
 
     expect(find.byType(GridView), findsOneWidget);
 
@@ -208,57 +205,33 @@ void main() {
     final state = _TestAppState();
     final navigatorObserver = _RecordingNavigatorObserver();
 
-    await pumpScreen(
-      tester,
-      state,
-      navigatorObserver: navigatorObserver,
-    );
+    await pumpScreen(tester, state, navigatorObserver: navigatorObserver);
 
     final openButton = tester.widget<OutlinedButton>(
-      find.byKey(
-        const ValueKey('open-Arthur Collection'),
-      ),
+      find.byKey(const ValueKey('open-Arthur Collection')),
     );
 
     openButton.onPressed!();
 
     await tester.idle();
 
-    expect(
-      state.requestedSelect,
-      'Arthur Collection',
-    );
+    expect(state.requestedSelect, 'Arthur Collection');
 
-    final route =
-    navigatorObserver.lastPushedRoute
-    as MaterialPageRoute<void>;
+    final route = navigatorObserver.lastPushedRoute as MaterialPageRoute<void>;
 
     final screen = route.builder(
-      tester.element(
-        find.byType(CollectionsScreen),
-      ),
+      tester.element(find.byType(CollectionsScreen)),
     );
 
-    expect(
-      screen,
-      isA<AtlasRoomScreen>(),
-    );
+    expect(screen, isA<AtlasRoomScreen>());
 
     final room = screen as AtlasRoomScreen;
 
-    expect(
-      room.collectionName,
-      'Arthur Collection',
-    );
+    expect(room.collectionName, 'Arthur Collection');
 
-    expect(
-      room.roomName,
-      'Arthur Collection',
-    );
+    expect(room.roomName, 'Arthur Collection');
 
-    await tester.pumpWidget(
-      const SizedBox.shrink(),
-    );
+    await tester.pumpWidget(const SizedBox.shrink());
   });
 
   testWidgets('rename collection request is forwarded', (tester) async {

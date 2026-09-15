@@ -13,35 +13,22 @@ class OwnershipAnalyzer {
   }) {
     final analysisTime = now ?? DateTime.now();
 
-    final validEvents = timeline
-        .where(
-          (event) =>
-      event.occurredAt.millisecondsSinceEpoch > 0,
-    )
-        .toList(growable: false)
-      ..sort(
-            (a, b) => a.occurredAt.compareTo(b.occurredAt),
-      );
+    final validEvents =
+        timeline
+            .where((event) => event.occurredAt.millisecondsSinceEpoch > 0)
+            .toList(growable: false)
+          ..sort((a, b) => a.occurredAt.compareTo(b.occurredAt));
 
     final ownedSince = _findOwnedSince(validEvents);
     final lastActivityAt = validEvents.isEmpty
         ? null
         : validEvents.last.occurredAt;
 
-    final daysOwned = _calculateDaysBetween(
-      ownedSince,
-      analysisTime,
-    );
+    final daysOwned = _calculateDaysBetween(ownedSince, analysisTime);
 
-    final monthsOwned = _calculateCompletedMonths(
-      ownedSince,
-      analysisTime,
-    );
+    final monthsOwned = _calculateCompletedMonths(ownedSince, analysisTime);
 
-    final yearsOwned = _calculateCompletedYears(
-      ownedSince,
-      analysisTime,
-    );
+    final yearsOwned = _calculateCompletedYears(ownedSince, analysisTime);
 
     final isRecentlyAdded = _isWithinDays(
       ownedSince,
@@ -72,58 +59,34 @@ class OwnershipAnalyzer {
     );
   }
 
-  DateTime? _findOwnedSince(
-      List<AtlasTimelineEvent> events,
-      ) {
+  DateTime? _findOwnedSince(List<AtlasTimelineEvent> events) {
     for (final event in events) {
-      if (event.type ==
-          AtlasTimelineEventType.addedToVault) {
+      if (event.type == AtlasTimelineEventType.addedToVault) {
         return event.occurredAt;
       }
     }
 
-    return events.isEmpty
-        ? null
-        : events.first.occurredAt;
+    return events.isEmpty ? null : events.first.occurredAt;
   }
 
-  int _calculateDaysBetween(
-      DateTime? start,
-      DateTime end,
-      ) {
+  int _calculateDaysBetween(DateTime? start, DateTime end) {
     if (start == null || start.isAfter(end)) {
       return 0;
     }
 
-    final normalizedStart = DateTime(
-      start.year,
-      start.month,
-      start.day,
-    );
+    final normalizedStart = DateTime(start.year, start.month, start.day);
 
-    final normalizedEnd = DateTime(
-      end.year,
-      end.month,
-      end.day,
-    );
+    final normalizedEnd = DateTime(end.year, end.month, end.day);
 
-    return normalizedEnd
-        .difference(normalizedStart)
-        .inDays;
+    return normalizedEnd.difference(normalizedStart).inDays;
   }
 
-  int _calculateCompletedMonths(
-      DateTime? start,
-      DateTime end,
-      ) {
+  int _calculateCompletedMonths(DateTime? start, DateTime end) {
     if (start == null || start.isAfter(end)) {
       return 0;
     }
 
-    var months =
-        (end.year - start.year) * 12 +
-            end.month -
-            start.month;
+    var months = (end.year - start.year) * 12 + end.month - start.month;
 
     if (end.day < start.day) {
       months--;
@@ -132,10 +95,7 @@ class OwnershipAnalyzer {
     return months < 0 ? 0 : months;
   }
 
-  int _calculateCompletedYears(
-      DateTime? start,
-      DateTime end,
-      ) {
+  int _calculateCompletedYears(DateTime? start, DateTime end) {
     if (start == null || start.isAfter(end)) {
       return 0;
     }
@@ -144,8 +104,7 @@ class OwnershipAnalyzer {
 
     final anniversaryPassed =
         end.month > start.month ||
-            (end.month == start.month &&
-                end.day >= start.day);
+        (end.month == start.month && end.day >= start.day);
 
     if (!anniversaryPassed) {
       years--;
@@ -154,11 +113,7 @@ class OwnershipAnalyzer {
     return years < 0 ? 0 : years;
   }
 
-  bool _isWithinDays(
-      DateTime? date,
-      DateTime now,
-      int dayWindow,
-      ) {
+  bool _isWithinDays(DateTime? date, DateTime now, int dayWindow) {
     if (date == null || date.isAfter(now)) {
       return false;
     }

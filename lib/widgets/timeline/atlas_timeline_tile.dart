@@ -30,18 +30,14 @@ class AtlasTimelineTile extends StatelessWidget {
                 _TimelineIcon(
                   icon: _iconForType(event.type),
                   isAtlasInsight:
-                  event.type == AtlasTimelineEventType.aiInsight,
+                      event.type == AtlasTimelineEventType.aiInsight,
                 ),
                 if (showConnector)
                   Expanded(
                     child: Container(
                       width: 2,
-                      margin: const EdgeInsets.only(
-                        top: AtlasSpacing.xs,
-                      ),
-                      color: AtlasColors.vaultGold.withValues(
-                        alpha: 0.22,
-                      ),
+                      margin: const EdgeInsets.only(top: AtlasSpacing.xs),
+                      color: AtlasColors.vaultGold.withValues(alpha: 0.22),
                     ),
                   ),
               ],
@@ -51,25 +47,18 @@ class AtlasTimelineTile extends StatelessWidget {
           Expanded(
             child: Padding(
               padding: EdgeInsets.only(
-                bottom: showConnector
-                    ? AtlasSpacing.lg
-                    : AtlasSpacing.sm,
+                bottom: showConnector ? AtlasSpacing.lg : AtlasSpacing.sm,
               ),
               child: Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(
-                  AtlasSpacing.md,
-                ),
+                padding: const EdgeInsets.all(AtlasSpacing.md),
                 decoration: BoxDecoration(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .surface
-                      .withValues(alpha: 0.55),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.surface.withValues(alpha: 0.55),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: AtlasColors.vaultGold.withValues(
-                      alpha: 0.16,
-                    ),
+                    color: AtlasColors.vaultGold.withValues(alpha: 0.16),
                   ),
                 ),
                 child: Column(
@@ -113,9 +102,7 @@ class AtlasTimelineTile extends StatelessWidget {
                       detail,
                     ],
                     const SizedBox(height: AtlasSpacing.sm),
-                    _CreatedByLabel(
-                      createdBy: event.createdBy,
-                    ),
+                    _CreatedByLabel(createdBy: event.createdBy),
                   ],
                 ),
               ),
@@ -126,18 +113,12 @@ class AtlasTimelineTile extends StatelessWidget {
     );
   }
 
-  static Widget? _buildEventDetail(
-      AtlasTimelineEvent event,
-      ) {
+  static Widget? _buildEventDetail(AtlasTimelineEvent event) {
     switch (event.type) {
       case AtlasTimelineEventType.valueUpdated:
         return _ValueChangeDetail(
-          previousValue: _readDouble(
-            event.metadata['previousValue'],
-          ),
-          newValue: _readDouble(
-            event.metadata['newValue'],
-          ),
+          previousValue: _readDouble(event.metadata['previousValue']),
+          newValue: _readDouble(event.metadata['newValue']),
           source: event.metadata['source']?.toString(),
         );
 
@@ -146,9 +127,7 @@ class AtlasTimelineTile extends StatelessWidget {
           rows: [
             _MetadataRow(
               label: 'Price Paid',
-              value: _formatCurrencyValue(
-                event.metadata['pricePaid'],
-              ),
+              value: _formatCurrencyValue(event.metadata['pricePaid']),
             ),
             _MetadataRow(
               label: 'Store',
@@ -162,9 +141,7 @@ class AtlasTimelineTile extends StatelessWidget {
           rows: [
             _MetadataRow(
               label: 'Sale Price',
-              value: _formatCurrencyValue(
-                event.metadata['salePrice'],
-              ),
+              value: _formatCurrencyValue(event.metadata['salePrice']),
             ),
             _MetadataRow(
               label: 'Platform',
@@ -178,8 +155,7 @@ class AtlasTimelineTile extends StatelessWidget {
           rows: [
             _MetadataRow(
               label: 'Convention',
-              value:
-              event.metadata['conventionName']?.toString(),
+              value: event.metadata['conventionName']?.toString(),
             ),
             _MetadataRow(
               label: 'Location',
@@ -193,9 +169,7 @@ class AtlasTimelineTile extends StatelessWidget {
     }
   }
 
-  static IconData _iconForType(
-      AtlasTimelineEventType type,
-      ) {
+  static IconData _iconForType(AtlasTimelineEventType type) {
     switch (type) {
       case AtlasTimelineEventType.addedToVault:
         return Icons.inventory_2_rounded;
@@ -253,9 +227,7 @@ class AtlasTimelineTile extends StatelessWidget {
     }
   }
 
-  static String _formatDate(
-      DateTime value,
-      ) {
+  static String _formatDate(DateTime value) {
     final localDate = value.toLocal();
 
     const monthNames = <String>[
@@ -278,21 +250,15 @@ class AtlasTimelineTile extends StatelessWidget {
     return '$month ${localDate.day}, ${localDate.year}';
   }
 
-  static double? _readDouble(
-      dynamic value,
-      ) {
+  static double? _readDouble(dynamic value) {
     if (value is num) {
       return value.toDouble();
     }
 
-    return double.tryParse(
-      value?.toString().trim() ?? '',
-    );
+    return double.tryParse(value?.toString().trim() ?? '');
   }
 
-  static String? _formatCurrencyValue(
-      dynamic value,
-      ) {
+  static String? _formatCurrencyValue(dynamic value) {
     final amount = _readDouble(value);
 
     if (amount == null) {
@@ -304,10 +270,7 @@ class AtlasTimelineTile extends StatelessWidget {
 }
 
 class _TimelineIcon extends StatelessWidget {
-  const _TimelineIcon({
-    required this.icon,
-    required this.isAtlasInsight,
-  });
+  const _TimelineIcon({required this.icon, required this.isAtlasInsight});
 
   final IconData icon;
   final bool isAtlasInsight;
@@ -328,11 +291,7 @@ class _TimelineIcon extends StatelessWidget {
           ),
         ),
       ),
-      child: Icon(
-        icon,
-        size: 20,
-        color: AtlasColors.vaultGold,
-      ),
+      child: Icon(icon, size: 20, color: AtlasColors.vaultGold),
     );
   }
 }
@@ -350,23 +309,17 @@ class _ValueChangeDetail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasValueChange =
-        previousValue != null || newValue != null;
+    final hasValueChange = previousValue != null || newValue != null;
 
-    if (!hasValueChange &&
-        (source == null || source!.trim().isEmpty)) {
+    if (!hasValueChange && (source == null || source!.trim().isEmpty)) {
       return const SizedBox.shrink();
     }
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(
-        AtlasSpacing.sm,
-      ),
+      padding: const EdgeInsets.all(AtlasSpacing.sm),
       decoration: BoxDecoration(
-        color: AtlasColors.vaultGold.withValues(
-          alpha: 0.08,
-        ),
+        color: AtlasColors.vaultGold.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -375,15 +328,14 @@ class _ValueChangeDetail extends StatelessWidget {
           if (hasValueChange)
             Text(
               '${_formatCurrency(previousValue)} → '
-                  '${_formatCurrency(newValue)}',
+              '${_formatCurrency(newValue)}',
               style: AtlasTypography.bodyMedium.copyWith(
                 color: AtlasColors.vaultGold,
                 fontWeight: FontWeight.bold,
               ),
             ),
           if (source != null && source!.trim().isNotEmpty) ...[
-            if (hasValueChange)
-              const SizedBox(height: AtlasSpacing.xs),
+            if (hasValueChange) const SizedBox(height: AtlasSpacing.xs),
             Text(
               'Source: ${_formatSource(source!)}',
               style: AtlasTypography.bodySmall.copyWith(
@@ -396,9 +348,7 @@ class _ValueChangeDetail extends StatelessWidget {
     );
   }
 
-  static String _formatCurrency(
-      double? value,
-      ) {
+  static String _formatCurrency(double? value) {
     if (value == null) {
       return 'Not set';
     }
@@ -406,13 +356,8 @@ class _ValueChangeDetail extends StatelessWidget {
     return '\$${value.toStringAsFixed(2)}';
   }
 
-  static String _formatSource(
-      String value,
-      ) {
-    final normalized = value
-        .trim()
-        .replaceAll('_', ' ')
-        .replaceAll('-', ' ');
+  static String _formatSource(String value) {
+    final normalized = value.trim().replaceAll('_', ' ').replaceAll('-', ' ');
 
     if (normalized.isEmpty) {
       return 'Unknown';
@@ -423,27 +368,21 @@ class _ValueChangeDetail extends StatelessWidget {
         .where((word) => word.isNotEmpty)
         .map(
           (word) =>
-      '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}',
-    )
+              '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}',
+        )
         .join(' ');
   }
 }
 
 class _MetadataDetail extends StatelessWidget {
-  const _MetadataDetail({
-    required this.rows,
-  });
+  const _MetadataDetail({required this.rows});
 
   final List<_MetadataRow> rows;
 
   @override
   Widget build(BuildContext context) {
     final visibleRows = rows
-        .where(
-          (row) =>
-      row.value != null &&
-          row.value!.trim().isNotEmpty,
-    )
+        .where((row) => row.value != null && row.value!.trim().isNotEmpty)
         .toList();
 
     if (visibleRows.isEmpty) {
@@ -452,20 +391,14 @@ class _MetadataDetail extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(
-        AtlasSpacing.sm,
-      ),
+      padding: const EdgeInsets.all(AtlasSpacing.sm),
       decoration: BoxDecoration(
-        color: AtlasColors.vaultGold.withValues(
-          alpha: 0.08,
-        ),
+        color: AtlasColors.vaultGold.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         children: [
-          for (var index = 0;
-          index < visibleRows.length;
-          index++) ...[
+          for (var index = 0; index < visibleRows.length; index++) ...[
             _MetadataLine(
               label: visibleRows[index].label,
               value: visibleRows[index].value!,
@@ -480,20 +413,14 @@ class _MetadataDetail extends StatelessWidget {
 }
 
 class _MetadataRow {
-  const _MetadataRow({
-    required this.label,
-    required this.value,
-  });
+  const _MetadataRow({required this.label, required this.value});
 
   final String label;
   final String? value;
 }
 
 class _MetadataLine extends StatelessWidget {
-  const _MetadataLine({
-    required this.label,
-    required this.value,
-  });
+  const _MetadataLine({required this.label, required this.value});
 
   final String label;
   final String value;
@@ -527,9 +454,7 @@ class _MetadataLine extends StatelessWidget {
 }
 
 class _CreatedByLabel extends StatelessWidget {
-  const _CreatedByLabel({
-    required this.createdBy,
-  });
+  const _CreatedByLabel({required this.createdBy});
 
   final String createdBy;
 
@@ -556,9 +481,7 @@ class _CreatedByLabel extends StatelessWidget {
     );
   }
 
-  static String _labelForCreatedBy(
-      String value,
-      ) {
+  static String _labelForCreatedBy(String value) {
     switch (value.trim().toLowerCase()) {
       case AtlasTimelineEvent.systemCreatedBy:
         return 'Recorded automatically';
@@ -575,9 +498,7 @@ class _CreatedByLabel extends StatelessWidget {
     }
   }
 
-  static IconData _iconForCreatedBy(
-      String value,
-      ) {
+  static IconData _iconForCreatedBy(String value) {
     switch (value.trim().toLowerCase()) {
       case AtlasTimelineEvent.systemCreatedBy:
         return Icons.settings_rounded;

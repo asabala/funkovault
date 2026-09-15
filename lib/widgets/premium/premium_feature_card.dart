@@ -37,13 +37,11 @@ class PremiumFeatureCard extends StatelessWidget {
             accentColor: AtlasColors.vaultGold,
             badge: const PremiumBadge(),
           ),
-          const SizedBox(
-            height: AtlasSpacing.lg,
-          ),
+          const SizedBox(height: AtlasSpacing.lg),
           AtlasActionRow(
             title: actionLabel,
             description:
-            'Unlock this Premium feature and additional advanced Atlas tools.',
+                'Unlock this Premium feature and additional advanced Atlas tools.',
             icon: Icons.lock_open_rounded,
             accentColor: AtlasColors.vaultGold,
             onTap: onAction,

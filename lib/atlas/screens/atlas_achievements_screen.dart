@@ -18,48 +18,40 @@ class AtlasAchievementsScreen extends StatelessWidget {
     const achievementEngine = AtlasAchievementEngine();
 
     final pops = repository.allPops(appState);
-    final achievements =
-    achievementEngine.evaluate(pops);
+    final achievements = achievementEngine.evaluate(pops);
 
-    final unlockedCount =
-        achievements.where((a) => a.unlocked).length;
+    final unlockedCount = achievements.where((a) => a.unlocked).length;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Atlas Achievements'),
-      ),
+      appBar: AppBar(title: const Text('Atlas Achievements')),
       body: VaultScrollView(
         children: [
           AtlasGreetingCard(
             title: '$unlockedCount / ${achievements.length} Unlocked',
             message:
-            'Atlas celebrates important milestones in your collecting journey.',
+                'Atlas celebrates important milestones in your collecting journey.',
             icon: Icons.emoji_events,
           ),
 
           const SizedBox(height: 16),
 
-          ...achievements.map(
-                (achievement) {
-              return Card(
-                child: ListTile(
-                  leading: Text(
-                    achievement.icon,
-                    style: const TextStyle(
-                      fontSize: 28,
-                    ),
-                  ),
-                  title: Text(achievement.title),
-                  subtitle: Text(achievement.description),
-                  trailing: Icon(
-                    achievement.unlocked
-                        ? Icons.check_circle
-                        : Icons.lock_outline,
-                  ),
+          ...achievements.map((achievement) {
+            return Card(
+              child: ListTile(
+                leading: Text(
+                  achievement.icon,
+                  style: const TextStyle(fontSize: 28),
                 ),
-              );
-            },
-          ),
+                title: Text(achievement.title),
+                subtitle: Text(achievement.description),
+                trailing: Icon(
+                  achievement.unlocked
+                      ? Icons.check_circle
+                      : Icons.lock_outline,
+                ),
+              ),
+            );
+          }),
         ],
       ),
     );

@@ -21,24 +21,16 @@ import '../vault/vault_health_screen.dart';
 import '../vault/vault_maintenance_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
-  const SettingsScreen({
-    super.key,
-  });
+  const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Settings',
-        ),
-      ),
+      appBar: AppBar(title: const Text('Settings')),
       body: ListView(
-        padding: const EdgeInsets.only(
-          bottom: 100,
-        ),
+        padding: const EdgeInsets.only(bottom: 100),
         children: [
           const Padding(
             padding: EdgeInsets.fromLTRB(
@@ -50,46 +42,38 @@ class SettingsScreen extends StatelessWidget {
             child: _SettingsHeaderCard(),
           ),
 
-          const _SettingsSectionHeader(
-            title: 'Account',
-          ),
+          const _SettingsSectionHeader(title: 'Account'),
 
           Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AtlasSpacing.md,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: AtlasSpacing.md),
             child: Column(
               children: [
                 AtlasActionRow(
                   title: 'Collector Profile',
                   description:
-                  'Update your name, title, bio, and collector details.',
+                      'Update your name, title, bio, and collector details.',
                   icon: Icons.person_outline,
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) =>
-                        const EditCollectorProfileScreen(),
+                        builder: (_) => const EditCollectorProfileScreen(),
                       ),
                     );
                   },
                 ),
-                const SizedBox(
-                  height: AtlasSpacing.sm,
-                ),
+                const SizedBox(height: AtlasSpacing.sm),
                 AtlasActionRow(
                   title: 'Premium',
                   description:
-                  'Manage Premium features, upgrades, and advanced tools.',
+                      'Manage Premium features, upgrades, and advanced tools.',
                   icon: Icons.workspace_premium_outlined,
                   accentColor: AtlasColors.vaultGold,
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) =>
-                        const PremiumSettingsScreen(),
+                        builder: (_) => const PremiumSettingsScreen(),
                       ),
                     );
                   },
@@ -97,27 +81,24 @@ class SettingsScreen extends StatelessWidget {
                 AtlasActionRow(
                   title: 'Premium',
                   description:
-                  'Manage Premium features, upgrades, and advanced tools.',
+                      'Manage Premium features, upgrades, and advanced tools.',
                   icon: Icons.workspace_premium_outlined,
                   accentColor: AtlasColors.vaultGold,
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) =>
-                        const PremiumSettingsScreen(),
+                        builder: (_) => const PremiumSettingsScreen(),
                       ),
                     );
                   },
                 ),
-                const SizedBox(
-                  height: AtlasSpacing.sm,
-                ),
+                const SizedBox(height: AtlasSpacing.sm),
                 if (authProvider.isLoggedIn)
                   AtlasActionRow(
                     title: 'Sign Out',
                     description:
-                    'Sign out of your Atlas account on this device.',
+                        'Sign out of your Atlas account on this device.',
                     icon: Icons.logout_rounded,
                     onTap: () async {
                       await authProvider.signOut();
@@ -130,7 +111,7 @@ class SettingsScreen extends StatelessWidget {
                         MaterialPageRoute<void>(
                           builder: (_) => const LoginScreen(),
                         ),
-                            (route) => false,
+                        (route) => false,
                       );
                     },
                   )
@@ -138,14 +119,14 @@ class SettingsScreen extends StatelessWidget {
                   AtlasActionRow(
                     title: 'Sign In',
                     description:
-                    'Sign in to your Atlas account to restore account features.',
+                        'Sign in to your Atlas account to restore account features.',
                     icon: Icons.login_rounded,
                     onTap: () {
                       Navigator.of(context).pushAndRemoveUntil(
                         MaterialPageRoute<void>(
                           builder: (_) => const LoginScreen(),
                         ),
-                            (route) => false,
+                        (route) => false,
                       );
                     },
                   ),
@@ -155,64 +136,52 @@ class SettingsScreen extends StatelessWidget {
 
           const _SettingsDivider(),
 
-          const _SettingsSectionHeader(
-            title: 'Collection Tools',
-          ),
+          const _SettingsSectionHeader(title: 'Collection Tools'),
 
           Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AtlasSpacing.md,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: AtlasSpacing.md),
             child: Column(
               children: [
                 AtlasActionRow(
                   title: 'Import Collection CSV',
-                  description:
-                  'Import a HobbyDB export into your collection.',
+                  description: 'Import a HobbyDB export into your collection.',
                   icon: Icons.upload_file,
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) =>
-                        const ImportCsvScreen(),
+                        builder: (_) => const ImportCsvScreen(),
                       ),
                     );
                   },
                 ),
-                const SizedBox(
-                  height: AtlasSpacing.sm,
-                ),
+                const SizedBox(height: AtlasSpacing.sm),
                 AtlasActionRow(
                   title: 'Vault Maintenance',
                   description:
-                  'Review, repair, or reset your current collection.',
+                      'Review, repair, or reset your current collection.',
                   icon: Icons.build_circle_outlined,
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) =>
-                        const VaultMaintenanceScreen(),
+                        builder: (_) => const VaultMaintenanceScreen(),
                       ),
                     );
                   },
                 ),
-                const SizedBox(
-                  height: AtlasSpacing.sm,
-                ),
+                const SizedBox(height: AtlasSpacing.sm),
                 AtlasActionRow(
                   title: 'Vault Health',
                   description:
-                  'Review health score, cleanup priority, and Premium health insights.',
+                      'Review health score, cleanup priority, and Premium health insights.',
                   icon: Icons.health_and_safety_outlined,
                   accentColor: AtlasColors.vaultGold,
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) =>
-                        const VaultHealthScreen(),
+                        builder: (_) => const VaultHealthScreen(),
                       ),
                     );
                   },
@@ -223,81 +192,67 @@ class SettingsScreen extends StatelessWidget {
 
           const _SettingsDivider(),
 
-          const _SettingsSectionHeader(
-            title: 'Preferences',
-          ),
+          const _SettingsSectionHeader(title: 'Preferences'),
 
           Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AtlasSpacing.md,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: AtlasSpacing.md),
             child: Column(
               children: [
                 AtlasActionRow(
                   title: 'Vault Preferences',
                   description:
-                  'Manage saved views, image defaults, filters, and sorting.',
+                      'Manage saved views, image defaults, filters, and sorting.',
                   icon: Icons.tune_outlined,
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) =>
-                        const VaultPreferencesScreen(),
+                        builder: (_) => const VaultPreferencesScreen(),
                       ),
                     );
                   },
                 ),
-                const SizedBox(
-                  height: AtlasSpacing.sm,
-                ),
+                const SizedBox(height: AtlasSpacing.sm),
                 AtlasActionRow(
                   title: 'Backup & Sync',
                   description:
-                  'Prepare cloud backup, restore, and sync options.',
+                      'Prepare cloud backup, restore, and sync options.',
                   icon: Icons.cloud_sync_outlined,
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) =>
-                        const BackupSyncSettingsScreen(),
+                        builder: (_) => const BackupSyncSettingsScreen(),
                       ),
                     );
                   },
                 ),
-                const SizedBox(
-                  height: AtlasSpacing.sm,
-                ),
+                const SizedBox(height: AtlasSpacing.sm),
                 AtlasActionRow(
                   title: 'Notifications',
                   description:
-                  'Manage future drop alerts, cleanup reminders, and value updates.',
+                      'Manage future drop alerts, cleanup reminders, and value updates.',
                   icon: Icons.notifications_none_rounded,
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) =>
-                        const NotificationsSettingsScreen(),
+                        builder: (_) => const NotificationsSettingsScreen(),
                       ),
                     );
                   },
                 ),
-                const SizedBox(
-                  height: AtlasSpacing.sm,
-                ),
+                const SizedBox(height: AtlasSpacing.sm),
                 AtlasActionRow(
                   title: 'Security',
                   description:
-                  'Manage account protection and future two-step verification.',
+                      'Manage account protection and future two-step verification.',
                   icon: Icons.security_outlined,
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) =>
-                        const SecuritySettingsScreen(),
+                        builder: (_) => const SecuritySettingsScreen(),
                       ),
                     );
                   },
@@ -308,26 +263,21 @@ class SettingsScreen extends StatelessWidget {
 
           const _SettingsDivider(),
 
-          const _SettingsSectionHeader(
-            title: 'Developer',
-          ),
+          const _SettingsSectionHeader(title: 'Developer'),
 
           Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AtlasSpacing.md,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: AtlasSpacing.md),
             child: AtlasActionRow(
               title: 'ADS Showcase',
               description:
-              'Preview Atlas Design System components, maturity, and roadmap.',
+                  'Preview Atlas Design System components, maturity, and roadmap.',
               icon: Icons.dashboard_customize_outlined,
               accentColor: AtlasColors.intelligenceBlue,
               onTap: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) =>
-                    const AtlasDesignSystemShowcaseScreen(),
+                    builder: (_) => const AtlasDesignSystemShowcaseScreen(),
                   ),
                 );
               },
@@ -336,34 +286,27 @@ class SettingsScreen extends StatelessWidget {
 
           const _SettingsDivider(),
 
-          const _SettingsSectionHeader(
-            title: 'Support & About',
-          ),
+          const _SettingsSectionHeader(title: 'Support & About'),
 
           Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AtlasSpacing.md,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: AtlasSpacing.md),
             child: Column(
               children: [
                 AtlasActionRow(
                   title: 'Help & Roadmap',
                   description:
-                  'Review planned features, guidance, and future Atlas tools.',
+                      'Review planned features, guidance, and future Atlas tools.',
                   icon: Icons.route_outlined,
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) =>
-                        const HelpRoadmapScreen(),
+                        builder: (_) => const HelpRoadmapScreen(),
                       ),
                     );
                   },
                 ),
-                const SizedBox(
-                  height: AtlasSpacing.sm,
-                ),
+                const SizedBox(height: AtlasSpacing.sm),
                 const AtlasActionRow(
                   title: 'Funko Vault',
                   description: 'Version 1.0',
@@ -390,7 +333,7 @@ class _SettingsHeaderCard extends StatelessWidget {
       child: AtlasSectionHeader(
         title: 'Atlas Control Center',
         subtitle:
-        'Manage your collector profile, Premium tools, vault health, preferences, backup, and security.',
+            'Manage your collector profile, Premium tools, vault health, preferences, backup, and security.',
         icon: Icons.settings_suggest_rounded,
         accentColor: AtlasColors.vaultGold,
       ),
@@ -399,9 +342,7 @@ class _SettingsHeaderCard extends StatelessWidget {
 }
 
 class _SettingsSectionHeader extends StatelessWidget {
-  const _SettingsSectionHeader({
-    required this.title,
-  });
+  const _SettingsSectionHeader({required this.title});
 
   final String title;
 
@@ -438,11 +379,7 @@ class _SettingsDivider extends StatelessWidget {
         AtlasSpacing.md,
         0,
       ),
-      child: Divider(
-        color: AtlasColors.textSecondary.withValues(
-          alpha: 0.18,
-        ),
-      ),
+      child: Divider(color: AtlasColors.textSecondary.withValues(alpha: 0.18)),
     );
   }
 }

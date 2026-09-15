@@ -25,17 +25,15 @@ class AtlasIntelligenceEngine {
     required int duplicateCount,
     required int missingValueCount,
   }) {
-    const confidenceEngine =
-    AtlasConfidenceEngine();
+    const confidenceEngine = AtlasConfidenceEngine();
 
-    final confidence =
-    confidenceEngine.calculate(pops);
+    final confidence = confidenceEngine.calculate(pops);
 
     if (duplicateCount > 0) {
       return AtlasIntelligenceReport(
         primaryFocusTitle: 'Review Duplicates',
         primaryFocusMessage:
-        'Atlas found $duplicateCount possible duplicate '
+            'Atlas found $duplicateCount possible duplicate '
             'group${duplicateCount == 1 ? '' : 's'}.',
         confidenceScore: confidence.score,
         confidenceMessage: confidence.message,
@@ -44,10 +42,9 @@ class AtlasIntelligenceEngine {
 
     if (missingValueCount > 0) {
       return AtlasIntelligenceReport(
-        primaryFocusTitle:
-        'Complete Missing Values',
+        primaryFocusTitle: 'Complete Missing Values',
         primaryFocusMessage:
-        '$missingValueCount '
+            '$missingValueCount '
             'Pop${missingValueCount == 1 ? '' : 's'} '
             'need estimated values.',
         confidenceScore: confidence.score,
@@ -58,7 +55,7 @@ class AtlasIntelligenceEngine {
     return AtlasIntelligenceReport(
       primaryFocusTitle: 'Vault Looks Strong',
       primaryFocusMessage:
-      'Atlas found no critical issues that need attention right now.',
+          'Atlas found no critical issues that need attention right now.',
       confidenceScore: confidence.score,
       confidenceMessage: confidence.message,
     );
@@ -68,8 +65,7 @@ class AtlasIntelligenceEngine {
     required Pop pop,
     required List<Activity> activities,
   }) {
-    const activitySummaryEngine =
-    PopActivitySummaryEngine();
+    const activitySummaryEngine = PopActivitySummaryEngine();
 
     return activitySummaryEngine.build(
       popId: pop.id,

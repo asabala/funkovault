@@ -18,11 +18,9 @@ final class IdentityHypothesis {
     List<String> supportingContributionIds = const <String>[],
     Map<String, Object?> attributes = const <String, Object?>{},
   }) : supportingContributionIds = List<String>.unmodifiable(
-    supportingContributionIds,
-  ),
-        attributes = Map<String, Object?>.unmodifiable(
-          attributes,
-        );
+         supportingContributionIds,
+       ),
+       attributes = Map<String, Object?>.unmodifiable(attributes);
 
   // Stable identifier for this hypothesis within the current identity process.
   final String hypothesisId;
@@ -86,10 +84,7 @@ final class IdentityHypothesis {
   }
 
   bool get hasCoreIdentity {
-    return hasCharacterName ||
-        hasProductNumber ||
-        hasSeries ||
-        hasProductLine;
+    return hasCharacterName || hasProductNumber || hasSeries || hasProductLine;
   }
 
   T? attribute<T>(String key) {

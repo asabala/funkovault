@@ -14,12 +14,12 @@ class AtlasExecutionMetadata {
     this.warningCount = 0,
     this.evidenceCount = 0,
     this.tags = const <String, String>{},
-  })  : assert(engineName != ''),
-        assert(engineVersion != ''),
-        assert(schemaVersion != ''),
-        assert(warningCount >= 0),
-        assert(evidenceCount >= 0),
-        assert(!completedAt.isBefore(startedAt));
+  }) : assert(engineName != ''),
+       assert(engineVersion != ''),
+       assert(schemaVersion != ''),
+       assert(warningCount >= 0),
+       assert(evidenceCount >= 0),
+       assert(!completedAt.isBefore(startedAt));
 
   // Stable name of the engine that produced the result.
   final String engineName;
@@ -81,12 +81,14 @@ class AtlasExecutionMetadata {
       engineName: engineName ?? this.engineName,
       engineVersion: engineVersion ?? this.engineVersion,
       schemaVersion: schemaVersion ?? this.schemaVersion,
-      policyVersion:
-      clearPolicyVersion ? null : policyVersion ?? this.policyVersion,
+      policyVersion: clearPolicyVersion
+          ? null
+          : policyVersion ?? this.policyVersion,
       startedAt: startedAt ?? this.startedAt,
       completedAt: completedAt ?? this.completedAt,
-      correlationId:
-      clearCorrelationId ? null : correlationId ?? this.correlationId,
+      correlationId: clearCorrelationId
+          ? null
+          : correlationId ?? this.correlationId,
       warningCount: warningCount ?? this.warningCount,
       evidenceCount: evidenceCount ?? this.evidenceCount,
       tags: Map<String, String>.unmodifiable(tags ?? this.tags),
@@ -158,7 +160,7 @@ class AtlasExecutionMetadata {
       evidenceCount,
       Object.hashAll(
         tags.entries.map(
-              (MapEntry<String, String> entry) =>
+          (MapEntry<String, String> entry) =>
               Object.hash(entry.key, entry.value),
         ),
       ),
@@ -178,10 +180,7 @@ class AtlasExecutionMetadata {
         ')';
   }
 
-  static bool _mapsEqual(
-      Map<String, String> left,
-      Map<String, String> right,
-      ) {
+  static bool _mapsEqual(Map<String, String> left, Map<String, String> right) {
     if (left.length != right.length) {
       return false;
     }

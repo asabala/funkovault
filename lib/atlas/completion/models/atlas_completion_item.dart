@@ -2,11 +2,7 @@ import 'package:funkovault2/atlas/catalog/models/atlas_catalog_product.dart';
 import 'package:funkovault2/atlas/taxonomy/models/atlas_taxonomy.dart';
 import 'package:funkovault2/models/pop.dart';
 
-enum AtlasCompletionItemState {
-  owned,
-  wishlisted,
-  missing,
-}
+enum AtlasCompletionItemState { owned, wishlisted, missing }
 
 final class AtlasCompletionItem {
   const AtlasCompletionItem({
@@ -63,8 +59,7 @@ final class AtlasCompletionItem {
   }
 
   bool get hasAnyWishlistState {
-    return isWishlistOverlayActive ||
-        hasWishlistMatches;
+    return isWishlistOverlayActive || hasWishlistMatches;
   }
 
   String get productId {
@@ -94,27 +89,17 @@ final class AtlasCompletionItem {
     double? releaseWeight,
   }) {
     return AtlasCompletionItem(
-      catalogProduct:
-      catalogProduct ?? this.catalogProduct,
-      taxonomy:
-      taxonomy ?? this.taxonomy,
-      state:
-      state ?? this.state,
-      ownedQuantity:
-      ownedQuantity ?? this.ownedQuantity,
-      ownedMatches:
-      List<Pop>.unmodifiable(
-        ownedMatches ?? this.ownedMatches,
-      ),
-      wishlistMatches:
-      List<Pop>.unmodifiable(
+      catalogProduct: catalogProduct ?? this.catalogProduct,
+      taxonomy: taxonomy ?? this.taxonomy,
+      state: state ?? this.state,
+      ownedQuantity: ownedQuantity ?? this.ownedQuantity,
+      ownedMatches: List<Pop>.unmodifiable(ownedMatches ?? this.ownedMatches),
+      wishlistMatches: List<Pop>.unmodifiable(
         wishlistMatches ?? this.wishlistMatches,
       ),
       isWishlistOverlayActive:
-      isWishlistOverlayActive ??
-          this.isWishlistOverlayActive,
-      releaseWeight:
-      releaseWeight ?? this.releaseWeight,
+          isWishlistOverlayActive ?? this.isWishlistOverlayActive,
+      releaseWeight: releaseWeight ?? this.releaseWeight,
     );
   }
 
@@ -126,30 +111,23 @@ final class AtlasCompletionItem {
     bool isWishlistOverlayActive = false,
     double releaseWeight = 1,
   }) {
-    final List<Pop> normalizedOwnedMatches =
-    List<Pop>.unmodifiable(
+    final List<Pop> normalizedOwnedMatches = List<Pop>.unmodifiable(
       ownedMatches,
     );
 
-    final List<Pop> normalizedWishlistMatches =
-    List<Pop>.unmodifiable(
+    final List<Pop> normalizedWishlistMatches = List<Pop>.unmodifiable(
       wishlistMatches,
     );
 
-    final int ownedQuantity =
-    normalizedOwnedMatches.fold<int>(
-      0,
-          (
-          int total,
-          Pop pop,
-          ) {
-        return total + pop.quantity;
-      },
-    );
+    final int ownedQuantity = normalizedOwnedMatches.fold<int>(0, (
+      int total,
+      Pop pop,
+    ) {
+      return total + pop.quantity;
+    });
 
     final bool hasWishlistState =
-        isWishlistOverlayActive ||
-            normalizedWishlistMatches.isNotEmpty;
+        isWishlistOverlayActive || normalizedWishlistMatches.isNotEmpty;
 
     final AtlasCompletionItemState state;
 
@@ -167,24 +145,16 @@ final class AtlasCompletionItem {
       state: state,
       ownedQuantity: ownedQuantity,
       ownedMatches: normalizedOwnedMatches,
-      wishlistMatches:
-      normalizedWishlistMatches,
-      isWishlistOverlayActive:
-      isWishlistOverlayActive,
-      releaseWeight:
-      releaseWeight <= 0
-          ? 1
-          : releaseWeight,
+      wishlistMatches: normalizedWishlistMatches,
+      isWishlistOverlayActive: isWishlistOverlayActive,
+      releaseWeight: releaseWeight <= 0 ? 1 : releaseWeight,
     );
   }
 
   @override
-  bool operator ==(
-      Object other,
-      ) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
-        other is AtlasCompletionItem &&
-            productId == other.productId;
+        other is AtlasCompletionItem && productId == other.productId;
   }
 
   @override

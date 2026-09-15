@@ -8,12 +8,10 @@ final class AtlasRegistryEntry {
     required this.displayName,
     required Iterable<String> aliases,
     Map<String, String>? metadata,
-  })  : aliases = Set<String>.unmodifiable(
-    aliases.map(normalizeAlias),
-  ),
-        metadata = Map<String, String>.unmodifiable(
-          metadata ?? const <String, String>{},
-        );
+  }) : aliases = Set<String>.unmodifiable(aliases.map(normalizeAlias)),
+       metadata = Map<String, String>.unmodifiable(
+         metadata ?? const <String, String>{},
+       );
 
   final String id;
 
@@ -26,9 +24,7 @@ final class AtlasRegistryEntry {
   final Map<String, String> metadata;
 
   bool matches(String value) {
-    return aliases.contains(
-      normalizeAlias(value),
-    );
+    return aliases.contains(normalizeAlias(value));
   }
 
   String? metadataValue(String key) {
@@ -39,10 +35,7 @@ final class AtlasRegistryEntry {
     return value
         .toLowerCase()
         .replaceAll('-', ' ')
-        .replaceAll(
-      RegExp(r'\s+'),
-      ' ',
-    )
+        .replaceAll(RegExp(r'\s+'), ' ')
         .trim();
   }
 }

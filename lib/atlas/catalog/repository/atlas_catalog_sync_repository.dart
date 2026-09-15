@@ -7,13 +7,10 @@ abstract interface class AtlasCatalogSyncRepository {
     required String sourceType,
     required String syncType,
     required int rowsReceived,
-    Map<String, Object?> metadata =
-    const <String, Object?>{},
+    Map<String, Object?> metadata = const <String, Object?>{},
   });
 
-  Future<ProductUpsertResult> upsertProduct(
-      AtlasCatalogProduct product,
-      );
+  Future<ProductUpsertResult> upsertProduct(AtlasCatalogProduct product);
 
   Future<void> insertPriceSnapshot({
     required int databaseProductId,
@@ -28,7 +25,6 @@ abstract interface class AtlasCatalogSyncRepository {
     required int rowsSkipped,
     required int rowsFailed,
     String? errorMessage,
-    Map<String, Object?> metadata =
-    const <String, Object?>{},
+    Map<String, Object?> metadata = const <String, Object?>{},
   });
 }

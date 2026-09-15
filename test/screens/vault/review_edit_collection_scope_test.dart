@@ -22,9 +22,7 @@ class _ReviewEditTestAppState extends AppState {
   @override
   List<String> collectionNamesContainingPop(Pop pop) {
     if (collectionResolutionOverrides.containsKey(pop.id)) {
-      return List<String>.unmodifiable(
-        collectionResolutionOverrides[pop.id]!,
-      );
+      return List<String>.unmodifiable(collectionResolutionOverrides[pop.id]!);
     }
 
     return super.collectionNamesContainingPop(pop);
@@ -86,10 +84,10 @@ void main() {
   }
 
   Future<void> pumpScreen(
-      WidgetTester tester,
-      AppState state,
-      Widget screen,
-      ) async {
+    WidgetTester tester,
+    AppState state,
+    Widget screen,
+  ) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(1200, 5000);
 
@@ -109,360 +107,298 @@ void main() {
     await tester.pump();
   }
 
-  testWidgets(
-    'Multiple Copies explicit scope forwards collection to editor',
-        (tester) async {
-      final state = _ReviewEditTestAppState();
-
-      final target = pop(
-        id: 'multiple-explicit',
-        name: 'Multiple Explicit',
-        quantity: 2,
-      );
-
-      state.collections['Arthur Collection']!.add(target);
-
-      await pumpScreen(
-        tester,
-        state,
-        const MultipleCopiesScreen(
-          collectionName: 'Arthur Collection',
-        ),
-      );
-
-      expect(find.text('Edit Quantity'), findsOneWidget);
-
-      await tester.tap(find.text('Edit Quantity'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
-
-      expect(find.byType(EditPopScreen), findsOneWidget);
-
-      final editor = tester.widget<EditPopScreen>(
-        find.byType(EditPopScreen),
-      );
-
-      expect(editor.collectionName, 'Arthur Collection');
-      expect(editor.pop.id, 'multiple-explicit');
-    },
-  );
-
-  testWidgets(
-    'Multiple Copies global edit resolves exactly one collection',
-        (tester) async {
-      final state = _ReviewEditTestAppState();
-
-      final target = pop(
-        id: 'multiple-global-one',
-        name: 'Multiple Global One',
-        quantity: 2,
-      );
-
-      state.collections['Arthur Collection']!.add(target);
-
-      await pumpScreen(
-        tester,
-        state,
-        const MultipleCopiesScreen(),
-      );
-
-      await tester.tap(find.text('Edit Quantity'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
-
-      expect(find.byType(EditPopScreen), findsOneWidget);
-
-      final editor = tester.widget<EditPopScreen>(
-        find.byType(EditPopScreen),
-      );
-
-      expect(editor.collectionName, 'Arthur Collection');
-      expect(editor.pop.id, 'multiple-global-one');
-    },
-  );
-
-  testWidgets(
-    'Multiple Copies global edit blocks zero collection matches',
-        (tester) async {
-      final state = _ReviewEditTestAppState(
-        collectionResolutionOverrides: {
-          'multiple-global-zero': <String>[],
-        },
-      );
-
-      final target = pop(
-        id: 'multiple-global-zero',
-        name: 'Multiple Global Zero',
-        quantity: 2,
-      );
-
-      state.collections['Arthur Collection']!.add(target);
-
-      await pumpScreen(
-        tester,
-        state,
-        const MultipleCopiesScreen(),
-      );
-
-      await tester.tap(find.text('Edit Quantity'));
-      await tester.pump();
-
-      expect(find.byType(EditPopScreen), findsNothing);
-      expect(
-        find.text(
-          'Could not edit this Pop because its collection could not be resolved safely.',
-        ),
-        findsOneWidget,
-      );
-    },
-  );
-
-  testWidgets(
-    'Multiple Copies global edit blocks multiple collection matches',
-        (tester) async {
-      final state = _ReviewEditTestAppState(
-        collectionResolutionOverrides: {
-          'multiple-global-many': <String>[
-            'Arthur Collection',
-            'Entire Family Collection',
-          ],
-        },
-      );
-
-      final target = pop(
-        id: 'multiple-global-many',
-        name: 'Multiple Global Many',
-        quantity: 2,
-      );
-
-      state.collections['Arthur Collection']!.add(target);
-
-      await pumpScreen(
-        tester,
-        state,
-        const MultipleCopiesScreen(),
-      );
-
-      await tester.tap(find.text('Edit Quantity'));
-      await tester.pump();
-
-      expect(find.byType(EditPopScreen), findsNothing);
-      expect(
-        find.text(
-          'Could not edit this Pop because its collection could not be resolved safely.',
-        ),
-        findsOneWidget,
-      );
-    },
-  );
-
-  testWidgets(
-    'Duplicate Review explicit scope forwards collection to editor',
-        (tester) async {
-      final state = _ReviewEditTestAppState();
-
-      final first = pop(
-        id: 'duplicate-explicit-a',
-        name: 'Duplicate Explicit',
-      );
-
-      final second = pop(
-        id: 'duplicate-explicit-b',
-        name: 'Duplicate Explicit',
-      );
-
-      final duplicates = <Pop>[first, second];
-
-      state.collections['Arthur Collection']!.addAll(duplicates);
-
-      await pumpScreen(
-        tester,
-        state,
-        DuplicateGroupReviewScreen(
-          groupKey: duplicateGroupKey(duplicates),
-          collectionName: 'Arthur Collection',
-        ),
-      );
-
-      final editButton = find.widgetWithText(
-        OutlinedButton,
-        'Edit Details',
-      );
-
-      expect(editButton, findsNWidgets(2));
-
-      await tester.tap(editButton.first);
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
-
-      expect(find.byType(EditPopScreen), findsOneWidget);
-
-      final editor = tester.widget<EditPopScreen>(
-        find.byType(EditPopScreen),
-      );
-
-      expect(editor.collectionName, 'Arthur Collection');
-    },
-  );
-
-  testWidgets(
-    'Duplicate Review global edit resolves exactly one collection',
-        (tester) async {
-      final state = _ReviewEditTestAppState();
-
-      final first = pop(
-        id: 'duplicate-global-one-a',
-        name: 'Duplicate Global One',
-      );
-
-      final second = pop(
-        id: 'duplicate-global-one-b',
-        name: 'Duplicate Global One',
-      );
-
-      final duplicates = <Pop>[first, second];
-
-      state.collections['Arthur Collection']!.addAll(duplicates);
-
-      await pumpScreen(
-        tester,
-        state,
-        DuplicateGroupReviewScreen(
-          groupKey: duplicateGroupKey(duplicates),
-        ),
-      );
-
-      await tester.tap(
-        find.widgetWithText(
-          OutlinedButton,
-          'Edit Details',
-        ).first,
-      );
-
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
-
-      expect(find.byType(EditPopScreen), findsOneWidget);
-
-      final editor = tester.widget<EditPopScreen>(
-        find.byType(EditPopScreen),
-      );
-
-      expect(editor.collectionName, 'Arthur Collection');
-    },
-  );
-
-  testWidgets(
-    'Duplicate Review global edit blocks zero collection matches',
-        (tester) async {
-      final state = _ReviewEditTestAppState(
-        collectionResolutionOverrides: {
-          'duplicate-global-zero-a': <String>[],
-          'duplicate-global-zero-b': <String>[],
-        },
-      );
-
-      final first = pop(
-        id: 'duplicate-global-zero-a',
-        name: 'Duplicate Global Zero',
-      );
-
-      final second = pop(
-        id: 'duplicate-global-zero-b',
-        name: 'Duplicate Global Zero',
-      );
-
-      final duplicates = <Pop>[first, second];
-
-      state.collections['Arthur Collection']!.addAll(duplicates);
-
-      await pumpScreen(
-        tester,
-        state,
-        DuplicateGroupReviewScreen(
-          groupKey: duplicateGroupKey(duplicates),
-        ),
-      );
-
-      await tester.tap(
-        find.widgetWithText(
-          OutlinedButton,
-          'Edit Details',
-        ).first,
-      );
-
-      await tester.pump();
-
-      expect(find.byType(EditPopScreen), findsNothing);
-      expect(
-        find.text(
-          'Could not edit this Pop because its collection could not be resolved safely.',
-        ),
-        findsOneWidget,
-      );
-    },
-  );
-
-  testWidgets(
-    'Duplicate Review global edit blocks multiple collection matches',
-        (tester) async {
-      final state = _ReviewEditTestAppState(
-        collectionResolutionOverrides: {
-          'duplicate-global-many-a': <String>[
-            'Arthur Collection',
-            'Entire Family Collection',
-          ],
-          'duplicate-global-many-b': <String>[
-            'Arthur Collection',
-            'Entire Family Collection',
-          ],
-        },
-      );
-
-      final first = pop(
-        id: 'duplicate-global-many-a',
-        name: 'Duplicate Global Many',
-      );
-
-      final second = pop(
-        id: 'duplicate-global-many-b',
-        name: 'Duplicate Global Many',
-      );
-
-      final duplicates = <Pop>[first, second];
-
-      state.collections['Arthur Collection']!.addAll(duplicates);
-
-      await pumpScreen(
-        tester,
-        state,
-        DuplicateGroupReviewScreen(
-          groupKey: duplicateGroupKey(duplicates),
-        ),
-      );
-
-      await tester.tap(
-        find.widgetWithText(
-          OutlinedButton,
-          'Edit Details',
-        ).first,
-      );
-
-      await tester.pump();
-
-      expect(find.byType(EditPopScreen), findsNothing);
-      expect(
-        find.text(
-          'Could not edit this Pop because its collection could not be resolved safely.',
-        ),
-        findsOneWidget,
-      );
-    },
-  );
+  testWidgets('Multiple Copies explicit scope forwards collection to editor', (
+    tester,
+  ) async {
+    final state = _ReviewEditTestAppState();
+
+    final target = pop(
+      id: 'multiple-explicit',
+      name: 'Multiple Explicit',
+      quantity: 2,
+    );
+
+    state.collections['Arthur Collection']!.add(target);
+
+    await pumpScreen(
+      tester,
+      state,
+      const MultipleCopiesScreen(collectionName: 'Arthur Collection'),
+    );
+
+    expect(find.text('Edit Quantity'), findsOneWidget);
+
+    await tester.tap(find.text('Edit Quantity'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.byType(EditPopScreen), findsOneWidget);
+
+    final editor = tester.widget<EditPopScreen>(find.byType(EditPopScreen));
+
+    expect(editor.collectionName, 'Arthur Collection');
+    expect(editor.pop.id, 'multiple-explicit');
+  });
+
+  testWidgets('Multiple Copies global edit resolves exactly one collection', (
+    tester,
+  ) async {
+    final state = _ReviewEditTestAppState();
+
+    final target = pop(
+      id: 'multiple-global-one',
+      name: 'Multiple Global One',
+      quantity: 2,
+    );
+
+    state.collections['Arthur Collection']!.add(target);
+
+    await pumpScreen(tester, state, const MultipleCopiesScreen());
+
+    await tester.tap(find.text('Edit Quantity'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.byType(EditPopScreen), findsOneWidget);
+
+    final editor = tester.widget<EditPopScreen>(find.byType(EditPopScreen));
+
+    expect(editor.collectionName, 'Arthur Collection');
+    expect(editor.pop.id, 'multiple-global-one');
+  });
+
+  testWidgets('Multiple Copies global edit blocks zero collection matches', (
+    tester,
+  ) async {
+    final state = _ReviewEditTestAppState(
+      collectionResolutionOverrides: {'multiple-global-zero': <String>[]},
+    );
+
+    final target = pop(
+      id: 'multiple-global-zero',
+      name: 'Multiple Global Zero',
+      quantity: 2,
+    );
+
+    state.collections['Arthur Collection']!.add(target);
+
+    await pumpScreen(tester, state, const MultipleCopiesScreen());
+
+    await tester.tap(find.text('Edit Quantity'));
+    await tester.pump();
+
+    expect(find.byType(EditPopScreen), findsNothing);
+    expect(
+      find.text(
+        'Could not edit this Pop because its collection could not be resolved safely.',
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('Multiple Copies global edit blocks multiple collection matches', (
+    tester,
+  ) async {
+    final state = _ReviewEditTestAppState(
+      collectionResolutionOverrides: {
+        'multiple-global-many': <String>[
+          'Arthur Collection',
+          'Entire Family Collection',
+        ],
+      },
+    );
+
+    final target = pop(
+      id: 'multiple-global-many',
+      name: 'Multiple Global Many',
+      quantity: 2,
+    );
+
+    state.collections['Arthur Collection']!.add(target);
+
+    await pumpScreen(tester, state, const MultipleCopiesScreen());
+
+    await tester.tap(find.text('Edit Quantity'));
+    await tester.pump();
+
+    expect(find.byType(EditPopScreen), findsNothing);
+    expect(
+      find.text(
+        'Could not edit this Pop because its collection could not be resolved safely.',
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('Duplicate Review explicit scope forwards collection to editor', (
+    tester,
+  ) async {
+    final state = _ReviewEditTestAppState();
+
+    final first = pop(id: 'duplicate-explicit-a', name: 'Duplicate Explicit');
+
+    final second = pop(id: 'duplicate-explicit-b', name: 'Duplicate Explicit');
+
+    final duplicates = <Pop>[first, second];
+
+    state.collections['Arthur Collection']!.addAll(duplicates);
+
+    await pumpScreen(
+      tester,
+      state,
+      DuplicateGroupReviewScreen(
+        groupKey: duplicateGroupKey(duplicates),
+        collectionName: 'Arthur Collection',
+      ),
+    );
+
+    final editButton = find.widgetWithText(OutlinedButton, 'Edit Details');
+
+    expect(editButton, findsNWidgets(2));
+
+    await tester.tap(editButton.first);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.byType(EditPopScreen), findsOneWidget);
+
+    final editor = tester.widget<EditPopScreen>(find.byType(EditPopScreen));
+
+    expect(editor.collectionName, 'Arthur Collection');
+  });
+
+  testWidgets('Duplicate Review global edit resolves exactly one collection', (
+    tester,
+  ) async {
+    final state = _ReviewEditTestAppState();
+
+    final first = pop(
+      id: 'duplicate-global-one-a',
+      name: 'Duplicate Global One',
+    );
+
+    final second = pop(
+      id: 'duplicate-global-one-b',
+      name: 'Duplicate Global One',
+    );
+
+    final duplicates = <Pop>[first, second];
+
+    state.collections['Arthur Collection']!.addAll(duplicates);
+
+    await pumpScreen(
+      tester,
+      state,
+      DuplicateGroupReviewScreen(groupKey: duplicateGroupKey(duplicates)),
+    );
+
+    await tester.tap(find.widgetWithText(OutlinedButton, 'Edit Details').first);
+
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.byType(EditPopScreen), findsOneWidget);
+
+    final editor = tester.widget<EditPopScreen>(find.byType(EditPopScreen));
+
+    expect(editor.collectionName, 'Arthur Collection');
+  });
+
+  testWidgets('Duplicate Review global edit blocks zero collection matches', (
+    tester,
+  ) async {
+    final state = _ReviewEditTestAppState(
+      collectionResolutionOverrides: {
+        'duplicate-global-zero-a': <String>[],
+        'duplicate-global-zero-b': <String>[],
+      },
+    );
+
+    final first = pop(
+      id: 'duplicate-global-zero-a',
+      name: 'Duplicate Global Zero',
+    );
+
+    final second = pop(
+      id: 'duplicate-global-zero-b',
+      name: 'Duplicate Global Zero',
+    );
+
+    final duplicates = <Pop>[first, second];
+
+    state.collections['Arthur Collection']!.addAll(duplicates);
+
+    await pumpScreen(
+      tester,
+      state,
+      DuplicateGroupReviewScreen(groupKey: duplicateGroupKey(duplicates)),
+    );
+
+    await tester.tap(find.widgetWithText(OutlinedButton, 'Edit Details').first);
+
+    await tester.pump();
+
+    expect(find.byType(EditPopScreen), findsNothing);
+    expect(
+      find.text(
+        'Could not edit this Pop because its collection could not be resolved safely.',
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('Duplicate Review global edit blocks multiple collection matches', (
+    tester,
+  ) async {
+    final state = _ReviewEditTestAppState(
+      collectionResolutionOverrides: {
+        'duplicate-global-many-a': <String>[
+          'Arthur Collection',
+          'Entire Family Collection',
+        ],
+        'duplicate-global-many-b': <String>[
+          'Arthur Collection',
+          'Entire Family Collection',
+        ],
+      },
+    );
+
+    final first = pop(
+      id: 'duplicate-global-many-a',
+      name: 'Duplicate Global Many',
+    );
+
+    final second = pop(
+      id: 'duplicate-global-many-b',
+      name: 'Duplicate Global Many',
+    );
+
+    final duplicates = <Pop>[first, second];
+
+    state.collections['Arthur Collection']!.addAll(duplicates);
+
+    await pumpScreen(
+      tester,
+      state,
+      DuplicateGroupReviewScreen(groupKey: duplicateGroupKey(duplicates)),
+    );
+
+    await tester.tap(find.widgetWithText(OutlinedButton, 'Edit Details').first);
+
+    await tester.pump();
+
+    expect(find.byType(EditPopScreen), findsNothing);
+    expect(
+      find.text(
+        'Could not edit this Pop because its collection could not be resolved safely.',
+      ),
+      findsOneWidget,
+    );
+  });
 
   testWidgets(
     'Duplicate Review Add Value resolves collection and preserves value focus',
-        (tester) async {
+    (tester) async {
       final state = _ReviewEditTestAppState();
 
       final first = pop(
@@ -484,15 +420,10 @@ void main() {
       await pumpScreen(
         tester,
         state,
-        DuplicateGroupReviewScreen(
-          groupKey: duplicateGroupKey(duplicates),
-        ),
+        DuplicateGroupReviewScreen(groupKey: duplicateGroupKey(duplicates)),
       );
 
-      final addValueButton = find.widgetWithText(
-        FilledButton,
-        'Add Value',
-      );
+      final addValueButton = find.widgetWithText(FilledButton, 'Add Value');
 
       expect(addValueButton, findsNWidgets(2));
 
@@ -502,9 +433,7 @@ void main() {
 
       expect(find.byType(EditPopScreen), findsOneWidget);
 
-      final editor = tester.widget<EditPopScreen>(
-        find.byType(EditPopScreen),
-      );
+      final editor = tester.widget<EditPopScreen>(find.byType(EditPopScreen));
 
       expect(editor.collectionName, 'Arthur Collection');
       expect(editor.focusValueField, isTrue);

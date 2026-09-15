@@ -12,15 +12,12 @@ import 'engine_support.dart';
 // This engine does not resolve a product identity. It validates existing
 // ScanCode evidence and produces BarcodeContribution objects for downstream
 // identity and product-resolution engines.
-final class BarcodeIntelligenceEngine
-    extends AbstractScanEngine {
+final class BarcodeIntelligenceEngine extends AbstractScanEngine {
   const BarcodeIntelligenceEngine();
 
-  static const String id =
-      'atlas.scan.barcode-intelligence';
+  static const String id = 'atlas.scan.barcode-intelligence';
 
-  static const String capabilityId =
-      'atlas.capability.barcode-intelligence';
+  static const String capabilityId = 'atlas.capability.barcode-intelligence';
 
   @override
   String get engineId {
@@ -34,9 +31,9 @@ final class BarcodeIntelligenceEngine
 
   @override
   Future<EngineResult> execute(
-      ScanSession session,
-      EngineContext context,
-      ) async {
+    ScanSession session,
+    EngineContext context,
+  ) async {
     if (!session.hasDetectedCodes) {
       return EngineResult.skipped(
         session: session,
@@ -48,8 +45,7 @@ final class BarcodeIntelligenceEngine
       );
     }
 
-    final List<BarcodeContribution> contributions =
-    <BarcodeContribution>[];
+    final List<BarcodeContribution> contributions = <BarcodeContribution>[];
 
     int validCodeCount = 0;
     int usableProductBarcodeCount = 0;
@@ -57,8 +53,7 @@ final class BarcodeIntelligenceEngine
     bool primaryAssigned = false;
 
     for (final ScanCode code in session.detectedCodes) {
-      final _BarcodeValidation validation =
-      _validate(code);
+      final _BarcodeValidation validation = _validate(code);
 
       if (validation.passed) {
         validCodeCount++;
@@ -69,16 +64,14 @@ final class BarcodeIntelligenceEngine
       }
 
       final bool isUsableProductBarcode =
-          validation.passed &&
-              code.isProductBarcode;
+          validation.passed && code.isProductBarcode;
 
       if (isUsableProductBarcode) {
         usableProductBarcodeCount++;
       }
 
       final bool isPrimaryCandidate =
-          !primaryAssigned &&
-              isUsableProductBarcode;
+          !primaryAssigned && isUsableProductBarcode;
 
       if (isPrimaryCandidate) {
         primaryAssigned = true;
@@ -86,75 +79,53 @@ final class BarcodeIntelligenceEngine
 
       contributions.add(
         BarcodeContribution(
-          contributionId:
-          _buildContributionId(code),
+          contributionId: _buildContributionId(code),
           sourceEngineId: engineId,
           createdAt: session.startedAt,
           code: code,
-          isPrimaryCandidate:
-          isPrimaryCandidate,
-          passedValidation:
-          validation.passed,
-          validationMessage:
-          validation.message,
-          confidence: EngineSupport.normalizeConfidence(
-            code.confidence,
-          ),
+          isPrimaryCandidate: isPrimaryCandidate,
+          passedValidation: validation.passed,
+          validationMessage: validation.message,
+          confidence: EngineSupport.normalizeConfidence(code.confidence),
           attributes: <String, Object?>{
             'format': code.format.name,
             'source': code.source.name,
-            'isProductBarcode':
-            code.isProductBarcode,
+            'isProductBarcode': code.isProductBarcode,
             'isQrCode': code.isQrCode,
-            'characterCount':
-            code.characterCount,
+            'characterCount': code.characterCount,
           },
         ),
       );
     }
 
-    final ScanSession updatedSession =
-    session.addContributions(
+    final ScanSession updatedSession = session.addContributions(
       contributions,
-      conflictPolicy:
-      ContributionConflictPolicy.replaceExisting,
+      conflictPolicy: ContributionConflictPolicy.replaceExisting,
     );
 
     final List<String> warnings = <String>[];
 
     if (validCodeCount == 0) {
-      warnings.add(
-        'No detected barcode or QR code passed validation.',
-      );
+      warnings.add('No detected barcode or QR code passed validation.');
     } else if (usableProductBarcodeCount == 0) {
-      warnings.add(
-        'No validated UPC or EAN product barcode was available.',
-      );
+      warnings.add('No validated UPC or EAN product barcode was available.');
     }
 
     return EngineResult.success(
       session: updatedSession,
       warnings: warnings,
       attributes: <String, Object?>{
-        'detectedCodeCount':
-        session.detectedCodes.length,
-        'barcodeContributionCount':
-        contributions.length,
-        'validCodeCount':
-        validCodeCount,
-        'usableProductBarcodeCount':
-        usableProductBarcodeCount,
-        'qrCodeCount':
-        qrCodeCount,
-        'primaryCandidateAssigned':
-        primaryAssigned,
+        'detectedCodeCount': session.detectedCodes.length,
+        'barcodeContributionCount': contributions.length,
+        'validCodeCount': validCodeCount,
+        'usableProductBarcodeCount': usableProductBarcodeCount,
+        'qrCodeCount': qrCodeCount,
+        'primaryCandidateAssigned': primaryAssigned,
       },
     );
   }
 
-  _BarcodeValidation _validate(
-      ScanCode code,
-      ) {
+  _BarcodeValidation _validate(ScanCode code) {
     if (code.normalizedValue.trim().isEmpty) {
       return const _BarcodeValidation.failed(
         'The scanned code value is empty.',
@@ -168,20 +139,16 @@ final class BarcodeIntelligenceEngine
     }
 
     if (code.format == ScanCodeFormat.unknown) {
-      return const _BarcodeValidation.failed(
-        'The barcode format is unknown.',
-      );
+      return const _BarcodeValidation.failed('The barcode format is unknown.');
     }
 
-    if (code.isProductBarcode &&
-        !code.containsNumericValue) {
+    if (code.isProductBarcode && !code.containsNumericValue) {
       return const _BarcodeValidation.failed(
         'UPC and EAN barcodes must contain only numbers.',
       );
     }
 
-    if (code.isProductBarcode &&
-        !_hasExpectedProductBarcodeLength(code)) {
+    if (code.isProductBarcode && !_hasExpectedProductBarcodeLength(code)) {
       return _BarcodeValidation.failed(
         'The ${code.format.name} barcode has an unexpected length.',
       );
@@ -190,9 +157,7 @@ final class BarcodeIntelligenceEngine
     return const _BarcodeValidation.passed();
   }
 
-  bool _hasExpectedProductBarcodeLength(
-      ScanCode code,
-      ) {
+  bool _hasExpectedProductBarcodeLength(ScanCode code) {
     switch (code.format) {
       case ScanCodeFormat.upcA:
         return code.characterCount == 12;
@@ -214,37 +179,22 @@ final class BarcodeIntelligenceEngine
     }
   }
 
-  String _buildContributionId(
-      ScanCode code,
-      ) {
+  String _buildContributionId(ScanCode code) {
     return EngineSupport.buildContributionId(
       namespace: 'atlas.barcode',
-      segments: <Object?>[
-        code.format.name,
-        code.normalizedValue,
-      ],
+      segments: <Object?>[code.format.name, code.normalizedValue],
     );
   }
 }
 
 // Internal validation result used only by BarcodeIntelligenceEngine.
 final class _BarcodeValidation {
-  const _BarcodeValidation._({
-    required this.passed,
-    this.message,
-  });
+  const _BarcodeValidation._({required this.passed, this.message});
 
-  const _BarcodeValidation.passed()
-      : this._(
-    passed: true,
-  );
+  const _BarcodeValidation.passed() : this._(passed: true);
 
-  const _BarcodeValidation.failed(
-      String message,
-      ) : this._(
-    passed: false,
-    message: message,
-  );
+  const _BarcodeValidation.failed(String message)
+    : this._(passed: false, message: message);
 
   final bool passed;
 

@@ -26,10 +26,7 @@ class ReflectionCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            message,
-            style: AtlasTypography.bodyMedium,
-          ),
+          Text(message, style: AtlasTypography.bodyMedium),
           const SizedBox(height: AtlasSpacing.md),
           Text(
             _quoteForTone(),

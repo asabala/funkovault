@@ -3,10 +3,7 @@ import 'auth_state.dart';
 abstract class AuthService {
   Future<AuthState> currentUser();
 
-  Future<AuthState> signIn({
-    required String email,
-    required String password,
-  });
+  Future<AuthState> signIn({required String email, required String password});
 
   Future<AuthState> register({
     required String displayName,
@@ -16,9 +13,7 @@ abstract class AuthService {
 
   Future<void> signOut();
 
-  Future<void> sendPasswordResetEmail(
-      String email,
-      );
+  Future<void> sendPasswordResetEmail(String email);
 
   Future<void> resendVerificationEmail();
 

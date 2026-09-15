@@ -19,9 +19,7 @@ class AtlasBottomNavigation extends StatelessWidget {
       selectedIndex: currentIndex,
       onDestinationSelected: onTap,
       backgroundColor: AtlasColors.surface,
-      indicatorColor: AtlasColors.intelligenceBlue.withValues(
-        alpha: 0.18,
-      ),
+      indicatorColor: AtlasColors.intelligenceBlue.withValues(alpha: 0.18),
       destinations: const [
         NavigationDestination(
           icon: Icon(AtlasIcons.atlas),
@@ -37,10 +35,7 @@ class AtlasBottomNavigation extends StatelessWidget {
           selectedIcon: Icon(Icons.qr_code_scanner),
           label: 'Scan',
         ),
-        NavigationDestination(
-          icon: Icon(AtlasIcons.trend),
-          label: 'Insights',
-        ),
+        NavigationDestination(icon: Icon(AtlasIcons.trend), label: 'Insights'),
         NavigationDestination(
           icon: Icon(Icons.school_outlined),
           selectedIcon: Icon(Icons.school),

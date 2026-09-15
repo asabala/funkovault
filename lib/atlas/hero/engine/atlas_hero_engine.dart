@@ -5,9 +5,7 @@ import '../rules/atlas_hero_rule.dart';
 import '../rules/atlas_hero_rules.dart';
 
 class AtlasHeroEngine {
-  const AtlasHeroEngine({
-    this.rules = AtlasHeroRules.all,
-  });
+  const AtlasHeroEngine({this.rules = AtlasHeroRules.all});
 
   final List<AtlasHeroRule> rules;
 
@@ -25,9 +23,7 @@ class AtlasHeroEngine {
 
     final scoreReasons = results
         .where((result) => result.isPositive)
-        .map(
-          (result) => '+${result.points} ${result.reason}',
-    )
+        .map((result) => '+${result.points} ${result.reason}')
         .toList(growable: false);
 
     final improvementSuggestions = results
@@ -71,7 +67,7 @@ class AtlasHeroEngine {
 
     final rulePoints = results.fold<int>(
       0,
-          (total, result) => total + result.points,
+      (total, result) => total + result.points,
     );
 
     return (baseScore + rulePoints).clamp(0, 100);

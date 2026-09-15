@@ -26,18 +26,9 @@ class VaultSummaryCard extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          _Stat(
-            label: 'Collectibles',
-            value: '$totalPops',
-          ),
-          _Stat(
-            label: 'Value',
-            value: '\$${totalValue.toStringAsFixed(0)}',
-          ),
-          _Stat(
-            label: 'Health',
-            value: '${health.toStringAsFixed(0)}%',
-          ),
+          _Stat(label: 'Collectibles', value: '$totalPops'),
+          _Stat(label: 'Value', value: '\$${totalValue.toStringAsFixed(0)}'),
+          _Stat(label: 'Health', value: '${health.toStringAsFixed(0)}%'),
         ],
       ),
     );
@@ -45,10 +36,7 @@ class VaultSummaryCard extends StatelessWidget {
 }
 
 class _Stat extends StatelessWidget {
-  const _Stat({
-    required this.label,
-    required this.value,
-  });
+  const _Stat({required this.label, required this.value});
 
   final String label;
   final String value;
@@ -57,10 +45,7 @@ class _Stat extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Text(
-          value,
-          style: AtlasTypography.headingMedium,
-        ),
+        Text(value, style: AtlasTypography.headingMedium),
         const SizedBox(height: AtlasSpacing.xs),
         Text(
           label,

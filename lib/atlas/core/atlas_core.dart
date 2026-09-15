@@ -40,44 +40,30 @@ class AtlasCore {
     const confidenceEngine = AtlasConfidenceEngine();
     const reflectionEngine = AtlasReflectionEngine();
     const memoryEngine = AtlasMemoryEngine();
-    const recommendationEngine =
-    AtlasRecommendationEngineV2();
+    const recommendationEngine = AtlasRecommendationEngineV2();
     const decisionEngine = AtlasDecisionEngine();
     const missionEngine = AtlasMissionEngine();
 
-    final collectorDNA =
-    dnaEngine.analyze(pops);
+    final collectorDNA = dnaEngine.analyze(pops);
 
-    final confidence =
-    confidenceEngine.calculate(pops);
+    final confidence = confidenceEngine.calculate(pops);
 
-    final reflection =
-    reflectionEngine.reflect(
+    final reflection = reflectionEngine.reflect(
       collectorName: collectorName,
       pops: pops,
     );
 
-    final memory =
-    memoryEngine.remember(
-      pops: pops,
-    );
+    final memory = memoryEngine.remember(pops: pops);
 
-    final recommendations =
-    recommendationEngine.analyze(
+    final recommendations = recommendationEngine.analyze(
       pops: pops,
       duplicateCount: duplicateCount,
       missingValueCount: missingValueCount,
     );
 
-    final decision =
-    decisionEngine.decide(
-      recommendations: recommendations,
-    );
+    final decision = decisionEngine.decide(recommendations: recommendations);
 
-    final mission =
-    missionEngine.buildMission(
-      decision,
-    );
+    final mission = missionEngine.buildMission(decision);
 
     return AtlasCoreReport(
       collectorDNA: collectorDNA,

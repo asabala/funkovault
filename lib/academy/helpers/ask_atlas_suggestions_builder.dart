@@ -7,47 +7,34 @@ class AskAtlasSuggestionsBuilder {
   static List<String> buildFunkoSuggestions({
     required AcademyRepository repository,
   }) {
-    final List<String> suggestions =
-    <String>[];
+    final List<String> suggestions = <String>[];
 
-    final Set<String> seen =
-    <String>{};
+    final Set<String> seen = <String>{};
 
-    for (final lesson
-    in repository.getLessons()) {
+    for (final lesson in repository.getLessons()) {
       _addSuggestion(
         suggestions: suggestions,
         seen: seen,
-        value: _questionForTitle(
-          lesson.title,
-        ),
+        value: _questionForTitle(lesson.title),
       );
     }
 
-    for (final topic in repository
-        .getRoadmapTopicsForTrack(
-      AcademyTrackIds.funkoCollecting,
-    )
-        .take(4)) {
+    for (final topic
+        in repository
+            .getRoadmapTopicsForTrack(AcademyTrackIds.funkoCollecting)
+            .take(4)) {
       _addSuggestion(
         suggestions: suggestions,
         seen: seen,
-        value: _questionForTitle(
-          topic.title,
-        ),
+        value: _questionForTitle(topic.title),
       );
     }
 
-    return List<String>.unmodifiable(
-      suggestions,
-    );
+    return List<String>.unmodifiable(suggestions);
   }
 
-  static String _questionForTitle(
-      String title,
-      ) {
-    final String cleanedTitle =
-    title.trim();
+  static String _questionForTitle(String title) {
+    final String cleanedTitle = title.trim();
 
     if (cleanedTitle.isEmpty) {
       return '';
@@ -65,22 +52,18 @@ class AskAtlasSuggestionsBuilder {
     required Set<String> seen,
     required String value,
   }) {
-    final String cleanedValue =
-    value.trim();
+    final String cleanedValue = value.trim();
 
     if (cleanedValue.isEmpty) {
       return;
     }
 
-    final String normalized =
-    cleanedValue.toLowerCase();
+    final String normalized = cleanedValue.toLowerCase();
 
     if (!seen.add(normalized)) {
       return;
     }
 
-    suggestions.add(
-      cleanedValue,
-    );
+    suggestions.add(cleanedValue);
   }
 }

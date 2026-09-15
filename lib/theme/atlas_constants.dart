@@ -16,46 +16,35 @@ class AtlasConstants {
   // Branding
   // ----------------------------------------------------------
 
-  static const String appName =
-      'Funko Vault';
+  static const String appName = 'Funko Vault';
 
-  static const String platformName =
-      'Atlas';
+  static const String platformName = 'Atlas';
 
-  static const String platformSubtitle =
-      'Collector Intelligence Platform';
+  static const String platformSubtitle = 'Collector Intelligence Platform';
 
-  static const String poweredBy =
-      'Powered by Atlas';
+  static const String poweredBy = 'Powered by Atlas';
 
-  static const String version =
-      '0.10.0';
+  static const String version = '0.10.0';
 
   // ----------------------------------------------------------
   // Collector
   // ----------------------------------------------------------
 
-  static const String collectorUnknown =
-      'Collector';
+  static const String collectorUnknown = 'Collector';
 
   // ----------------------------------------------------------
   // Atlas Messages
   // ----------------------------------------------------------
 
-  static const String initializing =
-      'Initializing Atlas Core...';
+  static const String initializing = 'Initializing Atlas Core...';
 
-  static const String preparing =
-      'Preparing your collection...';
+  static const String preparing = 'Preparing your collection...';
 
-  static const String analyzing =
-      'Analyzing collection...';
+  static const String analyzing = 'Analyzing collection...';
 
-  static const String ready =
-      'Atlas Ready.';
+  static const String ready = 'Atlas Ready.';
 
-  static const String loadingVault =
-      'Opening Collector\'s Vault...';
+  static const String loadingVault = 'Opening Collector\'s Vault...';
 
   // ----------------------------------------------------------
   // Motto

@@ -21,30 +21,24 @@ class AtlasConfidenceScreen extends StatelessWidget {
     final pops = repository.allPops(appState);
     final confidence = confidenceEngine.calculate(pops);
 
-    final missingValues =
-        pops.where((pop) => pop.value <= 0).length;
-    final missingPricePaid =
-        pops.where((pop) => pop.pricePaid <= 0).length;
-    final missingImages =
-        pops.where((pop) => pop.imageUrl.isEmpty).length;
-    final commonVariants =
-        pops.where((pop) => pop.variant == 'Common').length;
-    final noRetailExclusive =
-        pops.where((pop) => pop.retailExclusive == 'None').length;
-    final noEventSticker =
-        pops.where((pop) => pop.eventSticker == 'None').length;
-    final unsigned =
-        pops.where((pop) => pop.signature == 'Unsigned').length;
+    final missingValues = pops.where((pop) => pop.value <= 0).length;
+    final missingPricePaid = pops.where((pop) => pop.pricePaid <= 0).length;
+    final missingImages = pops.where((pop) => pop.imageUrl.isEmpty).length;
+    final commonVariants = pops.where((pop) => pop.variant == 'Common').length;
+    final noRetailExclusive = pops
+        .where((pop) => pop.retailExclusive == 'None')
+        .length;
+    final noEventSticker = pops
+        .where((pop) => pop.eventSticker == 'None')
+        .length;
+    final unsigned = pops.where((pop) => pop.signature == 'Unsigned').length;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Atlas Confidence'),
-      ),
+      appBar: AppBar(title: const Text('Atlas Confidence')),
       body: VaultScrollView(
         children: [
           AtlasGreetingCard(
-            title:
-            'Atlas Confidence ${confidence.score.toStringAsFixed(0)}%',
+            title: 'Atlas Confidence ${confidence.score.toStringAsFixed(0)}%',
             message: confidence.message,
             icon: Icons.psychology,
           ),

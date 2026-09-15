@@ -10,25 +10,20 @@ final class FunkoStickerNormalizer {
   Map<FunkoStickerType, List<String>> get aliases {
     return Map<FunkoStickerType, List<String>>.unmodifiable(
       _aliases.map(
-            (key, value) => MapEntry(
-          key,
-          List<String>.unmodifiable(value),
-        ),
+        (key, value) => MapEntry(key, List<String>.unmodifiable(value)),
       ),
     );
   }
-  FunkoStickerType normalize(
-      String? value,
-      ) {
-    final String normalized =
-    normalizeText(value);
+
+  FunkoStickerType normalize(String? value) {
+    final String normalized = normalizeText(value);
 
     if (normalized.isEmpty) {
       return FunkoStickerType.unknown;
     }
 
-    for (final MapEntry<FunkoStickerType, List<String>>
-    entry in _aliases.entries) {
+    for (final MapEntry<FunkoStickerType, List<String>> entry
+        in _aliases.entries) {
       if (entry.value.contains(normalized)) {
         return entry.key;
       }
@@ -37,85 +32,62 @@ final class FunkoStickerNormalizer {
     return FunkoStickerType.unknown;
   }
 
-  bool isKnownSticker(
-      String? value,
-      ) {
-    return normalize(value) !=
-        FunkoStickerType.unknown;
+  bool isKnownSticker(String? value) {
+    return normalize(value) != FunkoStickerType.unknown;
   }
 
-  String normalizeText(
-      String? value,
-      ) {
+  String normalizeText(String? value) {
     return value
-        ?.trim()
-        .toLowerCase()
-        .replaceAll(RegExp(r'[éèêë]'), 'e')
-        .replaceAll(RegExp(r'[áàâä]'), 'a')
-        .replaceAll(RegExp(r'[íìîï]'), 'i')
-        .replaceAll(RegExp(r'[óòôö]'), 'o')
-        .replaceAll(RegExp(r'[úùûü]'), 'u')
-        .replaceAll('ñ', 'n')
-        .replaceAll('ç', 'c')
-        .replaceAll('&', ' and ')
-        .replaceAll('-', ' ')
-        .replaceAll('_', ' ')
-        .replaceAll(
-      RegExp(r'[^a-z0-9\s]'),
-      ' ',
-    )
-        .replaceAll(
-      RegExp(r'\s+'),
-      ' ',
-    )
-        .trim() ??
+            ?.trim()
+            .toLowerCase()
+            .replaceAll(RegExp(r'[éèêë]'), 'e')
+            .replaceAll(RegExp(r'[áàâä]'), 'a')
+            .replaceAll(RegExp(r'[íìîï]'), 'i')
+            .replaceAll(RegExp(r'[óòôö]'), 'o')
+            .replaceAll(RegExp(r'[úùûü]'), 'u')
+            .replaceAll('ñ', 'n')
+            .replaceAll('ç', 'c')
+            .replaceAll('&', ' and ')
+            .replaceAll('-', ' ')
+            .replaceAll('_', ' ')
+            .replaceAll(RegExp(r'[^a-z0-9\s]'), ' ')
+            .replaceAll(RegExp(r'\s+'), ' ')
+            .trim() ??
         '';
   }
 
-  static const Map<FunkoStickerType, List<String>>
-  _aliases =
-  <FunkoStickerType, List<String>>{
-    FunkoStickerType.retailerExclusive: <String>[
-      'exclusive',
-      'retailer exclusive',
-    ],
+  static const Map<FunkoStickerType, List<String>> _aliases =
+      <FunkoStickerType, List<String>>{
+        FunkoStickerType.retailerExclusive: <String>[
+          'exclusive',
+          'retailer exclusive',
+        ],
 
-    FunkoStickerType.officialConvention: <String>[
-      'official convention',
-      'convention exclusive',
-      'official convention exclusive',
-    ],
+        FunkoStickerType.officialConvention: <String>[
+          'official convention',
+          'convention exclusive',
+          'official convention exclusive',
+        ],
 
-    FunkoStickerType.sharedConvention: <String>[
-      'shared exclusive',
-      'shared convention',
-      'shared convention exclusive',
-    ],
+        FunkoStickerType.sharedConvention: <String>[
+          'shared exclusive',
+          'shared convention',
+          'shared convention exclusive',
+        ],
 
-    FunkoStickerType.specialEdition: <String>[
-      'special edition',
-    ],
+        FunkoStickerType.specialEdition: <String>['special edition'],
 
-    FunkoStickerType.specialtySeries: <String>[
-      'specialty series',
-    ],
+        FunkoStickerType.specialtySeries: <String>['specialty series'],
 
-    FunkoStickerType.subscriptionBox: <String>[
-      'subscription box',
-    ],
+        FunkoStickerType.subscriptionBox: <String>['subscription box'],
 
-    FunkoStickerType.employeeExclusive: <String>[
-      'employee exclusive',
-      'funko employee',
-    ],
+        FunkoStickerType.employeeExclusive: <String>[
+          'employee exclusive',
+          'funko employee',
+        ],
 
-    FunkoStickerType.prototype: <String>[
-      'prototype',
-      'proto',
-    ],
+        FunkoStickerType.prototype: <String>['prototype', 'proto'],
 
-    FunkoStickerType.sample: <String>[
-      'sample',
-    ],
-  };
+        FunkoStickerType.sample: <String>['sample'],
+      };
 }

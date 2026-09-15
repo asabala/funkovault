@@ -23,9 +23,8 @@ class DuplicateReviewService {
 
     final possibleVariantGroups = identityResult.allGroups
         .where(
-          (group) =>
-      group.relationship != IdentityRelationship.exactDuplicate,
-    )
+          (group) => group.relationship != IdentityRelationship.exactDuplicate,
+        )
         .map(_convertGroup)
         .toList(growable: false);
 
@@ -36,9 +35,7 @@ class DuplicateReviewService {
     );
   }
 
-  DuplicateReviewGroup _convertGroup(
-      IdentityReviewGroup group,
-      ) {
+  DuplicateReviewGroup _convertGroup(IdentityReviewGroup group) {
     return DuplicateReviewGroup(
       key: group.key,
       pops: group.pops,
@@ -116,10 +113,7 @@ class DuplicateReviewGroup {
   int get itemCount => pops.length;
 
   int get totalQuantity {
-    return pops.fold<int>(
-      0,
-          (total, pop) => total + pop.quantity,
-    );
+    return pops.fold<int>(0, (total, pop) => total + pop.quantity);
   }
 
   String get name {

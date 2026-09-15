@@ -29,41 +29,30 @@ class AtlasCollectionIntelligence {
   final AtlasCollectibilitySummary collectibilitySummary;
   final AtlasRecommendationSummary recommendationSummary;
 
-  int get collectorScore =>
-      collectibilitySummary.score;
+  int get collectorScore => collectibilitySummary.score;
 
-  String get classification =>
-      collectibilitySummary.tier;
+  String get classification => collectibilitySummary.tier;
 
-  String get headline =>
-      collectibilitySummary.headline;
+  String get headline => collectibilitySummary.headline;
 
-  bool get hasScoreReasons =>
-      heroSummary.hasScoreReasons;
+  bool get hasScoreReasons => heroSummary.hasScoreReasons;
 
-  bool get hasImprovementSuggestions =>
-      collectibilitySummary.hasOpportunities;
+  bool get hasImprovementSuggestions => collectibilitySummary.hasOpportunities;
 
-  bool get hasIdentityBadges =>
-      identityBadges.isNotEmpty;
+  bool get hasIdentityBadges => identityBadges.isNotEmpty;
 
-  bool get hasCollectibilitySignals =>
-      collectibilitySummary.hasSignals;
+  bool get hasCollectibilitySignals => collectibilitySummary.hasSignals;
 
-  bool get isDisplayPiece =>
-      collectibilitySummary.isDisplayPiece;
+  bool get isDisplayPiece => collectibilitySummary.isDisplayPiece;
 
   bool get shouldReviewForInsurance =>
       collectibilitySummary.shouldReviewForInsurance;
 
-  bool get isMarketReady =>
-      collectibilitySummary.isMarketReady;
+  bool get isMarketReady => collectibilitySummary.isMarketReady;
 
-  bool get hasRecommendations =>
-      recommendationSummary.hasRecommendations;
+  bool get hasRecommendations => recommendationSummary.hasRecommendations;
 
-  int get recommendationCount =>
-      recommendationSummary.count;
+  int get recommendationCount => recommendationSummary.count;
 
   AtlasRecommendation? get primaryRecommendation =>
       recommendationSummary.primaryRecommendation;
@@ -81,20 +70,14 @@ class AtlasCollectionIntelligence {
     return AtlasCollectionIntelligence(
       popId: popId ?? this.popId,
       generatedAt: generatedAt ?? this.generatedAt,
-      heroSummary:
-      heroSummary ?? this.heroSummary,
-      timelineReport:
-      timelineReport ?? this.timelineReport,
-      activitySummary:
-      activitySummary ?? this.activitySummary,
-      identityBadges:
-      identityBadges ?? this.identityBadges,
+      heroSummary: heroSummary ?? this.heroSummary,
+      timelineReport: timelineReport ?? this.timelineReport,
+      activitySummary: activitySummary ?? this.activitySummary,
+      identityBadges: identityBadges ?? this.identityBadges,
       collectibilitySummary:
-      collectibilitySummary ??
-          this.collectibilitySummary,
+          collectibilitySummary ?? this.collectibilitySummary,
       recommendationSummary:
-      recommendationSummary ??
-          this.recommendationSummary,
+          recommendationSummary ?? this.recommendationSummary,
     );
   }
 }

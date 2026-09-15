@@ -7,10 +7,7 @@ import '../atlas/atlas_expandable_section.dart';
 import '../atlas/atlas_glass_panel.dart';
 
 class PopSourceDetailsSection extends StatelessWidget {
-  const PopSourceDetailsSection({
-    super.key,
-    required this.pop,
-  });
+  const PopSourceDetailsSection({super.key, required this.pop});
 
   final Pop pop;
 
@@ -55,25 +52,16 @@ class PopSourceDetailsSection extends StatelessWidget {
       ),
       child: Column(
         children: [
-          const _SourceDetailRow(
-            label: 'Source',
-            value: 'HobbyDB',
-          ),
+          const _SourceDetailRow(label: 'Source', value: 'HobbyDB'),
           if (pop.sourceCatalogId.trim().isNotEmpty)
-            _SourceDetailRow(
-              label: 'HDBID',
-              value: pop.sourceCatalogId,
-            ),
+            _SourceDetailRow(label: 'HDBID', value: pop.sourceCatalogId),
           if (pop.sourceCollectibleId.trim().isNotEmpty)
             _SourceDetailRow(
               label: 'HDBC Number',
               value: pop.sourceCollectibleId,
             ),
           if (pop.sourceUpc.trim().isNotEmpty)
-            _SourceDetailRow(
-              label: 'UPC',
-              value: pop.sourceUpc,
-            ),
+            _SourceDetailRow(label: 'UPC', value: pop.sourceUpc),
           if (pop.productionStatus.trim().isNotEmpty)
             _SourceDetailRow(
               label: 'Production Status',
@@ -82,9 +70,7 @@ class PopSourceDetailsSection extends StatelessWidget {
           if (pop.releaseDate.trim().isNotEmpty)
             _SourceDetailRow(
               label: 'Release Date',
-              value: _formatSourceDate(
-                pop.releaseDate,
-              ),
+              value: _formatSourceDate(pop.releaseDate),
             ),
           if (pop.gradingCompany.trim().isNotEmpty)
             _SourceDetailRow(
@@ -103,10 +89,7 @@ class PopSourceDetailsSection extends StatelessWidget {
 }
 
 class _SourceDetailRow extends StatelessWidget {
-  const _SourceDetailRow({
-    required this.label,
-    required this.value,
-  });
+  const _SourceDetailRow({required this.label, required this.value});
 
   final String label;
   final String value;
@@ -114,9 +97,7 @@ class _SourceDetailRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(
-        bottom: AtlasSpacing.sm,
-      ),
+      padding: const EdgeInsets.only(bottom: AtlasSpacing.sm),
       child: AtlasGlassPanel(
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,

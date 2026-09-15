@@ -19,17 +19,12 @@ import 'engine_support.dart';
 // Catalog searching, candidate ranking, and match decisions are delegated
 // to CatalogResolutionService. This engine only coordinates the scan
 // intelligence pipeline.
-final class ProductResolutionEngine
-    extends AbstractScanEngine {
-  const ProductResolutionEngine(
-      this._resolutionService,
-      );
+final class ProductResolutionEngine extends AbstractScanEngine {
+  const ProductResolutionEngine(this._resolutionService);
 
-  static const String id =
-      'atlas.scan.product-resolution';
+  static const String id = 'atlas.scan.product-resolution';
 
-  static const String capabilityId =
-      'atlas.capability.product-resolution';
+  static const String capabilityId = 'atlas.capability.product-resolution';
 
   final CatalogResolutionService _resolutionService;
 
@@ -45,11 +40,10 @@ final class ProductResolutionEngine
 
   @override
   Future<EngineResult> execute(
-      ScanSession session,
-      EngineContext context,
-      ) async {
-    final IdentityEvidence evidence =
-    IdentityEvidenceBuilder.fromSession(
+    ScanSession session,
+    EngineContext context,
+  ) async {
+    final IdentityEvidence evidence = IdentityEvidenceBuilder.fromSession(
       session,
     );
 
@@ -57,25 +51,20 @@ final class ProductResolutionEngine
       return EngineResult.skipped(
         session: session,
         reason: 'No identity evidence is available.',
-        attributes: const <String, Object?>{
-          'requirement': 'identityEvidence',
-        },
+        attributes: const <String, Object?>{'requirement': 'identityEvidence'},
       );
     }
 
-    final IdentityHypothesis? hypothesis =
-        evidence.primaryHypothesis;
+    final IdentityHypothesis? hypothesis = evidence.primaryHypothesis;
 
     if (hypothesis == null) {
       return EngineResult.skipped(
         session: session,
-        reason:
-        'No primary identity hypothesis was available.',
+        reason: 'No primary identity hypothesis was available.',
       );
     }
 
-    final CatalogResolutionRequest request =
-    CatalogResolutionRequest(
+    final CatalogResolutionRequest request = CatalogResolutionRequest(
       displayName: hypothesis.displayName,
       brand: hypothesis.brand,
       productLine: hypothesis.productLine,
@@ -83,51 +72,41 @@ final class ProductResolutionEngine
       characterName: hypothesis.characterName,
       productNumber: hypothesis.productNumber,
       variantName: hypothesis.variantName,
-      sourceConfidence:
-      hypothesis.confidence ?? 0.0,
+      sourceConfidence: hypothesis.confidence ?? 0.0,
       attributes: <String, Object?>{
         'hypothesisId': hypothesis.hypothesisId,
-        'supportingContributionIds':
-        hypothesis.supportingContributionIds,
+        'supportingContributionIds': hypothesis.supportingContributionIds,
       },
     );
 
-    final CatalogResolutionResult catalogResult =
-    await _resolutionService.resolve(
-      request,
-    );
+    final CatalogResolutionResult catalogResult = await _resolutionService
+        .resolve(request);
 
-    final selectedMatch =
-        catalogResult.selectedMatch;
+    final selectedMatch = catalogResult.selectedMatch;
 
     if (selectedMatch == null) {
       return EngineResult.skipped(
         session: session,
         reason:
-        catalogResult.resolutionReason ??
+            catalogResult.resolutionReason ??
             'No catalog product could be resolved.',
         attributes: <String, Object?>{
           'hypothesisId': hypothesis.hypothesisId,
-          'candidateCount':
-          catalogResult.candidateMatches.length,
-          'requiresReview':
-          catalogResult.requiresReview,
+          'candidateCount': catalogResult.candidateMatches.length,
+          'requiresReview': catalogResult.requiresReview,
         },
       );
     }
 
     final bool requiresReview =
         evidence.requiresReview ||
-            catalogResult.requiresReview ||
-            selectedMatch.requiresReview;
+        catalogResult.requiresReview ||
+        selectedMatch.requiresReview;
 
     final ResolvedProductSnapshot resolvedProduct =
-    ResolvedProductSnapshot.fromCatalogProduct(
-      selectedMatch.product,
-    );
+        ResolvedProductSnapshot.fromCatalogProduct(selectedMatch.product);
 
-    final ProductResolution resolution =
-    ProductResolution(
+    final ProductResolution resolution = ProductResolution(
       productId: resolvedProduct.productId,
       displayName: resolvedProduct.displayName,
       resolvedProduct: resolvedProduct,
@@ -135,61 +114,45 @@ final class ProductResolutionEngine
       requiresReview: requiresReview,
       attributes: <String, Object?>{
         'hypothesisId': hypothesis.hypothesisId,
-        'resolutionReason':
-        catalogResult.resolutionReason,
+        'resolutionReason': catalogResult.resolutionReason,
         'matchReason': selectedMatch.matchReason,
-        'candidateCount':
-        catalogResult.candidateMatches.length,
+        'candidateCount': catalogResult.candidateMatches.length,
       },
     );
 
-    final ProductResolutionContribution
-    contribution =
-    ProductResolutionContribution(
-      contributionId:
-      EngineSupport.buildContributionId(
-        namespace: 'atlas.resolution',
-        segments: <Object?>[
-          hypothesis.hypothesisId,
-          resolution.productId.value,
-        ],
-      ),
-      sourceEngineId: engineId,
-      createdAt: session.startedAt,
-      resolution: resolution,
-      confidence: resolution.matchConfidence,
-      attributes: <String, Object?>{
-        'resolutionReason':
-        catalogResult.resolutionReason,
-        'matchReason':
-        selectedMatch.matchReason,
-        'candidateCount':
-        catalogResult.candidateMatches.length,
-      },
-    );
+    final ProductResolutionContribution contribution =
+        ProductResolutionContribution(
+          contributionId: EngineSupport.buildContributionId(
+            namespace: 'atlas.resolution',
+            segments: <Object?>[
+              hypothesis.hypothesisId,
+              resolution.productId.value,
+            ],
+          ),
+          sourceEngineId: engineId,
+          createdAt: session.startedAt,
+          resolution: resolution,
+          confidence: resolution.matchConfidence,
+          attributes: <String, Object?>{
+            'resolutionReason': catalogResult.resolutionReason,
+            'matchReason': selectedMatch.matchReason,
+            'candidateCount': catalogResult.candidateMatches.length,
+          },
+        );
 
-    final ScanSession updatedSession =
-    session.addContributions(
-      <ProductResolutionContribution>[
-        contribution,
-      ],
-      conflictPolicy:
-      ContributionConflictPolicy.replaceExisting,
+    final ScanSession updatedSession = session.addContributions(
+      <ProductResolutionContribution>[contribution],
+      conflictPolicy: ContributionConflictPolicy.replaceExisting,
     );
 
     return EngineResult.success(
       session: updatedSession,
       attributes: <String, Object?>{
-        'resolvedProductId':
-        resolution.productId.value,
-        'matchConfidence':
-        resolution.matchConfidence,
-        'requiresReview':
-        resolution.requiresReview,
-        'candidateCount':
-        catalogResult.candidateMatches.length,
-        'resolutionReason':
-        catalogResult.resolutionReason,
+        'resolvedProductId': resolution.productId.value,
+        'matchConfidence': resolution.matchConfidence,
+        'requiresReview': resolution.requiresReview,
+        'candidateCount': catalogResult.candidateMatches.length,
+        'resolutionReason': catalogResult.resolutionReason,
       },
     );
   }

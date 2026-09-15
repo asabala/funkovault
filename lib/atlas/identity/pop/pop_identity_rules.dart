@@ -5,138 +5,74 @@ abstract final class PopIdentityRules {
     // ============================================================
     // VARIANT AND FINISH RULES
     // ============================================================
-
     PopIdentityRule(
       id: 'chase',
       emoji: '🔥',
       label: 'Chase',
-      targetScopes: {
-        PopIdentityScope.variant,
-        PopIdentityScope.collectorLabel,
-      },
-      keywords: [
-        'chase',
-        'chase variant',
-        'glow chase',
-        'metallic chase',
-      ],
+      targetScopes: {PopIdentityScope.variant, PopIdentityScope.collectorLabel},
+      keywords: ['chase', 'chase variant', 'glow chase', 'metallic chase'],
     ),
     PopIdentityRule(
       id: 'glow',
       emoji: '✨',
       label: 'Glow in the Dark',
-      targetScopes: {
-        PopIdentityScope.variant,
-        PopIdentityScope.collectorLabel,
-      },
-      keywords: [
-        'glow in the dark',
-        'glow-in-the-dark',
-        'gitd',
-        'glow',
-      ],
+      targetScopes: {PopIdentityScope.variant, PopIdentityScope.collectorLabel},
+      keywords: ['glow in the dark', 'glow-in-the-dark', 'gitd', 'glow'],
     ),
     PopIdentityRule(
       id: 'blacklight',
       emoji: '🎨',
       label: 'Blacklight',
-      targetScopes: {
-        PopIdentityScope.variant,
-        PopIdentityScope.collectorLabel,
-      },
-      keywords: [
-        'blacklight',
-        'black light',
-      ],
+      targetScopes: {PopIdentityScope.variant, PopIdentityScope.collectorLabel},
+      keywords: ['blacklight', 'black light'],
     ),
     PopIdentityRule(
       id: 'diamond',
       emoji: '💎',
       label: 'Diamond',
-      targetScopes: {
-        PopIdentityScope.variant,
-        PopIdentityScope.collectorLabel,
-      },
-      keywords: [
-        'diamond collection',
-        'diamond edition',
-        'diamond',
-        'glitter',
-      ],
+      targetScopes: {PopIdentityScope.variant, PopIdentityScope.collectorLabel},
+      keywords: ['diamond collection', 'diamond edition', 'diamond', 'glitter'],
     ),
     PopIdentityRule(
       id: 'flocked',
       emoji: '🐑',
       label: 'Flocked',
-      targetScopes: {
-        PopIdentityScope.variant,
-        PopIdentityScope.collectorLabel,
-      },
-      keywords: [
-        'flocked',
-        'flock',
-      ],
+      targetScopes: {PopIdentityScope.variant, PopIdentityScope.collectorLabel},
+      keywords: ['flocked', 'flock'],
     ),
     PopIdentityRule(
       id: 'metallic',
       emoji: '🪙',
       label: 'Metallic',
-      targetScopes: {
-        PopIdentityScope.variant,
-        PopIdentityScope.collectorLabel,
-      },
-      keywords: [
-        'metallic',
-        'chrome',
-        'gold chrome',
-        'silver chrome',
-      ],
+      targetScopes: {PopIdentityScope.variant, PopIdentityScope.collectorLabel},
+      keywords: ['metallic', 'chrome', 'gold chrome', 'silver chrome'],
     ),
     PopIdentityRule(
       id: 'scented',
       emoji: '🌸',
       label: 'Scented',
-      targetScopes: {
-        PopIdentityScope.variant,
-      },
-      keywords: [
-        'scented',
-        'scent',
-      ],
+      targetScopes: {PopIdentityScope.variant},
+      keywords: ['scented', 'scent'],
     ),
     PopIdentityRule(
       id: 'art_series',
       emoji: '🖼️',
       label: 'Art Series',
-      targetScopes: {
-        PopIdentityScope.variant,
-        PopIdentityScope.collectorLabel,
-      },
-      keywords: [
-        'art series',
-      ],
+      targetScopes: {PopIdentityScope.variant, PopIdentityScope.collectorLabel},
+      keywords: ['art series'],
     ),
     PopIdentityRule(
       id: 'nft',
       emoji: '🌐',
       label: 'NFT',
-      targetScopes: {
-        PopIdentityScope.variant,
-        PopIdentityScope.collectorLabel,
-      },
-      keywords: [
-        'nft',
-        'digital pop',
-        'digital collectible',
-      ],
+      targetScopes: {PopIdentityScope.variant, PopIdentityScope.collectorLabel},
+      keywords: ['nft', 'digital pop', 'digital collectible'],
     ),
     PopIdentityRule(
       id: 'translucent',
       emoji: '🫧',
       label: 'Translucent',
-      targetScopes: {
-        PopIdentityScope.variant,
-      },
+      targetScopes: {PopIdentityScope.variant},
       keywords: [
         'translucent',
         'transparent',
@@ -148,9 +84,7 @@ abstract final class PopIdentityRules {
       id: 'bloody',
       emoji: '🩸',
       label: 'Bloody',
-      targetScopes: {
-        PopIdentityScope.variant,
-      },
+      targetScopes: {PopIdentityScope.variant},
       keywords: [
         'bloody',
         'blood splatter',
@@ -162,117 +96,67 @@ abstract final class PopIdentityRules {
       id: 'pearlescent',
       emoji: '🦪',
       label: 'Pearlescent',
-      targetScopes: {
-        PopIdentityScope.variant,
-      },
-      keywords: [
-        'pearlescent',
-        'pearl finish',
-        'pearl edition',
-        'opal',
-      ],
+      targetScopes: {PopIdentityScope.variant},
+      keywords: ['pearlescent', 'pearl finish', 'pearl edition', 'opal'],
     ),
     PopIdentityRule(
       id: 'patina',
       emoji: '🏺',
       label: 'Patina',
-      targetScopes: {
-        PopIdentityScope.variant,
-      },
-      keywords: [
-        'patina',
-        'rust finish',
-        'bronze finish',
-      ],
+      targetScopes: {PopIdentityScope.variant},
+      keywords: ['patina', 'rust finish', 'bronze finish'],
     ),
     PopIdentityRule(
       id: 'light_up',
       emoji: '💡',
       label: 'Light-Up',
-      targetScopes: {
-        PopIdentityScope.variant,
-      },
-      keywords: [
-        'light up',
-        'light-up',
-        'lights up',
-      ],
+      targetScopes: {PopIdentityScope.variant},
+      keywords: ['light up', 'light-up', 'lights up'],
     ),
     PopIdentityRule(
       id: 'sound',
       emoji: '🔊',
       label: 'Sound',
-      targetScopes: {
-        PopIdentityScope.variant,
-      },
-      keywords: [
-        'sound edition',
-        'sound feature',
-        'with sound',
-      ],
+      targetScopes: {PopIdentityScope.variant},
+      keywords: ['sound edition', 'sound feature', 'with sound'],
     ),
     PopIdentityRule(
       id: 'prototype',
       emoji: '🧪',
       label: 'Prototype',
-      targetScopes: {
-        PopIdentityScope.variant,
-        PopIdentityScope.collectorLabel,
-      },
-      keywords: [
-        'prototype',
-        'proto',
-      ],
+      targetScopes: {PopIdentityScope.variant, PopIdentityScope.collectorLabel},
+      keywords: ['prototype', 'proto'],
     ),
     PopIdentityRule(
       id: 'unmasked',
       emoji: '👤',
       label: 'Unmasked',
-      targetScopes: {
-        PopIdentityScope.variant,
-      },
-      keywords: [
-        'unmasked',
-        'no mask',
-      ],
+      targetScopes: {PopIdentityScope.variant},
+      keywords: ['unmasked', 'no mask'],
     ),
     PopIdentityRule(
       id: 'masked',
       emoji: '🥷',
       label: 'Masked',
-      targetScopes: {
-        PopIdentityScope.variant,
-      },
-      keywords: [
-        'masked',
-        'with mask',
-      ],
+      targetScopes: {PopIdentityScope.variant},
+      keywords: ['masked', 'with mask'],
     ),
     PopIdentityRule(
       id: 'helmeted',
       emoji: '🪖',
       label: 'Helmeted',
-      targetScopes: {
-        PopIdentityScope.variant,
-      },
-      keywords: [
-        'helmeted',
-        'with helmet',
-      ],
+      targetScopes: {PopIdentityScope.variant},
+      keywords: ['helmeted', 'with helmet'],
     ),
 
     // ============================================================
     // FORM FACTOR AND COLLECTOR STATUS RULES
     // ============================================================
-
     PopIdentityRule(
       id: 'oversized',
       emoji: '📏',
       label: 'Oversized',
-      targetScopes: {
-        PopIdentityScope.variant,
-        PopIdentityScope.collectorLabel,
-      },
+      targetScopes: {PopIdentityScope.variant, PopIdentityScope.collectorLabel},
       keywords: [
         'jumbo',
         'super sized',
@@ -289,120 +173,68 @@ abstract final class PopIdentityRules {
       id: 'vaulted',
       emoji: '🔒',
       label: 'Vaulted',
-      targetScopes: {
-        PopIdentityScope.collectorLabel,
-      },
-      keywords: [
-        'vaulted',
-        'retired',
-      ],
+      targetScopes: {PopIdentityScope.collectorLabel},
+      keywords: ['vaulted', 'retired'],
     ),
     PopIdentityRule(
       id: 'pop_cover',
       emoji: '📖',
       label: 'Pop Cover',
-      targetScopes: {
-        PopIdentityScope.collectorLabel,
-        PopIdentityScope.variant,
-      },
-      keywords: [
-        'comic cover',
-        'album cover',
-        'poster cover',
-        'pop cover',
-      ],
+      targetScopes: {PopIdentityScope.collectorLabel, PopIdentityScope.variant},
+      keywords: ['comic cover', 'album cover', 'poster cover', 'pop cover'],
     ),
     PopIdentityRule(
       id: 'grail',
       emoji: '👑',
       label: 'Grail',
-      targetScopes: {
-        PopIdentityScope.collectorLabel,
-      },
-      keywords: [
-        'grail',
-      ],
+      targetScopes: {PopIdentityScope.collectorLabel},
+      keywords: ['grail'],
     ),
 
     // ============================================================
     // CONVENTION AND EVENT STICKER RULES
     // ============================================================
-
     PopIdentityRule(
       id: 'sdcc',
       emoji: '🎟️',
       label: 'SDCC',
-      targetScopes: {
-        PopIdentityScope.eventSticker,
-      },
-      keywords: [
-        'sdcc',
-        'san diego comic con',
-        'san diego comic-con',
-      ],
+      targetScopes: {PopIdentityScope.eventSticker},
+      keywords: ['sdcc', 'san diego comic con', 'san diego comic-con'],
     ),
     PopIdentityRule(
       id: 'nycc',
       emoji: '🎟️',
       label: 'NYCC',
-      targetScopes: {
-        PopIdentityScope.eventSticker,
-      },
-      keywords: [
-        'nycc',
-        'new york comic con',
-        'new york comic-con',
-      ],
+      targetScopes: {PopIdentityScope.eventSticker},
+      keywords: ['nycc', 'new york comic con', 'new york comic-con'],
     ),
     PopIdentityRule(
       id: 'eccc',
       emoji: '🎟️',
       label: 'ECCC',
-      targetScopes: {
-        PopIdentityScope.eventSticker,
-      },
-      keywords: [
-        'eccc',
-        'emerald city comic con',
-        'emerald city comic-con',
-      ],
+      targetScopes: {PopIdentityScope.eventSticker},
+      keywords: ['eccc', 'emerald city comic con', 'emerald city comic-con'],
     ),
     PopIdentityRule(
       id: 'wondercon',
       emoji: '🎟️',
       label: 'WonderCon',
-      targetScopes: {
-        PopIdentityScope.eventSticker,
-      },
-      keywords: [
-        'wondercon',
-        'wonder con',
-      ],
+      targetScopes: {PopIdentityScope.eventSticker},
+      keywords: ['wondercon', 'wonder con'],
     ),
     PopIdentityRule(
       id: 'c2e2',
       emoji: '🎟️',
       label: 'C2E2',
-      targetScopes: {
-        PopIdentityScope.eventSticker,
-      },
-      keywords: [
-        'c2e2',
-        'chicago comic and entertainment expo',
-      ],
+      targetScopes: {PopIdentityScope.eventSticker},
+      keywords: ['c2e2', 'chicago comic and entertainment expo'],
     ),
     PopIdentityRule(
       id: 'lacc',
       emoji: '🎟️',
       label: 'LACC',
-      targetScopes: {
-        PopIdentityScope.eventSticker,
-      },
-      keywords: [
-        'lacc',
-        'los angeles comic con',
-        'los angeles comic-con',
-      ],
+      targetScopes: {PopIdentityScope.eventSticker},
+      keywords: ['lacc', 'los angeles comic con', 'los angeles comic-con'],
     ),
     PopIdentityRule(
       id: 'fundays',
@@ -412,35 +244,21 @@ abstract final class PopIdentityRules {
         PopIdentityScope.eventSticker,
         PopIdentityScope.collectorLabel,
       },
-      keywords: [
-        'fundays',
-        'fun days',
-        'box of fun',
-      ],
+      keywords: ['fundays', 'fun days', 'box of fun'],
     ),
     PopIdentityRule(
       id: 'd23',
       emoji: '🏰',
       label: 'D23',
-      targetScopes: {
-        PopIdentityScope.eventSticker,
-      },
-      keywords: [
-        'd23',
-        'd23 expo',
-      ],
+      targetScopes: {PopIdentityScope.eventSticker},
+      keywords: ['d23', 'd23 expo'],
     ),
     PopIdentityRule(
       id: 'fan_expo',
       emoji: '🎟️',
       label: 'Fan Expo',
-      targetScopes: {
-        PopIdentityScope.eventSticker,
-      },
-      keywords: [
-        'fan expo',
-        'fanexpo',
-      ],
+      targetScopes: {PopIdentityScope.eventSticker},
+      keywords: ['fan expo', 'fanexpo'],
     ),
     PopIdentityRule(
       id: 'fright_night',
@@ -450,31 +268,20 @@ abstract final class PopIdentityRules {
         PopIdentityScope.eventSticker,
         PopIdentityScope.collectorLabel,
       },
-      keywords: [
-        'fright night',
-        'frightnight',
-      ],
+      keywords: ['fright night', 'frightnight'],
     ),
     PopIdentityRule(
       id: 'shared_convention',
       emoji: '🤝',
       label: 'Shared Convention',
-      targetScopes: {
-        PopIdentityScope.eventSticker,
-      },
-      keywords: [
-        'shared convention',
-        'shared exclusive',
-        'shared sticker',
-      ],
+      targetScopes: {PopIdentityScope.eventSticker},
+      keywords: ['shared convention', 'shared exclusive', 'shared sticker'],
     ),
     PopIdentityRule(
       id: 'official_convention',
       emoji: '🎟️',
       label: 'Official Convention',
-      targetScopes: {
-        PopIdentityScope.eventSticker,
-      },
+      targetScopes: {PopIdentityScope.eventSticker},
       keywords: [
         'official convention',
         'official con sticker',
@@ -489,41 +296,28 @@ abstract final class PopIdentityRules {
         PopIdentityScope.eventSticker,
         PopIdentityScope.retailExclusive,
       },
-      keywords: [
-        'special edition',
-        'special edition sticker',
-      ],
+      keywords: ['special edition', 'special edition sticker'],
     ),
 
     // ============================================================
     // RETAIL EXCLUSIVE RULES
     // ============================================================
-
     PopIdentityRule(
       id: 'funko_shop',
       emoji: '🛒',
       label: 'Funko Shop',
-      targetScopes: {
-        PopIdentityScope.retailExclusive,
-      },
-      keywords: [
-        'funko shop',
-        'funko.com',
-        'web exclusive',
-      ],
+      targetScopes: {PopIdentityScope.retailExclusive},
+      keywords: ['funko shop', 'funko.com', 'web exclusive'],
     ),
 
     // ============================================================
     // SCOPED METADATA RULES
     // ============================================================
-
     PopIdentityRule(
       id: 'limited_edition',
       emoji: '🏆',
       label: 'Limited Edition',
-      targetScopes: {
-        PopIdentityScope.limitedEdition,
-      },
+      targetScopes: {PopIdentityScope.limitedEdition},
       keywords: [
         'limited edition',
         'limited release',
@@ -536,15 +330,8 @@ abstract final class PopIdentityRules {
       id: 'signed',
       emoji: '🖋️',
       label: 'Signed',
-      targetScopes: {
-        PopIdentityScope.signature,
-      },
-      keywords: [
-        'signed',
-        'signature',
-        'autographed',
-        'autograph',
-      ],
+      targetScopes: {PopIdentityScope.signature},
+      keywords: ['signed', 'signature', 'autographed', 'autograph'],
     ),
   ];
 

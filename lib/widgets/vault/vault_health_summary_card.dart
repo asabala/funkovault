@@ -27,7 +27,7 @@ class VaultHealthSummaryCard extends StatelessWidget {
       title: 'Vault Health',
       highlight: '$roundedHealth% • $priority Priority',
       message:
-      'Needs Value: $needsValueCount • Duplicates: $duplicateGroupCount',
+          'Needs Value: $needsValueCount • Duplicates: $duplicateGroupCount',
       onTap: onTap,
     );
   }

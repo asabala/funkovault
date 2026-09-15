@@ -12,25 +12,14 @@ class AcademyRequestFactory {
     required DateTime createdAt,
   }) {
     return AcademyRequest(
-      id: AcademyRequestIdBuilder.buildTopicRequestId(
-        createdAt,
-      ),
-      title: _cleanRequiredText(
-        topic,
-        fallback: 'Academy Topic Request',
-      ),
-      description:
-      AcademyRequestDefaults.topicDescription,
+      id: AcademyRequestIdBuilder.buildTopicRequestId(createdAt),
+      title: _cleanRequiredText(topic, fallback: 'Academy Topic Request'),
+      description: AcademyRequestDefaults.topicDescription,
       type: AcademyRequestType.topic,
       status: AcademyRequestStatus.newRequest,
       source: AcademyRequestDefaults.source,
-      notes: _cleanOptionalText(
-        notes,
-      ) ??
-          AcademyRequestDefaults.topicNotes,
-      trackId: _cleanOptionalText(
-        trackId,
-      ),
+      notes: _cleanOptionalText(notes) ?? AcademyRequestDefaults.topicNotes,
+      trackId: _cleanOptionalText(trackId),
       createdAt: createdAt,
       updatedAt: createdAt,
     );
@@ -43,36 +32,21 @@ class AcademyRequestFactory {
     required DateTime createdAt,
   }) {
     return AcademyRequest(
-      id: AcademyRequestIdBuilder.buildTrackRequestId(
-        createdAt,
-      ),
-      title: _cleanRequiredText(
-        trackTitle,
-        fallback: 'Academy Track Request',
-      ),
-      description:
-      AcademyRequestDefaults.trackDescription,
+      id: AcademyRequestIdBuilder.buildTrackRequestId(createdAt),
+      title: _cleanRequiredText(trackTitle, fallback: 'Academy Track Request'),
+      description: AcademyRequestDefaults.trackDescription,
       type: AcademyRequestType.track,
       status: AcademyRequestStatus.newRequest,
       source: AcademyRequestDefaults.source,
-      notes: _cleanOptionalText(
-        notes,
-      ) ??
-          AcademyRequestDefaults.trackNotes,
-      trackId: _cleanOptionalText(
-        trackId,
-      ),
+      notes: _cleanOptionalText(notes) ?? AcademyRequestDefaults.trackNotes,
+      trackId: _cleanOptionalText(trackId),
       createdAt: createdAt,
       updatedAt: createdAt,
     );
   }
 
-  static String _cleanRequiredText(
-      String value, {
-        required String fallback,
-      }) {
-    final String cleaned =
-    value.trim();
+  static String _cleanRequiredText(String value, {required String fallback}) {
+    final String cleaned = value.trim();
 
     if (cleaned.isEmpty) {
       return fallback;
@@ -81,11 +55,8 @@ class AcademyRequestFactory {
     return cleaned;
   }
 
-  static String? _cleanOptionalText(
-      String? value,
-      ) {
-    final String cleaned =
-        value?.trim() ?? '';
+  static String? _cleanOptionalText(String? value) {
+    final String cleaned = value?.trim() ?? '';
 
     if (cleaned.isEmpty) {
       return null;

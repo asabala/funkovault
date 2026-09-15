@@ -12,11 +12,8 @@ final class CatalogMatch {
     required this.confidence,
     this.matchReason,
     this.requiresReview = false,
-    Map<String, Object?> attributes =
-    const <String, Object?>{},
-  }) : attributes = Map.unmodifiable(
-    Map<String, Object?>.from(attributes),
-  );
+    Map<String, Object?> attributes = const <String, Object?>{},
+  }) : attributes = Map.unmodifiable(Map<String, Object?>.from(attributes));
 
   final AtlasCatalogProduct product;
 
@@ -37,17 +34,14 @@ final class CatalogMatch {
   }
 
   bool get isMediumConfidence {
-    return confidence >= 0.80 &&
-        confidence < 0.95;
+    return confidence >= 0.80 && confidence < 0.95;
   }
 
   bool get isLowConfidence {
     return confidence < 0.80;
   }
 
-  T? attribute<T>(
-      String key,
-      ) {
+  T? attribute<T>(String key) {
     final Object? value = attributes[key];
 
     if (value is T) {
@@ -57,19 +51,14 @@ final class CatalogMatch {
     return null;
   }
 
-  bool hasAttribute(
-      String key,
-      ) {
+  bool hasAttribute(String key) {
     return attributes.containsKey(key);
   }
 
   @override
-  bool operator ==(
-      Object other,
-      ) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
-        other is CatalogMatch &&
-            other.productId == productId;
+        other is CatalogMatch && other.productId == productId;
   }
 
   @override

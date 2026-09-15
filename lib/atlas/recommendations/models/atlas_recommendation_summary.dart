@@ -4,9 +4,7 @@ import 'atlas_recommendation_type.dart';
 
 /// Immutable set of next-step recommendations for one collectible.
 class AtlasRecommendationSummary {
-  const AtlasRecommendationSummary({
-    required this.recommendations,
-  });
+  const AtlasRecommendationSummary({required this.recommendations});
 
   final List<AtlasRecommendation> recommendations;
 
@@ -14,10 +12,9 @@ class AtlasRecommendationSummary {
 
   int get count => recommendations.length;
 
-  List<AtlasRecommendation> get highPriorityRecommendations =>
-      recommendations
-          .where((recommendation) => recommendation.isHighPriority)
-          .toList(growable: false);
+  List<AtlasRecommendation> get highPriorityRecommendations => recommendations
+      .where((recommendation) => recommendation.isHighPriority)
+      .toList(growable: false);
 
   AtlasRecommendation? get primaryRecommendation {
     if (recommendations.isEmpty) {
@@ -28,17 +25,12 @@ class AtlasRecommendationSummary {
   }
 
   bool containsType(AtlasRecommendationType type) {
-    return recommendations.any(
-          (recommendation) => recommendation.type == type,
-    );
+    return recommendations.any((recommendation) => recommendation.type == type);
   }
 
   int countByPriority(AtlasRecommendationPriority priority) {
     return recommendations
-        .where(
-          (recommendation) =>
-      recommendation.priority == priority,
-    )
+        .where((recommendation) => recommendation.priority == priority)
         .length;
   }
 
@@ -46,8 +38,7 @@ class AtlasRecommendationSummary {
     List<AtlasRecommendation>? recommendations,
   }) {
     return AtlasRecommendationSummary(
-      recommendations:
-      recommendations ?? this.recommendations,
+      recommendations: recommendations ?? this.recommendations,
     );
   }
 }

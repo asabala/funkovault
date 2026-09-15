@@ -49,10 +49,7 @@ class _AtlasBootScreenState extends State<AtlasBootScreen>
       curve: AtlasAnimation.entranceCurve,
     );
 
-    _scaleAnimation = Tween<double>(
-      begin: 0.92,
-      end: 1.0,
-    ).animate(
+    _scaleAnimation = Tween<double>(begin: 0.92, end: 1.0).animate(
       CurvedAnimation(
         parent: _introController,
         curve: AtlasAnimation.entranceCurve,
@@ -99,13 +96,8 @@ class _AtlasBootScreenState extends State<AtlasBootScreen>
     );
   }
 
-  Future<void> _updateStatus(
-      String status,
-      int delayMs,
-      ) async {
-    await Future.delayed(
-      Duration(milliseconds: delayMs),
-    );
+  Future<void> _updateStatus(String status, int delayMs) async {
+    await Future.delayed(Duration(milliseconds: delayMs));
 
     if (!mounted) {
       return;
@@ -139,9 +131,7 @@ class _AtlasBootScreenState extends State<AtlasBootScreen>
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    AtlasBootLogo(
-                      pulse: _pulseAnimation,
-                    ),
+                    AtlasBootLogo(pulse: _pulseAnimation),
                     const SizedBox(height: AtlasSpacing.xl),
                     Text(
                       AtlasConstants.platformName.toUpperCase(),

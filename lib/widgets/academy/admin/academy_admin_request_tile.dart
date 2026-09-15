@@ -24,49 +24,30 @@ class AcademyAdminRequestTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String title =
-    request.title.trim();
+    final String title = request.title.trim();
 
-    final String source =
-    request.source.trim();
+    final String source = request.source.trim();
 
     return AtlasGlassCard(
-      accentColor:
-      AtlasColors.intelligenceBlue,
+      accentColor: AtlasColors.intelligenceBlue,
       child: Column(
-        crossAxisAlignment:
-        CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          AcademyRequestBadgeRow(
-            request: request,
-          ),
-          const SizedBox(
-            height: AtlasSpacing.md,
-          ),
+          AcademyRequestBadgeRow(request: request),
+          const SizedBox(height: AtlasSpacing.md),
           Text(
-            title.isEmpty
-                ? 'Academy Request'
-                : title,
-            style:
-            AtlasTypography.headingSmall,
+            title.isEmpty ? 'Academy Request' : title,
+            style: AtlasTypography.headingSmall,
           ),
-          const SizedBox(
-            height: AtlasSpacing.xs,
-          ),
+          const SizedBox(height: AtlasSpacing.xs),
           Text(
-            source.isEmpty
-                ? 'Atlas Academy'
-                : source,
-            style:
-            AtlasTypography.bodySmall.copyWith(
-              color:
-              AtlasColors.textSecondary,
+            source.isEmpty ? 'Atlas Academy' : source,
+            style: AtlasTypography.bodySmall.copyWith(
+              color: AtlasColors.textSecondary,
               height: 1.3,
             ),
           ),
-          const SizedBox(
-            height: AtlasSpacing.md,
-          ),
+          const SizedBox(height: AtlasSpacing.md),
           AcademyRequestActionRow(
             request: request,
             onReviewTap: onReviewTap,

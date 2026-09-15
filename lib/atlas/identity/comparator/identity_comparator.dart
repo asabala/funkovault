@@ -7,8 +7,7 @@ import 'identity_comparator_result.dart';
 //
 // Each comparator evaluates a specific part of identity, such as
 // core anchors, variant modifiers, or release context.
-abstract interface class IdentityComparator
-    implements AtlasModule {
+abstract interface class IdentityComparator implements AtlasModule {
   // Determines whether this comparator should participate for the
   // supplied profiles and policy.
   bool supports({

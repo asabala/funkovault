@@ -23,17 +23,11 @@ class AcademyAdminRequestList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final List<AcademyRequest> visibleRequests =
-    requests
-        .take(
-      AcademyAdminUiConfig.maxVisibleInboxRequests,
-    )
-        .toList(
-      growable: false,
-    );
+    final List<AcademyRequest> visibleRequests = requests
+        .take(AcademyAdminUiConfig.maxVisibleInboxRequests)
+        .toList(growable: false);
 
-    final int hiddenRequestCount =
-        requests.length - visibleRequests.length;
+    final int hiddenRequestCount = requests.length - visibleRequests.length;
 
     if (visibleRequests.isEmpty) {
       return const AcademyAdminEmptyInboxState();
@@ -42,42 +36,25 @@ class AcademyAdminRequestList extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        for (
-        int index = 0;
-        index < visibleRequests.length;
-        index++
-        ) ...[
+        for (int index = 0; index < visibleRequests.length; index++) ...[
           AcademyAdminRequestTile(
             request: visibleRequests[index],
             onReviewTap: () {
-              onReviewTap(
-                visibleRequests[index],
-              );
+              onReviewTap(visibleRequests[index]);
             },
             onApproveTap: () {
-              onApproveTap(
-                visibleRequests[index],
-              );
+              onApproveTap(visibleRequests[index]);
             },
             onDeclineTap: () {
-              onDeclineTap(
-                visibleRequests[index],
-              );
+              onDeclineTap(visibleRequests[index]);
             },
           ),
           if (index != visibleRequests.length - 1)
-            const SizedBox(
-              height: AtlasSpacing.sm,
-            ),
+            const SizedBox(height: AtlasSpacing.sm),
         ],
         if (hiddenRequestCount > 0) ...[
-          const SizedBox(
-            height: AtlasSpacing.md,
-          ),
-          AcademyAdminMoreRequestsLabel(
-            hiddenRequestCount:
-            hiddenRequestCount,
-          ),
+          const SizedBox(height: AtlasSpacing.md),
+          AcademyAdminMoreRequestsLabel(hiddenRequestCount: hiddenRequestCount),
         ],
       ],
     );

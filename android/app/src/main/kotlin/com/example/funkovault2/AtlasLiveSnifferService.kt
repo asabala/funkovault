@@ -72,18 +72,50 @@ class AtlasLiveSnifferService : Service() {
             service.updateOverlayState(text, showScanChoices, detectedCount)
             return true
         }
+
+        fun restartSelectedTargetIfActive(): Boolean {
+            val service = activeInstance ?: return false
+            service.restartSelectedTargetForAutomaticTurnover()
+            return true
+        }
     }
 
     private data class TargetTrackingConfig(
-        val coastMs: Long = 600L,
-        val lostMs: Long = 1500L,
-        val bootstrapEvidenceMs: Long = 850L,
-        val roiPaddingFraction: Float = 0.15f,
-        val reacquireMinIou: Double = 0.18,
-        val reacquireMaxCenterDistanceSquared: Float = 0.025f,
+        val coastMs: Long = 500L,
+        val lostMs: Long = 750L,
+        // A manual tap owns identity. ML Kit track continuity is only an aid, so
+        // keep the selected target alive through rotation/brief detector gaps.
+        val selectedTargetReacquireHoldMs: Long = 8_000L,
+        val selectedReplacementMinMissingMs: Long = 2_500L,
+        val selectedReplacementMinHits: Int = 8,
+        val coastingEvidenceMs: Long = 1_500L,
+        val reacquiringEvidenceMs: Long = 8_000L,
+        val initialOcrWidth: Float = 0.44f,
+        val initialOcrHeight: Float = 0.50f,
+        // Physical tracking can stay generous, but OCR must stay tight around
+        // the selected collectible. These values are deliberately separate.
+        val ocrPaddingFraction: Float = 0.04f,
+        val trackedOcrWidthFraction: Float = 0.88f,
+        val trackedOcrHeightFraction: Float = 0.78f,
+        val maxOcrWidth: Float = 0.50f,
+        val maxOcrHeight: Float = 0.58f,
+        val minOcrWidth: Float = 0.26f,
+        val minOcrHeight: Float = 0.32f,
+        val reacquireMinIou: Double = 0.36,
+        val reacquireMaxCenterDistanceSquared: Float = 0.012f,
+    )
+
+    private data class AuctionViewportConfig(
+        val left: Float = 0.15f,
+        val top: Float = 0.33f,
+        val right: Float = 0.85f,
+        val bottom: Float = 0.80f,
+        val minTrackOverlapFraction: Double = 0.55,
+        val maxTrackHeightFraction: Float = 0.65f,
     )
 
     private val targetTrackingConfig = TargetTrackingConfig()
+    private val auctionViewportConfig = AuctionViewportConfig()
 
     private var mediaProjection: MediaProjection? = null
     private var virtualDisplay: VirtualDisplay? = null
@@ -102,13 +134,24 @@ class AtlasLiveSnifferService : Service() {
     @Volatile private var singleTargetMode: Boolean = false
     @Volatile private var pendingTargetX: Double? = null
     @Volatile private var pendingTargetY: Double? = null
+    @Volatile private var selectionTapX: Double? = null
+    @Volatile private var selectionTapY: Double? = null
+    @Volatile private var targetAnchorU: Float? = null
+    @Volatile private var targetAnchorV: Float? = null
     @Volatile private var lockedTrackId: Int? = null
     @Volatile private var trackedBounds: RectF? = null
+    // Fix 6.4: OCR owns a stable foreground footprint independent of ML Kit's
+    // generic object box. Tracking translates this footprint; it does not resize
+    // it into the turntable base or background shelf.
+    @Volatile private var foregroundOcrBounds: RectF? = null
     @Volatile private var targetGeneration: Int = 0
     @Volatile private var targetState: String = "none"
     @Volatile private var lastTargetSeenElapsedMs: Long = 0L
     @Volatile private var reacquireCandidateTrackId: Int? = null
     @Volatile private var reacquireCandidateHits: Int = 0
+    private var previousSceneSignature: IntArray? = null
+    private var sceneDiscontinuityHits: Int = 0
+    private var lastSceneResetElapsedMs: Long = 0L
 
     private val recognitionInFlight = AtomicBoolean(false)
     private val frameSequence = AtomicLong(0L)
@@ -134,6 +177,19 @@ class AtlasLiveSnifferService : Service() {
     private val objectDetector: ObjectDetector by lazy {
         val options = ObjectDetectorOptions.Builder()
             .setDetectorMode(ObjectDetectorOptions.STREAM_MODE)
+            .enableMultipleObjects()
+            .build()
+        ObjectDetection.getClient(options)
+    }
+
+    // Manual tap authority must not depend on ML Kit's temporal STREAM_MODE
+    // tracker. MediaProjection currently supplies Bitmap frames, and ML Kit can
+    // reset its internal box-tracker history for that input path. In selected
+    // target mode Atlas owns temporal continuity through the persistent ROI and
+    // spatial association, while ML Kit supplies fresh object boxes only.
+    private val selectedTargetObjectDetector: ObjectDetector by lazy {
+        val options = ObjectDetectorOptions.Builder()
+            .setDetectorMode(ObjectDetectorOptions.SINGLE_IMAGE_MODE)
             .enableMultipleObjects()
             .build()
         ObjectDetection.getClient(options)
@@ -178,6 +234,7 @@ class AtlasLiveSnifferService : Service() {
         barcodeScanner.close()
         textRecognizer.close()
         objectDetector.close()
+        selectedTargetObjectDetector.close()
         AtlasLiveSnifferStateStore.isCapturing = false
         if (activeInstance === this) {
             activeInstance = null
@@ -211,12 +268,12 @@ class AtlasLiveSnifferService : Service() {
         startForeground(NOTIFICATION_ID, buildNotification())
 
         try {
-            AtlasLiveSnifferStateStore.hudText = "ATLAS LIVE\nListening..."
+            AtlasLiveSnifferStateStore.hudText = "ATLAS LIVELENS\nListening..."
             showOverlay()
             startProjection(resultCode, resultData)
             AtlasLiveSnifferStateStore.isCapturing = true
         } catch (error: Throwable) {
-            AtlasLiveSnifferStateStore.fail(error.message ?: "Atlas Live Sniffer could not start.")
+            AtlasLiveSnifferStateStore.fail(error.message ?: "Atlas LiveLens could not start.")
             stopSelfSafely()
         }
     }
@@ -370,10 +427,45 @@ class AtlasLiveSnifferService : Service() {
         sequence: Long,
         recognitionGeneration: Int,
     ) {
-        // TARGET_LOST is terminal for this selection generation. Do not let the
-        // detector silently bind a different background object. The user must
-        // tap the HUD and explicitly choose the Pop again.
-        if (targetState == "lost") {
+        // A broad room/source change can still roll non-manual tracking, but a
+        // user's explicit tap remains authoritative until target-specific turnover
+        // evidence proves that the selected physical Pop changed.
+        if (detectSceneDiscontinuity(bitmap, SystemClock.elapsedRealtime())) {
+            val manuallySelectedTarget = singleTargetMode &&
+                selectionTapX != null && selectionTapY != null
+            if (!manuallySelectedTarget) {
+                rollTargetGenerationForSceneChange(SystemClock.elapsedRealtime())
+                bitmap.recycle()
+                recognitionInFlight.set(false)
+                return
+            }
+            // A broad visual scene change is not enough to revoke a manual tap.
+            // Keep the selected generation alive and let persistent replacement
+            // tracking or repeated contradictory number evidence prove turnover.
+        }
+
+        // Keep two different spatial concepts:
+        // 1) trackedBounds: generous physical object bounds used for persistence.
+        // 2) recognitionBounds: a tighter collectible-sized ROI used only for OCR.
+        // This prevents the seller, shelf, auction chrome, and neighboring Pops
+        // inside a large detector box from contaminating the selected target.
+        val physicalBounds = trackedBounds ?: buildInitialTargetBounds(
+            pendingTargetX,
+            pendingTargetY,
+        )
+        val baseOcrBounds = foregroundOcrBounds
+            ?: buildInitialOcrFootprint(
+                pendingTargetX ?: selectionTapX,
+                pendingTargetY ?: selectionTapY,
+            )
+            ?: physicalBounds?.let { bounds ->
+                buildTightOcrBounds(
+                    physicalBounds = bounds,
+                    fallbackX = pendingTargetX ?: selectionTapX,
+                    fallbackY = pendingTargetY ?: selectionTapY,
+                )
+            }
+            ?: run {
             emitTrackingOnlyFrame(
                 capturedAtMicros,
                 sequence,
@@ -387,37 +479,37 @@ class AtlasLiveSnifferService : Service() {
             return
         }
 
-        // The ROI used for this frame is always the last authoritative physical
-        // location. On the very first frame after a tap it is a tight tap-centered
-        // bootstrap box. The object detector then moves this box frame-to-frame.
-        val bootstrapBounds = trackedBounds ?: buildInitialTargetBounds(
-            pendingTargetX,
-            pendingTargetY,
-        )
-        val recognitionBounds = bootstrapBounds ?: run {
-            emitTrackingOnlyFrame(
-                capturedAtMicros,
-                sequence,
-                recognitionGeneration,
-                width,
-                height,
-                emptyList(),
-            )
-            bitmap.recycle()
-            recognitionInFlight.set(false)
-            return
+        // Cycle a full package pass with high-resolution header and nameplate
+        // passes. This improves short auction reads without running three OCR
+        // requests on every frame. Evidence is accumulated across frames.
+        val recognitionBounds = selectOcrPassBounds(baseOcrBounds, sequence)
+        val boundedRecognitionBounds = if (singleTargetMode) {
+            // Keep the detector running on the full frame even when the prior
+            // foreground footprint has exited the auction viewport. In that
+            // case OCR falls back to the viewport itself so the replacement Pop
+            // can be observed without ever reading shelves/app chrome outside it.
+            intersectWithAuctionViewport(recognitionBounds) ?: auctionViewportRect()
+        } else {
+            recognitionBounds
         }
 
         val region = buildRecognitionRegionForBounds(
             source = bitmap,
             fullWidth = width,
             fullHeight = height,
-            normalizedBounds = recognitionBounds,
+            normalizedBounds = boundedRecognitionBounds,
         )
 
         val trackerBitmap = buildTrackerBitmap(bitmap)
         val trackerImage = InputImage.fromBitmap(trackerBitmap, 0)
-        val detectorTask = objectDetector.process(trackerImage)
+        val manuallySelectedTarget = singleTargetMode &&
+            selectionTapX != null && selectionTapY != null
+        val activeObjectDetector = if (manuallySelectedTarget) {
+            selectedTargetObjectDetector
+        } else {
+            objectDetector
+        }
+        val detectorTask = activeObjectDetector.process(trackerImage)
         val barcodeTask = barcodeScanner.process(InputImage.fromBitmap(region.bitmap, 0))
         val textTask = textRecognizer.process(InputImage.fromBitmap(region.bitmap, 0))
 
@@ -440,20 +532,57 @@ class AtlasLiveSnifferService : Service() {
 
             val now = SystemClock.elapsedRealtime()
             updatePhysicalTarget(detected, now)
+
+            // updatePhysicalTarget may intentionally roll to a new identity
+            // generation when ML Kit reports a different persistent foreground
+            // object. Never let OCR from the previous object cross that boundary.
+            if (recognitionGeneration != targetGeneration) {
+                if (trackerBitmap !== bitmap && !trackerBitmap.isRecycled) trackerBitmap.recycle()
+                region.recycleIfOwned(bitmap)
+                bitmap.recycle()
+                recognitionInFlight.set(false)
+                return@addOnCompleteListener
+            }
+
             val currentState = targetState
             val currentBounds = trackedBounds
             val currentTrackId = lockedTrackId
 
-            if (currentBounds != null) {
-                updateTargetReticle(currentBounds, currentState)
+            val currentOcrBounds = foregroundOcrBounds ?: currentBounds?.let { bounds ->
+                buildTightOcrBounds(
+                    physicalBounds = bounds,
+                    fallbackX = pendingTargetX ?: selectionTapX,
+                    fallbackY = pendingTargetY ?: selectionTapY,
+                )
+            }
+            if (currentOcrBounds != null) {
+                // The blue rectangle represents the actual auction-safe reading
+                // footprint, never the raw generic ML Kit box.
+                val visibleOcrBounds = if (singleTargetMode) {
+                    intersectWithAuctionViewport(currentOcrBounds) ?: auctionViewportRect()
+                } else {
+                    currentOcrBounds
+                }
+                updateTargetReticle(visibleOcrBounds, currentState)
             }
 
-            val bootstrapEvidenceAllowed =
-                pendingTargetX != null &&
-                    now - lastTargetSeenElapsedMs <= targetTrackingConfig.bootstrapEvidenceMs
+            // Initial ML Kit object acquisition can take longer than a few frames,
+            // especially on stylized boxes. Keep reading the tight user-selected ROI
+            // while acquiring instead of timing OCR out. For a manually selected
+            // target, tracker loss is not an identity boundary: the stable foreground
+            // footprint remains OCR-authoritative until explicit turnover evidence.
+            val elapsedSinceSeen = if (lastTargetSeenElapsedMs == 0L) {
+                Long.MAX_VALUE
+            } else {
+                now - lastTargetSeenElapsedMs
+            }
             val allowEvidence = currentState == "locked" ||
-                (currentState == "acquiring" &&
-                    (pendingTargetX == null || bootstrapEvidenceAllowed))
+                currentState == "acquiring" ||
+                (currentState == "coasting" &&
+                    elapsedSinceSeen <= targetTrackingConfig.coastingEvidenceMs) ||
+                (currentState == "reacquiring" &&
+                    elapsedSinceSeen <= targetTrackingConfig.reacquiringEvidenceMs) ||
+                (manuallySelectedTarget && currentState == "lost")
             val barcodes = if (allowEvidence && barcodeTask.isSuccessful) {
                 barcodeTask.result.orEmpty()
             } else {
@@ -467,12 +596,19 @@ class AtlasLiveSnifferService : Service() {
                         val box = line.boundingBox ?: return@mapNotNull null
                         val text = line.text.trim()
                         if (text.isEmpty()) return@mapNotNull null
+                        val left = region.fullX(box.left.toDouble(), width)
+                        val top = region.fullY(box.top.toDouble(), height)
+                        val right = region.fullX(box.right.toDouble(), width)
+                        val bottom = region.fullY(box.bottom.toDouble(), height)
+                        if (singleTargetMode && !isTextBlockInsideAuctionViewport(left, top, right, bottom)) {
+                            return@mapNotNull null
+                        }
                         mapOf(
                             "text" to text,
-                            "left" to region.fullX(box.left.toDouble(), width),
-                            "top" to region.fullY(box.top.toDouble(), height),
-                            "right" to region.fullX(box.right.toDouble(), width),
-                            "bottom" to region.fullY(box.bottom.toDouble(), height),
+                            "left" to left,
+                            "top" to top,
+                            "right" to right,
+                            "bottom" to bottom,
                             "trackId" to currentTrackId,
                         )
                     }
@@ -613,22 +749,50 @@ class AtlasLiveSnifferService : Service() {
     }
 
     private fun updatePhysicalTarget(detected: List<NativeTrack>, now: Long): NativeTrack? {
-        if (targetState == "lost" && pendingTargetX == null && pendingTargetY == null) {
-            return null
+        // Fix 6.5: in Auction Mode only tracks whose centroid is inside the
+        // turntable viewport and whose box overlaps it substantially may own
+        // foreground tracking. Giant merged shelf/turntable boxes are rejected.
+        val eligibleDetected = if (singleTargetMode) {
+            detected.filter(::isAuctionTrackEligible)
+        } else {
+            detected
         }
+
+        // Fix 6.4: tracking associates motion with the selected foreground area;
+        // it never owns OCR geometry or identity. The stable OCR footprint is
+        // translated from track motion and can keep contributing evidence while
+        // the physical detector is acquiring/coasting/reacquiring.
+        // In manual mode ML Kit SINGLE_IMAGE_MODE intentionally returns no
+        // tracking IDs; a spatially associated box is therefore a valid lock.
+        val manuallySelectedTarget = singleTargetMode &&
+            selectionTapX != null && selectionTapY != null
         val tapX = pendingTargetX
         val tapY = pendingTargetY
         if (tapX != null && tapY != null) {
-            val chosen = chooseTrackForTap(detected, tapX, tapY)
+            val chosen = chooseTrackForTap(eligibleDetected, tapX, tapY)
             if (chosen != null) {
+                targetAnchorU = ((tapX.toFloat() - chosen.bounds.left) /
+                    chosen.bounds.width().coerceAtLeast(0.0001f)).coerceIn(0.12f, 0.88f)
+                targetAnchorV = ((tapY.toFloat() - chosen.bounds.top) /
+                    chosen.bounds.height().coerceAtLeast(0.0001f)).coerceIn(0.12f, 0.88f)
+                // The tap is the initial foreground authority. Do not shift the
+                // OCR footprint to ML Kit's first generic object center; that was
+                // the source of the reticle sagging into shelves/turntable bases.
                 trackedBounds = chosen.bounds
+                foregroundOcrBounds =
+                    foregroundOcrBounds ?: buildInitialOcrFootprint(tapX, tapY)
                 lockedTrackId = chosen.trackId
                 pendingTargetX = null
                 pendingTargetY = null
                 lastTargetSeenElapsedMs = now
-                targetState = if (chosen.trackId == null) "acquiring" else "locked"
+                targetState = if (manuallySelectedTarget || chosen.trackId != null) {
+                    "locked"
+                } else {
+                    "acquiring"
+                }
                 return chosen
             }
+            foregroundOcrBounds = foregroundOcrBounds ?: buildInitialOcrFootprint(tapX, tapY)
             targetState = "acquiring"
             return null
         }
@@ -638,10 +802,16 @@ class AtlasLiveSnifferService : Service() {
         val exact = if (exactTrackId == null) {
             null
         } else {
-            detected.firstOrNull { it.trackId == exactTrackId }
+            eligibleDetected.firstOrNull { it.trackId == exactTrackId }
         }
         if (exact != null) {
-            trackedBounds = smoothBounds(priorBounds, exact.bounds)
+            val smoothed = smoothBounds(priorBounds, exact.bounds)
+            foregroundOcrBounds = translateForegroundFootprint(
+                foregroundOcrBounds,
+                priorBounds,
+                smoothed,
+            )
+            trackedBounds = smoothed
             lastTargetSeenElapsedMs = now
             targetState = "locked"
             reacquireCandidateTrackId = null
@@ -649,7 +819,7 @@ class AtlasLiveSnifferService : Service() {
             return exact
         }
 
-        val candidate = chooseReacquisitionTrack(detected, priorBounds)
+        val candidate = chooseReacquisitionTrack(eligibleDetected, priorBounds)
         if (candidate != null) {
             val candidateId = candidate.trackId
             if (candidateId != null && candidateId != lockedTrackId) {
@@ -659,19 +829,71 @@ class AtlasLiveSnifferService : Service() {
                     reacquireCandidateTrackId = candidateId
                     reacquireCandidateHits = 1
                 }
-                if (reacquireCandidateHits >= 2) {
-                    trackedBounds = smoothBounds(priorBounds, candidate.bounds)
-                    lockedTrackId = candidateId
-                    lastTargetSeenElapsedMs = now
-                    targetState = "locked"
-                    reacquireCandidateTrackId = null
-                    reacquireCandidateHits = 0
+
+                if (manuallySelectedTarget) {
+                    val elapsedSinceSeen = if (lastTargetSeenElapsedMs == 0L) {
+                        0L
+                    } else {
+                        now - lastTargetSeenElapsedMs
+                    }
+                    val likelySamePhysicalTarget = isLikelySameSelectedTarget(
+                        candidate = candidate,
+                        priorBounds = priorBounds,
+                    )
+
+                    // A tracker-ID change by itself is never an identity boundary
+                    // for a tapped Pop. Once the replacement track is spatially
+                    // compatible for a few frames, adopt it without rolling the
+                    // target generation or clearing Dart temporal evidence.
+                    if (likelySamePhysicalTarget && reacquireCandidateHits >= 2) {
+                        val smoothed = smoothBounds(priorBounds, candidate.bounds)
+                        foregroundOcrBounds = translateForegroundFootprint(
+                            foregroundOcrBounds,
+                            priorBounds,
+                            smoothed,
+                        )
+                        trackedBounds = smoothed
+                        lockedTrackId = candidateId
+                        lastTargetSeenElapsedMs = now
+                        targetState = "locked"
+                        reacquireCandidateTrackId = null
+                        reacquireCandidateHits = 0
+                        return candidate
+                    }
+
+                    // Only a persistent, spatially different replacement may roll
+                    // a manually selected generation. Contradictory product-number
+                    // evidence in Dart remains the other authoritative turnover path.
+                    val strongReplacement = !likelySamePhysicalTarget &&
+                        elapsedSinceSeen >= targetTrackingConfig.selectedReplacementMinMissingMs &&
+                        reacquireCandidateHits >= targetTrackingConfig.selectedReplacementMinHits
+                    if (strongReplacement) {
+                        rollTargetGenerationForNewForeground(candidate, priorBounds, now)
+                        return candidate
+                    }
+                } else if (reacquireCandidateHits >= 3) {
+                    // Preserve the pre-hotfix automatic turnover behavior when the
+                    // target was not explicitly selected by the user.
+                    rollTargetGenerationForNewForeground(candidate, priorBounds, now)
                     return candidate
                 }
             } else if (lockedTrackId == null) {
-                trackedBounds = smoothBounds(priorBounds, candidate.bounds)
+                val smoothed = smoothBounds(priorBounds, candidate.bounds)
+                foregroundOcrBounds = translateForegroundFootprint(
+                    foregroundOcrBounds,
+                    priorBounds,
+                    smoothed,
+                )
+                trackedBounds = smoothed
                 lastTargetSeenElapsedMs = now
-                targetState = "acquiring"
+                targetState = if (manuallySelectedTarget || candidate.trackId != null) {
+                    "locked"
+                } else {
+                    "acquiring"
+                }
+                lockedTrackId = candidate.trackId
+                reacquireCandidateTrackId = null
+                reacquireCandidateHits = 0
                 return candidate
             }
         } else {
@@ -680,15 +902,274 @@ class AtlasLiveSnifferService : Service() {
         }
 
         val elapsed = if (lastTargetSeenElapsedMs == 0L) 0L else now - lastTargetSeenElapsedMs
-        targetState = when {
-            elapsed <= targetTrackingConfig.coastMs -> "coasting"
-            elapsed <= targetTrackingConfig.lostMs -> "reacquiring"
-            else -> "lost"
+        targetState = if (manuallySelectedTarget) {
+            when {
+                elapsed <= targetTrackingConfig.coastMs -> "coasting"
+                elapsed <= targetTrackingConfig.selectedTargetReacquireHoldMs -> "reacquiring"
+                else -> "lost"
+            }
+        } else {
+            when {
+                elapsed <= targetTrackingConfig.coastMs -> "coasting"
+                elapsed <= targetTrackingConfig.lostMs -> "reacquiring"
+                else -> "lost"
+            }
         }
-        if (targetState == "lost") {
-            lockedTrackId = null
+
+        // Tap authority: a timeout alone can never prove that the physical Pop
+        // changed. Keep generation, ROI, tap coordinates, and evidence intact.
+        if (targetState == "lost" && !manuallySelectedTarget) {
+            rollTargetGenerationForViewportExit(now)
         }
         return null
+    }
+
+    private fun isLikelySameSelectedTarget(
+        candidate: NativeTrack,
+        priorBounds: RectF,
+    ): Boolean {
+        val iou = intersectionOverUnion(priorBounds, candidate.bounds)
+        val priorCx = (priorBounds.left + priorBounds.right) / 2f
+        val priorCy = (priorBounds.top + priorBounds.bottom) / 2f
+        val candidateCx = (candidate.bounds.left + candidate.bounds.right) / 2f
+        val candidateCy = (candidate.bounds.top + candidate.bounds.bottom) / 2f
+        val dx = candidateCx - priorCx
+        val dy = candidateCy - priorCy
+        val centerDistanceSquared = dx * dx + dy * dy
+        val priorArea = (priorBounds.width() * priorBounds.height()).coerceAtLeast(0.0001f)
+        val candidateArea =
+            (candidate.bounds.width() * candidate.bounds.height()).coerceAtLeast(0.0001f)
+        val areaRatio = candidateArea / priorArea
+
+        return iou >= 0.12 ||
+            (centerDistanceSquared <= 0.018f && areaRatio in 0.55f..1.80f)
+    }
+
+    private fun rollTargetGenerationForViewportExit(now: Long) {
+        if (!singleTargetMode) {
+            lockedTrackId = null
+            return
+        }
+        val footprint = foregroundOcrBounds
+        val prior = trackedBounds
+        val centerX = footprint?.let { (it.left + it.right) / 2f }
+            ?: prior?.let { (it.left + it.right) / 2f }
+            ?: selectionTapX?.toFloat()
+            ?: 0.5f
+        val centerY = footprint?.let { (it.top + it.bottom) / 2f }
+            ?: prior?.let { (it.top + it.bottom) / 2f }
+            ?: selectionTapY?.toFloat()
+            ?: 0.58f
+
+        targetGeneration++
+        pendingTargetX = centerX.toDouble()
+        pendingTargetY = centerY.toDouble()
+        selectionTapX = centerX.toDouble()
+        selectionTapY = centerY.toDouble()
+        lockedTrackId = null
+        trackedBounds = null
+        reacquireCandidateTrackId = null
+        reacquireCandidateHits = 0
+        lastTargetSeenElapsedMs = now
+        targetState = "acquiring"
+        AtlasLiveSnifferStateStore.emitControl("automaticTurnover", targetGeneration)
+        updateOverlayState(
+            "ATLAS LIVELENS\nForeground cleared\nAcquiring next Pop...",
+            showScanChoices = false,
+            detectedCount = 0,
+        )
+    }
+
+    private fun rollTargetGenerationForNewForeground(
+        candidate: NativeTrack,
+        priorBounds: RectF,
+        now: Long,
+    ) {
+        targetGeneration++
+        val smoothed = smoothBounds(priorBounds, candidate.bounds)
+        foregroundOcrBounds = translateForegroundFootprint(
+            foregroundOcrBounds,
+            priorBounds,
+            smoothed,
+        )
+        trackedBounds = smoothed
+        lockedTrackId = candidate.trackId
+        lastTargetSeenElapsedMs = now
+        targetState = if (candidate.trackId == null) "acquiring" else "locked"
+        reacquireCandidateTrackId = null
+        reacquireCandidateHits = 0
+        AtlasLiveSnifferStateStore.emitControl("targetGenerationRolled", targetGeneration)
+        updateOverlayState(
+            "ATLAS LIVELENS\nNew target detected\nReading fresh identity...",
+            showScanChoices = false,
+            detectedCount = 1,
+        )
+    }
+
+    private fun restartSelectedTargetForAutomaticTurnover() {
+        if (!singleTargetMode) return
+        val prior = trackedBounds
+        val footprint = foregroundOcrBounds
+        val centerX = footprint?.let { ((it.left + it.right) / 2f).toDouble() }
+            ?: selectionTapX
+            ?: prior?.let { ((it.left + it.right) / 2f).toDouble() }
+            ?: pendingTargetX
+        val centerY = footprint?.let { ((it.top + it.bottom) / 2f).toDouble() }
+            ?: selectionTapY
+            ?: prior?.let { ((it.top + it.bottom) / 2f).toDouble() }
+            ?: pendingTargetY
+        targetGeneration++
+        pendingTargetX = centerX
+        pendingTargetY = centerY
+        lockedTrackId = null
+        trackedBounds = prior ?: buildInitialTargetBounds(centerX, centerY)
+        foregroundOcrBounds = footprint ?: buildInitialOcrFootprint(centerX, centerY)
+        targetState = "acquiring"
+        lastTargetSeenElapsedMs = SystemClock.elapsedRealtime()
+        reacquireCandidateTrackId = null
+        reacquireCandidateHits = 0
+        sceneDiscontinuityHits = 0
+        AtlasLiveSnifferStateStore.emitControl("automaticTurnover", targetGeneration)
+        updateOverlayState(
+            "ATLAS LIVELENS\nNew Pop detected\nScanning fresh identity...",
+            showScanChoices = false,
+            detectedCount = 1,
+        )
+    }
+
+    private fun rollTargetGenerationForSceneChange(now: Long) {
+        val footprint = foregroundOcrBounds
+        val x = footprint?.let { ((it.left + it.right) / 2f).toDouble() } ?: selectionTapX
+        val y = footprint?.let { ((it.top + it.bottom) / 2f).toDouble() } ?: selectionTapY
+        targetGeneration++
+        pendingTargetX = x
+        pendingTargetY = y
+        lockedTrackId = null
+        trackedBounds = buildInitialTargetBounds(x, y)
+        foregroundOcrBounds = footprint ?: buildInitialOcrFootprint(x, y)
+        targetState = "acquiring"
+        lastTargetSeenElapsedMs = now
+        reacquireCandidateTrackId = null
+        reacquireCandidateHits = 0
+        lastSceneResetElapsedMs = now
+        AtlasLiveSnifferStateStore.emitControl("sceneDiscontinuity", targetGeneration)
+        updateOverlayState(
+            "ATLAS LIVELENS\nNew auction scene\nScanning fresh target...",
+            showScanChoices = false,
+            detectedCount = 1,
+        )
+    }
+
+    private fun detectSceneDiscontinuity(bitmap: Bitmap, now: Long): Boolean {
+        val signature = buildSceneSignature(bitmap)
+        val reference = previousSceneSignature
+        if (reference == null || reference.size != signature.size) {
+            previousSceneSignature = signature
+            sceneDiscontinuityHits = 0
+            return false
+        }
+        if (now - lastSceneResetElapsedMs < 900L) {
+            previousSceneSignature = signature
+            sceneDiscontinuityHits = 0
+            return false
+        }
+
+        var totalDifference = 0L
+        var stronglyChanged = 0
+        for (index in signature.indices) {
+            val difference = kotlin.math.abs(signature[index] - reference[index])
+            totalDifference += difference.toLong()
+            if (difference >= 46) stronglyChanged++
+        }
+        val meanDifference = totalDifference.toDouble() / signature.size.coerceAtLeast(1).toDouble()
+        val changedFraction = stronglyChanged.toDouble() / signature.size.coerceAtLeast(1).toDouble()
+        val abrupt = meanDifference >= 40.0 && changedFraction >= 0.46
+        if (!abrupt) {
+            previousSceneSignature = signature
+            sceneDiscontinuityHits = 0
+            return false
+        }
+
+        // Keep the old scene as the reference while the cut persists. Two
+        // consecutive frames that are both far from that stable reference are
+        // treated as a real room/source change rather than one noisy frame.
+        sceneDiscontinuityHits += 1
+        if (sceneDiscontinuityHits < 2) return false
+        previousSceneSignature = signature
+        sceneDiscontinuityHits = 0
+        return true
+    }
+
+    private fun buildSceneSignature(bitmap: Bitmap): IntArray {
+        val columns = 10
+        val rows = 14
+        val result = IntArray(columns * rows)
+        var index = 0
+        for (row in 0 until rows) {
+            val y = (((row + 0.5) / rows.toDouble()) * bitmap.height)
+                .toInt().coerceIn(0, bitmap.height - 1)
+            for (column in 0 until columns) {
+                val x = (((column + 0.5) / columns.toDouble()) * bitmap.width)
+                    .toInt().coerceIn(0, bitmap.width - 1)
+                val pixel = bitmap.getPixel(x, y)
+                val r = Color.red(pixel)
+                val g = Color.green(pixel)
+                val b = Color.blue(pixel)
+                result[index++] = ((r * 30) + (g * 59) + (b * 11)) / 100
+            }
+        }
+        return result
+    }
+
+    private fun auctionViewportRect(): RectF = RectF(
+        auctionViewportConfig.left,
+        auctionViewportConfig.top,
+        auctionViewportConfig.right,
+        auctionViewportConfig.bottom,
+    )
+
+    private fun intersectWithAuctionViewport(bounds: RectF): RectF? {
+        val viewport = auctionViewportRect()
+        val left = maxOf(bounds.left, viewport.left)
+        val top = maxOf(bounds.top, viewport.top)
+        val right = minOf(bounds.right, viewport.right)
+        val bottom = minOf(bounds.bottom, viewport.bottom)
+        if (right - left <= 0.002f || bottom - top <= 0.002f) return null
+        return RectF(left, top, right, bottom)
+    }
+
+    private fun auctionViewportOverlapFraction(bounds: RectF): Double {
+        val viewport = auctionViewportRect()
+        val left = maxOf(bounds.left, viewport.left)
+        val top = maxOf(bounds.top, viewport.top)
+        val right = minOf(bounds.right, viewport.right)
+        val bottom = minOf(bounds.bottom, viewport.bottom)
+        if (right <= left || bottom <= top) return 0.0
+        val intersection = (right - left) * (bottom - top)
+        val area = (bounds.width() * bounds.height()).coerceAtLeast(0.0001f)
+        return (intersection / area).toDouble().coerceIn(0.0, 1.0)
+    }
+
+    private fun isAuctionTrackEligible(track: NativeTrack): Boolean {
+        val bounds = track.bounds
+        if (bounds.height() > auctionViewportConfig.maxTrackHeightFraction) return false
+        val cx = (bounds.left + bounds.right) / 2f
+        val cy = (bounds.top + bounds.bottom) / 2f
+        val viewport = auctionViewportRect()
+        if (!viewport.contains(cx, cy)) return false
+        return auctionViewportOverlapFraction(bounds) >=
+            auctionViewportConfig.minTrackOverlapFraction
+    }
+
+    private fun isTextBlockInsideAuctionViewport(
+        left: Double,
+        top: Double,
+        right: Double,
+        bottom: Double,
+    ): Boolean {
+        val cx = ((left + right) / 2.0).toFloat()
+        val cy = ((top + bottom) / 2.0).toFloat()
+        return auctionViewportRect().contains(cx, cy)
     }
 
     private fun chooseTrackForTap(
@@ -697,28 +1178,12 @@ class AtlasLiveSnifferService : Service() {
         y: Double,
     ): NativeTrack? {
         if (tracks.isEmpty()) return null
-        val containing = tracks.filter { track ->
-            x >= track.bounds.left && x <= track.bounds.right &&
-                y >= track.bounds.top && y <= track.bounds.bottom
-        }
         val bootstrap = buildInitialTargetBounds(x, y)
-        val nearby = if (containing.isNotEmpty()) {
-            containing
-        } else if (bootstrap != null) {
-            tracks.filter { track ->
-                intersectionOverUnion(bootstrap, track.bounds) >= 0.05
-            }
-        } else {
-            emptyList()
-        }
-        if (nearby.isEmpty()) return null
-        return nearby.minByOrNull { track ->
-            val cx = (track.bounds.left + track.bounds.right) / 2.0
-            val cy = (track.bounds.top + track.bounds.bottom) / 2.0
-            val dx = cx - x
-            val dy = cy - y
-            dx * dx + dy * dy
-        }
+        return tracks
+            .map { track -> track to foregroundTrackScore(track, x, y, bootstrap) }
+            .filter { (_, score) -> score >= 0.18 }
+            .maxByOrNull { (_, score) -> score }
+            ?.first
     }
 
     private fun chooseReacquisitionTrack(
@@ -726,28 +1191,61 @@ class AtlasLiveSnifferService : Service() {
         prior: RectF,
     ): NativeTrack? {
         if (tracks.isEmpty()) return null
+        val priorCx = (prior.left + prior.right) / 2.0
+        val priorCy = (prior.top + prior.bottom) / 2.0
         val ranked = tracks.map { track ->
             val iou = intersectionOverUnion(prior, track.bounds)
-            val priorCx = (prior.left + prior.right) / 2f
-            val priorCy = (prior.top + prior.bottom) / 2f
-            val cx = (track.bounds.left + track.bounds.right) / 2f
-            val cy = (track.bounds.top + track.bounds.bottom) / 2f
-            val dx = cx - priorCx
-            val dy = cy - priorCy
-            val distanceSq = dx * dx + dy * dy
-            Triple(track, iou, distanceSq)
-        }.sortedWith(compareByDescending<Triple<NativeTrack, Double, Float>> { it.second }
-            .thenBy { it.third })
+            val priorArea = (prior.width() * prior.height()).coerceAtLeast(0.0001f)
+            val area = (track.bounds.width() * track.bounds.height()).coerceAtLeast(0.0001f)
+            val areaRatio = area / priorArea
+            val sizeCompatibility = when {
+                areaRatio < 0.40f || areaRatio > 2.35f -> 0.0
+                areaRatio in 0.72f..1.45f -> 1.0
+                else -> 0.55
+            }
+            val score = foregroundTrackScore(track, priorCx, priorCy, prior) +
+                iou * 0.32 +
+                sizeCompatibility * 0.12
+            track to score
+        }.sortedByDescending { it.second }
         val best = ranked.firstOrNull() ?: return null
-        val priorArea = (prior.width() * prior.height()).coerceAtLeast(0.0001f)
-        val bestArea = (best.first.bounds.width() * best.first.bounds.height())
-            .coerceAtLeast(0.0001f)
-        val areaRatio = bestArea / priorArea
-        val sizeCompatible = areaRatio in 0.45f..2.20f
-        val spatiallyCompatible =
-            best.second >= targetTrackingConfig.reacquireMinIou ||
-                best.third <= targetTrackingConfig.reacquireMaxCenterDistanceSquared
-        return if (sizeCompatible && spatiallyCompatible) best.first else null
+        return if (best.second >= 0.34) best.first else null
+    }
+
+    private fun foregroundTrackScore(
+        track: NativeTrack,
+        anchorX: Double,
+        anchorY: Double,
+        reference: RectF?,
+    ): Double {
+        val bounds = track.bounds
+        val cx = (bounds.left + bounds.right) / 2.0
+        val cy = (bounds.top + bounds.bottom) / 2.0
+        val dx = cx - anchorX
+        val dy = cy - anchorY
+        val distanceSq = dx * dx + dy * dy
+        val proximity = (1.0 - distanceSq / 0.22).coerceIn(0.0, 1.0)
+        val area = (bounds.width() * bounds.height()).coerceAtLeast(0f).toDouble()
+        val areaSignal = (area / 0.16).coerceIn(0.0, 1.0)
+        val centerSignal = (1.0 - kotlin.math.abs(cx - 0.5) / 0.5).coerceIn(0.0, 1.0)
+        val lowerCenterSignal = (1.0 - kotlin.math.abs(cy - 0.58) / 0.58).coerceIn(0.0, 1.0)
+        val tapContainment = if (
+            anchorX >= bounds.left && anchorX <= bounds.right &&
+            anchorY >= bounds.top && anchorY <= bounds.bottom
+        ) 1.0 else 0.0
+        val referenceIou = reference?.let { intersectionOverUnion(it, bounds) } ?: 0.0
+        val upperBackgroundPenalty = if (bounds.top < 0.18f) {
+            ((0.18f - bounds.top) / 0.18f).coerceIn(0f, 1f).toDouble() * 0.16
+        } else {
+            0.0
+        }
+        return tapContainment * 0.28 +
+            proximity * 0.26 +
+            referenceIou * 0.16 +
+            areaSignal * 0.12 +
+            centerSignal * 0.07 +
+            lowerCenterSignal * 0.11 -
+            upperBackgroundPenalty
     }
 
     private fun intersectionOverUnion(a: RectF, b: RectF): Double {
@@ -1039,19 +1537,26 @@ class AtlasLiveSnifferService : Service() {
         targetSelectionActive = true
         pendingTargetX = null
         pendingTargetY = null
+        selectionTapX = null
+        selectionTapY = null
+        targetAnchorU = null
+        targetAnchorV = null
         lockedTrackId = null
         trackedBounds = null
+        foregroundOcrBounds = null
         targetState = "awaitingSelection"
         lastTargetSeenElapsedMs = 0L
         reacquireCandidateTrackId = null
         reacquireCandidateHits = 0
+        previousSceneSignature = null
+        sceneDiscontinuityHits = 0
         // Do not forcibly clear recognitionInFlight here. Any in-flight result is
         // invalidated by targetGeneration and must finish before a new ML Kit
         // request starts, preventing concurrent stale recognition races.
         AtlasLiveSnifferStateStore.showScanChoices = false
         overlayChoiceRow?.visibility = View.GONE
         updateOverlayState(
-            "ATLAS LIVE\nTap the Pop you want to scan",
+            "ATLAS LIVELENS\nTap the Pop you want to scan",
             showScanChoices = false,
             detectedCount = 0,
         )
@@ -1076,17 +1581,24 @@ class AtlasLiveSnifferService : Service() {
                 targetGeneration++
                 pendingTargetX = x
                 pendingTargetY = y
+                selectionTapX = x
+                selectionTapY = y
+                targetAnchorU = null
+                targetAnchorV = null
                 lockedTrackId = null
                 trackedBounds = buildInitialTargetBounds(x, y)
+                foregroundOcrBounds = buildInitialOcrFootprint(x, y)
                 targetState = "acquiring"
                 lastTargetSeenElapsedMs = SystemClock.elapsedRealtime()
                 reacquireCandidateTrackId = null
                 reacquireCandidateHits = 0
+                previousSceneSignature = null
+                sceneDiscontinuityHits = 0
                 targetSelectionActive = false
                 removeTargetPicker()
-                trackedBounds?.let { updateTargetReticle(it, targetState) }
+                foregroundOcrBounds?.let { updateTargetReticle(it, targetState) }
                 updateOverlayState(
-                    "ATLAS LIVE\nTarget selected\nFinding physical track...",
+                    "ATLAS LIVELENS\nTarget selected\nFinding physical track...",
                     showScanChoices = false,
                     detectedCount = 1,
                 )
@@ -1129,12 +1641,19 @@ class AtlasLiveSnifferService : Service() {
         singleTargetMode = false
         pendingTargetX = null
         pendingTargetY = null
+        selectionTapX = null
+        selectionTapY = null
+        targetAnchorU = null
+        targetAnchorV = null
         lockedTrackId = null
         trackedBounds = null
+        foregroundOcrBounds = null
         targetState = "none"
         lastTargetSeenElapsedMs = 0L
         reacquireCandidateTrackId = null
         reacquireCandidateHits = 0
+        previousSceneSignature = null
+        sceneDiscontinuityHits = 0
         removeTargetPicker()
         removeTargetReticle()
     }
@@ -1163,6 +1682,138 @@ class AtlasLiveSnifferService : Service() {
         }
     }
 
+    private fun buildInitialOcrFootprint(x: Double?, y: Double?): RectF? {
+        if (x == null || y == null) return null
+        val halfWidth = targetTrackingConfig.initialOcrWidth / 2f
+        val halfHeight = targetTrackingConfig.initialOcrHeight / 2f
+        return clampRectAroundCenter(x.toFloat(), y.toFloat(), halfWidth, halfHeight)
+    }
+
+    private fun translateForegroundFootprint(
+        footprint: RectF?,
+        previousPhysical: RectF?,
+        currentPhysical: RectF,
+    ): RectF? {
+        val current = footprint ?: return null
+        val previous = previousPhysical ?: return current
+        val previousCx = (previous.left + previous.right) / 2f
+        val previousCy = (previous.top + previous.bottom) / 2f
+        val currentCx = (currentPhysical.left + currentPhysical.right) / 2f
+        val currentCy = (currentPhysical.top + currentPhysical.bottom) / 2f
+        // Follow track motion, but damp detector jitter so the OCR rectangle stays
+        // visually attached to the collectible instead of bouncing with shelf edges.
+        val dx = (currentCx - previousCx) * 0.72f
+        val dy = (currentCy - previousCy) * 0.72f
+        val nextCx = ((current.left + current.right) / 2f) + dx
+        val nextCy = ((current.top + current.bottom) / 2f) + dy
+        return clampRectAroundCenter(
+            nextCx,
+            nextCy,
+            current.width() / 2f,
+            current.height() / 2f,
+        )
+    }
+
+    private fun clampRectAroundCenter(
+        centerX: Float,
+        centerY: Float,
+        halfWidth: Float,
+        halfHeight: Float,
+    ): RectF {
+        val width = halfWidth * 2f
+        val height = halfHeight * 2f
+        val left = (centerX - halfWidth).coerceIn(0f, 1f - width.coerceAtMost(1f))
+        val top = (centerY - halfHeight).coerceIn(0f, 1f - height.coerceAtMost(1f))
+        return RectF(
+            left,
+            top,
+            (left + width).coerceAtMost(1f),
+            (top + height).coerceAtMost(1f),
+        )
+    }
+
+    private fun buildTightOcrBounds(
+        physicalBounds: RectF,
+        fallbackX: Double?,
+        fallbackY: Double?,
+    ): RectF {
+        val physicalWidth = physicalBounds.width().coerceAtLeast(0.0001f)
+        val physicalHeight = physicalBounds.height().coerceAtLeast(0.0001f)
+
+        val anchorX = targetAnchorU?.let { u ->
+            physicalBounds.left + physicalWidth * u
+        } ?: fallbackX?.toFloat()?.coerceIn(physicalBounds.left, physicalBounds.right)
+            ?: ((physicalBounds.left + physicalBounds.right) / 2f)
+        val anchorY = targetAnchorV?.let { v ->
+            physicalBounds.top + physicalHeight * v
+        } ?: fallbackY?.toFloat()?.coerceIn(physicalBounds.top, physicalBounds.bottom)
+            ?: ((physicalBounds.top + physicalBounds.bottom) / 2f)
+
+        val desiredWidth = (physicalWidth * targetTrackingConfig.trackedOcrWidthFraction)
+            .coerceAtMost(targetTrackingConfig.maxOcrWidth)
+            .coerceAtLeast(minOf(physicalWidth, targetTrackingConfig.minOcrWidth))
+        val desiredHeight = (physicalHeight * targetTrackingConfig.trackedOcrHeightFraction)
+            .coerceAtMost(targetTrackingConfig.maxOcrHeight)
+            .coerceAtLeast(minOf(physicalHeight, targetTrackingConfig.minOcrHeight))
+
+        val halfWidth = desiredWidth / 2f
+        val halfHeight = desiredHeight / 2f
+        var left = anchorX - halfWidth
+        var right = anchorX + halfWidth
+        var top = anchorY - halfHeight
+        var bottom = anchorY + halfHeight
+
+        // Keep the OCR window within the physical target whenever possible.
+        if (left < physicalBounds.left) {
+            right += physicalBounds.left - left
+            left = physicalBounds.left
+        }
+        if (right > physicalBounds.right) {
+            left -= right - physicalBounds.right
+            right = physicalBounds.right
+        }
+        if (top < physicalBounds.top) {
+            bottom += physicalBounds.top - top
+            top = physicalBounds.top
+        }
+        if (bottom > physicalBounds.bottom) {
+            top -= bottom - physicalBounds.bottom
+            bottom = physicalBounds.bottom
+        }
+
+        return RectF(
+            left.coerceIn(0f, 1f),
+            top.coerceIn(0f, 1f),
+            right.coerceIn(0f, 1f),
+            bottom.coerceIn(0f, 1f),
+        )
+    }
+
+    private fun selectOcrPassBounds(base: RectF, sequence: Long): RectF {
+        val height = base.height().coerceAtLeast(0.0001f)
+        return when ((sequence % 3L).toInt()) {
+            1 -> {
+                // Funko header: product line / franchise / box number.
+                RectF(
+                    base.left,
+                    base.top,
+                    base.right,
+                    (base.top + height * 0.40f).coerceAtMost(base.bottom),
+                )
+            }
+            2 -> {
+                // Funko nameplate: character/release name near the lower face.
+                RectF(
+                    base.left,
+                    (base.top + height * 0.62f).coerceAtMost(base.bottom - 0.001f),
+                    base.right,
+                    base.bottom,
+                )
+            }
+            else -> base
+        }
+    }
+
     private fun buildRecognitionRegionForBounds(
         source: Bitmap,
         fullWidth: Int,
@@ -1170,10 +1821,10 @@ class AtlasLiveSnifferService : Service() {
         normalizedBounds: RectF,
     ): RecognitionRegion {
         val padded = RectF(
-            (normalizedBounds.left - normalizedBounds.width() * targetTrackingConfig.roiPaddingFraction).coerceAtLeast(0f),
-            (normalizedBounds.top - normalizedBounds.height() * targetTrackingConfig.roiPaddingFraction).coerceAtLeast(0f),
-            (normalizedBounds.right + normalizedBounds.width() * targetTrackingConfig.roiPaddingFraction).coerceAtMost(1f),
-            (normalizedBounds.bottom + normalizedBounds.height() * targetTrackingConfig.roiPaddingFraction).coerceAtMost(1f),
+            (normalizedBounds.left - normalizedBounds.width() * targetTrackingConfig.ocrPaddingFraction).coerceAtLeast(0f),
+            (normalizedBounds.top - normalizedBounds.height() * targetTrackingConfig.ocrPaddingFraction).coerceAtLeast(0f),
+            (normalizedBounds.right + normalizedBounds.width() * targetTrackingConfig.ocrPaddingFraction).coerceAtMost(1f),
+            (normalizedBounds.bottom + normalizedBounds.height() * targetTrackingConfig.ocrPaddingFraction).coerceAtMost(1f),
         )
         val left = (padded.left * fullWidth).toInt().coerceIn(0, fullWidth - 1)
         val top = (padded.top * fullHeight).toInt().coerceIn(0, fullHeight - 1)
@@ -1184,8 +1835,8 @@ class AtlasLiveSnifferService : Service() {
 
         val crop = Bitmap.createBitmap(source, left, top, cropWidth, cropHeight)
         val scale = minOf(
-            2.0,
-            1500.0 / maxOf(cropWidth, cropHeight).coerceAtLeast(1).toDouble(),
+            2.25,
+            1650.0 / maxOf(cropWidth, cropHeight).coerceAtLeast(1).toDouble(),
         ).coerceAtLeast(1.0)
         val scaled = if (scale > 1.05) {
             Bitmap.createScaledBitmap(
@@ -1355,7 +2006,7 @@ class AtlasLiveSnifferService : Service() {
 
         return builder
             .setSmallIcon(android.R.drawable.ic_menu_view)
-            .setContentTitle("Atlas Live Sniffer")
+            .setContentTitle("Atlas LiveLens")
             .setContentText("Auction screen intelligence is active.")
             .setOngoing(true)
             .build()
@@ -1366,10 +2017,10 @@ class AtlasLiveSnifferService : Service() {
         val manager = getSystemService(NotificationManager::class.java)
         val channel = NotificationChannel(
             NOTIFICATION_CHANNEL_ID,
-            "Atlas Live Sniffer",
+            "Atlas LiveLens",
             NotificationManager.IMPORTANCE_LOW,
         )
-        channel.description = "Required while Atlas Live Sniffer is capturing the screen."
+        channel.description = "Required while Atlas LiveLens is capturing the screen."
         manager.createNotificationChannel(channel)
     }
 }

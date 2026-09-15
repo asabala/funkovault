@@ -35,9 +35,7 @@ class SupabaseAuthService implements AuthService {
     final response = await Supabase.instance.client.auth.signUp(
       email: email.trim(),
       password: password,
-      data: {
-        'display_name': displayName.trim(),
-      },
+      data: {'display_name': displayName.trim()},
     );
 
     if (response.session != null) {
@@ -53,12 +51,8 @@ class SupabaseAuthService implements AuthService {
   }
 
   @override
-  Future<void> sendPasswordResetEmail(
-      String email,
-      ) async {
-    await Supabase.instance.client.auth.resetPasswordForEmail(
-      email.trim(),
-    );
+  Future<void> sendPasswordResetEmail(String email) async {
+    await Supabase.instance.client.auth.resetPasswordForEmail(email.trim());
   }
 
   @override
@@ -83,8 +77,7 @@ class SupabaseAuthService implements AuthService {
     final appMetadata = user.appMetadata;
 
     final bool isPremium =
-        appMetadata['is_premium'] == true ||
-            appMetadata['tier'] == 'premium';
+        appMetadata['is_premium'] == true || appMetadata['tier'] == 'premium';
 
     return AuthState(
       status: AuthStatus.authenticated,

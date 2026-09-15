@@ -9,15 +9,9 @@ class AtlasCollectorState {
     required List<Pop> wishlistMatches,
     required List<Pop> relatedMatches,
     this.isOwnedWishlisted = false,
-  })  : ownedMatches = List<Pop>.unmodifiable(
-    ownedMatches,
-  ),
-        wishlistMatches = List<Pop>.unmodifiable(
-          wishlistMatches,
-        ),
-        relatedMatches = List<Pop>.unmodifiable(
-          relatedMatches,
-        );
+  }) : ownedMatches = List<Pop>.unmodifiable(ownedMatches),
+       wishlistMatches = List<Pop>.unmodifiable(wishlistMatches),
+       relatedMatches = List<Pop>.unmodifiable(relatedMatches);
 
   factory AtlasCollectorState.empty() {
     return AtlasCollectorState(
@@ -52,15 +46,9 @@ class AtlasCollectorState {
   }
 
   int get ownedQuantity {
-    return ownedMatches.fold<int>(
-      0,
-          (
-          int total,
-          Pop pop,
-          ) {
-        return total + pop.quantity;
-      },
-    );
+    return ownedMatches.fold<int>(0, (int total, Pop pop) {
+      return total + pop.quantity;
+    });
   }
 
   Pop? get primaryOwnedMatch {
@@ -84,12 +72,7 @@ class AtlasCollectorState {
   }
 
   List<Pop> get allExactMatches {
-    return List<Pop>.unmodifiable(
-      <Pop>[
-        ...ownedMatches,
-        ...wishlistMatches,
-      ],
-    );
+    return List<Pop>.unmodifiable(<Pop>[...ownedMatches, ...wishlistMatches]);
   }
 
   AtlasCollectorState copyWith({
@@ -100,12 +83,9 @@ class AtlasCollectorState {
   }) {
     return AtlasCollectorState(
       ownedMatches: ownedMatches ?? this.ownedMatches,
-      wishlistMatches:
-      wishlistMatches ?? this.wishlistMatches,
-      relatedMatches:
-      relatedMatches ?? this.relatedMatches,
-      isOwnedWishlisted:
-      isOwnedWishlisted ?? this.isOwnedWishlisted,
+      wishlistMatches: wishlistMatches ?? this.wishlistMatches,
+      relatedMatches: relatedMatches ?? this.relatedMatches,
+      isOwnedWishlisted: isOwnedWishlisted ?? this.isOwnedWishlisted,
     );
   }
 

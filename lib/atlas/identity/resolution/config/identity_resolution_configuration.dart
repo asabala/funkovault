@@ -33,8 +33,7 @@ class IdentityResolutionConfiguration {
     return IdentityResolutionConfiguration(
       policy: policy ?? this.policy,
       canonicalizationStrategy:
-      canonicalizationStrategy ??
-          this.canonicalizationStrategy,
+          canonicalizationStrategy ?? this.canonicalizationStrategy,
       options: options ?? this.options,
     );
   }
@@ -42,10 +41,8 @@ class IdentityResolutionConfiguration {
   Map<String, Object> toMap() {
     return <String, Object>{
       'policyVersion': policy.version,
-      'canonicalizationStrategyId':
-      canonicalizationStrategy.id,
-      'canonicalizationStrategyVersion':
-      canonicalizationStrategy.version,
+      'canonicalizationStrategyId': canonicalizationStrategy.id,
+      'canonicalizationStrategyVersion': canonicalizationStrategy.version,
       'options': options.toMap(),
     };
   }
@@ -65,17 +62,12 @@ class IdentityResolutionConfiguration {
         other is IdentityResolutionConfiguration &&
             runtimeType == other.runtimeType &&
             policy == other.policy &&
-            canonicalizationStrategy ==
-                other.canonicalizationStrategy &&
+            canonicalizationStrategy == other.canonicalizationStrategy &&
             options == other.options;
   }
 
   @override
   int get hashCode {
-    return Object.hash(
-      policy,
-      canonicalizationStrategy,
-      options,
-    );
+    return Object.hash(policy, canonicalizationStrategy, options);
   }
 }

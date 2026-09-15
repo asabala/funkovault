@@ -9,22 +9,17 @@ import 'identity_evidence.dart';
 // engines. Product-resolution consumes strongly typed identity evidence
 // instead of querying ContributionCollection directly.
 abstract final class IdentityEvidenceBuilder {
-  static IdentityEvidence fromSession(
-      ScanSession session,
-      ) {
-    return fromContributions(
-      session.contributions,
-    );
+  static IdentityEvidence fromSession(ScanSession session) {
+    return fromContributions(session.contributions);
   }
 
   static IdentityEvidence fromContributions(
-      ContributionCollection contributions,
-      ) {
+    ContributionCollection contributions,
+  ) {
     return IdentityEvidence(
-      contributions:
-      contributions
-          .ofType<IdentityContribution>()
-          .toList(growable: false),
+      contributions: contributions.ofType<IdentityContribution>().toList(
+        growable: false,
+      ),
     );
   }
 }

@@ -19,9 +19,7 @@ class AtlasCollectorActionContext {
 class AtlasCollectorActionEngine {
   const AtlasCollectorActionEngine();
 
-  List<AtlasCollectorAction> buildActions(
-      AtlasCollectorActionContext context,
-      ) {
+  List<AtlasCollectorAction> buildActions(AtlasCollectorActionContext context) {
     final List<AtlasCollectorAction> actions = <AtlasCollectorAction>[];
 
     if (context.isOwned && context.canViewExistingItem) {
@@ -104,14 +102,9 @@ class AtlasCollectorActionEngine {
       );
     }
 
-    actions.sort(
-          (
-          AtlasCollectorAction first,
-          AtlasCollectorAction second,
-          ) {
-        return first.priority.compareTo(second.priority);
-      },
-    );
+    actions.sort((AtlasCollectorAction first, AtlasCollectorAction second) {
+      return first.priority.compareTo(second.priority);
+    });
 
     return List<AtlasCollectorAction>.unmodifiable(actions);
   }

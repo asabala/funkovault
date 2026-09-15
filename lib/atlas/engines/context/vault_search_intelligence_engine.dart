@@ -31,17 +31,13 @@ class VaultSearchIntent {
   /// Clearly recognized request details Atlas cannot currently apply.
   final List<String> unsupportedParts;
 
-  bool get hasFilter =>
-      filterKey != null && filterKey!.trim().isNotEmpty;
+  bool get hasFilter => filterKey != null && filterKey!.trim().isNotEmpty;
 
-  bool get hasSearch =>
-      searchQuery != null && searchQuery!.trim().isNotEmpty;
+  bool get hasSearch => searchQuery != null && searchQuery!.trim().isNotEmpty;
 
-  bool get hasValueRange =>
-      minimumValue != null || maximumValue != null;
+  bool get hasValueRange => minimumValue != null || maximumValue != null;
 
-  bool get hasSort =>
-      sortKey != null && sortKey!.trim().isNotEmpty;
+  bool get hasSort => sortKey != null && sortKey!.trim().isNotEmpty;
 
   bool get hasUnsupportedParts => unsupportedParts.isNotEmpty;
 
@@ -55,15 +51,13 @@ class VaultSearchIntelligenceEngine {
   VaultSearchIntent interpret(String question) {
     final cleanedQuestion = question.trim();
     final normalized = cleanedQuestion.toLowerCase();
-    final unsupportedParts = _detectUnsupportedParts(
-      normalized,
-    );
+    final unsupportedParts = _detectUnsupportedParts(normalized);
 
     if (normalized.isEmpty) {
       return const VaultSearchIntent(
         title: 'Vault Search',
         message:
-        'Ask Atlas to find a collectible, category, series, owner, Vault status, or value range.',
+            'Ask Atlas to find a collectible, category, series, owner, Vault status, or value range.',
       );
     }
 
@@ -79,34 +73,22 @@ class VaultSearchIntelligenceEngine {
       normalizedQuestion: normalized,
     );
 
-    final filterKey =
-        filterIntent?.filterKey ??
-            valueIntent?.filterKey;
+    final filterKey = filterIntent?.filterKey ?? valueIntent?.filterKey;
 
     final minimumValue = valueIntent?.minimumValue;
     final maximumValue = valueIntent?.maximumValue;
     final sortKey = valueIntent?.sortKey;
 
-    final hasFilter =
-        filterKey != null &&
-            filterKey.trim().isNotEmpty;
+    final hasFilter = filterKey != null && filterKey.trim().isNotEmpty;
 
     final hasSearch =
-        extractedSearch != null &&
-            extractedSearch.trim().isNotEmpty;
+        extractedSearch != null && extractedSearch.trim().isNotEmpty;
 
-    final hasValueRange =
-        minimumValue != null ||
-            maximumValue != null;
+    final hasValueRange = minimumValue != null || maximumValue != null;
 
-    final hasSort =
-        sortKey != null &&
-            sortKey.trim().isNotEmpty;
+    final hasSort = sortKey != null && sortKey.trim().isNotEmpty;
 
-    if (hasFilter ||
-        hasSearch ||
-        hasValueRange ||
-        hasSort) {
+    if (hasFilter || hasSearch || hasValueRange || hasSort) {
       return VaultSearchIntent(
         title: _titleForCombinedIntent(
           hasSearch: hasSearch,
@@ -116,7 +98,7 @@ class VaultSearchIntelligenceEngine {
           valueIntent: valueIntent,
         ),
         message:
-        'Atlas identified supported Vault search criteria and can open Entire Vault with the requested view.',
+            'Atlas identified supported Vault search criteria and can open Entire Vault with the requested view.',
         filterKey: filterKey,
         searchQuery: extractedSearch,
         minimumValue: minimumValue,
@@ -149,7 +131,7 @@ class VaultSearchIntelligenceEngine {
       return const VaultSearchIntent(
         title: 'Most Valuable Collectibles',
         message:
-        'Atlas can open Entire Vault with collectibles sorted from highest to lowest recorded value.',
+            'Atlas can open Entire Vault with collectibles sorted from highest to lowest recorded value.',
         filterKey: 'hasValue',
         sortKey: 'highestValue',
       );
@@ -161,12 +143,8 @@ class VaultSearchIntelligenceEngine {
     ).firstMatch(originalQuestion);
 
     if (betweenMatch != null) {
-      final firstValue = double.tryParse(
-        betweenMatch.group(1) ?? '',
-      );
-      final secondValue = double.tryParse(
-        betweenMatch.group(2) ?? '',
-      );
+      final firstValue = double.tryParse(betweenMatch.group(1) ?? '');
+      final secondValue = double.tryParse(betweenMatch.group(2) ?? '');
 
       if (firstValue != null && secondValue != null) {
         final minimumValue = firstValue <= secondValue
@@ -180,7 +158,7 @@ class VaultSearchIntelligenceEngine {
         return VaultSearchIntent(
           title: 'Collectibles by Value',
           message:
-          'Atlas can show collectibles with recorded values between '
+              'Atlas can show collectibles with recorded values between '
               '\$${minimumValue.toStringAsFixed(2)} and '
               '\$${maximumValue.toStringAsFixed(2)}.',
           minimumValue: minimumValue,
@@ -196,15 +174,13 @@ class VaultSearchIntelligenceEngine {
     ).firstMatch(originalQuestion);
 
     if (minimumMatch != null) {
-      final minimumValue = double.tryParse(
-        minimumMatch.group(1) ?? '',
-      );
+      final minimumValue = double.tryParse(minimumMatch.group(1) ?? '');
 
       if (minimumValue != null) {
         return VaultSearchIntent(
           title: 'Collectibles Above a Value',
           message:
-          'Atlas can show collectibles with recorded values of '
+              'Atlas can show collectibles with recorded values of '
               '\$${minimumValue.toStringAsFixed(2)} or more.',
           minimumValue: minimumValue,
           sortKey: 'highestValue',
@@ -218,15 +194,13 @@ class VaultSearchIntelligenceEngine {
     ).firstMatch(originalQuestion);
 
     if (maximumMatch != null) {
-      final maximumValue = double.tryParse(
-        maximumMatch.group(1) ?? '',
-      );
+      final maximumValue = double.tryParse(maximumMatch.group(1) ?? '');
 
       if (maximumValue != null) {
         return VaultSearchIntent(
           title: 'Collectibles Below a Value',
           message:
-          'Atlas can show collectibles with recorded values up to '
+              'Atlas can show collectibles with recorded values up to '
               '\$${maximumValue.toStringAsFixed(2)}.',
           maximumValue: maximumValue,
           sortKey: 'highestValue',
@@ -247,7 +221,7 @@ class VaultSearchIntelligenceEngine {
       return const VaultSearchIntent(
         title: 'Signed Collectibles',
         message:
-        'Atlas can open Entire Vault and show collectibles with signature details.',
+            'Atlas can open Entire Vault and show collectibles with signature details.',
         filterKey: 'signed',
       );
     }
@@ -260,7 +234,7 @@ class VaultSearchIntelligenceEngine {
       return const VaultSearchIntent(
         title: 'Exclusive Collectibles',
         message:
-        'Atlas can open Entire Vault and show collectibles with exclusive details.',
+            'Atlas can open Entire Vault and show collectibles with exclusive details.',
         filterKey: 'exclusives',
       );
     }
@@ -274,7 +248,7 @@ class VaultSearchIntelligenceEngine {
       return const VaultSearchIntent(
         title: 'Stickered Collectibles',
         message:
-        'Atlas can open Entire Vault and show collectibles with sticker details.',
+            'Atlas can open Entire Vault and show collectibles with sticker details.',
         filterKey: 'stickers',
       );
     }
@@ -292,7 +266,7 @@ class VaultSearchIntelligenceEngine {
       return const VaultSearchIntent(
         title: 'Variant Collectibles',
         message:
-        'Atlas can open Entire Vault and show collectibles with variant details.',
+            'Atlas can open Entire Vault and show collectibles with variant details.',
         filterKey: 'variants',
       );
     }
@@ -306,33 +280,25 @@ class VaultSearchIntelligenceEngine {
       return const VaultSearchIntent(
         title: 'Limited Collectibles',
         message:
-        'Atlas can open Entire Vault and show collectibles with limited-edition details.',
+            'Atlas can open Entire Vault and show collectibles with limited-edition details.',
         filterKey: 'limited',
       );
     }
 
-    if (_containsAny(question, const [
-      'wishlist',
-      'wish list',
-      'wanted',
-    ])) {
+    if (_containsAny(question, const ['wishlist', 'wish list', 'wanted'])) {
       return const VaultSearchIntent(
         title: 'Wishlist Collectibles',
         message:
-        'Atlas can open Entire Vault and show collectibles currently on your wishlist.',
+            'Atlas can open Entire Vault and show collectibles currently on your wishlist.',
         filterKey: 'wishlist',
       );
     }
 
-    if (_containsAny(question, const [
-      'owned',
-      'my collection',
-      'i own',
-    ])) {
+    if (_containsAny(question, const ['owned', 'my collection', 'i own'])) {
       return const VaultSearchIntent(
         title: 'Owned Collectibles',
         message:
-        'Atlas can open Entire Vault and show collectibles marked as owned.',
+            'Atlas can open Entire Vault and show collectibles marked as owned.',
         filterKey: 'owned',
       );
     }
@@ -347,7 +313,7 @@ class VaultSearchIntelligenceEngine {
       return const VaultSearchIntent(
         title: 'Collectibles Needing Values',
         message:
-        'Atlas can open Entire Vault and show collectibles that still need estimated values.',
+            'Atlas can open Entire Vault and show collectibles that still need estimated values.',
         filterKey: 'needsValue',
       );
     }
@@ -361,7 +327,7 @@ class VaultSearchIntelligenceEngine {
       return const VaultSearchIntent(
         title: 'Collectibles With Values',
         message:
-        'Atlas can open Entire Vault and show collectibles with recorded values.',
+            'Atlas can open Entire Vault and show collectibles with recorded values.',
         filterKey: 'hasValue',
       );
     }
@@ -375,7 +341,7 @@ class VaultSearchIntelligenceEngine {
       return const VaultSearchIntent(
         title: 'Possible Duplicate Groups',
         message:
-        'Atlas can open Entire Vault and show possible duplicate or variant review groups.',
+            'Atlas can open Entire Vault and show possible duplicate or variant review groups.',
         filterKey: 'duplicates',
       );
     }
@@ -419,142 +385,125 @@ class VaultSearchIntelligenceEngine {
         continue;
       }
 
-      extracted = originalQuestion
-          .substring(prefix.length)
-          .trim();
+      extracted = originalQuestion.substring(prefix.length).trim();
 
       break;
     }
 
     extracted = extracted
         .replaceAll(
-      RegExp(
-        r'\b(?:and\s+)?sort(?:ed)?\s+(?:by\s+)?'
-        r'(?:highest|lowest)\s+value(?:\s+first)?\b',
-        caseSensitive: false,
-      ),
-      ' ',
-    )
-        .replaceAll(
-      RegExp(
-        r'\b(?:and\s+)?(?:highest|lowest)\s+value'
-        r'(?:\s+first)?\b',
-        caseSensitive: false,
-      ),
-      ' ',
-    )
-        .replaceAll(
-      RegExp(
-        r'\b(?:most valuable|highest valued|most expensive|top value)\b',
-        caseSensitive: false,
-      ),
-      ' ',
-    )
-        .replaceAll(
-      RegExp(
-        r'\b(?:worth|valued?)?\s*'
-        r'(?:between|from)\s+\$?\d+(?:\.\d{1,2})?'
-        r'\s+(?:and|to)\s+\$?\d+(?:\.\d{1,2})?\b',
-        caseSensitive: false,
-      ),
-      ' ',
-    )
-        .replaceAll(
-      RegExp(
-        r'\b(?:worth|valued?)?\s*'
-        r'(?:over|above|more than|greater than|at least|minimum|min)'
-        r'\s+\$?\d+(?:\.\d{1,2})?\b',
-        caseSensitive: false,
-      ),
-      ' ',
-    )
-        .replaceAll(
-      RegExp(
-        r'\b(?:worth|valued?)?\s*'
-        r'(?:under|below|less than|no more than|at most|maximum|max)'
-        r'\s+\$?\d+(?:\.\d{1,2})?\b',
-        caseSensitive: false,
-      ),
-      ' ',
-    )
-        .replaceAll(
-      RegExp(
-        r'\b(?:signed|signature|autograph|autographed)\b',
-        caseSensitive: false,
-      ),
-      ' ',
-    )
-        .replaceAll(
-      RegExp(
-        r'\b(?:retail\s+)?exclusives?\b',
-        caseSensitive: false,
-      ),
-      ' ',
-    )
-        .replaceAll(
-      RegExp(
-        r'\b(?:event\s+)?stickers?|stickered\b',
-        caseSensitive: false,
-      ),
-      ' ',
-    )
-        .replaceAll(
-      RegExp(
-        r'\b(?:variants?|chase|black\s*light|glow|metallic|flocked)\b',
-        caseSensitive: false,
-      ),
-      ' ',
-    )
-        .replaceAll(
-      RegExp(
-        r'\b(?:limited edition|limited|numbered pieces?)\b',
-        caseSensitive: false,
-      ),
-      ' ',
-    )
-        .replaceAll(
-      RegExp(
-        r'\b(?:wishlist|wish list|wanted)\b',
-        caseSensitive: false,
-      ),
-      ' ',
-    )
-        .replaceAll(
-      RegExp(
-        r'\b(?:owned|my collection|i own)\b',
-        caseSensitive: false,
-      ),
-      ' ',
-    )
-        .replaceAll(
-      RegExp(
-        r'\b(?:missing values?|needs? values?|without value)\b',
-        caseSensitive: false,
-      ),
-      ' ',
-    )
-        .replaceAll(
-      RegExp(
-        r'\b(?:has value|with values|valued pops|valued collectibles)\b',
-        caseSensitive: false,
-      ),
-      ' ',
-    )
-        .replaceAll(
-      RegExp(
-        r'\b(?:possible\s+)?duplicates?|variant review group\b',
-        caseSensitive: false,
-      ),
-      ' ',
-    )
-            .replaceAll(
           RegExp(
-            r'\b(?:pops?|collectibles?|items?)\b',
+            r'\b(?:and\s+)?sort(?:ed)?\s+(?:by\s+)?'
+            r'(?:highest|lowest)\s+value(?:\s+first)?\b',
             caseSensitive: false,
           ),
           ' ',
         )
-            .replaceAll(
+        .replaceAll(
+          RegExp(
+            r'\b(?:and\s+)?(?:highest|lowest)\s+value'
+            r'(?:\s+first)?\b',
+            caseSensitive: false,
+          ),
+          ' ',
+        )
+        .replaceAll(
+          RegExp(
+            r'\b(?:most valuable|highest valued|most expensive|top value)\b',
+            caseSensitive: false,
+          ),
+          ' ',
+        )
+        .replaceAll(
+          RegExp(
+            r'\b(?:worth|valued?)?\s*'
+            r'(?:between|from)\s+\$?\d+(?:\.\d{1,2})?'
+            r'\s+(?:and|to)\s+\$?\d+(?:\.\d{1,2})?\b',
+            caseSensitive: false,
+          ),
+          ' ',
+        )
+        .replaceAll(
+          RegExp(
+            r'\b(?:worth|valued?)?\s*'
+            r'(?:over|above|more than|greater than|at least|minimum|min)'
+            r'\s+\$?\d+(?:\.\d{1,2})?\b',
+            caseSensitive: false,
+          ),
+          ' ',
+        )
+        .replaceAll(
+          RegExp(
+            r'\b(?:worth|valued?)?\s*'
+            r'(?:under|below|less than|no more than|at most|maximum|max)'
+            r'\s+\$?\d+(?:\.\d{1,2})?\b',
+            caseSensitive: false,
+          ),
+          ' ',
+        )
+        .replaceAll(
+          RegExp(
+            r'\b(?:signed|signature|autograph|autographed)\b',
+            caseSensitive: false,
+          ),
+          ' ',
+        )
+        .replaceAll(
+          RegExp(r'\b(?:retail\s+)?exclusives?\b', caseSensitive: false),
+          ' ',
+        )
+        .replaceAll(
+          RegExp(r'\b(?:event\s+)?stickers?|stickered\b', caseSensitive: false),
+          ' ',
+        )
+        .replaceAll(
+          RegExp(
+            r'\b(?:variants?|chase|black\s*light|glow|metallic|flocked)\b',
+            caseSensitive: false,
+          ),
+          ' ',
+        )
+        .replaceAll(
+          RegExp(
+            r'\b(?:limited edition|limited|numbered pieces?)\b',
+            caseSensitive: false,
+          ),
+          ' ',
+        )
+        .replaceAll(
+          RegExp(r'\b(?:wishlist|wish list|wanted)\b', caseSensitive: false),
+          ' ',
+        )
+        .replaceAll(
+          RegExp(r'\b(?:owned|my collection|i own)\b', caseSensitive: false),
+          ' ',
+        )
+        .replaceAll(
+          RegExp(
+            r'\b(?:missing values?|needs? values?|without value)\b',
+            caseSensitive: false,
+          ),
+          ' ',
+        )
+        .replaceAll(
+          RegExp(
+            r'\b(?:has value|with values|valued pops|valued collectibles)\b',
+            caseSensitive: false,
+          ),
+          ' ',
+        )
+        .replaceAll(
+          RegExp(
+            r'\b(?:possible\s+)?duplicates?|variant review group\b',
+            caseSensitive: false,
+          ),
+          ' ',
+        )
+        .replaceAll(
+          RegExp(r'\b(?:pops?|collectibles?|items?)\b', caseSensitive: false),
+          ' ',
+        )
+        .replaceAll(
           RegExp(
             r'\b(?:value\s+increased|value\s+decreased|gained\s+value|'
             r'lost\s+value|value\s+history|price\s+history|'
@@ -563,7 +512,7 @@ class VaultSearchIntelligenceEngine {
           ),
           ' ',
         )
-            .replaceAll(
+        .replaceAll(
           RegExp(
             r'\b(?:released\s+in|release\s+year|'
             r'from\s+the\s+year|from)\s+'
@@ -572,7 +521,7 @@ class VaultSearchIntelligenceEngine {
           ),
           ' ',
         )
-            .replaceAll(
+        .replaceAll(
           RegExp(
             r'\b(?:mint|near mint|damaged|poor|good|excellent)\s+'
             r'(?:box\s+)?condition\b',
@@ -580,14 +529,14 @@ class VaultSearchIntelligenceEngine {
           ),
           ' ',
         )
-            .replaceAll(
+        .replaceAll(
           RegExp(
             r'\b(?:with|in)\s+(?:a\s+)?damaged box\b',
             caseSensitive: false,
           ),
           ' ',
         )
-            .replaceAll(
+        .replaceAll(
           RegExp(
             r'\b(?:price paid|purchase price|what i paid|'
             r'how much i paid)\b',
@@ -595,28 +544,14 @@ class VaultSearchIntelligenceEngine {
           ),
           ' ',
         )
-            .replaceAll(
-          RegExp(
-            r'\b(?:worth|valued|value)\b',
-            caseSensitive: false,
-          ),
+        .replaceAll(
+          RegExp(r'\b(?:worth|valued|value)\b', caseSensitive: false),
           ' ',
         )
-            .replaceAll(
-          RegExp(
-            r'^(?:by|with|using)\s+',
-            caseSensitive: false,
-          ),
-          ' ',
-        )
+        .replaceAll(RegExp(r'^(?:by|with|using)\s+', caseSensitive: false), ' ')
         .trim();
 
-    extracted = extracted
-        .replaceAll(
-      RegExp(r'\s+'),
-      ' ',
-    )
-        .trim();
+    extracted = extracted.replaceAll(RegExp(r'\s+'), ' ').trim();
 
     const connectorOnlyWords = {
       'and',
@@ -636,19 +571,19 @@ class VaultSearchIntelligenceEngine {
 
       extracted = extracted
           .replaceFirst(
-        RegExp(
-          r'^(?:and|by|with|using|for|from|of|the|that are|which are)\b\s*',
-          caseSensitive: false,
-        ),
-        '',
-      )
+            RegExp(
+              r'^(?:and|by|with|using|for|from|of|the|that are|which are)\b\s*',
+              caseSensitive: false,
+            ),
+            '',
+          )
           .replaceFirst(
-        RegExp(
-          r'\s*\b(?:and|by|with|using|for|from|of|the|that are|which are)$',
-          caseSensitive: false,
-        ),
-        '',
-      )
+            RegExp(
+              r'\s*\b(?:and|by|with|using|for|from|of|the|that are|which are)$',
+              caseSensitive: false,
+            ),
+            '',
+          )
           .trim();
 
       if (extracted == previousValue) {
@@ -689,9 +624,8 @@ class VaultSearchIntelligenceEngine {
 
     return 'Vault Search';
   }
-  List<String> _detectUnsupportedParts(
-      String question,
-      ) {
+
+  List<String> _detectUnsupportedParts(String question) {
     final unsupported = <String>[];
 
     final asksForReleaseYear = RegExp(
@@ -704,51 +638,42 @@ class VaultSearchIntelligenceEngine {
       unsupported.add('release-year filtering');
     }
 
-    final asksForCondition = _containsAny(
-      question,
-      const [
-        'box condition',
-        'item condition',
-        'mint condition',
-        'near mint',
-        'damaged box',
-        'poor condition',
-        'good condition',
-        'excellent condition',
-      ],
-    );
+    final asksForCondition = _containsAny(question, const [
+      'box condition',
+      'item condition',
+      'mint condition',
+      'near mint',
+      'damaged box',
+      'poor condition',
+      'good condition',
+      'excellent condition',
+    ]);
 
     if (asksForCondition) {
       unsupported.add('condition filtering');
     }
 
-    final asksForPricePaid = _containsAny(
-      question,
-      const [
-        'price paid',
-        'purchase price',
-        'what i paid',
-        'how much i paid',
-        'paid for',
-      ],
-    );
+    final asksForPricePaid = _containsAny(question, const [
+      'price paid',
+      'purchase price',
+      'what i paid',
+      'how much i paid',
+      'paid for',
+    ]);
 
     if (asksForPricePaid) {
       unsupported.add('price-paid filtering');
     }
 
-    final asksForValueHistory = _containsAny(
-      question,
-      const [
-        'value increased',
-        'value decreased',
-        'gained value',
-        'lost value',
-        'value history',
-        'price history',
-        'value trend',
-      ],
-    );
+    final asksForValueHistory = _containsAny(question, const [
+      'value increased',
+      'value decreased',
+      'gained value',
+      'lost value',
+      'value history',
+      'price history',
+      'value trend',
+    ]);
 
     if (asksForValueHistory) {
       unsupported.add('value-history filtering');
@@ -756,10 +681,8 @@ class VaultSearchIntelligenceEngine {
 
     return unsupported;
   }
-  bool _containsAny(
-      String value,
-      List<String> terms,
-      ) {
+
+  bool _containsAny(String value, List<String> terms) {
     return terms.any(value.contains);
   }
 }

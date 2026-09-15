@@ -19,8 +19,7 @@ final class AtlasIdentityToken {
   final int? endIndex;
 
   bool get hasLocation {
-    return startIndex != null &&
-        endIndex != null;
+    return startIndex != null && endIndex != null;
   }
 
   int? get length {

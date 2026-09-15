@@ -44,7 +44,7 @@ class DuplicateReviewSection extends StatelessWidget {
           AtlasSectionHeader(
             title: 'Duplicate Review Groups',
             subtitle:
-            'Showing ${groups.length} of $totalGroupCount '
+                'Showing ${groups.length} of $totalGroupCount '
                 'group${totalGroupCount == 1 ? '' : 's'} and '
                 '$visiblePopCount of $totalPopCount '
                 'Pop${totalPopCount == 1 ? '' : 's'} • '
@@ -54,10 +54,8 @@ class DuplicateReviewSection extends StatelessWidget {
           ),
           const SizedBox(height: AtlasSpacing.lg),
           ...groups.map(
-                (group) => Padding(
-              padding: const EdgeInsets.only(
-                bottom: AtlasSpacing.md,
-              ),
+            (group) => Padding(
+              padding: const EdgeInsets.only(bottom: AtlasSpacing.md),
               child: _DuplicateReviewGroupCard(
                 group: group,
                 showImages: showImages,
@@ -71,12 +69,8 @@ class DuplicateReviewSection extends StatelessWidget {
               width: double.infinity,
               child: OutlinedButton.icon(
                 onPressed: onLoadMore,
-                icon: const Icon(
-                  Icons.expand_more_rounded,
-                ),
-                label: const Text(
-                  'Load More Groups',
-                ),
+                icon: const Icon(Icons.expand_more_rounded),
+                label: const Text('Load More Groups'),
               ),
             ),
           ],
@@ -106,7 +100,7 @@ class _DuplicateReviewGroupCard extends StatelessWidget {
           AtlasActionRow(
             title: '${group.name} ${group.number}',
             description:
-            'Possible duplicate or variant review group • '
+                'Possible duplicate or variant review group • '
                 '${group.itemCount} '
                 'item${group.itemCount == 1 ? '' : 's'}',
             icon: Icons.content_copy_rounded,
@@ -115,29 +109,25 @@ class _DuplicateReviewGroupCard extends StatelessWidget {
           ),
 
           if (group.differenceLabels.isNotEmpty) ...[
-            const SizedBox(
-              height: AtlasSpacing.sm,
-            ),
+            const SizedBox(height: AtlasSpacing.sm),
             Wrap(
               spacing: AtlasSpacing.xs,
               runSpacing: AtlasSpacing.xs,
               children: group.differenceLabels
                   .map(
                     (label) => AtlasChip(
-                  label: label,
-                  icon: Icons.compare_arrows_rounded,
-                  size: AtlasChipSize.compact,
-                ),
-              )
+                      label: label,
+                      icon: Icons.compare_arrows_rounded,
+                      size: AtlasChipSize.compact,
+                    ),
+                  )
                   .toList(),
             ),
           ] else ...[
-            const SizedBox(
-              height: AtlasSpacing.sm,
-            ),
+            const SizedBox(height: AtlasSpacing.sm),
             Text(
               'No saved metadata differences detected. '
-                  'Compare images and item details manually.',
+              'Compare images and item details manually.',
               style: AtlasTypography.bodySmall.copyWith(
                 color: AtlasColors.textSecondary,
                 height: 1.35,
@@ -145,29 +135,16 @@ class _DuplicateReviewGroupCard extends StatelessWidget {
             ),
           ],
 
-          const SizedBox(
-            height: AtlasSpacing.md,
-          ),
+          const SizedBox(height: AtlasSpacing.md),
 
-          Divider(
-            color: AtlasColors.textSecondary.withValues(
-              alpha: 0.18,
-            ),
-          ),
+          Divider(color: AtlasColors.textSecondary.withValues(alpha: 0.18)),
 
-          const SizedBox(
-            height: AtlasSpacing.md,
-          ),
+          const SizedBox(height: AtlasSpacing.md),
 
           ...group.pops.map(
-                (pop) => Padding(
-              padding: const EdgeInsets.only(
-                bottom: AtlasSpacing.sm,
-              ),
-              child: VaultPopTile(
-                pop: pop,
-                showImage: showImages,
-              ),
+            (pop) => Padding(
+              padding: const EdgeInsets.only(bottom: AtlasSpacing.sm),
+              child: VaultPopTile(pop: pop, showImage: showImages),
             ),
           ),
         ],

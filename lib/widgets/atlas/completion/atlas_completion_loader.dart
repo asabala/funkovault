@@ -15,12 +15,7 @@ import 'package:funkovault2/widgets/atlas/components/atlas_error_state.dart';
 import 'package:funkovault2/widgets/atlas/components/atlas_loading_state.dart';
 import 'package:funkovault2/widgets/atlas/completion/atlas_completion_card.dart';
 
-enum AtlasCompletionLoaderState {
-  loading,
-  loaded,
-  unavailable,
-  error,
-}
+enum AtlasCompletionLoaderState { loading, loaded, unavailable, error }
 
 class AtlasCompletionLoader extends StatefulWidget {
   const AtlasCompletionLoader({
@@ -45,16 +40,13 @@ class AtlasCompletionLoader extends StatefulWidget {
   }
 }
 
-class _AtlasCompletionLoaderState
-    extends State<AtlasCompletionLoader> {
-  final AtlasCatalogService _catalogService =
-      AtlasCatalogService.instance;
+class _AtlasCompletionLoaderState extends State<AtlasCompletionLoader> {
+  final AtlasCatalogService _catalogService = AtlasCatalogService.instance;
 
   final AtlasCompletionService _completionService =
       AtlasCompletionService.instance;
 
-  AtlasCompletionLoaderState _loaderState =
-      AtlasCompletionLoaderState.loading;
+  AtlasCompletionLoaderState _loaderState = AtlasCompletionLoaderState.loading;
 
   AtlasCompletionResult? _result;
 
@@ -65,129 +57,98 @@ class _AtlasCompletionLoaderState
   int _requestId = 0;
 
   @override
-  void didUpdateWidget(
-      AtlasCompletionLoader oldWidget,
-      ) {
-    super.didUpdateWidget(
-      oldWidget,
-    );
+  void didUpdateWidget(AtlasCompletionLoader oldWidget) {
+    super.didUpdateWidget(oldWidget);
 
     if (oldWidget.pop.collectibleIdentityKey !=
-        widget.pop.collectibleIdentityKey ||
-        oldWidget.pop.lastUpdated !=
-            widget.pop.lastUpdated ||
-        oldWidget.pop.quantity !=
-            widget.pop.quantity ||
-        oldWidget.pop.isWishlist !=
-            widget.pop.isWishlist) {
+            widget.pop.collectibleIdentityKey ||
+        oldWidget.pop.lastUpdated != widget.pop.lastUpdated ||
+        oldWidget.pop.quantity != widget.pop.quantity ||
+        oldWidget.pop.isWishlist != widget.pop.isWishlist) {
       _loadedDependencyKey = null;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final AppState appState =
-    context.watch<AppState>();
+    final AppState appState = context.watch<AppState>();
 
-    final List<Pop> collectionPops =
-    appState.collections.values
-        .expand(
-          (
-          List<Pop> collection,
-          ) {
-        return collection;
-      },
-    )
-        .toList(
-      growable: false,
-    );
+    final List<Pop> collectionPops = appState.collections.values
+        .expand((List<Pop> collection) {
+          return collection;
+        })
+        .toList(growable: false);
 
     final Set<String> wishlistIdentityKeys =
         appState.allOwnedWishlistIdentityKeys;
 
-    final String dependencyKey =
-    _buildDependencyKey(
+    final String dependencyKey = _buildDependencyKey(
       collectionPops: collectionPops,
-      wishlistIdentityKeys:
-      wishlistIdentityKeys,
+      wishlistIdentityKeys: wishlistIdentityKeys,
     );
 
     if (_loadedDependencyKey != dependencyKey) {
       _loadedDependencyKey = dependencyKey;
 
-      WidgetsBinding.instance.addPostFrameCallback(
-            (_) {
-          if (!mounted ||
-              _loadedDependencyKey !=
-                  dependencyKey) {
-            return;
-          }
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || _loadedDependencyKey != dependencyKey) {
+          return;
+        }
 
-          _loadCompletion(
-            collectionPops: collectionPops,
-            wishlistIdentityKeys:
-            wishlistIdentityKeys,
-          );
-        },
-      );
+        _loadCompletion(
+          collectionPops: collectionPops,
+          wishlistIdentityKeys: wishlistIdentityKeys,
+        );
+      });
     }
 
     return switch (_loaderState) {
-      AtlasCompletionLoaderState.loading =>
-      const AtlasLoadingState(
+      AtlasCompletionLoaderState.loading => const AtlasLoadingState(
         title: 'Calculating collector progress',
         message:
-        'Atlas is resolving this catalog family and comparing it with your Vault.',
+            'Atlas is resolving this catalog family and comparing it with your Vault.',
         symbol: AtlasSymbols.completion,
         progressLabel: 'Atlas Intelligence',
       ),
-      AtlasCompletionLoaderState.loaded =>
-          _buildLoadedCard(),
-      AtlasCompletionLoaderState.unavailable =>
-      const AtlasEmptyState(
+      AtlasCompletionLoaderState.loaded => _buildLoadedCard(),
+      AtlasCompletionLoaderState.unavailable => const AtlasEmptyState(
         eyebrow: 'Collector Progress',
         title: 'Catalog match unavailable',
         message:
-        'Atlas could not connect this Vault record to a catalog release yet.',
+            'Atlas could not connect this Vault record to a catalog release yet.',
         symbol: AtlasSymbols.completion,
         compact: true,
       ),
-      AtlasCompletionLoaderState.error =>
-          AtlasErrorState(
-            eyebrow: 'Collector Progress',
-            title: 'Progress calculation unavailable',
-            message:
-            _errorMessage ??
-                'Atlas could not calculate collector progress.',
-            symbol: AtlasSymbols.reviewVariant,
-            tone: AtlasErrorStateTone.warning,
-            actionLabel: 'Try Again',
-            compact: true,
-            onAction: () {
-              _loadedDependencyKey = null;
+      AtlasCompletionLoaderState.error => AtlasErrorState(
+        eyebrow: 'Collector Progress',
+        title: 'Progress calculation unavailable',
+        message:
+            _errorMessage ?? 'Atlas could not calculate collector progress.',
+        symbol: AtlasSymbols.reviewVariant,
+        tone: AtlasErrorStateTone.warning,
+        actionLabel: 'Try Again',
+        compact: true,
+        onAction: () {
+          _loadedDependencyKey = null;
 
-              setState(
-                    () {
-                  _loaderState =
-                      AtlasCompletionLoaderState.loading;
-                  _errorMessage = null;
-                },
-              );
-            },
-          ),
+          setState(() {
+            _loaderState = AtlasCompletionLoaderState.loading;
+            _errorMessage = null;
+          });
+        },
+      ),
     };
   }
 
   Widget _buildLoadedCard() {
-    final AtlasCompletionResult? result =
-        _result;
+    final AtlasCompletionResult? result = _result;
 
     if (result == null) {
       return const AtlasEmptyState(
         eyebrow: 'Collector Progress',
         title: 'Catalog match unavailable',
         message:
-        'Atlas could not connect this Vault record to a catalog release yet.',
+            'Atlas could not connect this Vault record to a catalog release yet.',
         symbol: AtlasSymbols.completion,
         compact: true,
       );
@@ -195,10 +156,8 @@ class _AtlasCompletionLoaderState
 
     return AtlasCompletionCard(
       result: result,
-      maxVisibleItemsPerSection:
-      widget.maxVisibleItemsPerSection,
-      showItemBreakdown:
-      widget.showItemBreakdown,
+      maxVisibleItemsPerSection: widget.maxVisibleItemsPerSection,
+      showItemBreakdown: widget.showItemBreakdown,
     );
   }
 
@@ -206,118 +165,84 @@ class _AtlasCompletionLoaderState
     required List<Pop> collectionPops,
     required Set<String> wishlistIdentityKeys,
   }) async {
-    final int requestId =
-    ++_requestId;
+    final int requestId = ++_requestId;
 
     if (mounted) {
-      setState(
-            () {
-          _loaderState =
-              AtlasCompletionLoaderState.loading;
-          _errorMessage = null;
-        },
-      );
+      setState(() {
+        _loaderState = AtlasCompletionLoaderState.loading;
+        _errorMessage = null;
+      });
     }
 
     try {
-      final AtlasCatalogProduct? catalogProduct =
-      await _resolveCatalogProduct(
+      final AtlasCatalogProduct? catalogProduct = await _resolveCatalogProduct(
         widget.pop,
       );
 
-      if (!mounted ||
-          requestId != _requestId) {
+      if (!mounted || requestId != _requestId) {
         return;
       }
 
       if (catalogProduct == null) {
-        setState(
-              () {
-            _result = null;
-            _loaderState =
-                AtlasCompletionLoaderState.unavailable;
-          },
-        );
-
-        return;
-      }
-
-      final AtlasCompletionResult result =
-      await _completionService
-          .evaluateVariantFamily(
-        selectedProduct: catalogProduct,
-        collectionPops: collectionPops,
-        ownedWishlistIdentityKeys:
-        wishlistIdentityKeys,
-        collectionName:
-        widget.collectionName,
-      );
-
-      if (!mounted ||
-          requestId != _requestId) {
-        return;
-      }
-
-      setState(
-            () {
-          _result = result;
-          _loaderState =
-              AtlasCompletionLoaderState.loaded;
-          _errorMessage = null;
-        },
-      );
-    } catch (error) {
-      if (!mounted ||
-          requestId != _requestId) {
-        return;
-      }
-
-      setState(
-            () {
+        setState(() {
           _result = null;
-          _loaderState =
-              AtlasCompletionLoaderState.error;
-          _errorMessage =
-          'Atlas could not calculate collector progress.';
-        },
-      );
+          _loaderState = AtlasCompletionLoaderState.unavailable;
+        });
+
+        return;
+      }
+
+      final AtlasCompletionResult result = await _completionService
+          .evaluateVariantFamily(
+            selectedProduct: catalogProduct,
+            collectionPops: collectionPops,
+            ownedWishlistIdentityKeys: wishlistIdentityKeys,
+            collectionName: widget.collectionName,
+          );
+
+      if (!mounted || requestId != _requestId) {
+        return;
+      }
+
+      setState(() {
+        _result = result;
+        _loaderState = AtlasCompletionLoaderState.loaded;
+        _errorMessage = null;
+      });
+    } catch (error) {
+      if (!mounted || requestId != _requestId) {
+        return;
+      }
+
+      setState(() {
+        _result = null;
+        _loaderState = AtlasCompletionLoaderState.error;
+        _errorMessage = 'Atlas could not calculate collector progress.';
+      });
     }
   }
 
-  Future<AtlasCatalogProduct?>
-  _resolveCatalogProduct(
-      Pop pop,
-      ) async {
-    final AtlasProductId? atlasProductId =
-    _parseAtlasProductId(
+  Future<AtlasCatalogProduct?> _resolveCatalogProduct(Pop pop) async {
+    final AtlasProductId? atlasProductId = _parseAtlasProductId(
       pop.sourceCatalogId,
     );
 
     if (atlasProductId != null) {
-      final AtlasCatalogProduct? exactProduct =
-      await _catalogService
-          .findByProductId(
-        atlasProductId,
-      );
+      final AtlasCatalogProduct? exactProduct = await _catalogService
+          .findByProductId(atlasProductId);
 
       if (exactProduct != null) {
         return exactProduct;
       }
     }
 
-    final String barcode =
-    pop.sourceUpc.trim();
+    final String barcode = pop.sourceUpc.trim();
 
     if (barcode.isNotEmpty) {
-      final List<AtlasCatalogProduct>
-      barcodeMatches =
-      await _catalogService.findByBarcode(
-        barcode,
-      );
+      final List<AtlasCatalogProduct> barcodeMatches = await _catalogService
+          .findByBarcode(barcode);
 
-      final AtlasCatalogProduct?
-      bestBarcodeMatch =
-      _selectBestMatch(
+      final AtlasCatalogProduct? bestBarcodeMatch = _selectBestMatch(
         pop: pop,
         candidates: barcodeMatches,
       );
@@ -327,124 +252,80 @@ class _AtlasCompletionLoaderState
       }
     }
 
-    final List<AtlasCatalogProduct>
-    searchMatches =
-    await _catalogService.search(
-      query: pop.name.trim().isEmpty
-          ? null
-          : pop.name.trim(),
-      productNumber:
-      pop.number.trim().isEmpty
-          ? null
-          : pop.number.trim(),
-      variantName:
-      _searchableVariant(
-        pop.variant,
-      ),
-      limit: 100,
-    );
+    final List<AtlasCatalogProduct> searchMatches = await _catalogService
+        .search(
+          query: pop.name.trim().isEmpty ? null : pop.name.trim(),
+          productNumber: pop.number.trim().isEmpty ? null : pop.number.trim(),
+          variantName: _searchableVariant(pop.variant),
+          limit: 100,
+        );
 
-    return _selectBestMatch(
-      pop: pop,
-      candidates: searchMatches,
-    );
+    return _selectBestMatch(pop: pop, candidates: searchMatches);
   }
 
   AtlasCatalogProduct? _selectBestMatch({
     required Pop pop,
-    required Iterable<AtlasCatalogProduct>
-    candidates,
+    required Iterable<AtlasCatalogProduct> candidates,
   }) {
     AtlasCatalogProduct? bestMatch;
     int bestScore = -1;
 
-    final String targetIdentityKey =
-    pop.collectibleIdentityKey.trim();
+    final String targetIdentityKey = pop.collectibleIdentityKey.trim();
 
-    final String targetName =
-    _normalizeText(
-      pop.name,
-    );
+    final String targetName = _normalizeText(pop.name);
 
-    final String targetNumber =
-    _normalizeText(
-      pop.number,
-    );
+    final String targetNumber = _normalizeText(pop.number);
 
-    final String targetCollectibleId =
-    pop.sourceCollectibleId
+    final String targetCollectibleId = pop.sourceCollectibleId
         .trim()
         .toLowerCase();
 
-    for (final AtlasCatalogProduct candidate
-    in candidates) {
-      final Pop candidatePop =
-      AtlasCatalogConverter.toPop(
+    for (final AtlasCatalogProduct candidate in candidates) {
+      final Pop candidatePop = AtlasCatalogConverter.toPop(
         candidate,
-        timestamp: DateTime.fromMillisecondsSinceEpoch(
-          1,
-        ),
+        timestamp: DateTime.fromMillisecondsSinceEpoch(1),
       );
 
       int score = 0;
 
-      final String candidateIdentityKey =
-      candidatePop.collectibleIdentityKey
+      final String candidateIdentityKey = candidatePop.collectibleIdentityKey
           .trim();
 
       if (targetIdentityKey.isNotEmpty &&
           candidateIdentityKey.isNotEmpty &&
-          targetIdentityKey ==
-              candidateIdentityKey) {
+          targetIdentityKey == candidateIdentityKey) {
         score += 1000;
       }
 
-      final String candidateCollectibleId =
-      candidatePop.sourceCollectibleId
+      final String candidateCollectibleId = candidatePop.sourceCollectibleId
           .trim()
           .toLowerCase();
 
       if (targetCollectibleId.isNotEmpty &&
           candidateCollectibleId.isNotEmpty &&
-          targetCollectibleId ==
-              candidateCollectibleId) {
+          targetCollectibleId == candidateCollectibleId) {
         score += 900;
       }
 
-      final String candidateName =
-      _normalizeText(
-        candidate.displayName,
-      );
+      final String candidateName = _normalizeText(candidate.displayName);
 
-      if (targetName.isNotEmpty &&
-          candidateName == targetName) {
+      if (targetName.isNotEmpty && candidateName == targetName) {
         score += 300;
       } else if (targetName.isNotEmpty &&
-          (
-              candidateName.contains(
-                targetName,
-              ) ||
-                  targetName.contains(
-                    candidateName,
-                  )
-          )) {
+          (candidateName.contains(targetName) ||
+              targetName.contains(candidateName))) {
         score += 150;
       }
 
-      final String candidateNumber =
-      _normalizeText(
+      final String candidateNumber = _normalizeText(
         candidate.productNumber ?? '',
       );
 
-      if (targetNumber.isNotEmpty &&
-          candidateNumber == targetNumber) {
+      if (targetNumber.isNotEmpty && candidateNumber == targetNumber) {
         score += 250;
       }
 
-      if (_barcodesOverlap(
-        pop.sourceUpc,
-        candidatePop.sourceUpc,
-      )) {
+      if (_barcodesOverlap(pop.sourceUpc, candidatePop.sourceUpc)) {
         score += 800;
       }
 
@@ -461,33 +342,19 @@ class _AtlasCompletionLoaderState
     return bestMatch;
   }
 
-  AtlasProductId? _parseAtlasProductId(
-      String value,
-      ) {
-    final RegExpMatch? match =
-    RegExp(
+  AtlasProductId? _parseAtlasProductId(String value) {
+    final RegExpMatch? match = RegExp(
       r'^ATLAS-([A-Za-z0-9]+)-([0-9]+)$',
       caseSensitive: false,
-    ).firstMatch(
-      value.trim(),
-    );
+    ).firstMatch(value.trim());
 
     if (match == null) {
       return null;
     }
 
-    final String? categoryCode =
-    match.group(
-      1,
-    );
+    final String? categoryCode = match.group(1);
 
-    final int? numericId =
-    int.tryParse(
-      match.group(
-        2,
-      ) ??
-          '',
-    );
+    final int? numericId = int.tryParse(match.group(2) ?? '');
 
     if (categoryCode == null ||
         categoryCode.trim().isEmpty ||
@@ -496,20 +363,13 @@ class _AtlasCompletionLoaderState
       return null;
     }
 
-    return AtlasProductId(
-      categoryCode: categoryCode,
-      numericId: numericId,
-    );
+    return AtlasProductId(categoryCode: categoryCode, numericId: numericId);
   }
 
-  String? _searchableVariant(
-      String value,
-      ) {
-    final String cleaned =
-    value.trim();
+  String? _searchableVariant(String value) {
+    final String cleaned = value.trim();
 
-    final String normalized =
-    cleaned.toLowerCase();
+    final String normalized = cleaned.toLowerCase();
 
     if (cleaned.isEmpty ||
         normalized == 'common' ||
@@ -522,77 +382,42 @@ class _AtlasCompletionLoaderState
     return cleaned;
   }
 
-  bool _barcodesOverlap(
-      String first,
-      String second,
-      ) {
-    final Set<String> firstCandidates =
-    _barcodeCandidates(
-      first,
-    );
+  bool _barcodesOverlap(String first, String second) {
+    final Set<String> firstCandidates = _barcodeCandidates(first);
 
-    final Set<String> secondCandidates =
-    _barcodeCandidates(
-      second,
-    );
+    final Set<String> secondCandidates = _barcodeCandidates(second);
 
     return firstCandidates.isNotEmpty &&
         secondCandidates.isNotEmpty &&
-        firstCandidates.any(
-          secondCandidates.contains,
-        );
+        firstCandidates.any(secondCandidates.contains);
   }
 
-  Set<String> _barcodeCandidates(
-      String value,
-      ) {
-    final String normalized =
-    value.replaceAll(
-      RegExp(r'[^0-9A-Za-z]'),
-      '',
-    );
+  Set<String> _barcodeCandidates(String value) {
+    final String normalized = value.replaceAll(RegExp(r'[^0-9A-Za-z]'), '');
 
     if (normalized.isEmpty) {
       return const <String>{};
     }
 
-    final Set<String> candidates =
-    <String>{
-      normalized,
-    };
+    final Set<String> candidates = <String>{normalized};
 
-    if (normalized.length == 13 &&
-        normalized.startsWith('0')) {
-      candidates.add(
-        normalized.substring(
-          1,
-        ),
-      );
+    if (normalized.length == 13 && normalized.startsWith('0')) {
+      candidates.add(normalized.substring(1));
     }
 
     if (normalized.length == 12) {
-      candidates.add(
-        '0$normalized',
-      );
+      candidates.add('0$normalized');
     }
 
     return candidates;
   }
 
-  String _normalizeText(
-      String value,
-      ) {
+  String _normalizeText(String value) {
     return value
         .trim()
         .toLowerCase()
-        .replaceAll(
-      RegExp(r'[^a-z0-9]+'),
-      ' ',
-    )
-        .replaceAll(
-      RegExp(r'\s+'),
-      ' ',
-    )
+        .replaceAll(RegExp(r'[^a-z0-9]+'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
         .trim();
   }
 
@@ -601,33 +426,22 @@ class _AtlasCompletionLoaderState
     required Set<String> wishlistIdentityKeys,
   }) {
     final List<String> collectionParts =
-    collectionPops
-        .map(
-          (
-          Pop collectionPop,
-          ) {
-        return <String>[
-          collectionPop.id,
-          collectionPop
-              .collectibleIdentityKey,
-          '${collectionPop.quantity}',
-          '${collectionPop.isWishlist}',
-          collectionPop.lastUpdated,
-        ].join(
-          '|',
-        );
-      },
-    )
-        .toList(
-      growable: false,
-    )
-      ..sort();
+        collectionPops
+            .map((Pop collectionPop) {
+              return <String>[
+                collectionPop.id,
+                collectionPop.collectibleIdentityKey,
+                '${collectionPop.quantity}',
+                '${collectionPop.isWishlist}',
+                collectionPop.lastUpdated,
+              ].join('|');
+            })
+            .toList(growable: false)
+          ..sort();
 
-    final List<String> wishlistParts =
-    wishlistIdentityKeys.toList(
+    final List<String> wishlistParts = wishlistIdentityKeys.toList(
       growable: false,
-    )
-      ..sort();
+    )..sort();
 
     return <String>[
       widget.pop.collectibleIdentityKey,
@@ -637,8 +451,6 @@ class _AtlasCompletionLoaderState
       widget.pop.lastUpdated,
       ...collectionParts,
       ...wishlistParts,
-    ].join(
-      '::',
-    );
+    ].join('::');
   }
 }

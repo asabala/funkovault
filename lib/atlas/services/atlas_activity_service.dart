@@ -6,8 +6,7 @@ class AtlasActivityService {
   static final List<AtlasActivity> _activities = [
     AtlasActivity(
       title: 'Atlas Timeline Online',
-      description:
-      'Atlas is ready to track important Vault activity.',
+      description: 'Atlas is ready to track important Vault activity.',
       timestamp: DateTime.now(),
       type: 'system',
     ),

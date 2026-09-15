@@ -56,12 +56,10 @@ class CoreAnchorComparator implements IdentityComparator {
       return false;
     }
 
-    return rolesToEvaluate.any(
-          (IdentityRole role) {
-        return left.attributesByRole(role).isNotEmpty ||
-            right.attributesByRole(role).isNotEmpty;
-      },
-    );
+    return rolesToEvaluate.any((IdentityRole role) {
+      return left.attributesByRole(role).isNotEmpty ||
+          right.attributesByRole(role).isNotEmpty;
+    });
   }
 
   @override
@@ -75,15 +73,13 @@ class CoreAnchorComparator implements IdentityComparator {
     final List<String> notes = <String>[];
 
     for (final IdentityRole role in rolesToEvaluate) {
-      final List<IdentityAttribute> leftAttributes =
-      _usableAttributesForRole(
+      final List<IdentityAttribute> leftAttributes = _usableAttributesForRole(
         profile: left,
         role: role,
         policy: policy,
       );
 
-      final List<IdentityAttribute> rightAttributes =
-      _usableAttributesForRole(
+      final List<IdentityAttribute> rightAttributes = _usableAttributesForRole(
         profile: right,
         role: role,
         policy: policy,
@@ -100,35 +96,30 @@ class CoreAnchorComparator implements IdentityComparator {
     }
 
     if (evidence.isEmpty) {
-      notes.add(
-        'No usable core-anchor evidence was available for comparison.',
-      );
+      notes.add('No usable core-anchor evidence was available for comparison.');
     }
 
     final double confidence = _calculateConfidence(evidence);
 
     final bool hasConflict = evidence.any(
-          (IdentityEvidence item) => item.isConflict,
+      (IdentityEvidence item) => item.isConflict,
     );
 
-    final bool hasMissingRequiredEvidence = evidence.any(
-          (IdentityEvidence item) {
-        return item.isMissing &&
-            item.tags['requirement'] == 'required';
-      },
-    );
+    final bool hasMissingRequiredEvidence = evidence.any((
+      IdentityEvidence item,
+    ) {
+      return item.isMissing && item.tags['requirement'] == 'required';
+    });
 
     final bool hasMatchEvidence = evidence.any(
-          (IdentityEvidence item) => item.supportsMatch,
+      (IdentityEvidence item) => item.supportsMatch,
     );
 
-    final bool isMatch = hasMatchEvidence &&
+    final bool isMatch =
+        hasMatchEvidence &&
         !hasConflict &&
         confidence >= policy.minimumConfidence &&
-        (
-            policy.allowPartialMatches ||
-                !hasMissingRequiredEvidence
-        );
+        (policy.allowPartialMatches || !hasMissingRequiredEvidence);
 
     if (hasConflict) {
       notes.add(
@@ -137,15 +128,13 @@ class CoreAnchorComparator implements IdentityComparator {
     }
 
     if (hasMissingRequiredEvidence) {
-      notes.add(
-        'One or more required core-anchor attributes are missing.',
-      );
+      notes.add('One or more required core-anchor attributes are missing.');
     }
 
     if (confidence < policy.minimumConfidence) {
       notes.add(
         'Core-anchor confidence is below the policy minimum of '
-            '${policy.minimumConfidence.toStringAsFixed(2)}.',
+        '${policy.minimumConfidence.toStringAsFixed(2)}.',
       );
     }
 
@@ -159,9 +148,7 @@ class CoreAnchorComparator implements IdentityComparator {
     );
   }
 
-  Set<IdentityRole> _rolesForPolicy(
-      IdentityPolicy policy,
-      ) {
+  Set<IdentityRole> _rolesForPolicy(IdentityPolicy policy) {
     final Set<IdentityRole> policyRoles = <IdentityRole>{
       ...policy.requiredRoles,
       ...policy.optionalRoles,
@@ -179,22 +166,21 @@ class CoreAnchorComparator implements IdentityComparator {
     required IdentityRole role,
     required IdentityPolicy policy,
   }) {
-    return profile.attributesByRole(role).where(
-          (IdentityAttribute attribute) {
-        if (!attribute.contributesToIdentity) {
-          return false;
-        }
+    return profile
+        .attributesByRole(role)
+        .where((IdentityAttribute attribute) {
+          if (!attribute.contributesToIdentity) {
+            return false;
+          }
 
-        if (policy.requiredClassifications.isNotEmpty &&
-            !policy.includesClassification(
-              attribute.classification,
-            )) {
-          return false;
-        }
+          if (policy.requiredClassifications.isNotEmpty &&
+              !policy.includesClassification(attribute.classification)) {
+            return false;
+          }
 
-        return attribute.hasResolvedValue || attribute.hasConflict;
-      },
-    ).toList(growable: false);
+          return attribute.hasResolvedValue || attribute.hasConflict;
+        })
+        .toList(growable: false);
   }
 
   List<IdentityEvidence> _compareRole({
@@ -203,11 +189,13 @@ class CoreAnchorComparator implements IdentityComparator {
     required List<IdentityAttribute> rightAttributes,
     required IdentityPolicy policy,
   }) {
-    final Map<String, IdentityAttribute> leftByKey =
-    _attributeValueMap(leftAttributes);
+    final Map<String, IdentityAttribute> leftByKey = _attributeValueMap(
+      leftAttributes,
+    );
 
-    final Map<String, IdentityAttribute> rightByKey =
-    _attributeValueMap(rightAttributes);
+    final Map<String, IdentityAttribute> rightByKey = _attributeValueMap(
+      rightAttributes,
+    );
 
     final Set<String> attributeKeys = <String>{
       ...leftByKey.keys,
@@ -215,10 +203,7 @@ class CoreAnchorComparator implements IdentityComparator {
     };
 
     final bool isRequired = policy.requiresRole(role);
-    final double weight = _weightForRole(
-      role: role,
-      isRequired: isRequired,
-    );
+    final double weight = _weightForRole(role: role, isRequired: isRequired);
 
     if (attributeKeys.isEmpty) {
       return <IdentityEvidence>[
@@ -229,36 +214,31 @@ class CoreAnchorComparator implements IdentityComparator {
           weight: weight,
           confidence: 0.0,
           reason:
-          'Neither identity profile contains a usable value for '
+              'Neither identity profile contains a usable value for '
               '${role.serializedValue}.',
-          tags: _evidenceTags(
-            role: role,
-            isRequired: isRequired,
-          ),
+          tags: _evidenceTags(role: role, isRequired: isRequired),
         ),
       ];
     }
 
     final List<String> sortedKeys = attributeKeys.toList()..sort();
 
-    return sortedKeys.map(
-          (String attributeKey) {
-        final IdentityAttribute? leftAttribute =
-        leftByKey[attributeKey];
+    return sortedKeys
+        .map((String attributeKey) {
+          final IdentityAttribute? leftAttribute = leftByKey[attributeKey];
 
-        final IdentityAttribute? rightAttribute =
-        rightByKey[attributeKey];
+          final IdentityAttribute? rightAttribute = rightByKey[attributeKey];
 
-        return _compareAttribute(
-          attributeKey: attributeKey,
-          role: role,
-          leftAttribute: leftAttribute,
-          rightAttribute: rightAttribute,
-          weight: weight,
-          isRequired: isRequired,
-        );
-      },
-    ).toList(growable: false);
+          return _compareAttribute(
+            attributeKey: attributeKey,
+            role: role,
+            leftAttribute: leftAttribute,
+            rightAttribute: rightAttribute,
+            weight: weight,
+            isRequired: isRequired,
+          );
+        })
+        .toList(growable: false);
   }
 
   IdentityEvidence _compareAttribute({
@@ -286,12 +266,9 @@ class CoreAnchorComparator implements IdentityComparator {
         rightValue: rightValue,
         outcome: IdentityEvidenceOutcome.uncertain,
         weight: weight,
-        confidence: _combinedConfidence(
-          leftAttribute,
-          rightAttribute,
-        ),
+        confidence: _combinedConfidence(leftAttribute, rightAttribute),
         reason:
-        'One or both identity profiles contain unresolved internal '
+            'One or both identity profiles contain unresolved internal '
             'conflicts for $attributeKey.',
         tags: <String, String>{
           ...tags,
@@ -308,7 +285,7 @@ class CoreAnchorComparator implements IdentityComparator {
         weight: weight,
         confidence: 0.0,
         reason:
-        'Both identity profiles are missing a resolved value for '
+            'Both identity profiles are missing a resolved value for '
             '$attributeKey.',
         tags: tags,
       );
@@ -323,7 +300,7 @@ class CoreAnchorComparator implements IdentityComparator {
         weight: weight,
         confidence: rightAttribute?.resolutionConfidence ?? 0.0,
         reason:
-        'The left identity profile is missing a resolved value for '
+            'The left identity profile is missing a resolved value for '
             '$attributeKey.',
         tags: tags,
       );
@@ -338,7 +315,7 @@ class CoreAnchorComparator implements IdentityComparator {
         weight: weight,
         confidence: leftAttribute?.resolutionConfidence ?? 0.0,
         reason:
-        'The right identity profile is missing a resolved value for '
+            'The right identity profile is missing a resolved value for '
             '$attributeKey.',
         tags: tags,
       );
@@ -361,7 +338,7 @@ class CoreAnchorComparator implements IdentityComparator {
         weight: weight,
         confidence: confidence,
         reason:
-        'Both identity profiles contain the same normalized value '
+            'Both identity profiles contain the same normalized value '
             'for $attributeKey.',
         tags: tags,
       );
@@ -376,24 +353,22 @@ class CoreAnchorComparator implements IdentityComparator {
       weight: weight,
       confidence: confidence,
       reason:
-      'The identity profiles contain different resolved values for '
+          'The identity profiles contain different resolved values for '
           '$attributeKey.',
       tags: tags,
     );
   }
 
   Map<String, IdentityAttribute> _attributeValueMap(
-      List<IdentityAttribute> attributes,
-      ) {
-    final Map<String, IdentityAttribute> result =
-    <String, IdentityAttribute>{};
+    List<IdentityAttribute> attributes,
+  ) {
+    final Map<String, IdentityAttribute> result = <String, IdentityAttribute>{};
 
     for (final IdentityAttribute attribute in attributes) {
       final IdentityAttribute? existing = result[attribute.key];
 
       if (existing == null ||
-          attribute.resolutionConfidence >
-              existing.resolutionConfidence) {
+          attribute.resolutionConfidence > existing.resolutionConfidence) {
         result[attribute.key] = attribute;
       }
     }
@@ -401,9 +376,7 @@ class CoreAnchorComparator implements IdentityComparator {
     return result;
   }
 
-  String? _resolvedValue(
-      IdentityAttribute? attribute,
-      ) {
+  String? _resolvedValue(IdentityAttribute? attribute) {
     if (attribute == null || !attribute.hasResolvedValue) {
       return null;
     }
@@ -423,9 +396,9 @@ class CoreAnchorComparator implements IdentityComparator {
   }
 
   double _combinedConfidence(
-      IdentityAttribute? left,
-      IdentityAttribute? right,
-      ) {
+    IdentityAttribute? left,
+    IdentityAttribute? right,
+  ) {
     final List<double> values = <double>[
       if (left != null) left.resolutionConfidence,
       if (right != null) right.resolutionConfidence,
@@ -437,18 +410,15 @@ class CoreAnchorComparator implements IdentityComparator {
 
     final double total = values.fold<double>(
       0.0,
-          (double sum, double value) => sum + value,
+      (double sum, double value) => sum + value,
     );
 
     return total / values.length;
   }
 
-  double _calculateConfidence(
-      List<IdentityEvidence> evidence,
-      ) {
-    final Iterable<IdentityEvidence> participating =
-    evidence.where(
-          (IdentityEvidence item) => item.participatesInDecision,
+  double _calculateConfidence(List<IdentityEvidence> evidence) {
+    final Iterable<IdentityEvidence> participating = evidence.where(
+      (IdentityEvidence item) => item.participatesInDecision,
     );
 
     double totalWeight = 0.0;

@@ -32,10 +32,8 @@ class ScanVariantResolution {
   }
 
   bool get requiresConfirmation {
-    return status ==
-        ScanVariantStatus.multipleCandidates ||
-        status ==
-            ScanVariantStatus.visualConfirmationRequired;
+    return status == ScanVariantStatus.multipleCandidates ||
+        status == ScanVariantStatus.visualConfirmationRequired;
   }
 
   bool get hasMultipleCandidates {
@@ -51,14 +49,9 @@ class ScanVariantResolution {
   }) {
     return ScanVariantResolution(
       status: status ?? this.status,
-      candidateProductIds:
-      candidateProductIds ??
-          this.candidateProductIds,
-      confirmedTraits:
-      confirmedTraits ?? this.confirmedTraits,
-      unconfirmedTraits:
-      unconfirmedTraits ??
-          this.unconfirmedTraits,
+      candidateProductIds: candidateProductIds ?? this.candidateProductIds,
+      confirmedTraits: confirmedTraits ?? this.confirmedTraits,
+      unconfirmedTraits: unconfirmedTraits ?? this.unconfirmedTraits,
       confidence: confidence ?? this.confidence,
     );
   }

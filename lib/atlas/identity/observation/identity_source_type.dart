@@ -82,8 +82,7 @@ enum IdentitySourceType {
 
   // True when the source is considered internal to Atlas.
   bool get isInternal {
-    return this == IdentitySourceType.ai ||
-        this == IdentitySourceType.system;
+    return this == IdentitySourceType.ai || this == IdentitySourceType.system;
   }
 
   // True when the source originated outside Atlas.

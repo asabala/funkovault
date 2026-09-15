@@ -13,8 +13,7 @@ enum CollectorItemRelationship {
 // shared catalog product.
 class CollectorItemStatus {
   const CollectorItemStatus({
-    this.relationship =
-        CollectorItemRelationship.unknown,
+    this.relationship = CollectorItemRelationship.unknown,
     this.ownedQuantity = 0,
     this.collectionNames = const [],
     this.possibleDuplicateCount = 0,
@@ -29,22 +28,17 @@ class CollectorItemStatus {
   final int possibleDuplicateCount;
 
   bool get isOwned {
-    return relationship ==
-        CollectorItemRelationship.owned ||
-        relationship ==
-            CollectorItemRelationship.ownedAndWishlisted;
+    return relationship == CollectorItemRelationship.owned ||
+        relationship == CollectorItemRelationship.ownedAndWishlisted;
   }
 
   bool get isWishlisted {
-    return relationship ==
-        CollectorItemRelationship.wishlisted ||
-        relationship ==
-            CollectorItemRelationship.ownedAndWishlisted;
+    return relationship == CollectorItemRelationship.wishlisted ||
+        relationship == CollectorItemRelationship.ownedAndWishlisted;
   }
 
   bool get isNotInVault {
-    return relationship ==
-        CollectorItemRelationship.notInVault;
+    return relationship == CollectorItemRelationship.notInVault;
   }
 
   bool get hasPossibleDuplicates {
@@ -58,15 +52,11 @@ class CollectorItemStatus {
     int? possibleDuplicateCount,
   }) {
     return CollectorItemStatus(
-      relationship:
-      relationship ?? this.relationship,
-      ownedQuantity:
-      ownedQuantity ?? this.ownedQuantity,
-      collectionNames:
-      collectionNames ?? this.collectionNames,
+      relationship: relationship ?? this.relationship,
+      ownedQuantity: ownedQuantity ?? this.ownedQuantity,
+      collectionNames: collectionNames ?? this.collectionNames,
       possibleDuplicateCount:
-      possibleDuplicateCount ??
-          this.possibleDuplicateCount,
+          possibleDuplicateCount ?? this.possibleDuplicateCount,
     );
   }
 }

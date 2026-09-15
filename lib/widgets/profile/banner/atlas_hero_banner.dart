@@ -4,10 +4,7 @@ import '../../../theme/atlas_colors.dart';
 import '../../../theme/atlas_icons.dart';
 
 class AtlasHeroBanner extends StatelessWidget {
-  const AtlasHeroBanner({
-    this.bannerUrl = '',
-    super.key,
-  });
+  const AtlasHeroBanner({this.bannerUrl = '', super.key});
 
   final String bannerUrl;
 
@@ -32,11 +29,7 @@ class AtlasHeroBanner extends StatelessWidget {
         ),
       ),
       child: const Center(
-        child: Icon(
-          AtlasIcons.atlas,
-          color: AtlasColors.vaultGold,
-          size: 52,
-        ),
+        child: Icon(AtlasIcons.atlas, color: AtlasColors.vaultGold, size: 52),
       ),
     );
   }

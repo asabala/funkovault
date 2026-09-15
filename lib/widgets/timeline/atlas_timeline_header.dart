@@ -7,10 +7,7 @@ import 'package:funkovault2/theme/atlas_typography.dart';
 import 'package:funkovault2/widgets/atlas/atlas_glass_panel.dart';
 
 class AtlasTimelineHeader extends StatelessWidget {
-  const AtlasTimelineHeader({
-    super.key,
-    required this.summary,
-  });
+  const AtlasTimelineHeader({super.key, required this.summary});
 
   final AtlasTimelineSummary summary;
 
@@ -23,20 +20,12 @@ class AtlasTimelineHeader extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const Icon(
-                Icons.timeline_rounded,
-                color: AtlasColors.vaultGold,
-              ),
+              const Icon(Icons.timeline_rounded, color: AtlasColors.vaultGold),
               const SizedBox(width: AtlasSpacing.sm),
               Expanded(
-                child: Text(
-                  'Timeline',
-                  style: AtlasTypography.headingSmall,
-                ),
+                child: Text('Timeline', style: AtlasTypography.headingSmall),
               ),
-              _EventCountBadge(
-                count: summary.totalEvents,
-              ),
+              _EventCountBadge(count: summary.totalEvents),
             ],
           ),
           const SizedBox(height: AtlasSpacing.md),
@@ -55,18 +44,14 @@ class AtlasTimelineHeader extends StatelessWidget {
                     Expanded(
                       child: _TimelineSummaryItem(
                         label: 'First Event',
-                        value: _formatDate(
-                          summary.firstEvent?.occurredAt,
-                        ),
+                        value: _formatDate(summary.firstEvent?.occurredAt),
                       ),
                     ),
                     const SizedBox(width: AtlasSpacing.md),
                     Expanded(
                       child: _TimelineSummaryItem(
                         label: 'Latest Activity',
-                        value: _formatDate(
-                          summary.latestEvent?.occurredAt,
-                        ),
+                        value: _formatDate(summary.latestEvent?.occurredAt),
                       ),
                     ),
                   ],
@@ -77,10 +62,8 @@ class AtlasTimelineHeader extends StatelessWidget {
                   child: _TimelineSummaryItem(
                     label: 'Collector History',
                     value: _historyDurationLabel(
-                      firstEvent:
-                      summary.firstEvent?.occurredAt,
-                      latestEvent:
-                      summary.latestEvent?.occurredAt,
+                      firstEvent: summary.firstEvent?.occurredAt,
+                      latestEvent: summary.latestEvent?.occurredAt,
                     ),
                   ),
                 ),
@@ -91,9 +74,7 @@ class AtlasTimelineHeader extends StatelessWidget {
     );
   }
 
-  static String _formatDate(
-      DateTime? value,
-      ) {
+  static String _formatDate(DateTime? value) {
     if (value == null) {
       return 'Not available';
     }
@@ -135,20 +116,11 @@ class AtlasTimelineHeader extends StatelessWidget {
       return 'Not available';
     }
 
-    final firstDate = DateTime(
-      first.year,
-      first.month,
-      first.day,
-    );
+    final firstDate = DateTime(first.year, first.month, first.day);
 
-    final latestDate = DateTime(
-      latest.year,
-      latest.month,
-      latest.day,
-    );
+    final latestDate = DateTime(latest.year, latest.month, latest.day);
 
-    final totalDays =
-        latestDate.difference(firstDate).inDays;
+    final totalDays = latestDate.difference(firstDate).inDays;
 
     if (totalDays <= 0) {
       return 'Started today';
@@ -156,8 +128,8 @@ class AtlasTimelineHeader extends StatelessWidget {
 
     var totalMonths =
         (latestDate.year - firstDate.year) * 12 +
-            latestDate.month -
-            firstDate.month;
+        latestDate.month -
+        firstDate.month;
 
     if (latestDate.day < firstDate.day) {
       totalMonths--;
@@ -167,8 +139,7 @@ class AtlasTimelineHeader extends StatelessWidget {
       final years = totalMonths ~/ 12;
       final remainingMonths = totalMonths % 12;
 
-      final yearLabel =
-          '$years ${years == 1 ? 'year' : 'years'}';
+      final yearLabel = '$years ${years == 1 ? 'year' : 'years'}';
 
       if (remainingMonths == 0) {
         return yearLabel;
@@ -195,9 +166,7 @@ class AtlasTimelineHeader extends StatelessWidget {
 }
 
 class _EventCountBadge extends StatelessWidget {
-  const _EventCountBadge({
-    required this.count,
-  });
+  const _EventCountBadge({required this.count});
 
   final int count;
 
@@ -209,14 +178,10 @@ class _EventCountBadge extends StatelessWidget {
         vertical: 5,
       ),
       decoration: BoxDecoration(
-        color: AtlasColors.vaultGold.withValues(
-          alpha: 0.14,
-        ),
+        color: AtlasColors.vaultGold.withValues(alpha: 0.14),
         borderRadius: BorderRadius.circular(999),
         border: Border.all(
-          color: AtlasColors.vaultGold.withValues(
-            alpha: 0.36,
-          ),
+          color: AtlasColors.vaultGold.withValues(alpha: 0.36),
         ),
       ),
       child: Text(
@@ -231,10 +196,7 @@ class _EventCountBadge extends StatelessWidget {
 }
 
 class _TimelineSummaryItem extends StatelessWidget {
-  const _TimelineSummaryItem({
-    required this.label,
-    required this.value,
-  });
+  const _TimelineSummaryItem({required this.label, required this.value});
 
   final String label;
   final String value;

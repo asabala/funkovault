@@ -104,17 +104,12 @@ class TimelineHealth {
     List<String>? recommendations,
   }) {
     return TimelineHealth(
-      timelineEventCount:
-      timelineEventCount ?? this.timelineEventCount,
-      valueEventCount:
-      valueEventCount ?? this.valueEventCount,
+      timelineEventCount: timelineEventCount ?? this.timelineEventCount,
+      valueEventCount: valueEventCount ?? this.valueEventCount,
       healthScore: healthScore ?? this.healthScore,
-      confidenceScore:
-      confidenceScore ?? this.confidenceScore,
-      missingInformation:
-      missingInformation ?? this.missingInformation,
-      recommendations:
-      recommendations ?? this.recommendations,
+      confidenceScore: confidenceScore ?? this.confidenceScore,
+      missingInformation: missingInformation ?? this.missingInformation,
+      recommendations: recommendations ?? this.recommendations,
     );
   }
 

@@ -24,8 +24,7 @@ class VaultScrollView extends StatelessWidget {
     return SafeArea(
       child: ListView(
         controller: controller,
-        keyboardDismissBehavior:
-        ScrollViewKeyboardDismissBehavior.onDrag,
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         padding: padding,
         children: children,
       ),

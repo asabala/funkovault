@@ -19,8 +19,7 @@ class AtlasTaskEngine {
           type: AtlasTaskType.duplicates,
           priority: AtlasTaskPriority.high,
           title: 'Review Duplicate Pops',
-          description:
-          '$duplicateCount possible duplicate Pops were found.',
+          description: '$duplicateCount possible duplicate Pops were found.',
           actionText: 'Review Duplicates',
           count: duplicateCount,
         ),
@@ -48,8 +47,7 @@ class AtlasTaskEngine {
           type: AtlasTaskType.missingPurchaseDates,
           priority: AtlasTaskPriority.low,
           title: 'Missing Purchase Dates',
-          description:
-          '$missingPurchaseDateCount Pops need purchase dates.',
+          description: '$missingPurchaseDateCount Pops need purchase dates.',
           actionText: 'Complete Information',
           count: missingPurchaseDateCount,
         ),
@@ -58,17 +56,11 @@ class AtlasTaskEngine {
 
     return tasks;
   }
-  AtlasTask? highestPriority(
-      List<AtlasTask> tasks,
-      ) {
+
+  AtlasTask? highestPriority(List<AtlasTask> tasks) {
     if (tasks.isEmpty) return null;
 
-    tasks.sort(
-          (a, b) =>
-          b.priority.index.compareTo(
-            a.priority.index,
-          ),
-    );
+    tasks.sort((a, b) => b.priority.index.compareTo(a.priority.index));
 
     return tasks.first;
   }

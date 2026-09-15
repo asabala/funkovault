@@ -6,40 +6,24 @@ import 'atlas_catalog_repository.dart';
 
 // Simple in-memory catalog used for development, testing, and early
 // pipeline validation.
-final class InMemoryAtlasCatalogRepository
-    implements AtlasCatalogRepository {
+final class InMemoryAtlasCatalogRepository implements AtlasCatalogRepository {
   InMemoryAtlasCatalogRepository({
-    Iterable<AtlasCatalogProduct> products =
-    const <AtlasCatalogProduct>[],
-  })  : _index = AtlasCatalogIndex(
-    products: products,
-  ),
-        _searchIndex =
-        AtlasCatalogSearchIndex(
-          products: products,
-        );
+    Iterable<AtlasCatalogProduct> products = const <AtlasCatalogProduct>[],
+  }) : _index = AtlasCatalogIndex(products: products),
+       _searchIndex = AtlasCatalogSearchIndex(products: products);
 
   final AtlasCatalogIndex _index;
 
-  final AtlasCatalogSearchIndex
-  _searchIndex;
+  final AtlasCatalogSearchIndex _searchIndex;
 
   @override
-  Future<AtlasCatalogProduct?> findByProductId(
-      AtlasProductId productId,
-      ) async {
-    return _index.findByProductId(
-      productId.value,
-    );
+  Future<AtlasCatalogProduct?> findByProductId(AtlasProductId productId) async {
+    return _index.findByProductId(productId.value);
   }
 
   @override
-  Future<List<AtlasCatalogProduct>> findByBarcode(
-      String barcode,
-      ) async {
-    return _index.findByBarcode(
-      barcode,
-    );
+  Future<List<AtlasCatalogProduct>> findByBarcode(String barcode) async {
+    return _index.findByBarcode(barcode);
   }
 
   @override

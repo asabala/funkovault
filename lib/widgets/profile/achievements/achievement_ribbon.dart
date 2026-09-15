@@ -5,10 +5,7 @@ import '../../../theme/atlas_spacing.dart';
 import '../../../theme/atlas_typography.dart';
 
 class AchievementRibbon extends StatelessWidget {
-  const AchievementRibbon({
-    required this.title,
-    super.key,
-  });
+  const AchievementRibbon({required this.title, super.key});
 
   final String title;
 

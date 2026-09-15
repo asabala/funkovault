@@ -33,19 +33,13 @@ class VaultHealthScreen extends StatelessWidget {
     final vaultHealth = vaultHealthEngine.calculate(pops);
 
     final totalValue = vaultHealth.totalValue;
-    final duplicateGroupCount =
-        vaultHealth.duplicateGroupCount;
-    final needsValueCount =
-        vaultHealth.needsValueCount;
-    final healthScore =
-        vaultHealth.healthScore;
-    final priority =
-        vaultHealth.priority;
+    final duplicateGroupCount = vaultHealth.duplicateGroupCount;
+    final needsValueCount = vaultHealth.needsValueCount;
+    final healthScore = vaultHealth.healthScore;
+    final priority = vaultHealth.priority;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Vault Health'),
-      ),
+      appBar: AppBar(title: const Text('Vault Health')),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(
@@ -64,7 +58,7 @@ class VaultHealthScreen extends StatelessWidget {
                     const AtlasSectionHeader(
                       title: 'Vault Health',
                       subtitle:
-                      'Review the health of your collection and see what needs attention first.',
+                          'Review the health of your collection and see what needs attention first.',
                       icon: Icons.health_and_safety_rounded,
                       titleStyle: AtlasTypography.headingLarge,
                     ),
@@ -80,15 +74,16 @@ class VaultHealthScreen extends StatelessWidget {
                               layout: AtlasStatTileLayout.leading,
                               onTap: duplicateGroupCount > 0
                                   ? () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => const EntireVaultScreen(
-                                      initialFilterKey: 'duplicates',
-                                    ),
-                                  ),
-                                );
-                              }
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) =>
+                                              const EntireVaultScreen(
+                                                initialFilterKey: 'duplicates',
+                                              ),
+                                        ),
+                                      );
+                                    }
                                   : null,
                             ),
                           ),
@@ -118,7 +113,7 @@ class VaultHealthScreen extends StatelessWidget {
                     const AtlasSectionHeader(
                       title: 'Health Summary',
                       subtitle:
-                      'Atlas checks missing values and duplicate groups to estimate vault health.',
+                          'Atlas checks missing values and duplicate groups to estimate vault health.',
                       icon: Icons.monitor_heart_rounded,
                     ),
                     const SizedBox(height: AtlasSpacing.lg),
@@ -157,15 +152,15 @@ class VaultHealthScreen extends StatelessWidget {
                             showPanel: true,
                             onTap: needsValueCount > 0
                                 ? () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const EntireVaultScreen(
-                                    initialFilterKey: 'needsValue',
-                                  ),
-                                ),
-                              );
-                            }
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => const EntireVaultScreen(
+                                          initialFilterKey: 'needsValue',
+                                        ),
+                                      ),
+                                    );
+                                  }
                                 : null,
                           ),
                         ),
@@ -206,7 +201,7 @@ class VaultHealthScreen extends StatelessWidget {
                       AtlasSectionHeader(
                         title: 'Advanced Vault Health',
                         subtitle:
-                        'Premium intelligence for deeper vault analysis and cleanup prioritization.',
+                            'Premium intelligence for deeper vault analysis and cleanup prioritization.',
                         icon: Icons.workspace_premium_rounded,
                         accentColor: AtlasColors.vaultGold,
                       ),
@@ -215,7 +210,7 @@ class VaultHealthScreen extends StatelessWidget {
                       AtlasActionRow(
                         title: 'Risk Score',
                         description:
-                        'See which parts of your collection may need the most attention.',
+                            'See which parts of your collection may need the most attention.',
                         icon: Icons.warning_amber_rounded,
                         accentColor: AtlasColors.vaultGold,
                         showChevron: false,
@@ -227,7 +222,7 @@ class VaultHealthScreen extends StatelessWidget {
                       AtlasActionRow(
                         title: 'Duplicate Intelligence',
                         description:
-                        'Review possible duplicates with smarter context for variants, stickers, exclusives, and signed Pops.',
+                            'Review possible duplicates with smarter context for variants, stickers, exclusives, and signed Pops.',
                         icon: Icons.content_copy_rounded,
                         accentColor: AtlasColors.vaultGold,
                         showChevron: false,
@@ -239,7 +234,7 @@ class VaultHealthScreen extends StatelessWidget {
                       AtlasActionRow(
                         title: 'Value Cleanup Priority',
                         description:
-                        'Prioritize missing values based on impact instead of cleaning everything randomly.',
+                            'Prioritize missing values based on impact instead of cleaning everything randomly.',
                         icon: Icons.attach_money_rounded,
                         accentColor: AtlasColors.vaultGold,
                         showChevron: false,
@@ -251,7 +246,7 @@ class VaultHealthScreen extends StatelessWidget {
                       AtlasActionRow(
                         title: 'Collection Health Trends',
                         description:
-                        'Track how your vault health improves as your collection becomes cleaner.',
+                            'Track how your vault health improves as your collection becomes cleaner.',
                         icon: Icons.show_chart_rounded,
                         accentColor: AtlasColors.vaultGold,
                         showChevron: false,
@@ -282,53 +277,45 @@ class _VaultHealthScoreExplanation extends StatelessWidget {
             eyebrow: 'Vault Health',
             title: 'How Vault Health Works',
             message:
-            'Atlas starts from a clean-vault baseline and lowers the score when important collection data still needs attention.',
+                'Atlas starts from a clean-vault baseline and lowers the score when important collection data still needs attention.',
             icon: Icons.info_outline_rounded,
             tone: AtlasInsightPanelTone.intelligence,
           ),
-          const SizedBox(
-            height: AtlasSpacing.md,
-          ),
+          const SizedBox(height: AtlasSpacing.md),
           const AtlasActionRow(
             title: 'Starts at 100%',
             description:
-            'A clean vault starts with a full health score before issues are counted.',
+                'A clean vault starts with a full health score before issues are counted.',
             icon: Icons.favorite_rounded,
             accentColor: AtlasColors.vaultGold,
             showChevron: false,
             compact: true,
           ),
-          const SizedBox(
-            height: AtlasSpacing.sm,
-          ),
+          const SizedBox(height: AtlasSpacing.sm),
           const AtlasActionRow(
             title: 'Missing values lower the score',
             description:
-            'Pops without values make the vault less complete and reduce the health score.',
+                'Pops without values make the vault less complete and reduce the health score.',
             icon: Icons.attach_money_rounded,
             accentColor: AtlasColors.vaultGold,
             showChevron: false,
             compact: true,
           ),
-          const SizedBox(
-            height: AtlasSpacing.sm,
-          ),
+          const SizedBox(height: AtlasSpacing.sm),
           const AtlasActionRow(
             title: 'Duplicate review groups lower the score',
             description:
-            'Possible duplicate groups are counted as review items until they are confirmed as variants or cleaned up.',
+                'Possible duplicate groups are counted as review items until they are confirmed as variants or cleaned up.',
             icon: Icons.content_copy_rounded,
             accentColor: AtlasColors.vaultGold,
             showChevron: false,
             compact: true,
           ),
-          const SizedBox(
-            height: AtlasSpacing.sm,
-          ),
+          const SizedBox(height: AtlasSpacing.sm),
           const AtlasActionRow(
             title: 'Higher score means a cleaner vault',
             description:
-            'A higher score means fewer missing values and fewer possible duplicate review groups.',
+                'A higher score means fewer missing values and fewer possible duplicate review groups.',
             icon: Icons.trending_up_rounded,
             accentColor: AtlasColors.vaultGold,
             showChevron: false,
@@ -352,40 +339,34 @@ class _VaultHealthActionGuide extends StatelessWidget {
           AtlasSectionHeader(
             title: 'Recommended Next Steps',
             subtitle:
-            'Work through the highest-impact vault cleanup opportunities first.',
+                'Work through the highest-impact vault cleanup opportunities first.',
             icon: Icons.route_rounded,
           ),
-          SizedBox(
-            height: AtlasSpacing.md,
-          ),
+          SizedBox(height: AtlasSpacing.md),
           AtlasActionRow(
             title: '1. Add missing values first',
             description:
-            'Missing values make it harder for Atlas to estimate your collection strength.',
+                'Missing values make it harder for Atlas to estimate your collection strength.',
             icon: Icons.attach_money_rounded,
             accentColor: AtlasColors.vaultGold,
             showChevron: false,
             compact: true,
           ),
-          SizedBox(
-            height: AtlasSpacing.sm,
-          ),
+          SizedBox(height: AtlasSpacing.sm),
           AtlasActionRow(
             title: '2. Review duplicate groups',
             description:
-            'Duplicates are review groups only. Check variants, Chase versions, stickers, exclusives, and signatures before making changes.',
+                'Duplicates are review groups only. Check variants, Chase versions, stickers, exclusives, and signatures before making changes.',
             icon: Icons.content_copy_rounded,
             accentColor: AtlasColors.vaultGold,
             showChevron: false,
             compact: true,
           ),
-          SizedBox(
-            height: AtlasSpacing.sm,
-          ),
+          SizedBox(height: AtlasSpacing.sm),
           AtlasActionRow(
             title: '3. Protect important variants',
             description:
-            'Variant details, sticker details, limited editions, and signed Pops should stay clearly labeled.',
+                'Variant details, sticker details, limited editions, and signed Pops should stay clearly labeled.',
             icon: Icons.verified_user_outlined,
             accentColor: AtlasColors.vaultGold,
             showChevron: false,

@@ -9,21 +9,13 @@ class HiveService {
     return await Hive.openBox(boxName);
   }
 
-  static Future<void> saveData(
-      String key,
-      Map<String, dynamic> data,
-      ) async {
+  static Future<void> saveData(String key, Map<String, dynamic> data) async {
     final box = Hive.box(boxName);
 
-    await box.put(
-      key,
-      jsonEncode(data),
-    );
+    await box.put(key, jsonEncode(data));
   }
 
-  static Map<String, dynamic>? loadData(
-      String key,
-      ) {
+  static Map<String, dynamic>? loadData(String key) {
     final box = Hive.box(boxName);
 
     final value = box.get(key);

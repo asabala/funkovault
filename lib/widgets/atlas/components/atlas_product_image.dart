@@ -39,92 +39,72 @@ class AtlasProductImage extends StatelessWidget {
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: AtlasColors.textSecondary.withValues(
-          alpha: 0.06,
-        ),
-        borderRadius: BorderRadius.circular(
-          borderRadius,
-        ),
+        color: AtlasColors.textSecondary.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(borderRadius),
         border: showBorder
-            ? Border.all(
-          color: accentColor.withValues(
-            alpha: 0.28,
-          ),
-        )
+            ? Border.all(color: accentColor.withValues(alpha: 0.28))
             : null,
       ),
       clipBehavior: Clip.antiAlias,
       child: cleanedImageUrl.isEmpty
           ? _ProductImageFallback(
-        icon: placeholderIcon,
-        accentColor: accentColor,
-      )
+              icon: placeholderIcon,
+              accentColor: accentColor,
+            )
           : Image.network(
-        cleanedImageUrl,
-        fit: fit,
-        loadingBuilder: (
-            BuildContext context,
-            Widget child,
-            ImageChunkEvent? loadingProgress,
-            ) {
-          if (loadingProgress == null) {
-            return child;
-          }
+              cleanedImageUrl,
+              fit: fit,
+              loadingBuilder:
+                  (
+                    BuildContext context,
+                    Widget child,
+                    ImageChunkEvent? loadingProgress,
+                  ) {
+                    if (loadingProgress == null) {
+                      return child;
+                    }
 
-          final int? expectedBytes =
-              loadingProgress.expectedTotalBytes;
+                    final int? expectedBytes =
+                        loadingProgress.expectedTotalBytes;
 
-          final double? progress =
-          expectedBytes == null || expectedBytes <= 0
-              ? null
-              : loadingProgress.cumulativeBytesLoaded /
-              expectedBytes;
+                    final double? progress =
+                        expectedBytes == null || expectedBytes <= 0
+                        ? null
+                        : loadingProgress.cumulativeBytesLoaded / expectedBytes;
 
-          return Center(
-            child: SizedBox(
-              width: 32,
-              height: 32,
-              child: CircularProgressIndicator(
-                value: progress,
-                strokeWidth: 2,
-                color: accentColor,
-                backgroundColor: AtlasColors.surface,
-              ),
+                    return Center(
+                      child: SizedBox(
+                        width: 32,
+                        height: 32,
+                        child: CircularProgressIndicator(
+                          value: progress,
+                          strokeWidth: 2,
+                          color: accentColor,
+                          backgroundColor: AtlasColors.surface,
+                        ),
+                      ),
+                    );
+                  },
+              errorBuilder:
+                  (BuildContext context, Object error, StackTrace? stackTrace) {
+                    return _ProductImageFallback(
+                      icon: errorIcon,
+                      accentColor: AtlasColors.textSecondary,
+                    );
+                  },
             ),
-          );
-        },
-        errorBuilder: (
-            BuildContext context,
-            Object error,
-            StackTrace? stackTrace,
-            ) {
-          return _ProductImageFallback(
-            icon: errorIcon,
-            accentColor: AtlasColors.textSecondary,
-          );
-        },
-      ),
     );
   }
 }
 
 class _ProductImageFallback extends StatelessWidget {
-  const _ProductImageFallback({
-    required this.icon,
-    required this.accentColor,
-  });
+  const _ProductImageFallback({required this.icon, required this.accentColor});
 
   final IconData icon;
   final Color accentColor;
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Icon(
-        icon,
-        size: 72,
-        color: accentColor,
-      ),
-    );
+    return Center(child: Icon(icon, size: 72, color: accentColor));
   }
 }

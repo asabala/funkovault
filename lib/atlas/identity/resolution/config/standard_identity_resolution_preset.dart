@@ -10,11 +10,8 @@ import 'identity_resolution_preset.dart';
 // suitable for most identity resolution scenarios. Domain-specific
 // presets (Funko, Pokémon, Sports Cards, etc.) can build upon this
 // configuration or replace individual components.
-class StandardIdentityResolutionPreset
-    implements IdentityResolutionPreset {
-  const StandardIdentityResolutionPreset({
-    required this.policy,
-  });
+class StandardIdentityResolutionPreset implements IdentityResolutionPreset {
+  const StandardIdentityResolutionPreset({required this.policy});
 
   final IdentityPolicy policy;
 
@@ -31,8 +28,7 @@ class StandardIdentityResolutionPreset
   IdentityResolutionConfiguration get configuration {
     return IdentityResolutionConfiguration(
       policy: policy,
-      canonicalizationStrategy:
-      ConservativeCanonicalizationStrategy(),
+      canonicalizationStrategy: ConservativeCanonicalizationStrategy(),
       options: IdentityResolutionOptions.standard,
     );
   }

@@ -8,11 +8,8 @@ import 'knowledge_mapper_result.dart';
 // Generic module storage and discovery are handled by AtlasRegistry.
 // This class retains knowledge-mapping support checks and execution.
 class KnowledgeMapperRegistry {
-  KnowledgeMapperRegistry(
-      List<KnowledgeMapper> mappers,
-      ) : _registry = AtlasRegistry<KnowledgeMapper>(
-    mappers,
-  );
+  KnowledgeMapperRegistry(List<KnowledgeMapper> mappers)
+    : _registry = AtlasRegistry<KnowledgeMapper>(mappers);
 
   final AtlasRegistry<KnowledgeMapper> _registry;
 
@@ -43,38 +40,26 @@ class KnowledgeMapperRegistry {
   }
 
   // Returns only mappers that understand the supplied record.
-  List<KnowledgeMapper> supportedMappers(
-      KnowledgeRecord record,
-      ) {
-    return _registry.where(
-          (KnowledgeMapper mapper) {
-        return mapper.supports(record);
-      },
-    );
+  List<KnowledgeMapper> supportedMappers(KnowledgeRecord record) {
+    return _registry.where((KnowledgeMapper mapper) {
+      return mapper.supports(record);
+    });
   }
 
   // Executes every mapper that supports the supplied record.
   //
   // Results remain separated so the future Identity Resolver can
   // evaluate mapper confidence, provenance, and conflicting mappings.
-  List<KnowledgeMapperResult> mapAll(
-      KnowledgeRecord record,
-      ) {
-    final List<KnowledgeMapper> supported =
-    supportedMappers(record);
+  List<KnowledgeMapperResult> mapAll(KnowledgeRecord record) {
+    final List<KnowledgeMapper> supported = supportedMappers(record);
 
-    final List<KnowledgeMapperResult> results =
-    <KnowledgeMapperResult>[];
+    final List<KnowledgeMapperResult> results = <KnowledgeMapperResult>[];
 
     for (final KnowledgeMapper mapper in supported) {
-      results.add(
-        mapper.map(record),
-      );
+      results.add(mapper.map(record));
     }
 
-    return List<KnowledgeMapperResult>.unmodifiable(
-      results,
-    );
+    return List<KnowledgeMapperResult>.unmodifiable(results);
   }
 
   // Executes one specific mapper when it supports the record.
@@ -85,11 +70,9 @@ class KnowledgeMapperRegistry {
     required String mapperId,
     required KnowledgeRecord record,
   }) {
-    final KnowledgeMapper? mapper =
-    byId(mapperId);
+    final KnowledgeMapper? mapper = byId(mapperId);
 
-    if (mapper == null ||
-        !mapper.supports(record)) {
+    if (mapper == null || !mapper.supports(record)) {
       return null;
     }
 

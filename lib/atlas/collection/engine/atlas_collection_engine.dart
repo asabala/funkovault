@@ -15,15 +15,11 @@ import '../models/atlas_collection_intelligence.dart';
 class AtlasCollectionEngine {
   const AtlasCollectionEngine({
     this.heroEngine = const AtlasHeroEngine(),
-    this.timelineService =
-    const TimelineIntelligenceService(),
-    this.activitySummaryEngine =
-    const PopActivitySummaryEngine(),
+    this.timelineService = const TimelineIntelligenceService(),
+    this.activitySummaryEngine = const PopActivitySummaryEngine(),
     this.identityEngine = const PopIdentityEngine(),
-    this.collectibilityEngine =
-    const AtlasCollectibilityEngine(),
-    this.recommendationEngine =
-    const AtlasRecommendationEngine(),
+    this.collectibilityEngine = const AtlasCollectibilityEngine(),
+    this.recommendationEngine = const AtlasRecommendationEngine(),
   });
 
   final AtlasHeroEngine heroEngine;
@@ -39,11 +35,9 @@ class AtlasCollectionEngine {
   }) {
     final heroSummary = heroEngine.build(pop);
 
-    final timelineReport =
-    timelineService.buildReport(pop);
+    final timelineReport = timelineService.buildReport(pop);
 
-    final activitySummary =
-    activitySummaryEngine.build(
+    final activitySummary = activitySummaryEngine.build(
       popId: pop.id,
       popName: pop.name,
       popNumber: pop.number,
@@ -51,18 +45,15 @@ class AtlasCollectionEngine {
       timeline: pop.timeline,
     );
 
-    final identityBadges =
-    identityEngine.buildBadges(pop);
+    final identityBadges = identityEngine.buildBadges(pop);
 
-    final collectibilitySummary =
-    collectibilityEngine.build(
+    final collectibilitySummary = collectibilityEngine.build(
       pop: pop,
       heroSummary: heroSummary,
       identityBadges: identityBadges,
     );
 
-    final recommendationSummary =
-    recommendationEngine.build(
+    final recommendationSummary = recommendationEngine.build(
       pop: pop,
       collectibilitySummary: collectibilitySummary,
     );

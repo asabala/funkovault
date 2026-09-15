@@ -19,22 +19,17 @@ class AcademyRequestActionRow extends StatelessWidget {
   final VoidCallback onDeclineTap;
 
   bool get _canReview {
-    return request.status ==
-        AcademyRequestStatus.newRequest;
+    return request.status == AcademyRequestStatus.newRequest;
   }
 
   bool get _canResolve {
-    return request.status ==
-        AcademyRequestStatus.newRequest ||
-        request.status ==
-            AcademyRequestStatus.reviewed;
+    return request.status == AcademyRequestStatus.newRequest ||
+        request.status == AcademyRequestStatus.reviewed;
   }
 
   bool get _isResolved {
-    return request.status ==
-        AcademyRequestStatus.approved ||
-        request.status ==
-            AcademyRequestStatus.declined;
+    return request.status == AcademyRequestStatus.approved ||
+        request.status == AcademyRequestStatus.declined;
   }
 
   @override
@@ -43,24 +38,19 @@ class AcademyRequestActionRow extends StatelessWidget {
       return Row(
         children: [
           Icon(
-            request.status ==
-                AcademyRequestStatus.approved
+            request.status == AcademyRequestStatus.approved
                 ? Icons.check_circle_outline_rounded
                 : Icons.cancel_outlined,
             size: 18,
-            color: request.status ==
-                AcademyRequestStatus.approved
+            color: request.status == AcademyRequestStatus.approved
                 ? AtlasColors.success
                 : AtlasColors.warning,
           ),
-          const SizedBox(
-            width: AtlasSpacing.sm,
-          ),
+          const SizedBox(width: AtlasSpacing.sm),
           Text(
             request.statusLabel,
             style: TextStyle(
-              color: request.status ==
-                  AcademyRequestStatus.approved
+              color: request.status == AcademyRequestStatus.approved
                   ? AtlasColors.success
                   : AtlasColors.warning,
               fontWeight: FontWeight.w700,
@@ -75,40 +65,23 @@ class AcademyRequestActionRow extends StatelessWidget {
       runSpacing: AtlasSpacing.sm,
       children: [
         OutlinedButton.icon(
-          onPressed:
-          _canReview ? onReviewTap : null,
-          icon: const Icon(
-            Icons.visibility_outlined,
-            size: 18,
-          ),
+          onPressed: _canReview ? onReviewTap : null,
+          icon: const Icon(Icons.visibility_outlined, size: 18),
           label: Text(
-            request.status ==
-                AcademyRequestStatus.reviewed
+            request.status == AcademyRequestStatus.reviewed
                 ? 'Reviewed'
                 : 'Review',
           ),
         ),
         FilledButton.icon(
-          onPressed:
-          _canResolve ? onApproveTap : null,
-          icon: const Icon(
-            Icons.check_rounded,
-            size: 18,
-          ),
-          label: const Text(
-            'Approve',
-          ),
+          onPressed: _canResolve ? onApproveTap : null,
+          icon: const Icon(Icons.check_rounded, size: 18),
+          label: const Text('Approve'),
         ),
         TextButton.icon(
-          onPressed:
-          _canResolve ? onDeclineTap : null,
-          icon: const Icon(
-            Icons.close_rounded,
-            size: 18,
-          ),
-          label: const Text(
-            'Decline',
-          ),
+          onPressed: _canResolve ? onDeclineTap : null,
+          icon: const Icon(Icons.close_rounded, size: 18),
+          label: const Text('Decline'),
         ),
       ],
     );

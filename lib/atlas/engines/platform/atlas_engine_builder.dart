@@ -11,27 +11,22 @@ class AtlasEngineBuilder {
   AtlasEngineConfiguration? _configuration;
 
   // Supplies the configuration used when building the engine.
-  AtlasEngineBuilder configuration(
-      AtlasEngineConfiguration configuration,
-      ) {
+  AtlasEngineBuilder configuration(AtlasEngineConfiguration configuration) {
     _configuration = configuration;
     return this;
   }
 
   // Returns the configured AtlasEngine.
   AtlasEngine build() {
-    final AtlasEngineConfiguration? configuration =
-        _configuration;
+    final AtlasEngineConfiguration? configuration = _configuration;
 
     if (configuration == null) {
       throw StateError(
         'AtlasEngineConfiguration must be supplied before '
-            'building the AtlasEngine.',
+        'building the AtlasEngine.',
       );
     }
 
-    return AtlasEngine(
-      configuration: configuration,
-    );
+    return AtlasEngine(configuration: configuration);
   }
 }

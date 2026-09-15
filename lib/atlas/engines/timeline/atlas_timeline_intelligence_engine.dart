@@ -48,9 +48,7 @@ class AtlasTimelineIntelligenceEngine {
         timeline,
         AtlasTimelineEventType.purchased,
       ),
-      hasCollectorNotes: _hasCollectorInformation(
-        timeline,
-      ),
+      hasCollectorNotes: _hasCollectorInformation(timeline),
     );
 
     final milestones = milestoneAnalyzer.analyze(
@@ -77,22 +75,17 @@ class AtlasTimelineIntelligenceEngine {
   }
 
   bool _hasEventType(
-      List<AtlasTimelineEvent> timeline,
-      AtlasTimelineEventType type,
-      ) {
-    return timeline.any(
-          (event) => event.type == type,
-    );
+    List<AtlasTimelineEvent> timeline,
+    AtlasTimelineEventType type,
+  ) {
+    return timeline.any((event) => event.type == type);
   }
 
-  bool _hasCollectorInformation(
-      List<AtlasTimelineEvent> timeline,
-      ) {
+  bool _hasCollectorInformation(List<AtlasTimelineEvent> timeline) {
     return timeline.any(
-          (event) =>
-      event.type == AtlasTimelineEventType.noteAdded ||
-          event.type ==
-              AtlasTimelineEventType.collectorMoment,
+      (event) =>
+          event.type == AtlasTimelineEventType.noteAdded ||
+          event.type == AtlasTimelineEventType.collectorMoment,
     );
   }
 }

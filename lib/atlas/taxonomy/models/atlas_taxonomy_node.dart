@@ -48,8 +48,7 @@ final class AtlasTaxonomyNode {
   final Map<String, Object?> metadata;
 
   bool get hasParent {
-    return parentId != null &&
-        parentId!.trim().isNotEmpty;
+    return parentId != null && parentId!.trim().isNotEmpty;
   }
 
   bool get hasMetadata {
@@ -73,21 +72,14 @@ final class AtlasTaxonomyNode {
   }
 
   @override
-  bool operator ==(
-      Object other,
-      ) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
-        other is AtlasTaxonomyNode &&
-            scope == other.scope &&
-            id == other.id;
+        other is AtlasTaxonomyNode && scope == other.scope && id == other.id;
   }
 
   @override
   int get hashCode {
-    return Object.hash(
-      scope,
-      id,
-    );
+    return Object.hash(scope, id);
   }
 
   @override

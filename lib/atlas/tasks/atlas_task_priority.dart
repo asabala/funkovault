@@ -1,6 +1,1 @@
-enum AtlasTaskPriority {
-  low,
-  medium,
-  high,
-  critical,
-}
+enum AtlasTaskPriority { low, medium, high, critical }

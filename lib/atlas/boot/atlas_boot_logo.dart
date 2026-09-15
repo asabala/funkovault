@@ -3,10 +3,7 @@ import 'package:flutter/material.dart';
 import '../../theme/atlas_colors.dart';
 
 class AtlasBootLogo extends StatelessWidget {
-  const AtlasBootLogo({
-    super.key,
-    required this.pulse,
-  });
+  const AtlasBootLogo({super.key, required this.pulse});
 
   final Animation<double> pulse;
 
@@ -23,10 +20,7 @@ class AtlasBootLogo extends StatelessWidget {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: AtlasColors.surface,
-            border: Border.all(
-              color: AtlasColors.vaultGold,
-              width: 2,
-            ),
+            border: Border.all(color: AtlasColors.vaultGold, width: 2),
             boxShadow: [
               BoxShadow(
                 color: AtlasColors.intelligenceBlue.withValues(

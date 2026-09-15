@@ -7,41 +7,23 @@
 // This ID is owned by Atlas and remains stable regardless of changes to
 // external product databases.
 final class AtlasProductId {
-  AtlasProductId({
-    required String categoryCode,
-    required int numericId,
-  })  : categoryCode = _normalizeCategoryCode(categoryCode),
-        numericId = _validateNumericId(numericId);
+  AtlasProductId({required String categoryCode, required int numericId})
+    : categoryCode = _normalizeCategoryCode(categoryCode),
+      numericId = _validateNumericId(numericId);
 
   // Convenience constructor for Funko products.
-  AtlasProductId.funko({
-    required int numericId,
-  }) : this(
-    categoryCode: 'FNK',
-    numericId: numericId,
-  );
+  AtlasProductId.funko({required int numericId})
+    : this(categoryCode: 'FNK', numericId: numericId);
 
   // Future convenience constructors.
-  AtlasProductId.pokemon({
-    required int numericId,
-  }) : this(
-    categoryCode: 'PKM',
-    numericId: numericId,
-  );
+  AtlasProductId.pokemon({required int numericId})
+    : this(categoryCode: 'PKM', numericId: numericId);
 
-  AtlasProductId.hotWheels({
-    required int numericId,
-  }) : this(
-    categoryCode: 'HW',
-    numericId: numericId,
-  );
+  AtlasProductId.hotWheels({required int numericId})
+    : this(categoryCode: 'HW', numericId: numericId);
 
-  AtlasProductId.sports({
-    required int numericId,
-  }) : this(
-    categoryCode: 'SPT',
-    numericId: numericId,
-  );
+  AtlasProductId.sports({required int numericId})
+    : this(categoryCode: 'SPT', numericId: numericId);
 
   // Product family/category.
   final String categoryCode;
@@ -50,10 +32,7 @@ final class AtlasProductId {
   final int numericId;
 
   String get formattedNumericId {
-    return numericId.toString().padLeft(
-      6,
-      '0',
-    );
+    return numericId.toString().padLeft(6, '0');
   }
 
   // Human-readable identifier.
@@ -63,20 +42,11 @@ final class AtlasProductId {
 
   // Atlas URI.
   Uri get uri {
-    return Uri(
-      scheme: 'atlas',
-      host: 'product',
-      pathSegments: <String>[
-        value,
-      ],
-    );
+    return Uri(scheme: 'atlas', host: 'product', pathSegments: <String>[value]);
   }
 
-  static String _normalizeCategoryCode(
-      String value,
-      ) {
-    final String normalized =
-    value.trim().toUpperCase();
+  static String _normalizeCategoryCode(String value) {
+    final String normalized = value.trim().toUpperCase();
 
     if (normalized.isEmpty) {
       throw ArgumentError.value(
@@ -89,9 +59,7 @@ final class AtlasProductId {
     return normalized;
   }
 
-  static int _validateNumericId(
-      int value,
-      ) {
+  static int _validateNumericId(int value) {
     if (value <= 0) {
       throw ArgumentError.value(
         value,
@@ -104,9 +72,7 @@ final class AtlasProductId {
   }
 
   @override
-  bool operator ==(
-      Object other,
-      ) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         other is AtlasProductId &&
             other.categoryCode == categoryCode &&
@@ -115,10 +81,7 @@ final class AtlasProductId {
 
   @override
   int get hashCode {
-    return Object.hash(
-      categoryCode,
-      numericId,
-    );
+    return Object.hash(categoryCode, numericId);
   }
 
   @override

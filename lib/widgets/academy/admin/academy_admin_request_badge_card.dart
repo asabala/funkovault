@@ -16,8 +16,7 @@ class AcademyAdminRequestBadgeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool hasNewRequests =
-        newRequestCount > 0;
+    final bool hasNewRequests = newRequestCount > 0;
 
     return AtlasGlassCard(
       accentColor: hasNewRequests
@@ -32,15 +31,9 @@ class AcademyAdminRequestBadgeCard extends StatelessWidget {
             alignment: Alignment.center,
             decoration: BoxDecoration(
               color: hasNewRequests
-                  ? AtlasColors.vaultGold.withValues(
-                alpha: 0.14,
-              )
-                  : AtlasColors.textSecondary.withValues(
-                alpha: 0.08,
-              ),
-              borderRadius: BorderRadius.circular(
-                15,
-              ),
+                  ? AtlasColors.vaultGold.withValues(alpha: 0.14)
+                  : AtlasColors.textSecondary.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(15),
             ),
             child: Icon(
               hasNewRequests
@@ -51,39 +44,29 @@ class AcademyAdminRequestBadgeCard extends StatelessWidget {
                   : AtlasColors.textSecondary,
             ),
           ),
-          const SizedBox(
-            width: AtlasSpacing.md,
-          ),
+          const SizedBox(width: AtlasSpacing.md),
           Expanded(
             child: Column(
-              crossAxisAlignment:
-              CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   hasNewRequests
                       ? '$newRequestCount new '
-                      '${newRequestCount == 1 ? 'Academy request' : 'Academy requests'}'
+                            '${newRequestCount == 1 ? 'Academy request' : 'Academy requests'}'
                       : 'No New Academy Requests',
-                  style:
-                  AtlasTypography.headingSmall,
+                  style: AtlasTypography.headingSmall,
                 ),
-                const SizedBox(
-                  height: AtlasSpacing.xs,
-                ),
+                const SizedBox(height: AtlasSpacing.xs),
                 Text(
                   hasNewRequests
                       ? 'Review requested topics and future track interest.'
                       : 'Topic and track requests will appear here when submitted.',
-                  style:
-                  AtlasTypography.bodySmall.copyWith(
-                    color:
-                    AtlasColors.textSecondary,
+                  style: AtlasTypography.bodySmall.copyWith(
+                    color: AtlasColors.textSecondary,
                     height: 1.35,
                   ),
                 ),
-                const SizedBox(
-                  height: AtlasSpacing.sm,
-                ),
+                const SizedBox(height: AtlasSpacing.sm),
                 AtlasStatusChip(
                   label: hasNewRequests
                       ? '$newRequestCount New'
@@ -94,8 +77,7 @@ class AcademyAdminRequestBadgeCard extends StatelessWidget {
                   accentColor: hasNewRequests
                       ? AtlasColors.vaultGold
                       : AtlasColors.success,
-                  size:
-                  AtlasStatusChipSize.compact,
+                  size: AtlasStatusChipSize.compact,
                 ),
               ],
             ),

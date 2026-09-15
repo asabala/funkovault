@@ -19,10 +19,7 @@ import '../../widgets/atlas/components/atlas_section_header.dart';
 import '../../widgets/atlas/components/atlas_status_chip.dart';
 
 class PossibleDuplicatesScreen extends StatefulWidget {
-  const PossibleDuplicatesScreen({
-    super.key,
-    required this.collectionName,
-  });
+  const PossibleDuplicatesScreen({super.key, required this.collectionName});
 
   final String collectionName;
 
@@ -76,30 +73,28 @@ class _PossibleDuplicatesScreenState extends State<PossibleDuplicatesScreen> {
   @override
   Widget build(BuildContext context) {
     final appState = context.watch<AppState>();
-    final pops = appState.popsForCollection(
-      widget.collectionName,
-    );
+    final pops = appState.popsForCollection(widget.collectionName);
 
     final duplicateReport = const DuplicateReviewService().buildReport(pops);
     final sameIdentityGroups = duplicateReport.sameIdentityGroups;
     final possibleVariantGroups = duplicateReport.possibleVariantGroups;
 
-    final showSameIdentity = _filter == _DuplicateReviewFilter.all ||
+    final showSameIdentity =
+        _filter == _DuplicateReviewFilter.all ||
         _filter == _DuplicateReviewFilter.sameIdentity;
 
-    final showPossibleVariants = _filter == _DuplicateReviewFilter.all ||
+    final showPossibleVariants =
+        _filter == _DuplicateReviewFilter.all ||
         _filter == _DuplicateReviewFilter.possibleVariants;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Atlas Identity Intelligence'),
-      ),
+      appBar: AppBar(title: const Text('Atlas Identity Intelligence')),
       floatingActionButton: _showBackToTop
           ? FloatingActionButton.extended(
-        onPressed: _scrollToTop,
-        icon: const Icon(Icons.keyboard_arrow_up_rounded),
-        label: const Text('Top'),
-      )
+              onPressed: _scrollToTop,
+              icon: const Icon(Icons.keyboard_arrow_up_rounded),
+              label: const Text('Top'),
+            )
           : null,
       body: SafeArea(
         child: SingleChildScrollView(
@@ -122,32 +117,29 @@ class _PossibleDuplicatesScreenState extends State<PossibleDuplicatesScreen> {
                     const AtlasSectionHeader(
                       title: 'Atlas Identity Intelligence',
                       subtitle:
-                      'Atlas separates exact duplicates from related collectible releases and explains meaningful differences such as variants, stickers, finishes, packaging, production runs, signatures, and authentication.',
+                          'Atlas separates exact duplicates from related collectible releases and explains meaningful differences such as variants, stickers, finishes, packaging, production runs, signatures, and authentication.',
                       icon: Icons.manage_search_rounded,
                       accentColor: AtlasColors.vaultGold,
                     ),
-                    const SizedBox(
-                      height: AtlasSpacing.lg,
-                    ),
+                    const SizedBox(height: AtlasSpacing.lg),
                     Wrap(
                       spacing: AtlasSpacing.sm,
                       runSpacing: AtlasSpacing.sm,
                       children: [
                         AtlasStatusChip(
                           label:
-                          '${duplicateReport.exactDuplicateGroupCount} Exact Duplicates',
+                              '${duplicateReport.exactDuplicateGroupCount} Exact Duplicates',
                           icon: Icons.content_copy_rounded,
                           accentColor: AtlasColors.vaultGold,
                         ),
                         AtlasStatusChip(
                           label:
-                          '${duplicateReport.reviewGroupCount} Review Groups',
+                              '${duplicateReport.reviewGroupCount} Review Groups',
                           icon: Icons.compare_arrows_rounded,
                           accentColor: AtlasColors.vaultGold,
                         ),
                         AtlasStatusChip(
-                          label:
-                          '${duplicateReport.totalGroups} Total Groups',
+                          label: '${duplicateReport.totalGroups} Total Groups',
                           icon: Icons.inventory_2_outlined,
                           accentColor: AtlasColors.vaultGold,
                         ),
@@ -190,7 +182,7 @@ class _PossibleDuplicatesScreenState extends State<PossibleDuplicatesScreen> {
                   collectionName: widget.collectionName,
                   title: 'Exact Duplicate Groups',
                   subtitle:
-                  'These records share the same Atlas release fingerprint. Review them before consolidating quantities or correcting collection data.',
+                      'These records share the same Atlas release fingerprint. Review them before consolidating quantities or correcting collection data.',
                   emptyMessage: 'No exact duplicate groups found.',
                   groups: sameIdentityGroups,
                   badgeText: 'Exact',
@@ -204,7 +196,7 @@ class _PossibleDuplicatesScreenState extends State<PossibleDuplicatesScreen> {
                   collectionName: widget.collectionName,
                   title: 'Related Release Groups',
                   subtitle:
-                  'These collectibles share a broad identity but contain meaningful differences. Atlas classifies the strongest known difference and explains why the group needs review.',
+                      'These collectibles share a broad identity but contain meaningful differences. Atlas classifies the strongest known difference and explains why the group needs review.',
                   emptyMessage: 'No related release groups found.',
                   groups: possibleVariantGroups,
                   badgeText: 'Review',
@@ -220,11 +212,7 @@ class _PossibleDuplicatesScreenState extends State<PossibleDuplicatesScreen> {
   }
 }
 
-enum _DuplicateReviewFilter {
-  all,
-  sameIdentity,
-  possibleVariants,
-}
+enum _DuplicateReviewFilter { all, sameIdentity, possibleVariants }
 
 class _DuplicateFilterCard extends StatelessWidget {
   const _DuplicateFilterCard({
@@ -243,13 +231,10 @@ class _DuplicateFilterCard extends StatelessWidget {
         children: [
           const AtlasSectionHeader(
             title: 'Review Filter',
-            subtitle:
-            'Choose which identity groups you want to review.',
+            subtitle: 'Choose which identity groups you want to review.',
             icon: Icons.filter_alt_outlined,
           ),
-          const SizedBox(
-            height: AtlasSpacing.md,
-          ),
+          const SizedBox(height: AtlasSpacing.md),
           Wrap(
             spacing: AtlasSpacing.sm,
             runSpacing: AtlasSpacing.sm,
@@ -268,7 +253,7 @@ class _DuplicateFilterCard extends StatelessWidget {
               _FilterChipButton(
                 label: 'Related Releases',
                 selected:
-                selectedFilter == _DuplicateReviewFilter.possibleVariants,
+                    selectedFilter == _DuplicateReviewFilter.possibleVariants,
                 onSelected: () =>
                     onChanged(_DuplicateReviewFilter.possibleVariants),
               ),
@@ -310,8 +295,6 @@ class _FilterChipButton extends StatelessWidget {
     );
   }
 }
-
-
 
 class _DuplicateSection extends StatelessWidget {
   const _DuplicateSection({
@@ -356,7 +339,7 @@ class _DuplicateSection extends StatelessWidget {
             )
           else
             ...groups.map(
-                  (group) => Padding(
+              (group) => Padding(
                 padding: const EdgeInsets.only(bottom: AtlasSpacing.md),
                 child: _DuplicateGroupCard(
                   collectionName: collectionName,
@@ -402,18 +385,13 @@ class _DuplicateGroupCard extends StatelessWidget {
           Row(
             children: [
               AtlasStatusChip(
-                label: group.title.isEmpty
-                    ? badgeText
-                    : group.title,
+                label: group.title.isEmpty ? badgeText : group.title,
                 accentColor: badgeColor,
                 size: AtlasStatusChipSize.compact,
               ),
               const SizedBox(width: AtlasSpacing.sm),
               Expanded(
-                child: Text(
-                  firstPop.name,
-                  style: AtlasTypography.headingSmall,
-                ),
+                child: Text(firstPop.name, style: AtlasTypography.headingSmall),
               ),
             ],
           ),
@@ -425,16 +403,12 @@ class _DuplicateGroupCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: AtlasSpacing.md),
-          _IdentityEvidenceCard(
-            group: group,
-          ),
+          _IdentityEvidenceCard(group: group),
           const SizedBox(height: AtlasSpacing.md),
-          _GroupDifferenceSummary(
-            pops: group.pops,
-          ),
+          _GroupDifferenceSummary(pops: group.pops),
           const SizedBox(height: AtlasSpacing.md),
           ...group.pops.map(
-                (pop) => Padding(
+            (pop) => Padding(
               padding: const EdgeInsets.only(bottom: AtlasSpacing.sm),
               child: _DuplicatePopTile(
                 pop: pop,
@@ -450,9 +424,7 @@ class _DuplicateGroupCard extends StatelessWidget {
 }
 
 class _IdentityEvidenceCard extends StatelessWidget {
-  const _IdentityEvidenceCard({
-    required this.group,
-  });
+  const _IdentityEvidenceCard({required this.group});
 
   final DuplicateReviewGroup group;
 
@@ -460,8 +432,8 @@ class _IdentityEvidenceCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final evidence = group.evidence.isEmpty
         ? const <String>[
-      'Atlas found a related collectible identity that requires review.',
-    ]
+            'Atlas found a related collectible identity that requires review.',
+          ]
         : group.evidence;
 
     return Container(
@@ -506,10 +478,8 @@ class _IdentityEvidenceCard extends StatelessWidget {
           ),
           const SizedBox(height: AtlasSpacing.sm),
           ...evidence.map(
-                (item) => Padding(
-              padding: const EdgeInsets.only(
-                bottom: AtlasSpacing.xs,
-              ),
+            (item) => Padding(
+              padding: const EdgeInsets.only(bottom: AtlasSpacing.xs),
               child: Text(
                 '• $item',
                 style: AtlasTypography.bodySmall.copyWith(
@@ -525,9 +495,7 @@ class _IdentityEvidenceCard extends StatelessWidget {
 }
 
 class _GroupDifferenceSummary extends StatelessWidget {
-  const _GroupDifferenceSummary({
-    required this.pops,
-  });
+  const _GroupDifferenceSummary({required this.pops});
 
   final List<Pop> pops;
 
@@ -556,7 +524,7 @@ class _GroupDifferenceSummary extends StatelessWidget {
           ),
           const SizedBox(height: AtlasSpacing.sm),
           ...differences.map(
-                (difference) => Padding(
+            (difference) => Padding(
               padding: const EdgeInsets.only(bottom: AtlasSpacing.xs),
               child: Text(
                 difference,
@@ -649,9 +617,7 @@ class _GroupDifferenceSummary extends StatelessWidget {
     _addDifference(
       differences,
       label: 'Wishlist',
-      values: pops
-          .map((pop) => pop.isWishlist ? 'Wishlist' : 'Owned')
-          .toSet(),
+      values: pops.map((pop) => pop.isWishlist ? 'Wishlist' : 'Owned').toSet(),
       sameText: 'Wishlist/owned status matches.',
       differentText: 'Wishlist/owned status differs.',
     );
@@ -660,12 +626,12 @@ class _GroupDifferenceSummary extends StatelessWidget {
   }
 
   void _addDifference(
-      List<String> differences, {
-        required String label,
-        required Set<String> values,
-        required String sameText,
-        required String differentText,
-      }) {
+    List<String> differences, {
+    required String label,
+    required Set<String> values,
+    required String sameText,
+    required String differentText,
+  }) {
     final cleanedValues = values
         .map((value) => value.trim().isEmpty ? 'Blank' : value.trim())
         .toSet();
@@ -694,22 +660,23 @@ class _DuplicatePopTile extends StatelessWidget {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => PopDetailsScreen(
-          pop: pop,
-          collectionName: collectionName,
-        ),
+        builder: (_) =>
+            PopDetailsScreen(pop: pop, collectionName: collectionName),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final categoryLabel =
-    pop.category.trim().isEmpty ? 'No category' : pop.category.trim();
-    final seriesLabel =
-    pop.series.trim().isEmpty ? 'No series' : pop.series.trim();
-    final valueLabel =
-    pop.value <= 0 ? 'Value needed' : '\$${pop.value.toStringAsFixed(0)}';
+    final categoryLabel = pop.category.trim().isEmpty
+        ? 'No category'
+        : pop.category.trim();
+    final seriesLabel = pop.series.trim().isEmpty
+        ? 'No series'
+        : pop.series.trim();
+    final valueLabel = pop.value <= 0
+        ? 'Value needed'
+        : '\$${pop.value.toStringAsFixed(0)}';
     final dateAddedLabel = _formatDateLabel(pop.dateAdded);
     final lastUpdatedLabel = _formatDateLabel(pop.lastUpdated);
 
@@ -728,35 +695,31 @@ class _DuplicatePopTile extends StatelessWidget {
           Center(
             child: showImages
                 ? AtlasProductImage(
-              imageUrl: pop.imageUrl,
-              width: 120,
-              height: 150,
-              borderRadius: AtlasSpacing.md,
-              showBorder: true,
-            )
+                    imageUrl: pop.imageUrl,
+                    width: 120,
+                    height: 150,
+                    borderRadius: AtlasSpacing.md,
+                    showBorder: true,
+                  )
                 : Container(
-              width: 120,
-              height: 150,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: AtlasColors.textSecondary.withValues(
-                  alpha: 0.06,
-                ),
-                borderRadius: BorderRadius.circular(
-                  AtlasSpacing.md,
-                ),
-                border: Border.all(
-                  color: AtlasColors.textSecondary.withValues(
-                    alpha: 0.18,
+                    width: 120,
+                    height: 150,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: AtlasColors.textSecondary.withValues(alpha: 0.06),
+                      borderRadius: BorderRadius.circular(AtlasSpacing.md),
+                      border: Border.all(
+                        color: AtlasColors.textSecondary.withValues(
+                          alpha: 0.18,
+                        ),
+                      ),
+                    ),
+                    child: const Icon(
+                      Icons.image_outlined,
+                      size: 48,
+                      color: AtlasColors.textSecondary,
+                    ),
                   ),
-                ),
-              ),
-              child: const Icon(
-                Icons.image_outlined,
-                size: 48,
-                color: AtlasColors.textSecondary,
-              ),
-            ),
           ),
           const SizedBox(height: AtlasSpacing.md),
           Text(
@@ -767,9 +730,7 @@ class _DuplicatePopTile extends StatelessWidget {
             ),
           ),
           const SizedBox(height: AtlasSpacing.sm),
-          _DuplicateIdentityBadges(
-            pop: pop,
-          ),
+          _DuplicateIdentityBadges(pop: pop),
           const SizedBox(height: AtlasSpacing.sm),
           Text(
             '$seriesLabel • $categoryLabel',
@@ -848,9 +809,7 @@ String _formatDateLabel(String value) {
 }
 
 class _DuplicateIdentityBadges extends StatelessWidget {
-  const _DuplicateIdentityBadges({
-    required this.pop,
-  });
+  const _DuplicateIdentityBadges({required this.pop});
 
   final Pop pop;
 
@@ -869,12 +828,7 @@ class _DuplicateIdentityBadges extends StatelessWidget {
       spacing: AtlasSpacing.xs,
       runSpacing: AtlasSpacing.xs,
       children: badges
-          .map(
-            (badge) => AtlasChip(
-          label: badge,
-          size: AtlasChipSize.compact,
-        ),
-      )
+          .map((badge) => AtlasChip(label: badge, size: AtlasChipSize.compact))
           .toList(),
     );
   }

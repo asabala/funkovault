@@ -7,13 +7,9 @@ import '../models/atlas_catalog_product.dart';
 // cached data, or a combination of sources without changing the engines that
 // consume this interface.
 abstract interface class AtlasCatalogRepository {
-  Future<AtlasCatalogProduct?> findByProductId(
-      AtlasProductId productId,
-      );
+  Future<AtlasCatalogProduct?> findByProductId(AtlasProductId productId);
 
-  Future<List<AtlasCatalogProduct>> findByBarcode(
-      String barcode,
-      );
+  Future<List<AtlasCatalogProduct>> findByBarcode(String barcode);
 
   Future<List<AtlasCatalogProduct>> search({
     String? query,

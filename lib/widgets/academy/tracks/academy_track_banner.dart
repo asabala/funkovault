@@ -32,38 +32,26 @@ class AcademyTrackBanner extends StatelessWidget {
             height: 50,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: AtlasColors.vaultGold.withValues(
-                alpha: 0.12,
-              ),
-              borderRadius: BorderRadius.circular(
-                16,
-              ),
+              color: AtlasColors.vaultGold.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(16),
             ),
             child: Text(
               emoji.trim().isEmpty ? '🎓' : emoji.trim(),
-              style: const TextStyle(
-                fontSize: 28,
-              ),
+              style: const TextStyle(fontSize: 28),
             ),
           ),
-          const SizedBox(
-            width: AtlasSpacing.md,
-          ),
+          const SizedBox(width: AtlasSpacing.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  cleanedTitle.isEmpty
-                      ? 'Academy Track'
-                      : cleanedTitle,
+                  cleanedTitle.isEmpty ? 'Academy Track' : cleanedTitle,
                   style: AtlasTypography.headingSmall.copyWith(
                     color: AtlasColors.vaultGold,
                   ),
                 ),
-                const SizedBox(
-                  height: AtlasSpacing.xs,
-                ),
+                const SizedBox(height: AtlasSpacing.xs),
                 Text(
                   cleanedSubtitle.isEmpty
                       ? 'More Academy track details are coming soon.'

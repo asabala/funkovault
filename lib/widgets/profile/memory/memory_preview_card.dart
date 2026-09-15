@@ -23,10 +23,7 @@ class MemoryPreviewCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Atlas Memory',
-            style: AtlasTypography.headingSmall,
-          ),
+          Text('Atlas Memory', style: AtlasTypography.headingSmall),
 
           const SizedBox(height: AtlasSpacing.md),
 
@@ -40,10 +37,7 @@ class MemoryPreviewCard extends StatelessWidget {
                   shape: BoxShape.circle,
                   color: AtlasColors.vaultGold.withValues(alpha: 0.14),
                 ),
-                child: const Icon(
-                  Icons.history,
-                  color: AtlasColors.vaultGold,
-                ),
+                child: const Icon(Icons.history, color: AtlasColors.vaultGold),
               ),
 
               const SizedBox(width: AtlasSpacing.md),

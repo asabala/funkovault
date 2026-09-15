@@ -6,13 +6,10 @@ import 'knowledge_mapper_result.dart';
 //
 // Mappers understand source record structures but do not compare
 // identities or make final identity decisions.
-abstract interface class KnowledgeMapper
-    implements AtlasModule {
+abstract interface class KnowledgeMapper implements AtlasModule {
   // Determines whether this mapper understands the supplied record.
   bool supports(KnowledgeRecord record);
 
   // Converts one source record into zero or more identity profiles.
-  KnowledgeMapperResult map(
-      KnowledgeRecord record,
-      );
+  KnowledgeMapperResult map(KnowledgeRecord record);
 }

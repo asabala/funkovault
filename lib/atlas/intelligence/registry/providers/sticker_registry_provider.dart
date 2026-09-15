@@ -5,25 +5,18 @@ import '../atlas_registry_entry.dart';
 import '../atlas_registry_provider.dart';
 
 // Supplies Sticker entries for the Atlas Registry.
-final class StickerRegistryProvider
-    implements AtlasRegistryProvider {
-  StickerRegistryProvider({
-    FunkoStickerNormalizer? normalizer,
-  }) : _normalizer =
-      normalizer ??
-          const FunkoStickerNormalizer();
+final class StickerRegistryProvider implements AtlasRegistryProvider {
+  StickerRegistryProvider({FunkoStickerNormalizer? normalizer})
+    : _normalizer = normalizer ?? const FunkoStickerNormalizer();
 
   final FunkoStickerNormalizer _normalizer;
 
   @override
   Iterable<AtlasRegistryEntry> buildEntries() {
-    final List<AtlasRegistryEntry> entries =
-    <AtlasRegistryEntry>[];
+    final List<AtlasRegistryEntry> entries = <AtlasRegistryEntry>[];
 
-    for (final entry
-    in _normalizer.aliases.entries) {
-      final FunkoStickerType sticker =
-          entry.key;
+    for (final entry in _normalizer.aliases.entries) {
+      final FunkoStickerType sticker = entry.key;
 
       if (sticker == FunkoStickerType.none ||
           sticker == FunkoStickerType.unknown) {
@@ -40,8 +33,6 @@ final class StickerRegistryProvider
       );
     }
 
-    return List<AtlasRegistryEntry>.unmodifiable(
-      entries,
-    );
+    return List<AtlasRegistryEntry>.unmodifiable(entries);
   }
 }

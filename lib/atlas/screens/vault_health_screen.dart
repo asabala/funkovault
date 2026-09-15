@@ -8,9 +8,7 @@ import '../../widgets/vault/vault_scroll_view.dart';
 import '../repositories/vault_repository.dart';
 
 class VaultHealthScreen extends StatelessWidget {
-  const VaultHealthScreen({
-    super.key,
-  });
+  const VaultHealthScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -20,22 +18,22 @@ class VaultHealthScreen extends StatelessWidget {
 
     final allPops = repository.allPops(appState);
 
-    final duplicateGroups =
-        repository.duplicatePopGroups(appState).length;
+    final duplicateGroups = repository.duplicatePopGroups(appState).length;
 
-    final missingValues =
-        allPops.where((p) => p.value <= 0).length;
+    final missingValues = allPops.where((p) => p.value <= 0).length;
 
-    final missingImages =
-        allPops.where((p) => p.imageUrl.isEmpty).length;
+    final missingImages = allPops.where((p) => p.imageUrl.isEmpty).length;
 
-    final missingCollectorIdentity =
-        allPops.where((p) =>
-        p.variant == 'Common' &&
-            p.retailExclusive == 'None' &&
-            p.eventSticker == 'None' &&
-            p.limitedEdition == 'None' &&
-            p.signature == 'Unsigned').length;
+    final missingCollectorIdentity = allPops
+        .where(
+          (p) =>
+              p.variant == 'Common' &&
+              p.retailExclusive == 'None' &&
+              p.eventSticker == 'None' &&
+              p.limitedEdition == 'None' &&
+              p.signature == 'Unsigned',
+        )
+        .length;
 
     final score = _calculateHealth(
       total: allPops.length,
@@ -45,11 +43,7 @@ class VaultHealthScreen extends StatelessWidget {
     );
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Atlas Vault Health',
-        ),
-      ),
+      appBar: AppBar(title: const Text('Atlas Vault Health')),
       body: VaultScrollView(
         children: [
           AtlasGreetingCard(
@@ -114,11 +108,9 @@ class VaultHealthScreen extends StatelessWidget {
       return 100;
     }
 
-    final issues =
-        duplicates + missingValues + missingImages;
+    final issues = duplicates + missingValues + missingImages;
 
-    return (100 - ((issues / total) * 100))
-        .clamp(0, 100);
+    return (100 - ((issues / total) * 100)).clamp(0, 100);
   }
 
   String _assessment(double score) {
@@ -161,15 +153,10 @@ class _HealthTile extends StatelessWidget {
       child: ListTile(
         leading: Icon(icon),
         title: Text(title),
-        subtitle: Text(
-          healthy ? 'Healthy' : 'Needs Attention',
-        ),
+        subtitle: Text(healthy ? 'Healthy' : 'Needs Attention'),
         trailing: Text(
           value,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
-          ),
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
         ),
       ),
     );

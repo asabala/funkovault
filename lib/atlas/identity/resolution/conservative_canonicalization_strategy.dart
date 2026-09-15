@@ -9,8 +9,7 @@ import 'canonicalization_strategy.dart';
 //
 // Future strategies may merge compatible profiles once
 // Atlas has stronger conflict-resolution policies.
-class ConservativeCanonicalizationStrategy
-    implements CanonicalizationStrategy {
+class ConservativeCanonicalizationStrategy implements CanonicalizationStrategy {
   @override
   String get id => 'atlas.conservative_canonicalization';
 

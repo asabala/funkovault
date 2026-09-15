@@ -19,14 +19,14 @@ class IdentityEvidence {
     this.leftSource,
     this.rightSource,
     this.tags = const <String, String>{},
-  })  : assert(
-  weight >= 0.0 && weight <= 1.0,
-  'Weight must be between 0.0 and 1.0.',
-  ),
-        assert(
-        confidence >= 0.0 && confidence <= 1.0,
-        'Confidence must be between 0.0 and 1.0.',
-        );
+  }) : assert(
+         weight >= 0.0 && weight <= 1.0,
+         'Weight must be between 0.0 and 1.0.',
+       ),
+       assert(
+         confidence >= 0.0 && confidence <= 1.0,
+         'Confidence must be between 0.0 and 1.0.',
+       );
 
   // Stable key identifying the attribute being evaluated.
   final String attributeKey;
@@ -111,22 +111,14 @@ class IdentityEvidence {
     return IdentityEvidence(
       attributeKey: attributeKey ?? this.attributeKey,
       role: role ?? this.role,
-      leftValue: clearLeftValue
-          ? null
-          : leftValue ?? this.leftValue,
-      rightValue: clearRightValue
-          ? null
-          : rightValue ?? this.rightValue,
+      leftValue: clearLeftValue ? null : leftValue ?? this.leftValue,
+      rightValue: clearRightValue ? null : rightValue ?? this.rightValue,
       outcome: outcome ?? this.outcome,
       weight: weight ?? this.weight,
       confidence: confidence ?? this.confidence,
       reason: reason ?? this.reason,
-      leftSource: clearLeftSource
-          ? null
-          : leftSource ?? this.leftSource,
-      rightSource: clearRightSource
-          ? null
-          : rightSource ?? this.rightSource,
+      leftSource: clearLeftSource ? null : leftSource ?? this.leftSource,
+      rightSource: clearRightSource ? null : rightSource ?? this.rightSource,
       tags: tags ?? this.tags,
     );
   }
@@ -175,19 +167,14 @@ class IdentityEvidence {
       leftSource,
       rightSource,
       Object.hashAll(
-        tags.entries.map(
-              (MapEntry<String, String> entry) {
-            return Object.hash(entry.key, entry.value);
-          },
-        ),
+        tags.entries.map((MapEntry<String, String> entry) {
+          return Object.hash(entry.key, entry.value);
+        }),
       ),
     );
   }
 
-  static bool _mapsEqual<K, V>(
-      Map<K, V> first,
-      Map<K, V> second,
-      ) {
+  static bool _mapsEqual<K, V>(Map<K, V> first, Map<K, V> second) {
     if (identical(first, second)) {
       return true;
     }
@@ -197,8 +184,7 @@ class IdentityEvidence {
     }
 
     for (final MapEntry<K, V> entry in first.entries) {
-      if (!second.containsKey(entry.key) ||
-          second[entry.key] != entry.value) {
+      if (!second.containsKey(entry.key) || second[entry.key] != entry.value) {
         return false;
       }
     }

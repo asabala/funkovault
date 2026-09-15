@@ -82,8 +82,7 @@ enum AtlasCompletionScope {
   release,
 }
 
-extension AtlasCompletionScopeMetadata
-on AtlasCompletionScope {
+extension AtlasCompletionScopeMetadata on AtlasCompletionScope {
   String get key {
     return switch (this) {
       AtlasCompletionScope.catalog => 'catalog',
@@ -96,8 +95,7 @@ on AtlasCompletionScope {
       AtlasCompletionScope.wave => 'wave',
       AtlasCompletionScope.character => 'character',
       AtlasCompletionScope.mold => 'mold',
-      AtlasCompletionScope.variantFamily =>
-      'variant_family',
+      AtlasCompletionScope.variantFamily => 'variant_family',
       AtlasCompletionScope.retailer => 'retailer',
       AtlasCompletionScope.exclusive => 'exclusive',
       AtlasCompletionScope.convention => 'convention',
@@ -118,13 +116,10 @@ on AtlasCompletionScope {
       AtlasCompletionScope.wave => 'Wave',
       AtlasCompletionScope.character => 'Character',
       AtlasCompletionScope.mold => 'Mold',
-      AtlasCompletionScope.variantFamily =>
-      'Variant Family',
+      AtlasCompletionScope.variantFamily => 'Variant Family',
       AtlasCompletionScope.retailer => 'Retailer',
-      AtlasCompletionScope.exclusive =>
-      'Exclusive Type',
-      AtlasCompletionScope.convention =>
-      'Convention',
+      AtlasCompletionScope.exclusive => 'Exclusive Type',
+      AtlasCompletionScope.convention => 'Convention',
       AtlasCompletionScope.sticker => 'Sticker',
       AtlasCompletionScope.release => 'Release',
     };
@@ -181,27 +176,15 @@ on AtlasCompletionScope {
     };
   }
 
-  static AtlasCompletionScope? fromKey(
-      String value,
-      ) {
+  static AtlasCompletionScope? fromKey(String value) {
     final String normalized = value
         .trim()
         .toLowerCase()
-        .replaceAll(
-      RegExp(r'[^a-z0-9]+'),
-      '_',
-    )
-        .replaceAll(
-      RegExp(r'_+'),
-      '_',
-    )
-        .replaceAll(
-      RegExp(r'^_|_$'),
-      '',
-    );
+        .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
+        .replaceAll(RegExp(r'_+'), '_')
+        .replaceAll(RegExp(r'^_|_$'), '');
 
-    for (final AtlasCompletionScope scope
-    in AtlasCompletionScope.values) {
+    for (final AtlasCompletionScope scope in AtlasCompletionScope.values) {
       if (scope.key == normalized) {
         return scope;
       }

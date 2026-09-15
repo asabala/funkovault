@@ -27,9 +27,9 @@ class AtlasInsightPanel extends StatelessWidget {
     this.onTap,
     this.maxMessageLines,
   }) : assert(
-  icon == null || symbol == null,
-  'Use either icon or symbol, not both.',
-  );
+         icon == null || symbol == null,
+         'Use either icon or symbol, not both.',
+       );
 
   final String title;
   final String message;
@@ -49,102 +49,67 @@ class AtlasInsightPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color accentColor =
-    _accentColorForTone(
-      tone,
-    );
+    final Color accentColor = _accentColorForTone(tone);
 
     final Widget content = Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(
-        AtlasSpacing.md,
-      ),
+      padding: const EdgeInsets.all(AtlasSpacing.md),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(
-          16,
-        ),
-        color: accentColor.withValues(
-          alpha: 0.08,
-        ),
-        border: Border.all(
-          color: accentColor.withValues(
-            alpha: 0.22,
-          ),
-        ),
+        borderRadius: BorderRadius.circular(16),
+        color: accentColor.withValues(alpha: 0.08),
+        border: Border.all(color: accentColor.withValues(alpha: 0.22)),
       ),
       child: Row(
-        crossAxisAlignment:
-        CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _InsightIdentity(
             icon: icon,
             symbol: symbol,
             accentColor: accentColor,
           ),
-          const SizedBox(
-            width: AtlasSpacing.md,
-          ),
+          const SizedBox(width: AtlasSpacing.md),
           Expanded(
             child: Column(
-              crossAxisAlignment:
-              CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (eyebrow?.trim().isNotEmpty ==
-                    true) ...[
+                if (eyebrow?.trim().isNotEmpty == true) ...[
                   Text(
-                    eyebrow!
-                        .trim()
-                        .toUpperCase(),
-                    style: AtlasTypography.bodySmall
-                        .copyWith(
+                    eyebrow!.trim().toUpperCase(),
+                    style: AtlasTypography.bodySmall.copyWith(
                       color: accentColor,
-                      fontWeight:
-                      FontWeight.bold,
+                      fontWeight: FontWeight.bold,
                       letterSpacing: 0.6,
                     ),
                   ),
-                  const SizedBox(
-                    height: AtlasSpacing.xs,
-                  ),
+                  const SizedBox(height: AtlasSpacing.xs),
                 ],
                 Row(
-                  crossAxisAlignment:
-                  CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
                       child: Text(
                         title,
-                        style: AtlasTypography
-                            .bodyMedium
-                            .copyWith(
-                          color:
-                          AtlasColors.textPrimary,
-                          fontWeight:
-                          FontWeight.bold,
+                        style: AtlasTypography.bodyMedium.copyWith(
+                          color: AtlasColors.textPrimary,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
                     if (badge != null) ...[
-                      const SizedBox(
-                        width: AtlasSpacing.sm,
-                      ),
+                      const SizedBox(width: AtlasSpacing.sm),
                       badge!,
                     ],
                   ],
                 ),
-                const SizedBox(
-                  height: AtlasSpacing.xs,
-                ),
+                const SizedBox(height: AtlasSpacing.xs),
                 Text(
                   message,
                   maxLines: maxMessageLines,
                   overflow: maxMessageLines == null
                       ? TextOverflow.visible
                       : TextOverflow.ellipsis,
-                  style: AtlasTypography.bodySmall
-                      .copyWith(
-                    color:
-                    AtlasColors.textSecondary,
+                  style: AtlasTypography.bodySmall.copyWith(
+                    color: AtlasColors.textSecondary,
                     height: 1.4,
                   ),
                 ),
@@ -152,18 +117,11 @@ class AtlasInsightPanel extends StatelessWidget {
             ),
           ),
           if (trailing != null) ...[
-            const SizedBox(
-              width: AtlasSpacing.sm,
-            ),
+            const SizedBox(width: AtlasSpacing.sm),
             trailing!,
           ] else if (onTap != null) ...[
-            const SizedBox(
-              width: AtlasSpacing.sm,
-            ),
-            Icon(
-              Icons.chevron_right_rounded,
-              color: accentColor,
-            ),
+            const SizedBox(width: AtlasSpacing.sm),
+            Icon(Icons.chevron_right_rounded, color: accentColor),
           ],
         ],
       ),
@@ -175,35 +133,23 @@ class AtlasInsightPanel extends StatelessWidget {
 
     return Material(
       color: Colors.transparent,
-      borderRadius: BorderRadius.circular(
-        16,
-      ),
+      borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(
-          16,
-        ),
+        borderRadius: BorderRadius.circular(16),
         child: content,
       ),
     );
   }
 
-  Color _accentColorForTone(
-      AtlasInsightPanelTone tone,
-      ) {
+  Color _accentColorForTone(AtlasInsightPanelTone tone) {
     return switch (tone) {
-      AtlasInsightPanelTone.intelligence =>
-      AtlasColors.intelligenceBlue,
-      AtlasInsightPanelTone.recommendation =>
-      AtlasColors.vaultGold,
-      AtlasInsightPanelTone.success =>
-      AtlasColors.success,
-      AtlasInsightPanelTone.warning =>
-      AtlasColors.warning,
-      AtlasInsightPanelTone.danger =>
-      AtlasColors.danger,
-      AtlasInsightPanelTone.neutral =>
-      AtlasColors.textSecondary,
+      AtlasInsightPanelTone.intelligence => AtlasColors.intelligenceBlue,
+      AtlasInsightPanelTone.recommendation => AtlasColors.vaultGold,
+      AtlasInsightPanelTone.success => AtlasColors.success,
+      AtlasInsightPanelTone.warning => AtlasColors.warning,
+      AtlasInsightPanelTone.danger => AtlasColors.danger,
+      AtlasInsightPanelTone.neutral => AtlasColors.textSecondary,
     };
   }
 }
@@ -226,31 +172,17 @@ class _InsightIdentity extends StatelessWidget {
       height: 42,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: accentColor.withValues(
-          alpha: 0.12,
-        ),
-        borderRadius: BorderRadius.circular(
-          14,
-        ),
-        border: Border.all(
-          color: accentColor.withValues(
-            alpha: 0.24,
-          ),
-        ),
+        color: accentColor.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: accentColor.withValues(alpha: 0.24)),
       ),
       child: symbol != null
-          ? Text(
-        symbol!,
-        style: const TextStyle(
-          fontSize: 19,
-        ),
-      )
+          ? Text(symbol!, style: const TextStyle(fontSize: 19))
           : Icon(
-        icon ??
-            Icons.auto_awesome_rounded,
-        color: accentColor,
-        size: 22,
-      ),
+              icon ?? Icons.auto_awesome_rounded,
+              color: accentColor,
+              size: 22,
+            ),
     );
   }
 }

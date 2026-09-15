@@ -26,60 +26,33 @@ class AtlasGreetingCard extends StatelessWidget {
       curve: AtlasAnimation.standardCurve,
       decoration: BoxDecoration(
         color: AtlasColors.surface,
-        borderRadius: BorderRadius.circular(
-          AtlasRadius.lg,
-        ),
-        border: Border.all(
-          color: AtlasColors.border,
-        ),
+        borderRadius: BorderRadius.circular(AtlasRadius.lg),
+        border: Border.all(color: AtlasColors.border),
       ),
-      padding: const EdgeInsets.all(
-        AtlasSpacing.lg,
-      ),
+      padding: const EdgeInsets.all(AtlasSpacing.lg),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.all(
-              AtlasSpacing.md,
-            ),
+            padding: const EdgeInsets.all(AtlasSpacing.md),
             decoration: BoxDecoration(
-              color: AtlasColors.intelligenceBlue.withValues(
-                alpha: 0.15,
-              ),
-              borderRadius: BorderRadius.circular(
-                AtlasRadius.md,
-              ),
+              color: AtlasColors.intelligenceBlue.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(AtlasRadius.md),
             ),
-            child: Icon(
-              icon,
-              color: AtlasColors.vaultGold,
-              size: 28,
-            ),
+            child: Icon(icon, color: AtlasColors.vaultGold, size: 28),
           ),
 
-          const SizedBox(
-            width: AtlasSpacing.lg,
-          ),
+          const SizedBox(width: AtlasSpacing.lg),
 
           Expanded(
             child: Column(
-              crossAxisAlignment:
-              CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: AtlasTypography.headingMedium,
-                ),
+                Text(title, style: AtlasTypography.headingMedium),
 
-                const SizedBox(
-                  height: AtlasSpacing.sm,
-                ),
+                const SizedBox(height: AtlasSpacing.sm),
 
-                Text(
-                  message,
-                  style: AtlasTypography.bodyMedium,
-                ),
+                Text(message, style: AtlasTypography.bodyMedium),
               ],
             ),
           ),

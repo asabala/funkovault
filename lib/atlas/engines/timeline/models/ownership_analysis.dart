@@ -96,9 +96,7 @@ class OwnershipAnalysis {
     String? status,
   }) {
     return OwnershipAnalysis(
-      ownedSince: clearOwnedSince
-          ? null
-          : ownedSince ?? this.ownedSince,
+      ownedSince: clearOwnedSince ? null : ownedSince ?? this.ownedSince,
       daysOwned: daysOwned ?? this.daysOwned,
       monthsOwned: monthsOwned ?? this.monthsOwned,
       yearsOwned: yearsOwned ?? this.yearsOwned,
@@ -106,8 +104,7 @@ class OwnershipAnalysis {
           ? null
           : lastActivityAt ?? this.lastActivityAt,
       isRecentlyAdded: isRecentlyAdded ?? this.isRecentlyAdded,
-      isRecentlyUpdated:
-      isRecentlyUpdated ?? this.isRecentlyUpdated,
+      isRecentlyUpdated: isRecentlyUpdated ?? this.isRecentlyUpdated,
       status: status ?? this.status,
     );
   }

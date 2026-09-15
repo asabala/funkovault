@@ -15,28 +15,21 @@ class AskAtlasBottomSheetLauncher {
     required AcademyExplainerEngine explainerEngine,
     required ValueChanged<AcademyLesson> onOpenLesson,
   }) async {
-    final String cleanedQuestion =
-    question.trim();
+    final String cleanedQuestion = question.trim();
 
     if (cleanedQuestion.isEmpty) {
       return;
     }
 
-    final result =
-    explainerEngine.explain(
-      cleanedQuestion,
-    );
+    final result = explainerEngine.explain(cleanedQuestion);
 
     await showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
       isScrollControlled: true,
       useSafeArea: true,
-      backgroundColor:
-      Theme.of(context).colorScheme.surface,
-      builder: (
-          BuildContext sheetContext,
-          ) {
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      builder: (BuildContext sheetContext) {
         if (result == null) {
           return _buildEmptyAnswer(
             context: context,
@@ -55,8 +48,7 @@ class AskAtlasBottomSheetLauncher {
           );
         }
 
-        final AcademyLesson? lesson =
-            result.lesson;
+        final AcademyLesson? lesson = result.lesson;
 
         if (lesson == null) {
           return _buildEmptyAnswer(
@@ -75,17 +67,13 @@ class AskAtlasBottomSheetLauncher {
           answer: result.answer,
           atlasTip: result.atlasTip,
           onOpenLesson: () {
-            Navigator.pop(
-              sheetContext,
-            );
+            Navigator.pop(sheetContext);
 
             if (!context.mounted) {
               return;
             }
 
-            onOpenLesson(
-              lesson,
-            );
+            onOpenLesson(lesson);
           },
         );
       },
@@ -102,14 +90,9 @@ class AskAtlasBottomSheetLauncher {
   }) {
     return AskAtlasEmptyAnswer(
       question: question,
-      suggestions:
-      repository.getLessons(),
-      onSuggestionTap: (
-          AcademyLesson lesson,
-          ) {
-        Navigator.pop(
-          sheetContext,
-        );
+      suggestions: repository.getLessons(),
+      onSuggestionTap: (AcademyLesson lesson) {
+        Navigator.pop(sheetContext);
 
         if (!context.mounted) {
           return;
@@ -119,10 +102,8 @@ class AskAtlasBottomSheetLauncher {
           context: context,
           question: lesson.title,
           repository: repository,
-          explainerEngine:
-          explainerEngine,
-          onOpenLesson:
-          onOpenLesson,
+          explainerEngine: explainerEngine,
+          onOpenLesson: onOpenLesson,
         );
       },
     );

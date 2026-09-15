@@ -42,10 +42,7 @@ class IdentityReviewGroup {
   int get itemCount => pops.length;
 
   int get totalQuantity {
-    return pops.fold<int>(
-      0,
-          (total, pop) => total + pop.quantity,
-    );
+    return pops.fold<int>(0, (total, pop) => total + pop.quantity);
   }
 
   String get name {

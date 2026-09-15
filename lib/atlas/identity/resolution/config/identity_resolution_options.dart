@@ -28,8 +28,7 @@ class IdentityResolutionOptions {
   // Includes comparison and resolution notes in the final result.
   final bool includeComparisonNotes;
 
-  static const IdentityResolutionOptions standard =
-  IdentityResolutionOptions();
+  static const IdentityResolutionOptions standard = IdentityResolutionOptions();
 
   IdentityResolutionOptions copyWith({
     bool? allowSingleCandidate,
@@ -39,16 +38,14 @@ class IdentityResolutionOptions {
     bool? includeComparisonNotes,
   }) {
     return IdentityResolutionOptions(
-      allowSingleCandidate:
-      allowSingleCandidate ?? this.allowSingleCandidate,
-      compareAllCandidates:
-      compareAllCandidates ?? this.compareAllCandidates,
+      allowSingleCandidate: allowSingleCandidate ?? this.allowSingleCandidate,
+      compareAllCandidates: compareAllCandidates ?? this.compareAllCandidates,
       recordUnmatchedCandidates:
-      recordUnmatchedCandidates ?? this.recordUnmatchedCandidates,
+          recordUnmatchedCandidates ?? this.recordUnmatchedCandidates,
       buildResolutionSession:
-      buildResolutionSession ?? this.buildResolutionSession,
+          buildResolutionSession ?? this.buildResolutionSession,
       includeComparisonNotes:
-      includeComparisonNotes ?? this.includeComparisonNotes,
+          includeComparisonNotes ?? this.includeComparisonNotes,
     );
   }
 
@@ -80,8 +77,7 @@ class IdentityResolutionOptions {
             runtimeType == other.runtimeType &&
             allowSingleCandidate == other.allowSingleCandidate &&
             compareAllCandidates == other.compareAllCandidates &&
-            recordUnmatchedCandidates ==
-                other.recordUnmatchedCandidates &&
+            recordUnmatchedCandidates == other.recordUnmatchedCandidates &&
             buildResolutionSession == other.buildResolutionSession &&
             includeComparisonNotes == other.includeComparisonNotes;
   }

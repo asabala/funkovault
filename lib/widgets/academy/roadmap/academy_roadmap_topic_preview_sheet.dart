@@ -54,13 +54,9 @@ class AcademyRoadmapTopicPreviewSheet extends StatelessWidget {
                 accentColor: isPremium
                     ? AtlasColors.vaultGold
                     : AtlasColors.intelligenceBlue,
-                badge: isPremium
-                    ? const PremiumBadge()
-                    : null,
+                badge: isPremium ? const PremiumBadge() : null,
               ),
-              const SizedBox(
-                height: AtlasSpacing.lg,
-              ),
+              const SizedBox(height: AtlasSpacing.lg),
               if (isPremium)
                 const AcademyPremiumInsightCard()
               else
@@ -68,7 +64,7 @@ class AcademyRoadmapTopicPreviewSheet extends StatelessWidget {
                   icon: Icons.schedule_rounded,
                   title: 'Roadmap Topic',
                   message:
-                  'This topic is planned for a future Atlas Academy lesson.',
+                      'This topic is planned for a future Atlas Academy lesson.',
                 ),
             ],
           ),

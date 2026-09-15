@@ -30,19 +30,12 @@ class AtlasValueHistorySummary {
   bool get hasCurrentValue => currentValue > 0;
 }
 
-enum AtlasValueTrend {
-  up,
-  down,
-  unchanged,
-  none,
-}
+enum AtlasValueTrend { up, down, unchanged, none }
 
 class AtlasValueHistoryEngine {
   const AtlasValueHistoryEngine();
 
-  AtlasValueHistorySummary build(
-      List<ValueHistoryEntry> history,
-      ) {
+  AtlasValueHistorySummary build(List<ValueHistoryEntry> history) {
     if (history.isEmpty) {
       return const AtlasValueHistorySummary(
         currentValue: 0,
@@ -59,29 +52,18 @@ class AtlasValueHistoryEngine {
     }
 
     final sorted = [...history]
-      ..sort(
-            (a, b) => a.recordedAt.compareTo(
-          b.recordedAt,
-        ),
-      );
+      ..sort((a, b) => a.recordedAt.compareTo(b.recordedAt));
 
     final current = sorted.last;
 
-    final previous =
-    sorted.length > 1 ? sorted[sorted.length - 2] : null;
+    final previous = sorted.length > 1 ? sorted[sorted.length - 2] : null;
 
-    final highest = sorted
-        .map((e) => e.value)
-        .reduce((a, b) => a > b ? a : b);
+    final highest = sorted.map((e) => e.value).reduce((a, b) => a > b ? a : b);
 
-    final lowest = sorted
-        .map((e) => e.value)
-        .reduce((a, b) => a < b ? a : b);
+    final lowest = sorted.map((e) => e.value).reduce((a, b) => a < b ? a : b);
 
-    final average = sorted
-        .map((e) => e.value)
-        .reduce((a, b) => a + b) /
-        sorted.length;
+    final average =
+        sorted.map((e) => e.value).reduce((a, b) => a + b) / sorted.length;
 
     double change = 0;
     double percent = 0;
@@ -91,8 +73,7 @@ class AtlasValueHistoryEngine {
       change = current.value - previous.value;
 
       if (previous.value > 0) {
-        percent =
-            (change / previous.value) * 100;
+        percent = (change / previous.value) * 100;
       }
 
       if (change > 0) {

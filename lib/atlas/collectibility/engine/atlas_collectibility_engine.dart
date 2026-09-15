@@ -24,10 +24,7 @@ class AtlasCollectibilityEngine {
     required AtlasHeroSummary heroSummary,
     required List<PopIdentityBadgeData> identityBadges,
   }) {
-    final signals = _buildSignals(
-      pop: pop,
-      identityBadges: identityBadges,
-    );
+    final signals = _buildSignals(pop: pop, identityBadges: identityBadges);
 
     final strengths = _buildStrengths(
       heroSummary: heroSummary,
@@ -39,10 +36,7 @@ class AtlasCollectibilityEngine {
     final score = heroSummary.normalizedScore;
     final tier = heroSummary.classification;
 
-    final confidence = _buildConfidence(
-      pop: pop,
-      signalCount: signals.length,
-    );
+    final confidence = _buildConfidence(pop: pop, signalCount: signals.length);
 
     final marketReadiness = _buildMarketReadiness(pop);
 
@@ -50,11 +44,7 @@ class AtlasCollectibilityEngine {
       score: score,
       tier: tier,
       confidence: confidence,
-      headline: _buildHeadline(
-        pop: pop,
-        tier: tier,
-        signals: signals,
-      ),
+      headline: _buildHeadline(pop: pop, tier: tier, signals: signals),
       explanation: _buildExplanation(
         tier: tier,
         confidence: confidence,
@@ -63,10 +53,7 @@ class AtlasCollectibilityEngine {
       strengths: List<String>.unmodifiable(strengths),
       opportunities: List<String>.unmodifiable(opportunities),
       signals: List<AtlasCollectibilitySignal>.unmodifiable(signals),
-      isDisplayPiece: _isDisplayPiece(
-        score: score,
-        signals: signals,
-      ),
+      isDisplayPiece: _isDisplayPiece(score: score, signals: signals),
       shouldReviewForInsurance: _shouldReviewForInsurance(
         pop: pop,
         score: score,
@@ -95,18 +82,14 @@ class AtlasCollectibilityEngine {
           id: 'identity-${badge.id}',
           label: badge.label,
           description:
-          '${badge.displayLabel} is part of this collectible’s release identity.',
+              '${badge.displayLabel} is part of this collectible’s release identity.',
           category: 'Identity',
           points: 6,
         ),
       );
     }
 
-    final variantText = _combinedText([
-      pop.edition,
-      pop.variant,
-      pop.finish,
-    ]);
+    final variantText = _combinedText([pop.edition, pop.variant, pop.finish]);
 
     if (_containsAny(variantText, const ['chase'])) {
       addSignal(
@@ -114,54 +97,45 @@ class AtlasCollectibilityEngine {
           id: 'chase',
           label: 'Chase Release',
           description:
-          'Chase releases are distinct collectible variants with stronger collector differentiation.',
+              'Chase releases are distinct collectible variants with stronger collector differentiation.',
           category: 'Variant',
           points: 15,
         ),
       );
     }
 
-    if (_containsAny(
-      variantText,
-      const [
-        'prototype',
-        'proto',
-      ],
-    )) {
+    if (_containsAny(variantText, const ['prototype', 'proto'])) {
       addSignal(
         const AtlasCollectibilitySignal(
           id: 'prototype',
           label: 'Prototype',
           description:
-          'Prototype collectibles may have unusual production history and limited availability.',
+              'Prototype collectibles may have unusual production history and limited availability.',
           category: 'Production',
           points: 20,
         ),
       );
     }
 
-    if (_containsAny(
-      variantText,
-      const [
-        'glow',
-        'glow in the dark',
-        'gitd',
-        'flocked',
-        'metallic',
-        'diamond',
-        'blacklight',
-        'black light',
-        'chrome',
-        'translucent',
-        'holographic',
-      ],
-    )) {
+    if (_containsAny(variantText, const [
+      'glow',
+      'glow in the dark',
+      'gitd',
+      'flocked',
+      'metallic',
+      'diamond',
+      'blacklight',
+      'black light',
+      'chrome',
+      'translucent',
+      'holographic',
+    ])) {
       addSignal(
         const AtlasCollectibilitySignal(
           id: 'special-finish',
           label: 'Special Finish',
           description:
-          'A special finish gives this release a visually distinct collector identity.',
+              'A special finish gives this release a visually distinct collector identity.',
           category: 'Variant',
           points: 8,
         ),
@@ -174,7 +148,7 @@ class AtlasCollectibilityEngine {
           id: 'retail-exclusive',
           label: 'Retail Exclusive',
           description:
-          'This release is associated with ${pop.retailExclusive.trim()}.',
+              'This release is associated with ${pop.retailExclusive.trim()}.',
           category: 'Distribution',
           points: 8,
         ),
@@ -192,8 +166,7 @@ class AtlasCollectibilityEngine {
         AtlasCollectibilitySignal(
           id: 'sticker-release',
           label: 'Sticker Release',
-          description:
-          '$stickerLabel helps distinguish this physical release.',
+          description: '$stickerLabel helps distinguish this physical release.',
           category: 'Release',
           points: 8,
         ),
@@ -206,7 +179,7 @@ class AtlasCollectibilityEngine {
           id: 'limited-edition',
           label: 'Limited Edition',
           description:
-          '${pop.limitedEdition.trim()} indicates restricted or numbered production.',
+              '${pop.limitedEdition.trim()} indicates restricted or numbered production.',
           category: 'Production',
           points: 15,
         ),
@@ -219,7 +192,7 @@ class AtlasCollectibilityEngine {
           id: 'signed',
           label: 'Signed Collectible',
           description:
-          '${pop.signature.trim()} adds autograph-related collector significance.',
+              '${pop.signature.trim()} adds autograph-related collector significance.',
           category: 'Authentication',
           points: 10,
         ),
@@ -233,7 +206,7 @@ class AtlasCollectibilityEngine {
           id: 'authenticated',
           label: 'Authentication Recorded',
           description:
-          'Authentication information strengthens the collectible’s documented provenance.',
+              'Authentication information strengthens the collectible’s documented provenance.',
           category: 'Authentication',
           points: 10,
         ),
@@ -246,7 +219,7 @@ class AtlasCollectibilityEngine {
           id: 'graded',
           label: 'Grading Recorded',
           description:
-          '${pop.gradingCompany.trim()} is recorded as the grading company.',
+              '${pop.gradingCompany.trim()} is recorded as the grading company.',
           category: 'Condition',
           points: 8,
         ),
@@ -255,21 +228,18 @@ class AtlasCollectibilityEngine {
 
     final productionStatus = pop.productionStatus.trim().toLowerCase();
 
-    if (_containsAny(
-      productionStatus,
-      const [
-        'vaulted',
-        'retired',
-        'discontinued',
-        'out of production',
-      ],
-    )) {
+    if (_containsAny(productionStatus, const [
+      'vaulted',
+      'retired',
+      'discontinued',
+      'out of production',
+    ])) {
       addSignal(
         AtlasCollectibilitySignal(
           id: 'production-ended',
           label: 'Production Ended',
           description:
-          '${pop.productionStatus.trim()} may increase collector interest by limiting future supply.',
+              '${pop.productionStatus.trim()} may increase collector interest by limiting future supply.',
           category: 'Production',
           points: 10,
         ),
@@ -288,7 +258,7 @@ class AtlasCollectibilityEngine {
           id: 'catalog-identity',
           label: 'Strong Catalog Identity',
           description:
-          'Multiple catalog identifiers strengthen release matching and record confidence.',
+              'Multiple catalog identifiers strengthen release matching and record confidence.',
           category: 'Data Quality',
           points: 4,
         ),
@@ -363,18 +333,13 @@ class AtlasCollectibilityEngine {
     if (_hasMeaningfulSignature(pop.signature) &&
         !_hasMeaningfulValue(pop.authenticationProvider) &&
         !_hasMeaningfulValue(pop.authenticityNumber)) {
-      opportunities.add(
-        'Add autograph authentication details when available.',
-      );
+      opportunities.add('Add autograph authentication details when available.');
     }
 
     return opportunities;
   }
 
-  String _buildConfidence({
-    required Pop pop,
-    required int signalCount,
-  }) {
+  String _buildConfidence({required Pop pop, required int signalCount}) {
     var evidenceCount = signalCount;
 
     if (pop.value > 0) {
@@ -419,17 +384,14 @@ class AtlasCollectibilityEngine {
     required String tier,
     required List<AtlasCollectibilitySignal> signals,
   }) {
-    final name = pop.name.trim().isEmpty
-        ? 'This collectible'
-        : pop.name.trim();
+    final name = pop.name.trim().isEmpty ? 'This collectible' : pop.name.trim();
 
     if (signals.isEmpty) {
       return '$name currently has a standard collector profile.';
     }
 
     final strongestSignal = signals.reduce(
-          (current, next) =>
-      next.points > current.points ? next : current,
+      (current, next) => next.points > current.points ? next : current,
     );
 
     return '$name is classified as a $tier, led by its '
@@ -463,8 +425,8 @@ class AtlasCollectibilityEngine {
     required List<AtlasCollectibilitySignal> signals,
   }) {
     final hasVisualSignal = signals.any(
-          (signal) =>
-      signal.id == 'special-finish' ||
+      (signal) =>
+          signal.id == 'special-finish' ||
           signal.id == 'chase' ||
           signal.id == 'prototype' ||
           signal.id == 'signed' ||
@@ -480,8 +442,8 @@ class AtlasCollectibilityEngine {
     required List<AtlasCollectibilitySignal> signals,
   }) {
     final hasStrongDocumentation = signals.any(
-          (signal) =>
-      signal.id == 'authenticated' ||
+      (signal) =>
+          signal.id == 'authenticated' ||
           signal.id == 'graded' ||
           signal.id == 'limited-edition' ||
           signal.id == 'prototype',
@@ -499,8 +461,8 @@ class AtlasCollectibilityEngine {
     final hasBoxCondition = pop.boxCondition.trim().isNotEmpty;
     final hasReleaseIdentity =
         pop.sourceCatalogId.trim().isNotEmpty ||
-            pop.sourceCollectibleId.trim().isNotEmpty ||
-            pop.sourceUpc.trim().isNotEmpty;
+        pop.sourceCollectibleId.trim().isNotEmpty ||
+        pop.sourceUpc.trim().isNotEmpty;
 
     if (hasValue &&
         hasImage &&
@@ -548,10 +510,7 @@ class AtlasCollectibilityEngine {
         .join(' ');
   }
 
-  static bool _containsAny(
-      String source,
-      List<String> values,
-      ) {
+  static bool _containsAny(String source, List<String> values) {
     return values.any(source.contains);
   }
 

@@ -2,8 +2,7 @@ class AtlasConfig {
   const AtlasConfig._();
 
   /// Supabase Project URL
-  static const String supabaseUrl =
-      'https://qzwvzkzryzzlolcqkrfq.supabase.co';
+  static const String supabaseUrl = 'https://qzwvzkzryzzlolcqkrfq.supabase.co';
 
   /// Supabase Publishable Key
   static const String supabasePublishableKey =

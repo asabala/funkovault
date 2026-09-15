@@ -5,9 +5,8 @@ import '../models/atlas_catalog_product.dart';
 // This index normalizes searchable text and allows repositories to perform
 // consistent text searches without duplicating normalization logic.
 final class AtlasCatalogSearchIndex {
-  AtlasCatalogSearchIndex({
-    required Iterable<AtlasCatalogProduct> products,
-  }) : _products = List.unmodifiable(products);
+  AtlasCatalogSearchIndex({required Iterable<AtlasCatalogProduct> products})
+    : _products = List.unmodifiable(products);
 
   final List<AtlasCatalogProduct> _products;
 
@@ -22,14 +21,11 @@ final class AtlasCatalogSearchIndex {
     String? variantName,
     int limit = 25,
   }) {
-    final String normalizedQuery =
-    _normalize(query);
+    final String normalizedQuery = _normalize(query);
 
-    final List<AtlasCatalogProduct> results =
-    <AtlasCatalogProduct>[];
+    final List<AtlasCatalogProduct> results = <AtlasCatalogProduct>[];
 
-    for (final AtlasCatalogProduct product
-    in _products) {
+    for (final AtlasCatalogProduct product in _products) {
       if (!_matches(
         product: product,
         query: normalizedQuery,
@@ -51,9 +47,7 @@ final class AtlasCatalogSearchIndex {
       }
     }
 
-    return List<AtlasCatalogProduct>.unmodifiable(
-      results,
-    );
+    return List<AtlasCatalogProduct>.unmodifiable(results);
   }
 
   bool _matches({
@@ -68,41 +62,31 @@ final class AtlasCatalogSearchIndex {
     String? variantName,
   }) {
     if (categoryCode != null &&
-        product.categoryCode !=
-            categoryCode.toUpperCase()) {
+        product.categoryCode != categoryCode.toUpperCase()) {
       return false;
     }
 
-    if (brand != null &&
-        product.brand != brand) {
+    if (brand != null && product.brand != brand) {
       return false;
     }
 
-    if (productLine != null &&
-        product.productLine != productLine) {
+    if (productLine != null && product.productLine != productLine) {
       return false;
     }
 
-    if (series != null &&
-        product.series != series) {
+    if (series != null && product.series != series) {
       return false;
     }
 
-    if (characterName != null &&
-        product.characterName !=
-            characterName) {
+    if (characterName != null && product.characterName != characterName) {
       return false;
     }
 
-    if (productNumber != null &&
-        product.productNumber !=
-            productNumber) {
+    if (productNumber != null && product.productNumber != productNumber) {
       return false;
     }
 
-    if (variantName != null &&
-        product.variantName !=
-            variantName) {
+    if (variantName != null && product.variantName != variantName) {
       return false;
     }
 
@@ -110,22 +94,13 @@ final class AtlasCatalogSearchIndex {
       return true;
     }
 
-    return _normalize(product.displayName)
-        .contains(query) ||
-        _normalize(product.series)
-            .contains(query) ||
-        _normalize(product.characterName)
-            .contains(query) ||
-        _normalize(product.productNumber)
-            .contains(query);
+    return _normalize(product.displayName).contains(query) ||
+        _normalize(product.series).contains(query) ||
+        _normalize(product.characterName).contains(query) ||
+        _normalize(product.productNumber).contains(query);
   }
 
-  String _normalize(
-      String? value,
-      ) {
-    return value
-        ?.trim()
-        .toLowerCase() ??
-        '';
+  String _normalize(String? value) {
+    return value?.trim().toLowerCase() ?? '';
   }
 }

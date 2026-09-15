@@ -1,7 +1,4 @@
-enum AuthStatus {
-  guest,
-  authenticated,
-}
+enum AuthStatus { guest, authenticated }
 
 class AuthState {
   const AuthState({
@@ -20,8 +17,7 @@ class AuthState {
   final bool isPremium;
   final bool emailVerified;
 
-  bool get isLoggedIn =>
-      status == AuthStatus.authenticated;
+  bool get isLoggedIn => status == AuthStatus.authenticated;
 
   AuthState copyWith({
     AuthStatus? status,
@@ -37,8 +33,7 @@ class AuthState {
       email: email ?? this.email,
       displayName: displayName ?? this.displayName,
       isPremium: isPremium ?? this.isPremium,
-      emailVerified:
-      emailVerified ?? this.emailVerified,
+      emailVerified: emailVerified ?? this.emailVerified,
     );
   }
 

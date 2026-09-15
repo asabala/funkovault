@@ -29,19 +29,12 @@ class ContinueJourneyCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Continue Your Journey',
-            style: AtlasTypography.headingSmall,
-          ),
+          Text('Continue Your Journey', style: AtlasTypography.headingSmall),
           const SizedBox(height: AtlasSpacing.md),
           AtlasGlassPanel(
             child: Row(
               children: [
-                Icon(
-                  icon,
-                  color: AtlasColors.vaultGold,
-                  size: 30,
-                ),
+                Icon(icon, color: AtlasColors.vaultGold, size: 30),
                 const SizedBox(width: AtlasSpacing.md),
                 Expanded(
                   child: Column(

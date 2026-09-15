@@ -11,9 +11,7 @@ class PipelineExecutionResult {
     return PipelineExecutionResult._(
       initialSession: initialSession,
       finalSession: finalSession,
-      engineResults: List<EngineResult>.unmodifiable(
-        engineResults,
-      ),
+      engineResults: List<EngineResult>.unmodifiable(engineResults),
     );
   }
 
@@ -35,38 +33,26 @@ class PipelineExecutionResult {
 
   int get successfulEngineCount {
     return engineResults
-        .where(
-          (EngineResult result) => result.isSuccessful,
-    )
+        .where((EngineResult result) => result.isSuccessful)
         .length;
   }
 
   int get skippedEngineCount {
     return engineResults
-        .where(
-          (EngineResult result) => result.wasSkipped,
-    )
+        .where((EngineResult result) => result.wasSkipped)
         .length;
   }
 
   int get failedEngineCount {
     return engineResults
-        .where(
-          (EngineResult result) => result.hasFailed,
-    )
+        .where((EngineResult result) => result.hasFailed)
         .length;
   }
 
   int get warningCount {
-    return engineResults.fold<int>(
-      0,
-          (
-          int total,
-          EngineResult result,
-          ) {
-        return total + result.warnings.length;
-      },
-    );
+    return engineResults.fold<int>(0, (int total, EngineResult result) {
+      return total + result.warnings.length;
+    });
   }
 
   bool get completedSuccessfully {
@@ -86,31 +72,23 @@ class PipelineExecutionResult {
   }
 
   Duration get totalEngineDuration {
-    return engineResults.fold<Duration>(
-      Duration.zero,
-          (
-          Duration total,
-          EngineResult result,
-          ) {
-        return total +
-            (result.metadata?.duration ?? Duration.zero);
-      },
-    );
+    return engineResults.fold<Duration>(Duration.zero, (
+      Duration total,
+      EngineResult result,
+    ) {
+      return total + (result.metadata?.duration ?? Duration.zero);
+    });
   }
 
   List<EngineResult> get failures {
     return List<EngineResult>.unmodifiable(
-      engineResults.where(
-            (EngineResult result) => result.hasFailed,
-      ),
+      engineResults.where((EngineResult result) => result.hasFailed),
     );
   }
 
   List<EngineResult> get skipped {
     return List<EngineResult>.unmodifiable(
-      engineResults.where(
-            (EngineResult result) => result.wasSkipped,
-      ),
+      engineResults.where((EngineResult result) => result.wasSkipped),
     );
   }
 

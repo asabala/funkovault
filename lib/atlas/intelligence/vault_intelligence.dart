@@ -15,7 +15,7 @@ class VaultIntelligence {
       largestCollectionCount: 0,
       reportTitle: 'Vault Intelligence Online',
       reportMessage:
-      'Atlas is ready to analyze your collection once collection data is connected.',
+          'Atlas is ready to analyze your collection once collection data is connected.',
     );
   }
 
@@ -74,8 +74,7 @@ class VaultIntelligence {
     final issueCount =
         duplicateCount + missingValueCount + missingPurchaseDateCount;
 
-    final score =
-        100 - ((issueCount / totalPops) * 100);
+    final score = 100 - ((issueCount / totalPops) * 100);
 
     return score.clamp(0, 100);
   }
@@ -94,8 +93,7 @@ class VaultIntelligence {
       return 'Duplicates Found';
     }
 
-    if (missingValueCount > 0 ||
-        missingPurchaseDateCount > 0) {
+    if (missingValueCount > 0 || missingPurchaseDateCount > 0) {
       return 'Vault Needs Review';
     }
 
@@ -126,8 +124,7 @@ class VaultIntelligence {
       return '$missingPurchaseDateCount Pops are missing purchase dates.';
     }
 
-    if (largestCollectionName.trim().isNotEmpty &&
-        largestCollectionCount > 0) {
+    if (largestCollectionName.trim().isNotEmpty && largestCollectionCount > 0) {
       return '$largestCollectionName is currently your largest collection with $largestCollectionCount Pops.';
     }
 

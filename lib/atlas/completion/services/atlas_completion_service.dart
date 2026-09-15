@@ -14,15 +14,11 @@ final class AtlasCompletionService {
     AtlasCatalogService? catalogService,
     AtlasCompletionEngine? completionEngine,
     AtlasTaxonomyService? taxonomyService,
-  })  : _catalogService =
-      catalogService ?? AtlasCatalogService.instance,
-        _completionEngine =
-            completionEngine ?? AtlasCompletionEngine(),
-        _taxonomyService =
-            taxonomyService ?? AtlasTaxonomyService.instance;
+  }) : _catalogService = catalogService ?? AtlasCatalogService.instance,
+       _completionEngine = completionEngine ?? AtlasCompletionEngine(),
+       _taxonomyService = taxonomyService ?? AtlasTaxonomyService.instance;
 
-  static final AtlasCompletionService instance =
-  AtlasCompletionService();
+  static final AtlasCompletionService instance = AtlasCompletionService();
 
   final AtlasCatalogService _catalogService;
   final AtlasCompletionEngine _completionEngine;
@@ -40,20 +36,17 @@ final class AtlasCompletionService {
   Future<AtlasCompletionResult> evaluateVariantFamily({
     required AtlasCatalogProduct selectedProduct,
     required List<Pop> collectionPops,
-    Set<String> ownedWishlistIdentityKeys =
-    const <String>{},
+    Set<String> ownedWishlistIdentityKeys = const <String>{},
     String collectionName = 'All Atlas Collections',
     bool includeWishlist = true,
     bool includeInactiveCatalogItems = false,
     int searchLimit = 250,
   }) async {
-    final AtlasTaxonomy selectedTaxonomy =
-    _taxonomyService.resolve(
+    final AtlasTaxonomy selectedTaxonomy = _taxonomyService.resolve(
       selectedProduct,
     );
 
-    final AtlasTaxonomyNode? variantFamilyNode =
-    selectedTaxonomy.nodeForScope(
+    final AtlasTaxonomyNode? variantFamilyNode = selectedTaxonomy.nodeForScope(
       AtlasCompletionScope.variantFamily,
     );
 
@@ -62,23 +55,20 @@ final class AtlasCompletionService {
         selectedProduct: selectedProduct,
         selectedTaxonomy: selectedTaxonomy,
         collectionPops: collectionPops,
-        ownedWishlistIdentityKeys:
-        ownedWishlistIdentityKeys,
+        ownedWishlistIdentityKeys: ownedWishlistIdentityKeys,
         collectionName: collectionName,
         includeWishlist: includeWishlist,
-        includeInactiveCatalogItems:
-        includeInactiveCatalogItems,
+        includeInactiveCatalogItems: includeInactiveCatalogItems,
       );
     }
 
     final List<AtlasCatalogProduct> candidates =
-    await _findVariantFamilyCandidates(
-      selectedProduct: selectedProduct,
-      searchLimit: searchLimit,
-    );
+        await _findVariantFamilyCandidates(
+          selectedProduct: selectedProduct,
+          searchLimit: searchLimit,
+        );
 
-    final AtlasCompletionQuery query =
-    AtlasCompletionQuery(
+    final AtlasCompletionQuery query = AtlasCompletionQuery(
       filters: <AtlasCompletionFilter>[
         AtlasCompletionFilter(
           scope: AtlasCompletionScope.variantFamily,
@@ -86,19 +76,16 @@ final class AtlasCompletionService {
           displayName: variantFamilyNode.name,
         ),
       ],
-      primaryScope:
-      AtlasCompletionScope.variantFamily,
+      primaryScope: AtlasCompletionScope.variantFamily,
       includeWishlist: includeWishlist,
-      includeInactiveCatalogItems:
-      includeInactiveCatalogItems,
+      includeInactiveCatalogItems: includeInactiveCatalogItems,
     );
 
     return _completionEngine.evaluate(
       query: query,
       catalogProducts: candidates,
       collectionPops: collectionPops,
-      ownedWishlistIdentityKeys:
-      ownedWishlistIdentityKeys,
+      ownedWishlistIdentityKeys: ownedWishlistIdentityKeys,
       collectionName: collectionName,
     );
   }
@@ -116,22 +103,17 @@ final class AtlasCompletionService {
     required AtlasCatalogProduct selectedProduct,
     required AtlasCompletionScope scope,
     required List<Pop> collectionPops,
-    Set<String> ownedWishlistIdentityKeys =
-    const <String>{},
+    Set<String> ownedWishlistIdentityKeys = const <String>{},
     String collectionName = 'All Atlas Collections',
     bool includeWishlist = true,
     bool includeInactiveCatalogItems = false,
     int searchLimit = 500,
   }) async {
-    final AtlasTaxonomy selectedTaxonomy =
-    _taxonomyService.resolve(
+    final AtlasTaxonomy selectedTaxonomy = _taxonomyService.resolve(
       selectedProduct,
     );
 
-    final AtlasTaxonomyNode? targetNode =
-    selectedTaxonomy.nodeForScope(
-      scope,
-    );
+    final AtlasTaxonomyNode? targetNode = selectedTaxonomy.nodeForScope(scope);
 
     if (targetNode == null) {
       return AtlasCompletionResult(
@@ -139,22 +121,19 @@ final class AtlasCompletionService {
           filters: const <AtlasCompletionFilter>[],
           primaryScope: scope,
           includeWishlist: includeWishlist,
-          includeInactiveCatalogItems:
-          includeInactiveCatalogItems,
+          includeInactiveCatalogItems: includeInactiveCatalogItems,
         ),
         items: const [],
       );
     }
 
-    final List<AtlasCatalogProduct> candidates =
-    await _findScopeCandidates(
+    final List<AtlasCatalogProduct> candidates = await _findScopeCandidates(
       selectedProduct: selectedProduct,
       scope: scope,
       searchLimit: searchLimit,
     );
 
-    final AtlasCompletionQuery query =
-    AtlasCompletionQuery(
+    final AtlasCompletionQuery query = AtlasCompletionQuery(
       filters: <AtlasCompletionFilter>[
         AtlasCompletionFilter(
           scope: scope,
@@ -164,39 +143,29 @@ final class AtlasCompletionService {
       ],
       primaryScope: scope,
       includeWishlist: includeWishlist,
-      includeInactiveCatalogItems:
-      includeInactiveCatalogItems,
+      includeInactiveCatalogItems: includeInactiveCatalogItems,
     );
 
     return _completionEngine.evaluate(
       query: query,
       catalogProducts: candidates,
       collectionPops: collectionPops,
-      ownedWishlistIdentityKeys:
-      ownedWishlistIdentityKeys,
+      ownedWishlistIdentityKeys: ownedWishlistIdentityKeys,
       collectionName: collectionName,
     );
   }
 
-  Future<List<AtlasCatalogProduct>>
-  _findVariantFamilyCandidates({
+  Future<List<AtlasCatalogProduct>> _findVariantFamilyCandidates({
     required AtlasCatalogProduct selectedProduct,
     required int searchLimit,
   }) async {
-    final String? characterName =
-    _cleanText(
-      selectedProduct.characterName,
-    );
+    final String? characterName = _cleanText(selectedProduct.characterName);
 
-    final String? productNumber =
-    _cleanText(
-      selectedProduct.productNumber,
-    );
+    final String? productNumber = _cleanText(selectedProduct.productNumber);
 
     final List<AtlasCatalogProduct> products;
 
-    if (characterName != null ||
-        productNumber != null) {
+    if (characterName != null || productNumber != null) {
       products = await _catalogService.search(
         characterName: characterName,
         productNumber: productNumber,
@@ -215,66 +184,42 @@ final class AtlasCompletionService {
     );
   }
 
-  Future<List<AtlasCatalogProduct>>
-  _findScopeCandidates({
+  Future<List<AtlasCatalogProduct>> _findScopeCandidates({
     required AtlasCatalogProduct selectedProduct,
     required AtlasCompletionScope scope,
     required int searchLimit,
   }) async {
-    final List<AtlasCatalogProduct> products =
-    switch (scope) {
-      AtlasCompletionScope.brand =>
-      await _catalogService.search(
-        brand: _cleanText(
-          selectedProduct.brand,
-        ),
+    final List<AtlasCatalogProduct> products = switch (scope) {
+      AtlasCompletionScope.brand => await _catalogService.search(
+        brand: _cleanText(selectedProduct.brand),
         limit: searchLimit,
       ),
 
-      AtlasCompletionScope.franchise =>
-      await _catalogService.search(
-        productLine: _cleanText(
-          selectedProduct.productLine,
-        ),
+      AtlasCompletionScope.franchise => await _catalogService.search(
+        productLine: _cleanText(selectedProduct.productLine),
         limit: searchLimit,
       ),
 
-      AtlasCompletionScope.series =>
-      await _catalogService.search(
-        series: _cleanText(
-          selectedProduct.series,
-        ),
+      AtlasCompletionScope.series => await _catalogService.search(
+        series: _cleanText(selectedProduct.series),
         limit: searchLimit,
       ),
 
-      AtlasCompletionScope.character =>
-      await _catalogService.search(
-        characterName: _cleanText(
-          selectedProduct.characterName,
-        ),
+      AtlasCompletionScope.character => await _catalogService.search(
+        characterName: _cleanText(selectedProduct.characterName),
         limit: searchLimit,
       ),
 
-      AtlasCompletionScope.variantFamily =>
-      await _catalogService.search(
-        characterName: _cleanText(
-          selectedProduct.characterName,
-        ),
-        productNumber: _cleanText(
-          selectedProduct.productNumber,
-        ),
+      AtlasCompletionScope.variantFamily => await _catalogService.search(
+        characterName: _cleanText(selectedProduct.characterName),
+        productNumber: _cleanText(selectedProduct.productNumber),
         limit: searchLimit,
       ),
 
-      AtlasCompletionScope.release =>
-      <AtlasCatalogProduct>[
-        selectedProduct,
-      ],
+      AtlasCompletionScope.release => <AtlasCatalogProduct>[selectedProduct],
 
       _ => await _catalogService.search(
-        query: _bestGeneralQuery(
-          selectedProduct,
-        ),
+        query: _bestGeneralQuery(selectedProduct),
         limit: searchLimit,
       ),
     };
@@ -294,39 +239,32 @@ final class AtlasCompletionService {
     required bool includeWishlist,
     required bool includeInactiveCatalogItems,
   }) {
-    final AtlasTaxonomyNode? releaseNode =
-    selectedTaxonomy.nodeForScope(
+    final AtlasTaxonomyNode? releaseNode = selectedTaxonomy.nodeForScope(
       AtlasCompletionScope.release,
     );
 
-    final List<AtlasCompletionFilter> filters =
-    releaseNode == null
+    final List<AtlasCompletionFilter> filters = releaseNode == null
         ? const <AtlasCompletionFilter>[]
         : <AtlasCompletionFilter>[
-      AtlasCompletionFilter(
-        scope: AtlasCompletionScope.release,
-        nodeId: releaseNode.id,
-        displayName: releaseNode.name,
-      ),
-    ];
+            AtlasCompletionFilter(
+              scope: AtlasCompletionScope.release,
+              nodeId: releaseNode.id,
+              displayName: releaseNode.name,
+            ),
+          ];
 
-    final AtlasCompletionQuery query =
-    AtlasCompletionQuery(
+    final AtlasCompletionQuery query = AtlasCompletionQuery(
       filters: filters,
       primaryScope: AtlasCompletionScope.release,
       includeWishlist: includeWishlist,
-      includeInactiveCatalogItems:
-      includeInactiveCatalogItems,
+      includeInactiveCatalogItems: includeInactiveCatalogItems,
     );
 
     return _completionEngine.evaluate(
       query: query,
-      catalogProducts: <AtlasCatalogProduct>[
-        selectedProduct,
-      ],
+      catalogProducts: <AtlasCatalogProduct>[selectedProduct],
       collectionPops: collectionPops,
-      ownedWishlistIdentityKeys:
-      ownedWishlistIdentityKeys,
+      ownedWishlistIdentityKeys: ownedWishlistIdentityKeys,
       collectionName: collectionName,
     );
   }
@@ -336,90 +274,47 @@ final class AtlasCompletionService {
     required Iterable<AtlasCatalogProduct> products,
   }) {
     final Map<String, AtlasCatalogProduct> productsById =
-    <String, AtlasCatalogProduct>{};
+        <String, AtlasCatalogProduct>{};
 
-    void addProduct(
-        AtlasCatalogProduct product,
-        ) {
-      final String productId =
-      product.productId.value.trim();
+    void addProduct(AtlasCatalogProduct product) {
+      final String productId = product.productId.value.trim();
 
       final String key = productId.isEmpty
-          ? _fallbackProductKey(
-        product,
-      )
+          ? _fallbackProductKey(product)
           : productId.toLowerCase();
 
-      productsById.putIfAbsent(
-        key,
-            () => product,
-      );
+      productsById.putIfAbsent(key, () => product);
     }
 
-    addProduct(
-      selectedProduct,
-    );
+    addProduct(selectedProduct);
 
-    for (final AtlasCatalogProduct product
-    in products) {
-      addProduct(
-        product,
-      );
+    for (final AtlasCatalogProduct product in products) {
+      addProduct(product);
     }
 
-    return List<AtlasCatalogProduct>.unmodifiable(
-      productsById.values,
-    );
+    return List<AtlasCatalogProduct>.unmodifiable(productsById.values);
   }
 
-  String _bestGeneralQuery(
-      AtlasCatalogProduct product,
-      ) {
-    return _cleanText(
-      product.characterName,
-    ) ??
-        _cleanText(
-          product.series,
-        ) ??
-        _cleanText(
-          product.productLine,
-        ) ??
+  String _bestGeneralQuery(AtlasCatalogProduct product) {
+    return _cleanText(product.characterName) ??
+        _cleanText(product.series) ??
+        _cleanText(product.productLine) ??
         product.displayName;
   }
 
-  String _fallbackProductKey(
-      AtlasCatalogProduct product,
-      ) {
-    final String normalizedName =
-    _normalizeText(
-      product.displayName,
-    );
+  String _fallbackProductKey(AtlasCatalogProduct product) {
+    final String normalizedName = _normalizeText(product.displayName);
 
-    final String normalizedNumber =
-    _normalizeText(
-      product.productNumber ?? '',
-    );
+    final String normalizedNumber = _normalizeText(product.productNumber ?? '');
 
-    final String normalizedVariant =
-    _normalizeText(
-      product.variantName ?? '',
-    );
+    final String normalizedVariant = _normalizeText(product.variantName ?? '');
 
-    final String normalizedBarcodes =
-    product.barcodes
-        .map(
-      _normalizeBarcode,
-    )
-        .where(
-          (
-          String barcode,
-          ) {
-        return barcode.isNotEmpty;
-      },
-    )
-        .join(
-      '|',
-    );
+    final String normalizedBarcodes = product.barcodes
+        .map(_normalizeBarcode)
+        .where((String barcode) {
+          return barcode.isNotEmpty;
+        })
+        .join('|');
 
     return <String>[
       'fallback',
@@ -427,45 +322,25 @@ final class AtlasCompletionService {
       normalizedNumber,
       normalizedVariant,
       normalizedBarcodes,
-    ].join(
-      ':',
-    );
+    ].join(':');
   }
 
-  String? _cleanText(
-      String? value,
-      ) {
-    final String cleaned =
-        value?.trim() ?? '';
+  String? _cleanText(String? value) {
+    final String cleaned = value?.trim() ?? '';
 
-    return cleaned.isEmpty
-        ? null
-        : cleaned;
+    return cleaned.isEmpty ? null : cleaned;
   }
 
-  String _normalizeText(
-      String value,
-      ) {
+  String _normalizeText(String value) {
     return value
         .trim()
         .toLowerCase()
-        .replaceAll(
-      RegExp(r'[^a-z0-9]+'),
-      ' ',
-    )
-        .replaceAll(
-      RegExp(r'\s+'),
-      ' ',
-    )
+        .replaceAll(RegExp(r'[^a-z0-9]+'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
         .trim();
   }
 
-  String _normalizeBarcode(
-      String value,
-      ) {
-    return value.replaceAll(
-      RegExp(r'[^0-9A-Za-z]'),
-      '',
-    );
+  String _normalizeBarcode(String value) {
+    return value.replaceAll(RegExp(r'[^0-9A-Za-z]'), '');
   }
 }

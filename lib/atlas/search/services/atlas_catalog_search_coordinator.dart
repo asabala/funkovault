@@ -4,10 +4,8 @@ import 'package:funkovault2/atlas/catalog/services/atlas_catalog_service.dart';
 import 'package:funkovault2/models/pop.dart';
 
 final class AtlasCatalogSearchCoordinator {
-  AtlasCatalogSearchCoordinator({
-    AtlasCatalogService? catalogService,
-  }) : _catalogService =
-      catalogService ?? AtlasCatalogService.instance;
+  AtlasCatalogSearchCoordinator({AtlasCatalogService? catalogService})
+    : _catalogService = catalogService ?? AtlasCatalogService.instance;
 
   final AtlasCatalogService _catalogService;
 
@@ -22,113 +20,76 @@ final class AtlasCatalogSearchCoordinator {
       return const <AtlasCatalogSearchCandidate>[];
     }
 
-    final List<AtlasCatalogProduct> catalogProducts =
-    await _catalogService.search(
-      query: cleanedQuery,
-      limit: limit,
-    );
+    final List<AtlasCatalogProduct> catalogProducts = await _catalogService
+        .search(query: cleanedQuery, limit: limit);
 
     final List<_MutableSearchCandidate> candidates =
-    <_MutableSearchCandidate>[];
+        <_MutableSearchCandidate>[];
 
-    final Map<String, _MutableSearchCandidate>
-    candidatesByCatalogId =
-    <String, _MutableSearchCandidate>{};
+    final Map<String, _MutableSearchCandidate> candidatesByCatalogId =
+        <String, _MutableSearchCandidate>{};
 
-    final Map<String, _MutableSearchCandidate>
-    candidatesByCollectibleId =
-    <String, _MutableSearchCandidate>{};
+    final Map<String, _MutableSearchCandidate> candidatesByCollectibleId =
+        <String, _MutableSearchCandidate>{};
 
-    final Map<String, _MutableSearchCandidate>
-    candidatesByUpc =
-    <String, _MutableSearchCandidate>{};
+    final Map<String, _MutableSearchCandidate> candidatesByUpc =
+        <String, _MutableSearchCandidate>{};
 
-    final Map<String, _MutableSearchCandidate>
-    vaultOnlyCandidatesByIdentity =
-    <String, _MutableSearchCandidate>{};
+    final Map<String, _MutableSearchCandidate> vaultOnlyCandidatesByIdentity =
+        <String, _MutableSearchCandidate>{};
 
-    final DateTime conversionTimestamp =
-    DateTime.now();
+    final DateTime conversionTimestamp = DateTime.now();
 
-    for (
-    int index = 0;
-    index < catalogProducts.length;
-    index++
-    ) {
-      final AtlasCatalogProduct catalogProduct =
-      catalogProducts[index];
+    for (int index = 0; index < catalogProducts.length; index++) {
+      final AtlasCatalogProduct catalogProduct = catalogProducts[index];
 
-      final String catalogId =
-      _normalizeIdentifier(
+      final String catalogId = _normalizeIdentifier(
         catalogProduct.productId.value,
       );
 
-      if (catalogId.isEmpty ||
-          candidatesByCatalogId.containsKey(
-            catalogId,
-          )) {
+      if (catalogId.isEmpty || candidatesByCatalogId.containsKey(catalogId)) {
         continue;
       }
 
-      final Pop catalogPop =
-      AtlasCatalogConverter.toPop(
+      final Pop catalogPop = AtlasCatalogConverter.toPop(
         catalogProduct,
         owner: 'Atlas Catalog',
         quantity: 1,
-        timestamp: conversionTimestamp.add(
-          Duration(
-            microseconds: index,
-          ),
-        ),
+        timestamp: conversionTimestamp.add(Duration(microseconds: index)),
       );
 
-      final _MutableSearchCandidate candidate =
-      _MutableSearchCandidate(
+      final _MutableSearchCandidate candidate = _MutableSearchCandidate(
         catalogProduct: catalogProduct,
         pop: catalogPop,
         isCatalogBacked: true,
       );
 
-      candidates.add(
-        candidate,
-      );
+      candidates.add(candidate);
 
-      candidatesByCatalogId[catalogId] =
-          candidate;
+      candidatesByCatalogId[catalogId] = candidate;
 
-      final String collectibleId =
-      _normalizeIdentifier(
+      final String collectibleId = _normalizeIdentifier(
         catalogPop.sourceCollectibleId,
       );
 
       if (collectibleId.isNotEmpty) {
-        candidatesByCollectibleId.putIfAbsent(
-          collectibleId,
-              () => candidate,
-        );
+        candidatesByCollectibleId.putIfAbsent(collectibleId, () => candidate);
       }
 
-      final String upc = _normalizeBarcode(
-        catalogPop.sourceUpc,
-      );
+      final String upc = _normalizeBarcode(catalogPop.sourceUpc);
 
       if (upc.isNotEmpty) {
-        candidatesByUpc.putIfAbsent(
-          upc,
-              () => candidate,
-        );
+        candidatesByUpc.putIfAbsent(upc, () => candidate);
       }
     }
 
-    for (final MapEntry<String, List<Pop>>
-    collectionEntry in collections.entries) {
-      final String collectionName =
-      collectionEntry.key.trim().isEmpty
+    for (final MapEntry<String, List<Pop>> collectionEntry
+        in collections.entries) {
+      final String collectionName = collectionEntry.key.trim().isEmpty
           ? 'Vault'
           : collectionEntry.key.trim();
 
-      for (final Pop vaultPop
-      in collectionEntry.value) {
+      for (final Pop vaultPop in collectionEntry.value) {
         if (!_matchesVaultQuery(
           pop: vaultPop,
           collectionName: collectionName,
@@ -137,125 +98,79 @@ final class AtlasCatalogSearchCoordinator {
           continue;
         }
 
-        final _MutableSearchCandidate?
-        representedCatalogCandidate =
-        _findCatalogCandidate(
-          pop: vaultPop,
-          candidatesByCatalogId:
-          candidatesByCatalogId,
-          candidatesByCollectibleId:
-          candidatesByCollectibleId,
-          candidatesByUpc:
-          candidatesByUpc,
-        );
+        final _MutableSearchCandidate? representedCatalogCandidate =
+            _findCatalogCandidate(
+              pop: vaultPop,
+              candidatesByCatalogId: candidatesByCatalogId,
+              candidatesByCollectibleId: candidatesByCollectibleId,
+              candidatesByUpc: candidatesByUpc,
+            );
 
-        if (representedCatalogCandidate !=
-            null) {
-          representedCatalogCandidate
-              .collectionNames
-              .add(
-            collectionName,
-          );
+        if (representedCatalogCandidate != null) {
+          representedCatalogCandidate.collectionNames.add(collectionName);
 
           continue;
         }
 
-        final String vaultIdentityKey =
-        _vaultIdentityKey(
-          vaultPop,
-        );
+        final String vaultIdentityKey = _vaultIdentityKey(vaultPop);
 
-        final _MutableSearchCandidate?
-        existingVaultCandidate =
-        vaultOnlyCandidatesByIdentity[
-        vaultIdentityKey];
+        final _MutableSearchCandidate? existingVaultCandidate =
+            vaultOnlyCandidatesByIdentity[vaultIdentityKey];
 
         if (existingVaultCandidate != null) {
-          existingVaultCandidate.collectionNames
-              .add(
-            collectionName,
-          );
+          existingVaultCandidate.collectionNames.add(collectionName);
 
           continue;
         }
 
-        final _MutableSearchCandidate candidate =
-        _MutableSearchCandidate(
+        final _MutableSearchCandidate candidate = _MutableSearchCandidate(
           pop: vaultPop,
           isCatalogBacked: false,
-          collectionNames: <String>{
-            collectionName,
-          },
+          collectionNames: <String>{collectionName},
         );
 
-        vaultOnlyCandidatesByIdentity[
-        vaultIdentityKey] = candidate;
+        vaultOnlyCandidatesByIdentity[vaultIdentityKey] = candidate;
 
-        candidates.add(
-          candidate,
-        );
+        candidates.add(candidate);
       }
     }
 
     return List<AtlasCatalogSearchCandidate>.unmodifiable(
-      candidates.map(
-            (_MutableSearchCandidate candidate) {
-          return candidate.freeze();
-        },
-      ),
+      candidates.map((_MutableSearchCandidate candidate) {
+        return candidate.freeze();
+      }),
     );
   }
 
-  static _MutableSearchCandidate?
-  _findCatalogCandidate({
+  static _MutableSearchCandidate? _findCatalogCandidate({
     required Pop pop,
-    required Map<
-        String,
-        _MutableSearchCandidate>
-    candidatesByCatalogId,
-    required Map<
-        String,
-        _MutableSearchCandidate>
-    candidatesByCollectibleId,
-    required Map<
-        String,
-        _MutableSearchCandidate>
-    candidatesByUpc,
+    required Map<String, _MutableSearchCandidate> candidatesByCatalogId,
+    required Map<String, _MutableSearchCandidate> candidatesByCollectibleId,
+    required Map<String, _MutableSearchCandidate> candidatesByUpc,
   }) {
-    final String catalogId =
-    _normalizeIdentifier(
-      pop.sourceCatalogId,
-    );
+    final String catalogId = _normalizeIdentifier(pop.sourceCatalogId);
 
     if (catalogId.isNotEmpty) {
-      final _MutableSearchCandidate?
-      catalogCandidate =
-      candidatesByCatalogId[catalogId];
+      final _MutableSearchCandidate? catalogCandidate =
+          candidatesByCatalogId[catalogId];
 
       if (catalogCandidate != null) {
         return catalogCandidate;
       }
     }
 
-    final String collectibleId =
-    _normalizeIdentifier(
-      pop.sourceCollectibleId,
-    );
+    final String collectibleId = _normalizeIdentifier(pop.sourceCollectibleId);
 
     if (collectibleId.isNotEmpty) {
-      final _MutableSearchCandidate?
-      collectibleCandidate =
-      candidatesByCollectibleId[
-      collectibleId];
+      final _MutableSearchCandidate? collectibleCandidate =
+          candidatesByCollectibleId[collectibleId];
 
       if (collectibleCandidate != null) {
         return collectibleCandidate;
       }
     }
 
-    final String upc = _normalizeBarcode(
-      pop.sourceUpc,
-    );
+    final String upc = _normalizeBarcode(pop.sourceUpc);
 
     if (upc.isNotEmpty) {
       return candidatesByUpc[upc];
@@ -269,17 +184,13 @@ final class AtlasCatalogSearchCoordinator {
     required String collectionName,
     required String query,
   }) {
-    final String normalizedQuery =
-    _normalizeSearchText(
-      query,
-    );
+    final String normalizedQuery = _normalizeSearchText(query);
 
     if (normalizedQuery.isEmpty) {
       return false;
     }
 
-    final String searchableText =
-    _normalizeSearchText(
+    final String searchableText = _normalizeSearchText(
       <String>[
         pop.name,
         pop.number,
@@ -297,43 +208,27 @@ final class AtlasCatalogSearchCoordinator {
         pop.sourceCollectibleId,
         pop.collectorLabel,
         collectionName,
-        pop.isWishlist
-            ? 'wishlist'
-            : 'owned',
-      ].join(
-        ' ',
-      ),
+        pop.isWishlist ? 'wishlist' : 'owned',
+      ].join(' '),
     );
 
-    return searchableText.contains(
-      normalizedQuery,
-    );
+    return searchableText.contains(normalizedQuery);
   }
 
-  static String _vaultIdentityKey(
-      Pop pop,
-      ) {
-    final String catalogId =
-    _normalizeIdentifier(
-      pop.sourceCatalogId,
-    );
+  static String _vaultIdentityKey(Pop pop) {
+    final String catalogId = _normalizeIdentifier(pop.sourceCatalogId);
 
     if (catalogId.isNotEmpty) {
       return 'catalog:$catalogId';
     }
 
-    final String collectibleId =
-    _normalizeIdentifier(
-      pop.sourceCollectibleId,
-    );
+    final String collectibleId = _normalizeIdentifier(pop.sourceCollectibleId);
 
     if (collectibleId.isNotEmpty) {
       return 'collectible:$collectibleId';
     }
 
-    final String upc = _normalizeBarcode(
-      pop.sourceUpc,
-    );
+    final String upc = _normalizeBarcode(pop.sourceUpc);
 
     if (upc.isNotEmpty) {
       return 'upc:$upc';
@@ -341,64 +236,31 @@ final class AtlasCatalogSearchCoordinator {
 
     return <String>[
       'release',
-      _normalizeSearchText(
-        pop.name,
-      ),
-      _normalizeSearchText(
-        pop.number,
-      ),
-      _normalizeSearchText(
-        pop.variant,
-      ),
-      _normalizeSearchText(
-        pop.edition,
-      ),
-      _normalizeSearchText(
-        pop.retailExclusive,
-      ),
-      _normalizeSearchText(
-        pop.eventSticker,
-      ),
-      _normalizeSearchText(
-        pop.limitedEdition,
-      ),
-      _normalizeSearchText(
-        pop.signature,
-      ),
-    ].join(
-      '|',
-    );
+      _normalizeSearchText(pop.name),
+      _normalizeSearchText(pop.number),
+      _normalizeSearchText(pop.variant),
+      _normalizeSearchText(pop.edition),
+      _normalizeSearchText(pop.retailExclusive),
+      _normalizeSearchText(pop.eventSticker),
+      _normalizeSearchText(pop.limitedEdition),
+      _normalizeSearchText(pop.signature),
+    ].join('|');
   }
 
-  static String _normalizeIdentifier(
-      String value,
-      ) {
+  static String _normalizeIdentifier(String value) {
     return value.trim().toLowerCase();
   }
 
-  static String _normalizeBarcode(
-      String value,
-      ) {
-    return value.replaceAll(
-      RegExp(r'[^0-9A-Za-z]'),
-      '',
-    );
+  static String _normalizeBarcode(String value) {
+    return value.replaceAll(RegExp(r'[^0-9A-Za-z]'), '');
   }
 
-  static String _normalizeSearchText(
-      String value,
-      ) {
+  static String _normalizeSearchText(String value) {
     return value
         .trim()
         .toLowerCase()
-        .replaceAll(
-      RegExp(r'[^a-z0-9]+'),
-      ' ',
-    )
-        .replaceAll(
-      RegExp(r'\s+'),
-      ' ',
-    )
+        .replaceAll(RegExp(r'[^a-z0-9]+'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
         .trim();
   }
 }
@@ -425,8 +287,7 @@ final class AtlasCatalogSearchCandidate {
   }
 
   String get productId {
-    return catalogProduct?.productId.value ??
-        pop.sourceCatalogId;
+    return catalogProduct?.productId.value ?? pop.sourceCatalogId;
   }
 
   String get displayName {
@@ -434,8 +295,7 @@ final class AtlasCatalogSearchCandidate {
   }
 
   String get sourceLabel {
-    if (isCatalogBacked &&
-        collectionNames.isEmpty) {
+    if (isCatalogBacked && collectionNames.isEmpty) {
       return 'Atlas Catalog';
     }
 
@@ -444,9 +304,7 @@ final class AtlasCatalogSearchCandidate {
     }
 
     if (collectionNames.isNotEmpty) {
-      return collectionNames.join(
-        ', ',
-      );
+      return collectionNames.join(', ');
     }
 
     return 'Vault';
@@ -459,8 +317,7 @@ final class _MutableSearchCandidate {
     required this.isCatalogBacked,
     this.catalogProduct,
     Set<String>? collectionNames,
-  }) : collectionNames =
-      collectionNames ?? <String>{};
+  }) : collectionNames = collectionNames ?? <String>{};
 
   final AtlasCatalogProduct? catalogProduct;
   final Pop pop;
@@ -468,20 +325,15 @@ final class _MutableSearchCandidate {
   final Set<String> collectionNames;
 
   AtlasCatalogSearchCandidate freeze() {
-    final List<String> sortedCollectionNames =
-    collectionNames.toList(
+    final List<String> sortedCollectionNames = collectionNames.toList(
       growable: false,
-    )
-      ..sort();
+    )..sort();
 
     return AtlasCatalogSearchCandidate(
       catalogProduct: catalogProduct,
       pop: pop,
       isCatalogBacked: isCatalogBacked,
-      collectionNames:
-      List<String>.unmodifiable(
-        sortedCollectionNames,
-      ),
+      collectionNames: List<String>.unmodifiable(sortedCollectionNames),
     );
   }
 }

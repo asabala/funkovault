@@ -302,8 +302,8 @@ void main() {
   });
 
   testWidgets('scoped multiple copies review forwards collection context', (
-      tester,
-      ) async {
+    tester,
+  ) async {
     final state = AppState();
 
     state.collections['Arthur Collection']!.add(
@@ -317,9 +317,7 @@ void main() {
     await pumpVault(
       tester,
       state,
-      const EntireVaultScreen(
-        collectionName: 'Arthur Collection',
-      ),
+      const EntireVaultScreen(collectionName: 'Arthur Collection'),
     );
 
     final reviewButton = find.byTooltip('Review Multiple Copies');
@@ -336,9 +334,6 @@ void main() {
       find.byType(MultipleCopiesScreen),
     );
 
-    expect(
-      multipleCopiesScreen.collectionName,
-      'Arthur Collection',
-    );
+    expect(multipleCopiesScreen.collectionName, 'Arthur Collection');
   });
 }

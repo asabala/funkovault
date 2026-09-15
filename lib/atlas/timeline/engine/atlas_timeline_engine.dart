@@ -7,27 +7,19 @@ class AtlasTimelineEngine {
   const AtlasTimelineEngine();
 
   /// Returns events sorted from oldest to newest.
-  List<AtlasTimelineEvent> chronological(
-      List<AtlasTimelineEvent> events,
-      ) {
+  List<AtlasTimelineEvent> chronological(List<AtlasTimelineEvent> events) {
     final sorted = List<AtlasTimelineEvent>.from(events);
 
-    sorted.sort(
-          (a, b) => a.occurredAt.compareTo(b.occurredAt),
-    );
+    sorted.sort((a, b) => a.occurredAt.compareTo(b.occurredAt));
 
     return List<AtlasTimelineEvent>.unmodifiable(sorted);
   }
 
   /// Returns newest events first.
-  List<AtlasTimelineEvent> newestFirst(
-      List<AtlasTimelineEvent> events,
-      ) {
+  List<AtlasTimelineEvent> newestFirst(List<AtlasTimelineEvent> events) {
     final sorted = chronological(events);
 
-    return List<AtlasTimelineEvent>.unmodifiable(
-      sorted.reversed.toList(),
-    );
+    return List<AtlasTimelineEvent>.unmodifiable(sorted.reversed.toList());
   }
 
   /// Compares the previous and updated versions of a Pop and returns
@@ -47,8 +39,7 @@ class AtlasTimelineEngine {
     if (previousPop.value != updatedPop.value) {
       events.add(
         AtlasTimelineFactory.valueUpdated(
-          id:
-          'value-${updatedPop.id}-${occurredAt.microsecondsSinceEpoch}',
+          id: 'value-${updatedPop.id}-${occurredAt.microsecondsSinceEpoch}',
           popId: updatedPop.id,
           occurredAt: occurredAt,
           previousValue: previousPop.value,
@@ -58,14 +49,10 @@ class AtlasTimelineEngine {
       );
     }
 
-    return List<AtlasTimelineEvent>.unmodifiable(
-      chronological(events),
-    );
+    return List<AtlasTimelineEvent>.unmodifiable(chronological(events));
   }
 
-  AtlasTimelineSummary buildSummary(
-      List<AtlasTimelineEvent> events,
-      ) {
+  AtlasTimelineSummary buildSummary(List<AtlasTimelineEvent> events) {
     if (events.isEmpty) {
       return const AtlasTimelineSummary(
         totalEvents: 0,
@@ -85,45 +72,25 @@ class AtlasTimelineEngine {
     final first = sorted.first;
     final latest = sorted.last;
 
-    final years =
-        latest.occurredAt.year -
-            first.occurredAt.year +
-            1;
+    final years = latest.occurredAt.year - first.occurredAt.year + 1;
 
     return AtlasTimelineSummary(
       totalEvents: sorted.length,
       firstEvent: first,
       latestEvent: latest,
       yearsActive: years,
-      purchaseCount: _count(
-        sorted,
-        AtlasTimelineEventType.purchased,
-      ),
-      saleCount: _count(
-        sorted,
-        AtlasTimelineEventType.sold,
-      ),
-      valueUpdateCount: _count(
-        sorted,
-        AtlasTimelineEventType.valueUpdated,
-      ),
+      purchaseCount: _count(sorted, AtlasTimelineEventType.purchased),
+      saleCount: _count(sorted, AtlasTimelineEventType.sold),
+      valueUpdateCount: _count(sorted, AtlasTimelineEventType.valueUpdated),
       collectorMomentCount: _count(
         sorted,
         AtlasTimelineEventType.collectorMoment,
       ),
-      aiInsightCount: _count(
-        sorted,
-        AtlasTimelineEventType.aiInsight,
-      ),
+      aiInsightCount: _count(sorted, AtlasTimelineEventType.aiInsight),
     );
   }
 
-  int _count(
-      List<AtlasTimelineEvent> events,
-      AtlasTimelineEventType type,
-      ) {
-    return events.where(
-          (event) => event.type == type,
-    ).length;
+  int _count(List<AtlasTimelineEvent> events, AtlasTimelineEventType type) {
+    return events.where((event) => event.type == type).length;
   }
 }

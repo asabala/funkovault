@@ -39,91 +39,63 @@ class DefaultIdentityResolver implements IdentityResolver {
   }) async {
     final DateTime startedAt = DateTime.now();
 
-    final List<IdentityProfile> candidates =
-    <IdentityProfile>[];
+    final List<IdentityProfile> candidates = <IdentityProfile>[];
 
-    for (final KnowledgeMapperResult mapperResult
-    in mapperResults) {
+    for (final KnowledgeMapperResult mapperResult in mapperResults) {
       candidates.addAll(mapperResult.profiles);
     }
 
     final List<IdentityComparisonResult> comparisons =
-    <IdentityComparisonResult>[];
+        <IdentityComparisonResult>[];
 
     if (configuration.options.compareAllCandidates) {
-      for (
-      int leftIndex = 0;
-      leftIndex < candidates.length;
-      leftIndex++
-      ) {
+      for (int leftIndex = 0; leftIndex < candidates.length; leftIndex++) {
         for (
-        int rightIndex = leftIndex + 1;
-        rightIndex < candidates.length;
-        rightIndex++
+          int rightIndex = leftIndex + 1;
+          rightIndex < candidates.length;
+          rightIndex++
         ) {
-          final AtlasResult<IdentityComparisonResult>
-          comparison = decisionEngine.compare(
-            left: candidates[leftIndex],
-            right: candidates[rightIndex],
-            policy: configuration.policy,
-          );
+          final AtlasResult<IdentityComparisonResult> comparison =
+              decisionEngine.compare(
+                left: candidates[leftIndex],
+                right: candidates[rightIndex],
+                policy: configuration.policy,
+              );
 
           if (comparison.hasUsableOutput) {
-            comparisons.add(
-              comparison.requireOutput(),
-            );
+            comparisons.add(comparison.requireOutput());
           }
         }
       }
     }
 
-    final List<IdentityProfile> canonicalProfiles =
-    configuration.canonicalizationStrategy.canonicalize(
-      candidates: candidates,
-      comparisons: comparisons,
-    );
+    final List<IdentityProfile> canonicalProfiles = configuration
+        .canonicalizationStrategy
+        .canonicalize(candidates: candidates, comparisons: comparisons);
 
     final DateTime completedAt = DateTime.now();
 
-    final List<String> notes =
-    configuration.options.includeComparisonNotes
-        ? const <String>[
-      'Resolution completed successfully.',
-    ]
+    final List<String> notes = configuration.options.includeComparisonNotes
+        ? const <String>['Resolution completed successfully.']
         : const <String>[];
 
-    final IdentityResolutionSession session =
-    IdentityResolutionSession(
+    final IdentityResolutionSession session = IdentityResolutionSession(
       sessionId: startedAt.microsecondsSinceEpoch.toString(),
       startedAt: startedAt,
       completedAt: completedAt,
       sourceRecords: mapperResults
           .map(
-            (KnowledgeMapperResult mapperResult) =>
-        mapperResult.sourceRecord,
-      )
+            (KnowledgeMapperResult mapperResult) => mapperResult.sourceRecord,
+          )
           .toList(growable: false),
-      mapperResults:
-      List<KnowledgeMapperResult>.unmodifiable(
-        mapperResults,
-      ),
-      candidateProfiles:
-      List<IdentityProfile>.unmodifiable(
-        candidates,
-      ),
-      comparisons:
-      List<IdentityComparisonResult>.unmodifiable(
-        comparisons,
-      ),
-      canonicalProfiles:
-      List<IdentityProfile>.unmodifiable(
-        canonicalProfiles,
-      ),
+      mapperResults: List<KnowledgeMapperResult>.unmodifiable(mapperResults),
+      candidateProfiles: List<IdentityProfile>.unmodifiable(candidates),
+      comparisons: List<IdentityComparisonResult>.unmodifiable(comparisons),
+      canonicalProfiles: List<IdentityProfile>.unmodifiable(canonicalProfiles),
       notes: notes,
     );
 
-    final IdentityResolutionResult result =
-    IdentityResolutionResult(
+    final IdentityResolutionResult result = IdentityResolutionResult(
       session: session,
     );
 
@@ -142,27 +114,26 @@ class DefaultIdentityResolver implements IdentityResolver {
           'operation': 'resolution',
           'candidate_count': candidates.length.toString(),
           'comparison_count': comparisons.length.toString(),
-          'canonical_profile_count':
-          canonicalProfiles.length.toString(),
-          'mapper_result_count':
-          mapperResults.length.toString(),
-          'compare_all_candidates': configuration
-              .options.compareAllCandidates
+          'canonical_profile_count': canonicalProfiles.length.toString(),
+          'mapper_result_count': mapperResults.length.toString(),
+          'compare_all_candidates': configuration.options.compareAllCandidates
               .toString(),
-          'allow_single_candidate': configuration
-              .options.allowSingleCandidate
+          'allow_single_candidate': configuration.options.allowSingleCandidate
               .toString(),
           'record_unmatched_candidates': configuration
-              .options.recordUnmatchedCandidates
+              .options
+              .recordUnmatchedCandidates
               .toString(),
           'build_resolution_session': configuration
-              .options.buildResolutionSession
+              .options
+              .buildResolutionSession
               .toString(),
           'include_comparison_notes': configuration
-              .options.includeComparisonNotes
+              .options
+              .includeComparisonNotes
               .toString(),
           'canonicalization_strategy':
-          configuration.canonicalizationStrategy.id,
+              configuration.canonicalizationStrategy.id,
         },
       ),
     );

@@ -20,27 +20,22 @@ final class ResolvedProductSnapshot {
     String? variantName,
     Iterable<String> barcodes = const <String>[],
     Map<String, Object?> attributes = const <String, Object?>{},
-  })  : displayName = _requireText(
-    displayName,
-    'displayName',
-  ),
-        categoryCode = _normalizeCode(categoryCode),
-        brand = _normalizeOptionalText(brand),
-        productLine = _normalizeOptionalText(productLine),
-        series = _normalizeOptionalText(series),
-        characterName = _normalizeOptionalText(characterName),
-        productNumber = _normalizeOptionalText(productNumber),
-        variantName = _normalizeOptionalText(variantName),
-        barcodes = List<String>.unmodifiable(
-          _normalizeBarcodes(barcodes),
-        ),
-        attributes = Map<String, Object?>.unmodifiable(
-          Map<String, Object?>.from(attributes),
-        );
+  }) : displayName = _requireText(displayName, 'displayName'),
+       categoryCode = _normalizeCode(categoryCode),
+       brand = _normalizeOptionalText(brand),
+       productLine = _normalizeOptionalText(productLine),
+       series = _normalizeOptionalText(series),
+       characterName = _normalizeOptionalText(characterName),
+       productNumber = _normalizeOptionalText(productNumber),
+       variantName = _normalizeOptionalText(variantName),
+       barcodes = List<String>.unmodifiable(_normalizeBarcodes(barcodes)),
+       attributes = Map<String, Object?>.unmodifiable(
+         Map<String, Object?>.from(attributes),
+       );
 
   factory ResolvedProductSnapshot.fromCatalogProduct(
-      AtlasCatalogProduct product,
-      ) {
+    AtlasCatalogProduct product,
+  ) {
     return ResolvedProductSnapshot(
       productId: product.productId,
       displayName: product.displayName,
@@ -109,8 +104,7 @@ final class ResolvedProductSnapshot {
   bool matchesBarcode(String value) {
     final String normalized = _normalizeBarcode(value);
 
-    return normalized.isNotEmpty &&
-        barcodes.contains(normalized);
+    return normalized.isNotEmpty && barcodes.contains(normalized);
   }
 
   AtlasCatalogProduct toCatalogProduct() {
@@ -129,10 +123,7 @@ final class ResolvedProductSnapshot {
     );
   }
 
-  static String _requireText(
-      String value,
-      String parameterName,
-      ) {
+  static String _requireText(String value, String parameterName) {
     final String normalized = value.trim();
 
     if (normalized.isEmpty) {
@@ -170,9 +161,7 @@ final class ResolvedProductSnapshot {
     return normalized;
   }
 
-  static List<String> _normalizeBarcodes(
-      Iterable<String> values,
-      ) {
+  static List<String> _normalizeBarcodes(Iterable<String> values) {
     final Set<String> normalized = <String>{};
 
     for (final String value in values) {
@@ -187,17 +176,13 @@ final class ResolvedProductSnapshot {
   }
 
   static String _normalizeBarcode(String value) {
-    return value.replaceAll(
-      RegExp(r'[^0-9A-Za-z]'),
-      '',
-    );
+    return value.replaceAll(RegExp(r'[^0-9A-Za-z]'), '');
   }
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
-        other is ResolvedProductSnapshot &&
-            other.productId == productId;
+        other is ResolvedProductSnapshot && other.productId == productId;
   }
 
   @override

@@ -23,6 +23,7 @@ final class RecognitionEvidence {
   bool get hasRecognition {
     return hasBarcodes || hasOcr;
   }
+
   bool get hasIdentityEvidence {
     return identityText.isNotEmpty;
   }
@@ -36,22 +37,15 @@ final class RecognitionEvidence {
   }
 
   Iterable<OCRContribution> get identityText {
-    return ocr.where(
-          (OCRContribution value) =>
-      value.isIdentityEvidence,
-    );
+    return ocr.where((OCRContribution value) => value.isIdentityEvidence);
   }
 
   Iterable<OCRContribution> get variantText {
-    return ocr.where(
-          (OCRContribution value) =>
-      value.isVariantEvidence,
-    );
+    return ocr.where((OCRContribution value) => value.isVariantEvidence);
   }
 
   BarcodeContribution? get primaryBarcode {
-    for (final BarcodeContribution barcode
-    in barcodes) {
+    for (final BarcodeContribution barcode in barcodes) {
       if (barcode.isPrimaryCandidate) {
         return barcode;
       }

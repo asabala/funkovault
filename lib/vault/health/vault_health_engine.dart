@@ -5,24 +5,16 @@ class VaultHealthEngine {
   const VaultHealthEngine();
 
   static const DuplicateReviewEngine _duplicateReviewEngine =
-  DuplicateReviewEngine();
+      DuplicateReviewEngine();
 
   VaultHealthSnapshot calculate(List<Pop> pops) {
     final totalPops = pops.length;
 
-    final totalValue = pops.fold<double>(
-      0,
-          (total, pop) => total + pop.value,
-    );
+    final totalValue = pops.fold<double>(0, (total, pop) => total + pop.value);
 
-    final needsValueCount = pops
-        .where(
-          (pop) => pop.value <= 0,
-    )
-        .length;
+    final needsValueCount = pops.where((pop) => pop.value <= 0).length;
 
-    final duplicateGroupCount =
-    _duplicateReviewEngine.countGroups(pops);
+    final duplicateGroupCount = _duplicateReviewEngine.countGroups(pops);
 
     final healthScore = _calculateHealthScore(
       totalPops: totalPops,
@@ -55,11 +47,9 @@ class VaultHealthEngine {
       return 100;
     }
 
-    final issueCount =
-        duplicateGroupCount + needsValueCount;
+    final issueCount = duplicateGroupCount + needsValueCount;
 
-    final score =
-        100 - ((issueCount / totalPops) * 100);
+    final score = 100 - ((issueCount / totalPops) * 100);
 
     return score.clamp(0, 100);
   }
@@ -69,8 +59,7 @@ class VaultHealthEngine {
     required int duplicateGroupCount,
     required double healthScore,
   }) {
-    final issueCount =
-        needsValueCount + duplicateGroupCount;
+    final issueCount = needsValueCount + duplicateGroupCount;
 
     if (issueCount == 0 && healthScore >= 95) {
       return 'Clean';
@@ -105,9 +94,7 @@ class VaultHealthSnapshot {
   final double healthScore;
   final String priority;
 
-  int get issueCount =>
-      needsValueCount + duplicateGroupCount;
+  int get issueCount => needsValueCount + duplicateGroupCount;
 
-  bool get isClean =>
-      issueCount == 0 && healthScore >= 95;
+  bool get isClean => issueCount == 0 && healthScore >= 95;
 }

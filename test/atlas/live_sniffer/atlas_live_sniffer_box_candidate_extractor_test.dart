@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:funkovault2/atlas/live_sniffer/models/atlas_live_sniffer_native_frame.dart';
+import 'package:funkovault2/atlas/live_sniffer/models/atlas_live_sniffer_target_state.dart';
+import 'package:funkovault2/atlas/live_sniffer/models/atlas_live_sniffer_track.dart';
 import 'package:funkovault2/atlas/live_sniffer/recognition/atlas_live_sniffer_box_candidate_extractor.dart';
 
 void main() {
@@ -184,4 +186,188 @@ void main() {
       );
     },
   );
+
+  test('ranked number parser keeps #422 when OCR also sees a year', () {
+    final frame = AtlasLiveSnifferNativeFrame(
+      capturedAt: DateTime.utc(2026, 9, 15),
+      barcodes: const [],
+      textBlocks: const <AtlasLiveSnifferNativeTextBlock>[
+        AtlasLiveSnifferNativeTextBlock(
+          text: 'POP! #422 2024',
+          left: 0.35,
+          top: 0.40,
+          right: 0.66,
+          bottom: 0.46,
+        ),
+        AtlasLiveSnifferNativeTextBlock(
+          text: 'QUI-GON JINN',
+          left: 0.37,
+          top: 0.62,
+          right: 0.64,
+          bottom: 0.68,
+        ),
+      ],
+    );
+
+    final candidates = extractor.extract(frame, focusX: 0.50, focusY: 0.54);
+
+    expect(candidates, isNotEmpty);
+    expect(candidates.first.productNumber, '422');
+    expect(candidates.first.text, contains('QUI-GON JINN'));
+  });
+
+  test('ranked number parser ignores dimension after #2148', () {
+    final frame = AtlasLiveSnifferNativeFrame(
+      capturedAt: DateTime.utc(2026, 9, 15),
+      barcodes: const [],
+      textBlocks: const <AtlasLiveSnifferNativeTextBlock>[
+        AtlasLiveSnifferNativeTextBlock(
+          text: '#2148 4 INCH',
+          left: 0.34,
+          top: 0.40,
+          right: 0.66,
+          bottom: 0.46,
+        ),
+        AtlasLiveSnifferNativeTextBlock(
+          text: 'TONY TONY CHOPPER',
+          left: 0.31,
+          top: 0.62,
+          right: 0.69,
+          bottom: 0.68,
+        ),
+      ],
+    );
+
+    final candidates = extractor.extract(frame, focusX: 0.50, focusY: 0.54);
+
+    expect(candidates, isNotEmpty);
+    expect(candidates.first.productNumber, '2148');
+  });
+
+  test('ranked number parser ignores age rating after Funko number', () {
+    final frame = AtlasLiveSnifferNativeFrame(
+      capturedAt: DateTime.utc(2026, 9, 15),
+      barcodes: const [],
+      textBlocks: const <AtlasLiveSnifferNativeTextBlock>[
+        AtlasLiveSnifferNativeTextBlock(
+          text: 'FUNKO 127 6+',
+          left: 0.35,
+          top: 0.40,
+          right: 0.65,
+          bottom: 0.46,
+        ),
+        AtlasLiveSnifferNativeTextBlock(
+          text: 'YUJI ITADORI',
+          left: 0.36,
+          top: 0.62,
+          right: 0.64,
+          bottom: 0.68,
+        ),
+      ],
+    );
+
+    final candidates = extractor.extract(frame, focusX: 0.50, focusY: 0.54);
+
+    expect(candidates, isNotEmpty);
+    expect(candidates.first.productNumber, '127');
+  });
+
+  test('ranked number parser ignores bid price and keeps explicit Pop number', () {
+    final frame = AtlasLiveSnifferNativeFrame(
+      capturedAt: DateTime.utc(2026, 9, 15),
+      barcodes: const [],
+      textBlocks: const <AtlasLiveSnifferNativeTextBlock>[
+        AtlasLiveSnifferNativeTextBlock(
+          text: r'$35 #422',
+          left: 0.35,
+          top: 0.40,
+          right: 0.65,
+          bottom: 0.46,
+        ),
+        AtlasLiveSnifferNativeTextBlock(
+          text: 'QUI-GON JINN',
+          left: 0.37,
+          top: 0.62,
+          right: 0.64,
+          bottom: 0.68,
+        ),
+      ],
+    );
+
+    final candidates = extractor.extract(frame, focusX: 0.50, focusY: 0.54);
+
+    expect(candidates, isNotEmpty);
+    expect(candidates.first.productNumber, '422');
+    expect(
+      candidates.map((candidate) => candidate.productNumber),
+      isNot(contains('35')),
+    );
+  });
+
+  test('ranked number parser preserves valid 19xx Pop number near year metadata', () {
+    final frame = AtlasLiveSnifferNativeFrame(
+      capturedAt: DateTime.utc(2026, 9, 15),
+      barcodes: const [],
+      textBlocks: const <AtlasLiveSnifferNativeTextBlock>[
+        AtlasLiveSnifferNativeTextBlock(
+          text: 'POP! #1925 © 2024',
+          left: 0.34,
+          top: 0.40,
+          right: 0.67,
+          bottom: 0.46,
+        ),
+        AtlasLiveSnifferNativeTextBlock(
+          text: 'ELPHABA',
+          left: 0.42,
+          top: 0.62,
+          right: 0.59,
+          bottom: 0.68,
+        ),
+      ],
+    );
+
+    final candidates = extractor.extract(frame, focusX: 0.50, focusY: 0.54);
+
+    expect(candidates, isNotEmpty);
+    expect(candidates.first.productNumber, '1925');
+    expect(candidates.first.text, contains('ELPHABA'));
+  });
+
+
+  test('front panel ranker prefers 1447 over title sequel number 2', () {
+    final frame = AtlasLiveSnifferNativeFrame(
+      capturedAt: DateTime.utc(2026, 9, 15),
+      barcodes: const [],
+      targetState: AtlasLiveSnifferTargetState.locked,
+      lockedTrackId: 7,
+      trackedBoundingBox: const AtlasLiveSnifferNormalizedRect(left: 0.30, top: 0.36, right: 0.70, bottom: 0.80),
+      textBlocks: const <AtlasLiveSnifferNativeTextBlock>[
+        AtlasLiveSnifferNativeTextBlock(text: 'POP! INSIDE OUT 2 1447', left: 0.34, top: 0.40, right: 0.66, bottom: 0.46, trackId: 7),
+        AtlasLiveSnifferNativeTextBlock(text: 'ANXIETY', left: 0.42, top: 0.68, right: 0.58, bottom: 0.73, trackId: 7),
+      ],
+    );
+    final candidates = extractor.extract(frame, focusX: 0.50, focusY: 0.56);
+    expect(candidates, isNotEmpty);
+    expect(candidates.first.productNumber, '1447');
+  });
+
+  test('selected front panel 1114 outranks bare background shelf marker 22', () {
+    final frame = AtlasLiveSnifferNativeFrame(
+      capturedAt: DateTime.utc(2026, 9, 15),
+      barcodes: const [],
+      targetState: AtlasLiveSnifferTargetState.locked,
+      lockedTrackId: 9,
+      trackedBoundingBox: const AtlasLiveSnifferNormalizedRect(left: 0.29, top: 0.42, right: 0.66, bottom: 0.82),
+      textBlocks: const <AtlasLiveSnifferNativeTextBlock>[
+        AtlasLiveSnifferNativeTextBlock(text: '22', left: 0.36, top: 0.34, right: 0.42, bottom: 0.37, trackId: 9),
+        AtlasLiveSnifferNativeTextBlock(text: 'POP! JUJUTSU KAISEN 1114', left: 0.32, top: 0.45, right: 0.63, bottom: 0.51, trackId: 9),
+        AtlasLiveSnifferNativeTextBlock(text: 'SATORU GOJO', left: 0.37, top: 0.68, right: 0.59, bottom: 0.73, trackId: 9),
+      ],
+    );
+    final candidates = extractor.extract(frame, focusX: 0.50, focusY: 0.57);
+    expect(candidates, isNotEmpty);
+    expect(candidates.first.productNumber, '1114');
+    expect(candidates.map((candidate) => candidate.productNumber), isNot(contains('22')));
+  });
+
 }

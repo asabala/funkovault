@@ -19,9 +19,7 @@ class AcademyTopicRoadmapCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color accentColor = _accentColorForTopic(
-      topic,
-    );
+    final Color accentColor = _accentColorForTopic(topic);
 
     return AtlasGlassCard(
       onTap: onTap,
@@ -33,21 +31,13 @@ class AcademyTopicRoadmapCard extends StatelessWidget {
             isPremium: topic.isPremium,
             isAvailable: topic.isAvailable,
           ),
-          const SizedBox(
-            width: AtlasSpacing.md,
-          ),
+          const SizedBox(width: AtlasSpacing.md),
           Expanded(
             child: Column(
-              crossAxisAlignment:
-              CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  topic.title,
-                  style: AtlasTypography.headingSmall,
-                ),
-                const SizedBox(
-                  height: AtlasSpacing.xs,
-                ),
+                Text(topic.title, style: AtlasTypography.headingSmall),
+                const SizedBox(height: AtlasSpacing.xs),
                 Text(
                   topic.subtitle,
                   style: AtlasTypography.bodySmall.copyWith(
@@ -55,9 +45,7 @@ class AcademyTopicRoadmapCard extends StatelessWidget {
                     height: 1.35,
                   ),
                 ),
-                const SizedBox(
-                  height: AtlasSpacing.sm,
-                ),
+                const SizedBox(height: AtlasSpacing.sm),
                 Wrap(
                   spacing: AtlasSpacing.sm,
                   runSpacing: AtlasSpacing.sm,
@@ -65,41 +53,28 @@ class AcademyTopicRoadmapCard extends StatelessWidget {
                     AtlasStatusChip(
                       label: topic.category,
                       icon: Icons.category_outlined,
-                      accentColor:
-                      AtlasColors.vaultGold,
-                      size:
-                      AtlasStatusChipSize.compact,
+                      accentColor: AtlasColors.vaultGold,
+                      size: AtlasStatusChipSize.compact,
                     ),
                     AtlasStatusChip(
-                      label: _statusLabel(
-                        topic,
-                      ),
-                      icon: _statusIcon(
-                        topic,
-                      ),
-                      accentColor:
-                      accentColor,
-                      size:
-                      AtlasStatusChipSize.compact,
+                      label: _statusLabel(topic),
+                      icon: _statusIcon(topic),
+                      accentColor: accentColor,
+                      size: AtlasStatusChipSize.compact,
                     ),
                     if (topic.isPremium)
                       const AtlasStatusChip(
                         label: 'Premium',
-                        icon: Icons
-                            .workspace_premium_rounded,
-                        accentColor:
-                        AtlasColors.vaultGold,
-                        size:
-                        AtlasStatusChipSize.compact,
+                        icon: Icons.workspace_premium_rounded,
+                        accentColor: AtlasColors.vaultGold,
+                        size: AtlasStatusChipSize.compact,
                       ),
                   ],
                 ),
               ],
             ),
           ),
-          const SizedBox(
-            width: AtlasSpacing.sm,
-          ),
+          const SizedBox(width: AtlasSpacing.sm),
           const Icon(
             Icons.chevron_right_rounded,
             color: AtlasColors.textSecondary,
@@ -109,9 +84,7 @@ class AcademyTopicRoadmapCard extends StatelessWidget {
     );
   }
 
-  static String _statusLabel(
-      AcademyTopic topic,
-      ) {
+  static String _statusLabel(AcademyTopic topic) {
     if (topic.isAvailable) {
       return 'Available';
     }
@@ -119,9 +92,7 @@ class AcademyTopicRoadmapCard extends StatelessWidget {
     return 'Roadmap';
   }
 
-  static IconData _statusIcon(
-      AcademyTopic topic,
-      ) {
+  static IconData _statusIcon(AcademyTopic topic) {
     if (topic.isAvailable) {
       return Icons.check_circle_outline_rounded;
     }
@@ -129,9 +100,7 @@ class AcademyTopicRoadmapCard extends StatelessWidget {
     return Icons.schedule_rounded;
   }
 
-  static Color _accentColorForTopic(
-      AcademyTopic topic,
-      ) {
+  static Color _accentColorForTopic(AcademyTopic topic) {
     if (topic.isPremium) {
       return AtlasColors.vaultGold;
     }
@@ -145,10 +114,7 @@ class AcademyTopicRoadmapCard extends StatelessWidget {
 }
 
 class _TopicStatusIcon extends StatelessWidget {
-  const _TopicStatusIcon({
-    required this.isPremium,
-    required this.isAvailable,
-  });
+  const _TopicStatusIcon({required this.isPremium, required this.isAvailable});
 
   final bool isPremium;
   final bool isAvailable;
@@ -174,18 +140,11 @@ class _TopicStatusIcon extends StatelessWidget {
       width: 46,
       height: 46,
       decoration: BoxDecoration(
-        color: color.withValues(
-          alpha: 0.14,
-        ),
-        borderRadius: BorderRadius.circular(
-          16,
-        ),
+        color: color.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(16),
       ),
       alignment: Alignment.center,
-      child: Icon(
-        icon,
-        color: color,
-      ),
+      child: Icon(icon, color: color),
     );
   }
 }

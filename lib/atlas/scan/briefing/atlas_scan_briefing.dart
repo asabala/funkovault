@@ -1,9 +1,4 @@
-enum AtlasScanBriefingPriority {
-  success,
-  information,
-  warning,
-  critical,
-}
+enum AtlasScanBriefingPriority { success, information, warning, critical }
 
 class AtlasScanBriefing {
   const AtlasScanBriefing({

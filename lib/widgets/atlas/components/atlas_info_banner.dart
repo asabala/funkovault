@@ -36,10 +36,7 @@ class AtlasInfoBanner extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(
-                icon,
-                color: accentColor,
-              ),
+              Icon(icon, color: accentColor),
               const SizedBox(width: AtlasSpacing.md),
               Expanded(
                 child: Column(
@@ -71,9 +68,7 @@ class AtlasInfoBanner extends StatelessWidget {
               alignment: Alignment.centerLeft,
               child: TextButton.icon(
                 onPressed: onAction,
-                icon: const Icon(
-                  Icons.arrow_forward_rounded,
-                ),
+                icon: const Icon(Icons.arrow_forward_rounded),
                 label: Text(actionLabel!),
               ),
             ),

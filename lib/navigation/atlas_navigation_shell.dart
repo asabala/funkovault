@@ -11,9 +11,7 @@ import 'atlas_bottom_navigation.dart';
 import 'atlas_navigation_controller.dart';
 
 class AtlasNavigationShell extends StatelessWidget {
-  const AtlasNavigationShell({
-    super.key,
-  });
+  const AtlasNavigationShell({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -31,8 +29,8 @@ class _AtlasNavigationShellView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final AtlasNavigationController controller =
-    context.watch<AtlasNavigationController>();
+    final AtlasNavigationController controller = context
+        .watch<AtlasNavigationController>();
 
     final List<Widget> pages = <Widget>[
       const AtlasHomeScreen(),
@@ -44,13 +42,9 @@ class _AtlasNavigationShellView extends StatelessWidget {
       // Atlas first launches and disposes the scanner when the user
       // leaves the Scan tab.
       if (controller.index == _scannerIndex)
-        const ScanScreen(
-          key: ValueKey<String>('atlas-active-scanner'),
-        )
+        const ScanScreen(key: ValueKey<String>('atlas-active-scanner'))
       else
-        const SizedBox.shrink(
-          key: ValueKey<String>('atlas-inactive-scanner'),
-        ),
+        const SizedBox.shrink(key: ValueKey<String>('atlas-inactive-scanner')),
 
       const AtlasInsightsScreen(),
       const AtlasAcademyScreen(),
@@ -58,10 +52,7 @@ class _AtlasNavigationShellView extends StatelessWidget {
     ];
 
     return Scaffold(
-      body: IndexedStack(
-        index: controller.index,
-        children: pages,
-      ),
+      body: IndexedStack(index: controller.index, children: pages),
       bottomNavigationBar: AtlasBottomNavigation(
         currentIndex: controller.index,
         onTap: controller.goTo,

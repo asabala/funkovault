@@ -2,30 +2,13 @@
 //
 // This represents runtime access and pipeline behavior. It does not contain
 // billing logic or subscription-provider details.
-enum AtlasAccessTier {
-  guest,
-  free,
-  premium,
-  enterprise,
-}
+enum AtlasAccessTier { guest, free, premium, enterprise }
 
 // Describes the network state available to an Atlas engine.
-enum EngineConnectivity {
-  online,
-  offline,
-  limited,
-  unknown,
-}
+enum EngineConnectivity { online, offline, limited, unknown }
 
 // Describes the type of device executing the engine pipeline.
-enum EngineDeviceType {
-  mobile,
-  tablet,
-  desktop,
-  web,
-  server,
-  unknown,
-}
+enum EngineDeviceType { mobile, tablet, desktop, web, server, unknown }
 
 // Immutable runtime information shared with every Atlas engine.
 //
@@ -46,20 +29,11 @@ class EngineContext {
     Set<String> featureFlags = const <String>{},
     Set<String> deviceCapabilities = const <String>{},
     Set<String> experimentIds = const <String>{},
-    Map<String, Object?> attributes =
-    const <String, Object?>{},
-  })  : featureFlags = Set<String>.unmodifiable(
-    featureFlags,
-  ),
-        deviceCapabilities = Set<String>.unmodifiable(
-          deviceCapabilities,
-        ),
-        experimentIds = Set<String>.unmodifiable(
-          experimentIds,
-        ),
-        attributes = Map<String, Object?>.unmodifiable(
-          attributes,
-        );
+    Map<String, Object?> attributes = const <String, Object?>{},
+  }) : featureFlags = Set<String>.unmodifiable(featureFlags),
+       deviceCapabilities = Set<String>.unmodifiable(deviceCapabilities),
+       experimentIds = Set<String>.unmodifiable(experimentIds),
+       attributes = Map<String, Object?>.unmodifiable(attributes);
 
   final String requestId;
 
@@ -92,8 +66,7 @@ class EngineContext {
   }
 
   bool get hasActiveCollection {
-    return activeCollectionId != null &&
-        activeCollectionId!.trim().isNotEmpty;
+    return activeCollectionId != null && activeCollectionId!.trim().isNotEmpty;
   }
 
   bool get isGuest {
@@ -124,22 +97,19 @@ class EngineContext {
   bool hasFeature(String featureId) {
     final String normalized = featureId.trim();
 
-    return normalized.isNotEmpty &&
-        featureFlags.contains(normalized);
+    return normalized.isNotEmpty && featureFlags.contains(normalized);
   }
 
   bool hasDeviceCapability(String capabilityId) {
     final String normalized = capabilityId.trim();
 
-    return normalized.isNotEmpty &&
-        deviceCapabilities.contains(normalized);
+    return normalized.isNotEmpty && deviceCapabilities.contains(normalized);
   }
 
   bool isInExperiment(String experimentId) {
     final String normalized = experimentId.trim();
 
-    return normalized.isNotEmpty &&
-        experimentIds.contains(normalized);
+    return normalized.isNotEmpty && experimentIds.contains(normalized);
   }
 
   T? attribute<T>(String key) {
@@ -171,16 +141,14 @@ class EngineContext {
       requestId: requestId ?? this.requestId,
       createdAt: createdAt ?? this.createdAt,
       userId: userId ?? this.userId,
-      activeCollectionId:
-      activeCollectionId ?? this.activeCollectionId,
+      activeCollectionId: activeCollectionId ?? this.activeCollectionId,
       accessTier: accessTier ?? this.accessTier,
       connectivity: connectivity ?? this.connectivity,
       deviceType: deviceType ?? this.deviceType,
       localeCode: localeCode ?? this.localeCode,
       currencyCode: currencyCode ?? this.currencyCode,
       featureFlags: featureFlags ?? this.featureFlags,
-      deviceCapabilities:
-      deviceCapabilities ?? this.deviceCapabilities,
+      deviceCapabilities: deviceCapabilities ?? this.deviceCapabilities,
       experimentIds: experimentIds ?? this.experimentIds,
       attributes: attributes ?? this.attributes,
     );
@@ -189,57 +157,36 @@ class EngineContext {
   EngineContext addFeatureFlag(String featureId) {
     final String normalized = featureId.trim();
 
-    if (normalized.isEmpty ||
-        featureFlags.contains(normalized)) {
+    if (normalized.isEmpty || featureFlags.contains(normalized)) {
       return this;
     }
 
-    return copyWith(
-      featureFlags: <String>{
-        ...featureFlags,
-        normalized,
-      },
-    );
+    return copyWith(featureFlags: <String>{...featureFlags, normalized});
   }
 
-  EngineContext addDeviceCapability(
-      String capabilityId,
-      ) {
+  EngineContext addDeviceCapability(String capabilityId) {
     final String normalized = capabilityId.trim();
 
-    if (normalized.isEmpty ||
-        deviceCapabilities.contains(normalized)) {
+    if (normalized.isEmpty || deviceCapabilities.contains(normalized)) {
       return this;
     }
 
     return copyWith(
-      deviceCapabilities: <String>{
-        ...deviceCapabilities,
-        normalized,
-      },
+      deviceCapabilities: <String>{...deviceCapabilities, normalized},
     );
   }
 
   EngineContext addExperiment(String experimentId) {
     final String normalized = experimentId.trim();
 
-    if (normalized.isEmpty ||
-        experimentIds.contains(normalized)) {
+    if (normalized.isEmpty || experimentIds.contains(normalized)) {
       return this;
     }
 
-    return copyWith(
-      experimentIds: <String>{
-        ...experimentIds,
-        normalized,
-      },
-    );
+    return copyWith(experimentIds: <String>{...experimentIds, normalized});
   }
 
-  EngineContext setAttribute(
-      String key,
-      Object? value,
-      ) {
+  EngineContext setAttribute(String key, Object? value) {
     final String normalizedKey = key.trim();
 
     if (normalizedKey.isEmpty) {
@@ -247,10 +194,7 @@ class EngineContext {
     }
 
     return copyWith(
-      attributes: <String, Object?>{
-        ...attributes,
-        normalizedKey: value,
-      },
+      attributes: <String, Object?>{...attributes, normalizedKey: value},
     );
   }
 

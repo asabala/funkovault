@@ -17,35 +17,17 @@ final class AtlasCatalogProduct {
     String? productNumber,
     String? variantName,
     Iterable<String> barcodes = const <String>[],
-    Map<String, Object?> attributes =
-    const <String, Object?>{},
-  })  : displayName = _requireText(
-    displayName,
-    'displayName',
-  ),
-        categoryCode = _normalizeCode(
-          categoryCode,
-        ),
-        brand = _normalizeOptionalText(brand),
-        productLine = _normalizeOptionalText(
-          productLine,
-        ),
-        series = _normalizeOptionalText(series),
-        characterName = _normalizeOptionalText(
-          characterName,
-        ),
-        productNumber = _normalizeOptionalText(
-          productNumber,
-        ),
-        variantName = _normalizeOptionalText(
-          variantName,
-        ),
-        barcodes = List.unmodifiable(
-          _normalizeBarcodes(barcodes),
-        ),
-        attributes = Map.unmodifiable(
-          Map<String, Object?>.from(attributes),
-        );
+    Map<String, Object?> attributes = const <String, Object?>{},
+  }) : displayName = _requireText(displayName, 'displayName'),
+       categoryCode = _normalizeCode(categoryCode),
+       brand = _normalizeOptionalText(brand),
+       productLine = _normalizeOptionalText(productLine),
+       series = _normalizeOptionalText(series),
+       characterName = _normalizeOptionalText(characterName),
+       productNumber = _normalizeOptionalText(productNumber),
+       variantName = _normalizeOptionalText(variantName),
+       barcodes = List.unmodifiable(_normalizeBarcodes(barcodes)),
+       attributes = Map.unmodifiable(Map<String, Object?>.from(attributes));
 
   final AtlasProductId productId;
 
@@ -81,9 +63,7 @@ final class AtlasCatalogProduct {
     return productNumber != null;
   }
 
-  T? attribute<T>(
-      String key,
-      ) {
+  T? attribute<T>(String key) {
     final Object? value = attributes[key];
 
     if (value is T) {
@@ -93,26 +73,17 @@ final class AtlasCatalogProduct {
     return null;
   }
 
-  bool hasAttribute(
-      String key,
-      ) {
+  bool hasAttribute(String key) {
     return attributes.containsKey(key);
   }
 
-  bool matchesBarcode(
-      String value,
-      ) {
-    final String normalized =
-    _normalizeBarcode(value);
+  bool matchesBarcode(String value) {
+    final String normalized = _normalizeBarcode(value);
 
-    return normalized.isNotEmpty &&
-        barcodes.contains(normalized);
+    return normalized.isNotEmpty && barcodes.contains(normalized);
   }
 
-  static String _requireText(
-      String value,
-      String parameterName,
-      ) {
+  static String _requireText(String value, String parameterName) {
     final String normalized = value.trim();
 
     if (normalized.isEmpty) {
@@ -126,11 +97,8 @@ final class AtlasCatalogProduct {
     return normalized;
   }
 
-  static String _normalizeCode(
-      String value,
-      ) {
-    final String normalized =
-    value.trim().toUpperCase();
+  static String _normalizeCode(String value) {
+    final String normalized = value.trim().toUpperCase();
 
     if (normalized.isEmpty) {
       throw ArgumentError.value(
@@ -143,9 +111,7 @@ final class AtlasCatalogProduct {
     return normalized;
   }
 
-  static String? _normalizeOptionalText(
-      String? value,
-      ) {
+  static String? _normalizeOptionalText(String? value) {
     final String normalized = value?.trim() ?? '';
 
     if (normalized.isEmpty) {
@@ -155,42 +121,28 @@ final class AtlasCatalogProduct {
     return normalized;
   }
 
-  static List<String> _normalizeBarcodes(
-      Iterable<String> values,
-      ) {
-    final Set<String> normalized =
-    <String>{};
+  static List<String> _normalizeBarcodes(Iterable<String> values) {
+    final Set<String> normalized = <String>{};
 
     for (final String value in values) {
-      final String barcode =
-      _normalizeBarcode(value);
+      final String barcode = _normalizeBarcode(value);
 
       if (barcode.isNotEmpty) {
         normalized.add(barcode);
       }
     }
 
-    return normalized.toList(
-      growable: false,
-    );
+    return normalized.toList(growable: false);
   }
 
-  static String _normalizeBarcode(
-      String value,
-      ) {
-    return value.replaceAll(
-      RegExp(r'[^0-9A-Za-z]'),
-      '',
-    );
+  static String _normalizeBarcode(String value) {
+    return value.replaceAll(RegExp(r'[^0-9A-Za-z]'), '');
   }
 
   @override
-  bool operator ==(
-      Object other,
-      ) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
-        other is AtlasCatalogProduct &&
-            other.productId == productId;
+        other is AtlasCatalogProduct && other.productId == productId;
   }
 
   @override

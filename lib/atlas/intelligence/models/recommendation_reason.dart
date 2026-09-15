@@ -12,9 +12,9 @@ class RecommendationReason {
     this.evidence = const <RecommendationEvidence>[],
     this.metadata = const <String, Object?>{},
   }) : assert(
-  confidence >= 0 && confidence <= 1,
-  'confidence must be between 0 and 1',
-  );
+         confidence >= 0 && confidence <= 1,
+         'confidence must be between 0 and 1',
+       );
 
   final String id;
 
@@ -90,9 +90,7 @@ class RecommendationReason {
       confidence,
       Object.hashAll(evidence),
       Object.hashAll(
-        metadata.entries.map(
-              (entry) => Object.hash(entry.key, entry.value),
-        ),
+        metadata.entries.map((entry) => Object.hash(entry.key, entry.value)),
       ),
     );
   }

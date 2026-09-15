@@ -1,9 +1,4 @@
-enum TimelineInsightPriority {
-  low,
-  medium,
-  high,
-  critical,
-}
+enum TimelineInsightPriority { low, medium, high, critical }
 
 enum TimelineInsightCategory {
   ownership,
@@ -52,10 +47,9 @@ class TimelineInsight {
 
   bool get isHighPriority =>
       priority == TimelineInsightPriority.high ||
-          priority == TimelineInsightPriority.critical;
-
-  bool get isCritical =>
       priority == TimelineInsightPriority.critical;
+
+  bool get isCritical => priority == TimelineInsightPriority.critical;
 
   TimelineInsight copyWith({
     String? id,

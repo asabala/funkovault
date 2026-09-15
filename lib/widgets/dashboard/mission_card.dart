@@ -32,15 +32,10 @@ class MissionCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 const Text(
                   "Today's Mission",
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                 ),
                 const Spacer(),
-                AtlasPriorityChip(
-                  severity: severity,
-                ),
+                AtlasPriorityChip(severity: severity),
               ],
             ),
 
@@ -48,10 +43,7 @@ class MissionCard extends StatelessWidget {
 
             Text(
               title,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
 
             const SizedBox(height: 8),
@@ -66,9 +58,7 @@ class MissionCard extends StatelessWidget {
                 const SizedBox(width: 6),
                 Text(
                   estimatedTime,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
               ],
             ),
@@ -82,9 +72,7 @@ class MissionCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     reward,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
               ],

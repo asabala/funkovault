@@ -58,41 +58,34 @@ class IdentityReviewService {
         relatedGroups,
         IdentityRelationship.eventDifference,
       ),
-      needsReview: _groupsFor(
-        relatedGroups,
-        IdentityRelationship.needsReview,
-      ),
+      needsReview: _groupsFor(relatedGroups, IdentityRelationship.needsReview),
     );
   }
 
-  List<IdentityReviewGroup> _buildExactDuplicateGroups(
-      List<Pop> pops,
-      ) {
+  List<IdentityReviewGroup> _buildExactDuplicateGroups(List<Pop> pops) {
     final groups = duplicateReviewEngine.buildGroups(pops);
 
     return groups
         .map(
           (group) => IdentityReviewGroup(
-        key: group.key,
-        relationship: IdentityRelationship.exactDuplicate,
-        pops: group.pops,
-        title: 'Exact Duplicate',
-        explanation:
-        'These records share the same Atlas release fingerprint.',
-        confidence: 100,
-        evidence: const <String>[
-          'Release identity matches',
-          'Variant identity matches',
-          'Packaging identity matches',
-        ],
-      ),
-    )
+            key: group.key,
+            relationship: IdentityRelationship.exactDuplicate,
+            pops: group.pops,
+            title: 'Exact Duplicate',
+            explanation:
+                'These records share the same Atlas release fingerprint.',
+            confidence: 100,
+            evidence: const <String>[
+              'Release identity matches',
+              'Variant identity matches',
+              'Packaging identity matches',
+            ],
+          ),
+        )
         .toList(growable: false);
   }
 
-  List<IdentityReviewGroup> _buildRelatedReviewGroups(
-      List<Pop> pops,
-      ) {
+  List<IdentityReviewGroup> _buildRelatedReviewGroups(List<Pop> pops) {
     final popsBySimilarityKey = <String, List<Pop>>{};
 
     for (final pop in pops) {
@@ -102,10 +95,7 @@ class IdentityReviewService {
         continue;
       }
 
-      popsBySimilarityKey.putIfAbsent(
-        key,
-            () => <Pop>[],
-      );
+      popsBySimilarityKey.putIfAbsent(key, () => <Pop>[]);
 
       popsBySimilarityKey[key]!.add(pop);
     }
@@ -130,12 +120,7 @@ class IdentityReviewService {
         continue;
       }
 
-      groups.add(
-        _classifyRelatedGroup(
-          key: entry.key,
-          pops: relatedPops,
-        ),
-      );
+      groups.add(_classifyRelatedGroup(key: entry.key, pops: relatedPops));
     }
 
     return List<IdentityReviewGroup>.unmodifiable(groups);
@@ -149,36 +134,23 @@ class IdentityReviewService {
 
     final hasVariantDifference = _hasDifference(
       pops,
-          (pop) => <String>[
-        pop.edition,
-        pop.variant,
-        pop.limitedEdition,
-      ].join('|'),
+      (pop) => <String>[pop.edition, pop.variant, pop.limitedEdition].join('|'),
     );
 
-    final hasStickerDifference = _hasDifference(
-      pops,
-          (pop) => pop.stickerType,
-    );
+    final hasStickerDifference = _hasDifference(pops, (pop) => pop.stickerType);
 
-    final hasEventDifference = _hasDifference(
-      pops,
-          (pop) => pop.eventSticker,
-    );
+    final hasEventDifference = _hasDifference(pops, (pop) => pop.eventSticker);
 
-    final hasFinishDifference = _hasDifference(
-      pops,
-          (pop) => pop.finish,
-    );
+    final hasFinishDifference = _hasDifference(pops, (pop) => pop.finish);
 
     final hasRetailerDifference = _hasDifference(
       pops,
-          (pop) => pop.retailExclusive,
+      (pop) => pop.retailExclusive,
     );
 
     final hasPackagingDifference = _hasDifference(
       pops,
-          (pop) => <String>[
+      (pop) => <String>[
         pop.size,
         pop.packagingType,
         pop.boxVersion,
@@ -188,20 +160,14 @@ class IdentityReviewService {
 
     final hasProductionDifference = _hasDifference(
       pops,
-          (pop) => <String>[
-        pop.productionCode,
-        pop.releaseDate,
-      ].join('|'),
+      (pop) => <String>[pop.productionCode, pop.releaseDate].join('|'),
     );
 
-    final hasSignatureDifference = _hasDifference(
-      pops,
-          (pop) => pop.signature,
-    );
+    final hasSignatureDifference = _hasDifference(pops, (pop) => pop.signature);
 
     final hasAuthenticationDifference = _hasDifference(
       pops,
-          (pop) => <String>[
+      (pop) => <String>[
         pop.authenticationProvider,
         pop.gradingCompany,
         pop.authenticityNumber,
@@ -266,8 +232,8 @@ class IdentityReviewService {
       evidence: List<String>.unmodifiable(
         evidence.isEmpty
             ? const <String>[
-          'The records share a broad identity but require review',
-        ]
+                'The records share a broad identity but require review',
+              ]
             : evidence,
       ),
     );
@@ -325,10 +291,7 @@ class IdentityReviewService {
     return IdentityRelationship.needsReview;
   }
 
-  bool _hasDifference(
-      List<Pop> pops,
-      String Function(Pop pop) selector,
-      ) {
+  bool _hasDifference(List<Pop> pops, String Function(Pop pop) selector) {
     final values = pops
         .map(selector)
         .map(Pop.normalizeIdentityText)
@@ -339,9 +302,9 @@ class IdentityReviewService {
   }
 
   List<IdentityReviewGroup> _groupsFor(
-      List<IdentityReviewGroup> groups,
-      IdentityRelationship relationship,
-      ) {
+    List<IdentityReviewGroup> groups,
+    IdentityRelationship relationship,
+  ) {
     return groups
         .where((group) => group.relationship == relationship)
         .toList(growable: false);
@@ -374,9 +337,7 @@ class IdentityReviewService {
     }
   }
 
-  String _explanationFor(
-      IdentityRelationship relationship,
-      ) {
+  String _explanationFor(IdentityRelationship relationship) {
     switch (relationship) {
       case IdentityRelationship.exactDuplicate:
         return 'These records appear to represent the same exact release.';
@@ -420,9 +381,7 @@ class IdentityReviewService {
     }
   }
 
-  int _confidenceFor(
-      IdentityRelationship relationship,
-      ) {
+  int _confidenceFor(IdentityRelationship relationship) {
     switch (relationship) {
       case IdentityRelationship.exactDuplicate:
         return 100;

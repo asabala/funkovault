@@ -114,9 +114,7 @@ class Pop {
     this.lastUpdated = '',
   });
 
-  factory Pop.fromJson(
-      Map<String, dynamic> json,
-      ) {
+  factory Pop.fromJson(Map<String, dynamic> json) {
     final parsedId = json['id']?.toString() ?? '';
     final legacyEdition = json['edition'] ?? 'Common';
 
@@ -163,8 +161,7 @@ class Pop {
       copyrightYear: json['copyrightYear'] ?? '',
       productionCode: json['productionCode'] ?? '',
       stickerType: json['stickerType'] ?? '',
-      authenticationProvider:
-      json['authenticationProvider'] ?? '',
+      authenticationProvider: json['authenticationProvider'] ?? '',
       value: parsedValue,
       pricePaid: _readDouble(json['pricePaid']),
       valueHistory: parsedValueHistory,
@@ -467,14 +464,12 @@ class Pop {
       limitedEdition: limitedEdition ?? this.limitedEdition,
       signature: signature ?? this.signature,
       sourceCatalogId: sourceCatalogId ?? this.sourceCatalogId,
-      sourceCollectibleId:
-      sourceCollectibleId ?? this.sourceCollectibleId,
+      sourceCollectibleId: sourceCollectibleId ?? this.sourceCollectibleId,
       sourceUpc: sourceUpc ?? this.sourceUpc,
       productionStatus: productionStatus ?? this.productionStatus,
       releaseDate: releaseDate ?? this.releaseDate,
       gradingCompany: gradingCompany ?? this.gradingCompany,
-      authenticityNumber:
-      authenticityNumber ?? this.authenticityNumber,
+      authenticityNumber: authenticityNumber ?? this.authenticityNumber,
       finish: finish ?? this.finish,
       size: size ?? this.size,
       packagingType: packagingType ?? this.packagingType,
@@ -483,7 +478,7 @@ class Pop {
       productionCode: productionCode ?? this.productionCode,
       stickerType: stickerType ?? this.stickerType,
       authenticationProvider:
-      authenticationProvider ?? this.authenticationProvider,
+          authenticationProvider ?? this.authenticationProvider,
       value: value ?? this.value,
       pricePaid: pricePaid ?? this.pricePaid,
       valueHistory: valueHistory ?? this.valueHistory,
@@ -551,16 +546,10 @@ class Pop {
       return rawValue.toDouble();
     }
 
-    return double.tryParse(
-      rawValue?.toString().trim() ?? '',
-    ) ??
-        0;
+    return double.tryParse(rawValue?.toString().trim() ?? '') ?? 0;
   }
 
-  static int _readInt(
-      dynamic rawValue, {
-        required int fallback,
-      }) {
+  static int _readInt(dynamic rawValue, {required int fallback}) {
     if (rawValue is int) {
       return rawValue;
     }
@@ -569,18 +558,15 @@ class Pop {
       return rawValue.toInt();
     }
 
-    return int.tryParse(
-      rawValue?.toString().trim() ?? '',
-    ) ??
-        fallback;
+    return int.tryParse(rawValue?.toString().trim() ?? '') ?? fallback;
   }
 
   static List<ValueHistoryEntry> _readValueHistory(
-      dynamic rawHistory, {
-        required double currentValue,
-        required String dateAdded,
-        required String lastUpdated,
-      }) {
+    dynamic rawHistory, {
+    required double currentValue,
+    required String dateAdded,
+    required String lastUpdated,
+  }) {
     final entries = <ValueHistoryEntry>[];
 
     if (rawHistory is List) {
@@ -602,9 +588,7 @@ class Pop {
     }
 
     if (entries.isNotEmpty) {
-      entries.sort(
-            (a, b) => a.recordedAt.compareTo(b.recordedAt),
-      );
+      entries.sort((a, b) => a.recordedAt.compareTo(b.recordedAt));
 
       return List<ValueHistoryEntry>.unmodifiable(entries);
     }
@@ -615,25 +599,23 @@ class Pop {
 
     final recordedAt =
         DateTime.tryParse(lastUpdated) ??
-            DateTime.tryParse(dateAdded) ??
-            DateTime.fromMillisecondsSinceEpoch(0);
+        DateTime.tryParse(dateAdded) ??
+        DateTime.fromMillisecondsSinceEpoch(0);
 
-    return List<ValueHistoryEntry>.unmodifiable(
-      <ValueHistoryEntry>[
-        ValueHistoryEntry(
-          value: currentValue,
-          recordedAt: recordedAt,
-          source: ValueHistoryEntry.legacyValueSource,
-        ),
-      ],
-    );
+    return List<ValueHistoryEntry>.unmodifiable(<ValueHistoryEntry>[
+      ValueHistoryEntry(
+        value: currentValue,
+        recordedAt: recordedAt,
+        source: ValueHistoryEntry.legacyValueSource,
+      ),
+    ]);
   }
 
   static List<AtlasTimelineEvent> _readTimeline(
-      dynamic rawTimeline, {
-        required String popId,
-        required String dateAdded,
-      }) {
+    dynamic rawTimeline, {
+    required String popId,
+    required String dateAdded,
+  }) {
     final events = <AtlasTimelineEvent>[];
 
     if (rawTimeline is List) {
@@ -651,9 +633,7 @@ class Pop {
     }
 
     if (events.isNotEmpty) {
-      events.sort(
-            (a, b) => a.occurredAt.compareTo(b.occurredAt),
-      );
+      events.sort((a, b) => a.occurredAt.compareTo(b.occurredAt));
 
       return List<AtlasTimelineEvent>.unmodifiable(events);
     }
@@ -664,28 +644,23 @@ class Pop {
       return const [];
     }
 
-    return List<AtlasTimelineEvent>.unmodifiable(
-      <AtlasTimelineEvent>[
-        AtlasTimelineEvent(
-          id: 'legacy-added-$popId',
-          popId: popId,
-          type: AtlasTimelineEventType.addedToVault,
-          occurredAt: addedAt,
-          title: 'Added to Vault',
-          createdBy: AtlasTimelineEvent.systemCreatedBy,
-          createdAt: addedAt,
-        ),
-      ],
-    );
+    return List<AtlasTimelineEvent>.unmodifiable(<AtlasTimelineEvent>[
+      AtlasTimelineEvent(
+        id: 'legacy-added-$popId',
+        popId: popId,
+        type: AtlasTimelineEventType.addedToVault,
+        occurredAt: addedAt,
+        title: 'Added to Vault',
+        createdBy: AtlasTimelineEvent.systemCreatedBy,
+        createdAt: addedAt,
+      ),
+    ]);
   }
 
   // Cleans strings by lowercasing and stripping non-alphanumeric characters.
   // Converts "Spider-Man #01!" -> "spiderman01"
   static String normalizeIdentityText(String value) {
-    return value
-        .trim()
-        .toLowerCase()
-        .replaceAll(RegExp(r'[^a-z0-9]'), '');
+    return value.trim().toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
   }
 
   static String normalizeVariantIdentity(String value) {

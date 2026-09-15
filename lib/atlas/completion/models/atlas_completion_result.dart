@@ -7,10 +7,7 @@ final class AtlasCompletionResult {
   AtlasCompletionResult({
     required this.query,
     required Iterable<AtlasCompletionItem> items,
-  }) : items =
-  List<AtlasCompletionItem>.unmodifiable(
-    items,
-  );
+  }) : items = List<AtlasCompletionItem>.unmodifiable(items);
 
   final AtlasCompletionQuery query;
 
@@ -29,27 +26,21 @@ final class AtlasCompletionResult {
   }
 
   int get ownedReleaseCount {
-    return items.where(
-          (AtlasCompletionItem item) {
-        return item.isOwned;
-      },
-    ).length;
+    return items.where((AtlasCompletionItem item) {
+      return item.isOwned;
+    }).length;
   }
 
   int get wishlistReleaseCount {
-    return items.where(
-          (AtlasCompletionItem item) {
-        return item.isWishlisted;
-      },
-    ).length;
+    return items.where((AtlasCompletionItem item) {
+      return item.isWishlisted;
+    }).length;
   }
 
   int get missingReleaseCount {
-    return items.where(
-          (AtlasCompletionItem item) {
-        return item.isMissing;
-      },
-    ).length;
+    return items.where((AtlasCompletionItem item) {
+      return item.isMissing;
+    }).length;
   }
 
   int get remainingReleaseCount {
@@ -57,15 +48,9 @@ final class AtlasCompletionResult {
   }
 
   int get totalOwnedQuantity {
-    return items.fold<int>(
-      0,
-          (
-          int total,
-          AtlasCompletionItem item,
-          ) {
-        return total + item.ownedQuantity;
-      },
-    );
+    return items.fold<int>(0, (int total, AtlasCompletionItem item) {
+      return total + item.ownedQuantity;
+    });
   }
 
   double get completionPercent {
@@ -73,11 +58,7 @@ final class AtlasCompletionResult {
       return 0;
     }
 
-    return (
-        ownedReleaseCount /
-            totalReleaseCount
-    ) *
-        100;
+    return (ownedReleaseCount / totalReleaseCount) * 100;
   }
 
   double get completionRatio {
@@ -85,13 +66,7 @@ final class AtlasCompletionResult {
       return 0;
     }
 
-    return (
-        ownedReleaseCount /
-            totalReleaseCount
-    ).clamp(
-      0,
-      1,
-    );
+    return (ownedReleaseCount / totalReleaseCount).clamp(0, 1);
   }
 
   double get wishlistProgressPercent {
@@ -99,20 +74,12 @@ final class AtlasCompletionResult {
       return 0;
     }
 
-    return (
-        (
-            ownedReleaseCount +
-                wishlistReleaseCount
-        ) /
-            totalReleaseCount
-    ) *
+    return ((ownedReleaseCount + wishlistReleaseCount) / totalReleaseCount) *
         100;
   }
 
   bool get isComplete {
-    return totalReleaseCount > 0 &&
-        ownedReleaseCount ==
-            totalReleaseCount;
+    return totalReleaseCount > 0 && ownedReleaseCount == totalReleaseCount;
   }
 
   bool get hasWishlistItems {
@@ -128,114 +95,76 @@ final class AtlasCompletionResult {
   }
 
   bool get isNearCompletion {
-    return !isComplete &&
-        totalReleaseCount > 1 &&
-        remainingReleaseCount <= 2;
+    return !isComplete && totalReleaseCount > 1 && remainingReleaseCount <= 2;
   }
 
   bool get isHalfComplete {
-    return !isComplete &&
-        completionPercent >= 50;
+    return !isComplete && completionPercent >= 50;
   }
 
   bool get hasMissingChase {
-    return missingItems.any(
-          (AtlasCompletionItem item) {
-        final String searchableText =
-        <String>[
-          item.displayName,
-          item.variantName ?? '',
-          item.catalogProduct.attributes
-          ['rarity']
-              ?.toString() ??
-              '',
-          item.catalogProduct.attributes
-          ['treatment']
-              ?.toString() ??
-              '',
-          item.catalogProduct.attributes
-          ['finish']
-              ?.toString() ??
-              '',
-        ].join(
-          ' ',
-        ).toLowerCase();
+    return missingItems.any((AtlasCompletionItem item) {
+      final String searchableText = <String>[
+        item.displayName,
+        item.variantName ?? '',
+        item.catalogProduct.attributes['rarity']?.toString() ?? '',
+        item.catalogProduct.attributes['treatment']?.toString() ?? '',
+        item.catalogProduct.attributes['finish']?.toString() ?? '',
+      ].join(' ').toLowerCase();
 
-        return searchableText.contains(
-          'chase',
-        );
-      },
-    );
+      return searchableText.contains('chase');
+    });
   }
 
   List<AtlasCompletionItem> get ownedItems {
     return List<AtlasCompletionItem>.unmodifiable(
-      items.where(
-            (AtlasCompletionItem item) {
-          return item.isOwned;
-        },
-      ),
+      items.where((AtlasCompletionItem item) {
+        return item.isOwned;
+      }),
     );
   }
 
   List<AtlasCompletionItem> get wishlistItems {
     return List<AtlasCompletionItem>.unmodifiable(
-      items.where(
-            (AtlasCompletionItem item) {
-          return item.isWishlisted;
-        },
-      ),
+      items.where((AtlasCompletionItem item) {
+        return item.isWishlisted;
+      }),
     );
   }
 
   List<AtlasCompletionItem> get missingItems {
     return List<AtlasCompletionItem>.unmodifiable(
-      items.where(
-            (AtlasCompletionItem item) {
-          return item.isMissing;
-        },
-      ),
+      items.where((AtlasCompletionItem item) {
+        return item.isMissing;
+      }),
     );
   }
 
-  Map<AtlasCompletionItemState, List<AtlasCompletionItem>>
-  get itemsByState {
-    final Map<
-        AtlasCompletionItemState,
-        List<AtlasCompletionItem>>
-    groupedItems =
-    <AtlasCompletionItemState,
-        List<AtlasCompletionItem>>{
+  Map<AtlasCompletionItemState, List<AtlasCompletionItem>> get itemsByState {
+    final Map<AtlasCompletionItemState, List<AtlasCompletionItem>>
+    groupedItems = <AtlasCompletionItemState, List<AtlasCompletionItem>>{
       for (final AtlasCompletionItemState state
-      in AtlasCompletionItemState.values)
+          in AtlasCompletionItemState.values)
         state: <AtlasCompletionItem>[],
     };
 
-    for (final AtlasCompletionItem item
-    in items) {
-      groupedItems[item.state]!.add(
-        item,
-      );
+    for (final AtlasCompletionItem item in items) {
+      groupedItems[item.state]!.add(item);
     }
 
     return UnmodifiableMapView<
-        AtlasCompletionItemState,
-        List<AtlasCompletionItem>>(
-      groupedItems.map(
-            (
-            AtlasCompletionItemState state,
-            List<AtlasCompletionItem> items,
-            ) {
-          return MapEntry<
-              AtlasCompletionItemState,
-              List<AtlasCompletionItem>>(
-            state,
-            List<AtlasCompletionItem>.unmodifiable(
-              items,
-            ),
-          );
-        },
-      ),
+      AtlasCompletionItemState,
+      List<AtlasCompletionItem>
+    >(
+      groupedItems.map((
+        AtlasCompletionItemState state,
+        List<AtlasCompletionItem> items,
+      ) {
+        return MapEntry<AtlasCompletionItemState, List<AtlasCompletionItem>>(
+          state,
+          List<AtlasCompletionItem>.unmodifiable(items),
+        );
+      }),
     );
   }
 
@@ -262,8 +191,7 @@ final class AtlasCompletionResult {
       return 'Collection complete. Every release is owned.';
     }
 
-    if (ownedReleaseCount == 0 &&
-        wishlistReleaseCount > 0) {
+    if (ownedReleaseCount == 0 && wishlistReleaseCount > 0) {
       return 'Your next collecting goal is already on the Wishlist.';
     }
 
@@ -281,7 +209,7 @@ final class AtlasCompletionResult {
       return hasMissingChase
           ? 'Almost complete. A Chase is still missing.'
           : 'Almost complete. Only '
-          '$remainingReleaseCount releases remain.';
+                '$remainingReleaseCount releases remain.';
     }
 
     if (completionPercent >= 75) {

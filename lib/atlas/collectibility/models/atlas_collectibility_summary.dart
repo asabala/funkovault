@@ -50,8 +50,7 @@ class AtlasCollectibilitySummary {
 
   bool get isMarketReady => marketReadiness == 'Ready';
 
-  bool get needsMarketDetails =>
-      marketReadiness == 'Needs Details';
+  bool get needsMarketDetails => marketReadiness == 'Needs Details';
 
   AtlasCollectibilitySummary copyWith({
     int? score,
@@ -77,7 +76,7 @@ class AtlasCollectibilitySummary {
       signals: signals ?? this.signals,
       isDisplayPiece: isDisplayPiece ?? this.isDisplayPiece,
       shouldReviewForInsurance:
-      shouldReviewForInsurance ?? this.shouldReviewForInsurance,
+          shouldReviewForInsurance ?? this.shouldReviewForInsurance,
       marketReadiness: marketReadiness ?? this.marketReadiness,
     );
   }

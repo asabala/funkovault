@@ -9,11 +9,10 @@ import 'product_resolution.dart';
 final class ResolutionEvidence {
   ResolutionEvidence({
     List<ProductResolutionContribution> contributions =
-    const <ProductResolutionContribution>[],
-  }) : contributions =
-  List<ProductResolutionContribution>.unmodifiable(
-    contributions,
-  );
+        const <ProductResolutionContribution>[],
+  }) : contributions = List<ProductResolutionContribution>.unmodifiable(
+         contributions,
+       );
 
   final List<ProductResolutionContribution> contributions;
 

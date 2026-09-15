@@ -38,9 +38,7 @@ class _TestAuthService implements AuthService {
   Future<void> signOut() async {}
 
   @override
-  Future<void> sendPasswordResetEmail(
-      String email,
-      ) async {}
+  Future<void> sendPasswordResetEmail(String email) async {}
 
   @override
   Future<void> resendVerificationEmail() async {}
@@ -52,23 +50,18 @@ class _TestAuthService implements AuthService {
 }
 
 class _TestAuthProvider extends AuthProvider {
-  _TestAuthProvider({
-    required AuthState authState,
-  }) : _testController = AuthController(
-    authService: _TestAuthService(
-      authState,
-    ),
-  );
+  _TestAuthProvider({required AuthState authState})
+    : _testController = AuthController(
+        authService: _TestAuthService(authState),
+      );
 
   final AuthController _testController;
 
   @override
-  AuthController get controller =>
-      _testController;
+  AuthController get controller => _testController;
 
   @override
-  bool get isPremium =>
-      _testController.isPremium;
+  bool get isPremium => _testController.isPremium;
 
   Future<void> initializeForTest() async {
     await _testController.loadCurrentUser();
@@ -84,18 +77,13 @@ class _TestAuthProvider extends AuthProvider {
 
 void main() {
   Future<void> pumpPremiumSettings(
-      WidgetTester tester, {
-        required AuthState authState,
-      }) async {
+    WidgetTester tester, {
+    required AuthState authState,
+  }) async {
     tester.view.devicePixelRatio = 1;
-    tester.view.physicalSize = const Size(
-      1200,
-      2400,
-    );
+    tester.view.physicalSize = const Size(1200, 2400);
 
-    final authProvider = _TestAuthProvider(
-      authState: authState,
-    );
+    final authProvider = _TestAuthProvider(authState: authState);
 
     await authProvider.initializeForTest();
 
@@ -108,89 +96,59 @@ void main() {
     await tester.pumpWidget(
       ChangeNotifierProvider<AuthProvider>.value(
         value: authProvider,
-        child: const MaterialApp(
-          home: PremiumSettingsScreen(),
-        ),
+        child: const MaterialApp(home: PremiumSettingsScreen()),
       ),
     );
 
     await tester.pump();
   }
 
-  testWidgets(
-    'basic account shows basic premium state',
-        (tester) async {
-      await pumpPremiumSettings(
-        tester,
-        authState: const AuthState(
-          status: AuthStatus.authenticated,
-          email: 'arthur@example.com',
-          displayName: 'Arthur',
-          isPremium: false,
-          emailVerified: true,
-        ),
-      );
+  testWidgets('basic account shows basic premium state', (tester) async {
+    await pumpPremiumSettings(
+      tester,
+      authState: const AuthState(
+        status: AuthStatus.authenticated,
+        email: 'arthur@example.com',
+        displayName: 'Arthur',
+        isPremium: false,
+        emailVerified: true,
+      ),
+    );
 
-      expect(
-        find.text('Atlas Premium'),
-        findsOneWidget,
-      );
+    expect(find.text('Atlas Premium'), findsOneWidget);
 
-      expect(
-        find.text('Basic Plan'),
-        findsOneWidget,
-      );
+    expect(find.text('Basic Plan'), findsOneWidget);
 
-      expect(
-        find.text('Premium Active'),
-        findsNothing,
-      );
+    expect(find.text('Premium Active'), findsNothing);
 
-      await tester.pumpWidget(
-        const SizedBox.shrink(),
-      );
-    },
-  );
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
 
-  testWidgets(
-    'premium account shows premium state from AuthState',
-        (tester) async {
-      await pumpPremiumSettings(
-        tester,
-        authState: const AuthState(
-          status: AuthStatus.authenticated,
-          email: 'arthur@example.com',
-          displayName: 'Arthur',
-          isPremium: true,
-          emailVerified: true,
-        ),
-      );
+  testWidgets('premium account shows premium state from AuthState', (
+    tester,
+  ) async {
+    await pumpPremiumSettings(
+      tester,
+      authState: const AuthState(
+        status: AuthStatus.authenticated,
+        email: 'arthur@example.com',
+        displayName: 'Arthur',
+        isPremium: true,
+        emailVerified: true,
+      ),
+    );
 
-      expect(
-        find.text('Premium Active'),
-        findsOneWidget,
-      );
+    expect(find.text('Premium Active'), findsOneWidget);
 
-      expect(
-        find.text('Premium Plan'),
-        findsOneWidget,
-      );
+    expect(find.text('Premium Plan'), findsOneWidget);
 
-      expect(
-        find.text(
-          'Premium tools are enabled for your Atlas account.',
-        ),
-        findsOneWidget,
-      );
+    expect(
+      find.text('Premium tools are enabled for your Atlas account.'),
+      findsOneWidget,
+    );
 
-      expect(
-        find.text('Basic Plan'),
-        findsNothing,
-      );
+    expect(find.text('Basic Plan'), findsNothing);
 
-      await tester.pumpWidget(
-        const SizedBox.shrink(),
-      );
-    },
-  );
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
 }

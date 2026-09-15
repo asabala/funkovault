@@ -7,18 +7,14 @@ import 'atlas_identity_token.dart';
 final class AtlasIdentityTokenizer {
   const AtlasIdentityTokenizer();
 
-  List<AtlasIdentityToken> tokenize(
-      String? text,
-      ) {
+  List<AtlasIdentityToken> tokenize(String? text) {
     if (text == null || text.trim().isEmpty) {
       return const <AtlasIdentityToken>[];
     }
 
-    final List<AtlasIdentityToken> tokens =
-    <AtlasIdentityToken>[];
+    final List<AtlasIdentityToken> tokens = <AtlasIdentityToken>[];
 
-    final RegExp expression =
-    RegExp(r"[A-Za-z0-9#&'-]+");
+    final RegExp expression = RegExp(r"[A-Za-z0-9#&'-]+");
 
     for (final Match match in expression.allMatches(text)) {
       final String raw = match.group(0)!;
@@ -33,34 +29,22 @@ final class AtlasIdentityTokenizer {
       );
     }
 
-    return List<AtlasIdentityToken>.unmodifiable(
-      tokens,
-    );
+    return List<AtlasIdentityToken>.unmodifiable(tokens);
   }
 
-  String normalize(
-      String? value,
-      ) {
+  String normalize(String? value) {
     return _normalize(value);
   }
 
-  static String _normalize(
-      String? value,
-      ) {
+  static String _normalize(String? value) {
     return value
-        ?.trim()
-        .toLowerCase()
-        .replaceAll('&', ' and ')
-        .replaceAll('_', ' ')
-        .replaceAll(
-      RegExp(r'[^a-z0-9#\s-]'),
-      '',
-    )
-        .replaceAll(
-      RegExp(r'\s+'),
-      ' ',
-    )
-        .trim() ??
+            ?.trim()
+            .toLowerCase()
+            .replaceAll('&', ' and ')
+            .replaceAll('_', ' ')
+            .replaceAll(RegExp(r'[^a-z0-9#\s-]'), '')
+            .replaceAll(RegExp(r'\s+'), ' ')
+            .trim() ??
         '';
   }
 }

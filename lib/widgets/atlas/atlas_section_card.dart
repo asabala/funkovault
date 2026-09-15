@@ -21,41 +21,26 @@ class AtlasSectionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(
-          AtlasSpacing.lg,
-        ),
+        padding: const EdgeInsets.all(AtlasSpacing.lg),
         child: Column(
-          crossAxisAlignment:
-          CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
                 if (icon != null) ...[
                   Container(
-                    padding: const EdgeInsets.all(
-                      AtlasSpacing.sm,
-                    ),
+                    padding: const EdgeInsets.all(AtlasSpacing.sm),
                     decoration: BoxDecoration(
                       color: AtlasColors.surface,
-                      borderRadius: BorderRadius.circular(
-                        AtlasRadius.md,
-                      ),
-                      border: Border.all(
-                        color: AtlasColors.border,
-                      ),
+                      borderRadius: BorderRadius.circular(AtlasRadius.md),
+                      border: Border.all(color: AtlasColors.border),
                     ),
-                    child: Icon(
-                      icon,
-                      color: AtlasColors.vaultGold,
-                    ),
+                    child: Icon(icon, color: AtlasColors.vaultGold),
                   ),
                   const SizedBox(width: AtlasSpacing.md),
                 ],
                 Expanded(
-                  child: Text(
-                    title,
-                    style: AtlasTypography.headingMedium,
-                  ),
+                  child: Text(title, style: AtlasTypography.headingMedium),
                 ),
               ],
             ),

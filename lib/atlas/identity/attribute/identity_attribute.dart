@@ -17,20 +17,17 @@ class IdentityAttribute {
     this.resolvedValue,
     this.resolvedPresence = IdentityPresence.unknown,
     this.resolutionConfidence = 0.0,
-  })  : assert(
-  key.trim().isNotEmpty,
-  'Identity attribute key cannot be empty.',
-  ),
-        assert(
-        resolutionConfidence >= 0.0 && resolutionConfidence <= 1.0,
-        'Resolution confidence must be between 0.0 and 1.0.',
-        ),
-        assert(
-        resolvedPresence.isKnown
-            ? resolvedValue != null && resolvedValue.trim().isNotEmpty
-            : true,
-        'Known attributes must contain a resolved value.',
-        );
+  }) : assert(key.trim().isNotEmpty, 'Identity attribute key cannot be empty.'),
+       assert(
+         resolutionConfidence >= 0.0 && resolutionConfidence <= 1.0,
+         'Resolution confidence must be between 0.0 and 1.0.',
+       ),
+       assert(
+         resolvedPresence.isKnown
+             ? resolvedValue != null && resolvedValue.trim().isNotEmpty
+             : true,
+         'Known attributes must contain a resolved value.',
+       );
 
   // Stable category-specific identifier for this attribute.
   //
@@ -72,7 +69,7 @@ class IdentityAttribute {
   // True when one or more observations can be used as evidence.
   bool get hasUsableObservations {
     return observations.any(
-          (IdentityObservation observation) => observation.isUsable,
+      (IdentityObservation observation) => observation.isUsable,
     );
   }
 
@@ -88,25 +85,20 @@ class IdentityAttribute {
   List<IdentityObservation> get usableObservations {
     return List<IdentityObservation>.unmodifiable(
       observations.where(
-            (IdentityObservation observation) => observation.isUsable,
+        (IdentityObservation observation) => observation.isUsable,
       ),
     );
   }
 
   // Returns a copy with an additional observation.
-  IdentityAttribute addObservation(
-      IdentityObservation observation,
-      ) {
+  IdentityAttribute addObservation(IdentityObservation observation) {
     assert(
-    observation.role == role,
-    'Observation role must match the attribute role.',
+      observation.role == role,
+      'Observation role must match the attribute role.',
     );
 
     return copyWith(
-      observations: <IdentityObservation>[
-        ...observations,
-        observation,
-      ],
+      observations: <IdentityObservation>[...observations, observation],
     );
   }
 
@@ -132,8 +124,7 @@ class IdentityAttribute {
           ? null
           : resolvedValue ?? this.resolvedValue,
       resolvedPresence: resolvedPresence ?? this.resolvedPresence,
-      resolutionConfidence:
-      resolutionConfidence ?? this.resolutionConfidence,
+      resolutionConfidence: resolutionConfidence ?? this.resolutionConfidence,
     );
   }
 
@@ -143,9 +134,7 @@ class IdentityAttribute {
       'role': role.serializedValue,
       'classification': classification.serializedValue,
       'observations': observations
-          .map(
-            (IdentityObservation observation) => observation.toJson(),
-      )
+          .map((IdentityObservation observation) => observation.toJson())
           .toList(growable: false),
       'resolvedValue': resolvedValue,
       'resolvedPresence': resolvedPresence.serializedValue,
@@ -153,26 +142,20 @@ class IdentityAttribute {
     };
   }
 
-  factory IdentityAttribute.fromJson(
-      Map<String, dynamic> json,
-      ) {
+  factory IdentityAttribute.fromJson(Map<String, dynamic> json) {
     final List<dynamic> rawObservations =
         json['observations'] as List<dynamic>? ?? const <dynamic>[];
 
     return IdentityAttribute(
       key: json['key'] as String,
-      role: IdentityRole.fromSerializedValue(
-        json['role'] as String,
-      ),
+      role: IdentityRole.fromSerializedValue(json['role'] as String),
       classification: IdentityClassification.fromSerializedValue(
         json['classification'] as String,
       ),
       observations: List<IdentityObservation>.unmodifiable(
         rawObservations.map(
-              (dynamic observation) => IdentityObservation.fromJson(
-            Map<String, dynamic>.from(
-              observation as Map<dynamic, dynamic>,
-            ),
+          (dynamic observation) => IdentityObservation.fromJson(
+            Map<String, dynamic>.from(observation as Map<dynamic, dynamic>),
           ),
         ),
       ),
@@ -181,7 +164,7 @@ class IdentityAttribute {
         json['resolvedPresence'] as String? ?? 'unknown',
       ),
       resolutionConfidence:
-      (json['resolutionConfidence'] as num?)?.toDouble() ?? 0.0,
+          (json['resolutionConfidence'] as num?)?.toDouble() ?? 0.0,
     );
   }
 
@@ -224,10 +207,7 @@ class IdentityAttribute {
     );
   }
 
-  static bool _listsEqual<T>(
-      List<T> first,
-      List<T> second,
-      ) {
+  static bool _listsEqual<T>(List<T> first, List<T> second) {
     if (identical(first, second)) {
       return true;
     }

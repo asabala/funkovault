@@ -3,131 +3,38 @@
 // Retailers, conventions, stickers, distribution channels, and piece counts
 // are modeled separately by their own intelligence layers.
 enum AtlasVariantType {
-  common(
-    code: 'common',
-    displayName: 'Common',
-  ),
-  chase(
-    code: 'chase',
-    displayName: 'Chase',
-  ),
-  blacklight(
-    code: 'blacklight',
-    displayName: 'Black Light',
-  ),
-  glow(
-    code: 'glow',
-    displayName: 'Glow in the Dark',
-  ),
-  metallic(
-    code: 'metallic',
-    displayName: 'Metallic',
-  ),
-  chrome(
-    code: 'chrome',
-    displayName: 'Chrome',
-  ),
-  diamond(
-    code: 'diamond',
-    displayName: 'Diamond',
-  ),
-  glitter(
-    code: 'glitter',
-    displayName: 'Glitter',
-  ),
-  flocked(
-    code: 'flocked',
-    displayName: 'Flocked',
-  ),
-  scented(
-    code: 'scented',
-    displayName: 'Scented',
-  ),
-  dieCast(
-    code: 'die-cast',
-    displayName: 'Die-Cast',
-  ),
-  translucent(
-    code: 'translucent',
-    displayName: 'Translucent',
-  ),
-  woodDeco(
-    code: 'wood-deco',
-    displayName: 'Wood Deco',
-  ),
-  patina(
-    code: 'patina',
-    displayName: 'Patina',
-  ),
-  sepia(
-    code: 'sepia',
-    displayName: 'Sepia',
-  ),
-  grayscale(
-    code: 'grayscale',
-    displayName: 'Grayscale',
-  ),
-  signed(
-    code: 'signed',
-    displayName: 'Signed',
-  ),
-  limitedEdition(
-    code: 'limited-edition',
-    displayName: 'Limited Edition',
-  ),
-  numbered(
-    code: 'numbered',
-    displayName: 'Numbered Piece',
-  ),
-  artistProof(
-    code: 'artist-proof',
-    displayName: 'Artist Proof',
-  ),
-  prototype(
-    code: 'prototype',
-    displayName: 'Prototype',
-  ),
-  error(
-    code: 'error',
-    displayName: 'Error Variant',
-  ),
-  nft(
-    code: 'nft',
-    displayName: 'NFT',
-  ),
-  soda(
-    code: 'soda',
-    displayName: 'Soda',
-  ),
-  jumbo(
-    code: 'jumbo',
-    displayName: 'Jumbo',
-  ),
-  superSized(
-    code: 'super-sized',
-    displayName: 'Super Sized',
-  ),
-  mini(
-    code: 'mini',
-    displayName: 'Mini',
-  ),
-  pocket(
-    code: 'pocket',
-    displayName: 'Pocket',
-  ),
-  keychain(
-    code: 'keychain',
-    displayName: 'Keychain',
-  ),
-  unknown(
-    code: 'unknown',
-    displayName: 'Unknown Variant',
-  );
+  common(code: 'common', displayName: 'Common'),
+  chase(code: 'chase', displayName: 'Chase'),
+  blacklight(code: 'blacklight', displayName: 'Black Light'),
+  glow(code: 'glow', displayName: 'Glow in the Dark'),
+  metallic(code: 'metallic', displayName: 'Metallic'),
+  chrome(code: 'chrome', displayName: 'Chrome'),
+  diamond(code: 'diamond', displayName: 'Diamond'),
+  glitter(code: 'glitter', displayName: 'Glitter'),
+  flocked(code: 'flocked', displayName: 'Flocked'),
+  scented(code: 'scented', displayName: 'Scented'),
+  dieCast(code: 'die-cast', displayName: 'Die-Cast'),
+  translucent(code: 'translucent', displayName: 'Translucent'),
+  woodDeco(code: 'wood-deco', displayName: 'Wood Deco'),
+  patina(code: 'patina', displayName: 'Patina'),
+  sepia(code: 'sepia', displayName: 'Sepia'),
+  grayscale(code: 'grayscale', displayName: 'Grayscale'),
+  signed(code: 'signed', displayName: 'Signed'),
+  limitedEdition(code: 'limited-edition', displayName: 'Limited Edition'),
+  numbered(code: 'numbered', displayName: 'Numbered Piece'),
+  artistProof(code: 'artist-proof', displayName: 'Artist Proof'),
+  prototype(code: 'prototype', displayName: 'Prototype'),
+  error(code: 'error', displayName: 'Error Variant'),
+  nft(code: 'nft', displayName: 'NFT'),
+  soda(code: 'soda', displayName: 'Soda'),
+  jumbo(code: 'jumbo', displayName: 'Jumbo'),
+  superSized(code: 'super-sized', displayName: 'Super Sized'),
+  mini(code: 'mini', displayName: 'Mini'),
+  pocket(code: 'pocket', displayName: 'Pocket'),
+  keychain(code: 'keychain', displayName: 'Keychain'),
+  unknown(code: 'unknown', displayName: 'Unknown Variant');
 
-  const AtlasVariantType({
-    required this.code,
-    required this.displayName,
-  });
+  const AtlasVariantType({required this.code, required this.displayName});
 
   final String code;
 
@@ -138,8 +45,7 @@ enum AtlasVariantType {
   }
 
   bool get isSpecial {
-    return this != AtlasVariantType.common &&
-        this != AtlasVariantType.unknown;
+    return this != AtlasVariantType.common && this != AtlasVariantType.unknown;
   }
 
   bool get affectsIdentity {
@@ -161,8 +67,7 @@ enum AtlasVariantType {
       AtlasVariantType.woodDeco ||
       AtlasVariantType.patina ||
       AtlasVariantType.sepia ||
-      AtlasVariantType.grayscale =>
-      true,
+      AtlasVariantType.grayscale => true,
       _ => false,
     };
   }
@@ -174,8 +79,7 @@ enum AtlasVariantType {
       AtlasVariantType.artistProof ||
       AtlasVariantType.prototype ||
       AtlasVariantType.error ||
-      AtlasVariantType.nft =>
-      true,
+      AtlasVariantType.nft => true,
       _ => false,
     };
   }
@@ -187,20 +91,15 @@ enum AtlasVariantType {
       AtlasVariantType.superSized ||
       AtlasVariantType.mini ||
       AtlasVariantType.pocket ||
-      AtlasVariantType.keychain =>
-      true,
+      AtlasVariantType.keychain => true,
       _ => false,
     };
   }
 
-  static AtlasVariantType fromCode(
-      String? code,
-      ) {
-    final String normalizedCode =
-        code?.trim().toLowerCase() ?? '';
+  static AtlasVariantType fromCode(String? code) {
+    final String normalizedCode = code?.trim().toLowerCase() ?? '';
 
-    for (final AtlasVariantType type
-    in AtlasVariantType.values) {
+    for (final AtlasVariantType type in AtlasVariantType.values) {
       if (type.code == normalizedCode) {
         return type;
       }

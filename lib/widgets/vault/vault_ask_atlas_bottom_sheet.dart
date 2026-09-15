@@ -22,17 +22,13 @@ class VaultNavigationRequest {
   final double? maximumValue;
   final String? sortKey;
 
-  bool get hasFilter =>
-      filterKey != null && filterKey!.trim().isNotEmpty;
+  bool get hasFilter => filterKey != null && filterKey!.trim().isNotEmpty;
 
-  bool get hasSearch =>
-      searchQuery != null && searchQuery!.trim().isNotEmpty;
+  bool get hasSearch => searchQuery != null && searchQuery!.trim().isNotEmpty;
 
-  bool get hasValueRange =>
-      minimumValue != null || maximumValue != null;
+  bool get hasValueRange => minimumValue != null || maximumValue != null;
 
-  bool get hasSort =>
-      sortKey != null && sortKey!.trim().isNotEmpty;
+  bool get hasSort => sortKey != null && sortKey!.trim().isNotEmpty;
 
   bool get hasNavigationDetails =>
       hasFilter || hasSearch || hasValueRange || hasSort;
@@ -98,9 +94,7 @@ class _VaultAskAtlasSheetState extends State<_VaultAskAtlasSheet> {
   void initState() {
     super.initState();
 
-    _questionController = TextEditingController(
-      text: widget.initialQuestion,
-    );
+    _questionController = TextEditingController(text: widget.initialQuestion);
 
     _answer = _buildAnswer(widget.initialQuestion);
   }
@@ -129,11 +123,13 @@ class _VaultAskAtlasSheetState extends State<_VaultAskAtlasSheet> {
       _answer = _buildAnswer(question);
     });
   }
+
   void _clearQuestion() {
     _questionController.clear();
 
     setState(() {});
   }
+
   void _askSuggestedQuestion(String question) {
     _questionController.text = question;
     _questionController.selection = TextSelection.collapsed(
@@ -231,6 +227,7 @@ class _VaultAskAtlasSheetState extends State<_VaultAskAtlasSheet> {
 
     return Icons.open_in_new_rounded;
   }
+
   bool get _hasUnsupportedDetails {
     return _answer.hasUnsupportedParts;
   }
@@ -266,13 +263,15 @@ class _VaultAskAtlasSheetState extends State<_VaultAskAtlasSheet> {
       return null;
     }
 
-    return _answer.unsupportedParts.map((part) {
-      final formatted = part.isEmpty
-          ? part
-          : part[0].toUpperCase() + part.substring(1);
+    return _answer.unsupportedParts
+        .map((part) {
+          final formatted = part.isEmpty
+              ? part
+              : part[0].toUpperCase() + part.substring(1);
 
-      return '$formatted is not supported yet.';
-    }).join('\n');
+          return '$formatted is not supported yet.';
+        })
+        .join('\n');
   }
 
   List<String> get _unsupportedSuggestionQuestions {
@@ -291,47 +290,40 @@ class _VaultAskAtlasSheetState extends State<_VaultAskAtlasSheet> {
     }
 
     if (unsupportedParts.contains('value-history filtering')) {
-      addSuggestions(
-        const [
-          'Show my most valuable Pops',
-          'Show Pops over \$50',
-          'Show Pops between \$25 and \$100',
-        ],
-      );
+      addSuggestions(const [
+        'Show my most valuable Pops',
+        'Show Pops over \$50',
+        'Show Pops between \$25 and \$100',
+      ]);
     }
 
     if (unsupportedParts.contains('release-year filtering')) {
-      addSuggestions(
-        const [
-          'Find my Stitch Pops',
-          'Show my exclusives',
-          'Show my variants',
-        ],
-      );
+      addSuggestions(const [
+        'Find my Stitch Pops',
+        'Show my exclusives',
+        'Show my variants',
+      ]);
     }
 
     if (unsupportedParts.contains('condition filtering')) {
-      addSuggestions(
-        const [
-          'Show Pops that need values',
-          'Show my signed Pops',
-          'Show my limited Pops',
-        ],
-      );
+      addSuggestions(const [
+        'Show Pops that need values',
+        'Show my signed Pops',
+        'Show my limited Pops',
+      ]);
     }
 
     if (unsupportedParts.contains('price-paid filtering')) {
-      addSuggestions(
-        const [
-          'Show Pops over \$50',
-          'Show my most valuable Pops',
-          'Show Pops that need values',
-        ],
-      );
+      addSuggestions(const [
+        'Show Pops over \$50',
+        'Show my most valuable Pops',
+        'Show Pops that need values',
+      ]);
     }
 
     return suggestions.take(3).toList();
   }
+
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
@@ -382,9 +374,7 @@ class _VaultAskAtlasSheetState extends State<_VaultAskAtlasSheet> {
                   decoration: InputDecoration(
                     labelText: 'Ask about your Vault',
                     hintText: 'What should I clean up first?',
-                    prefixIcon: const Icon(
-                      Icons.chat_bubble_outline_rounded,
-                    ),
+                    prefixIcon: const Icon(Icons.chat_bubble_outline_rounded),
                     suffixIcon: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -392,16 +382,12 @@ class _VaultAskAtlasSheetState extends State<_VaultAskAtlasSheet> {
                           IconButton(
                             tooltip: 'Clear question',
                             onPressed: _clearQuestion,
-                            icon: const Icon(
-                              Icons.clear_rounded,
-                            ),
+                            icon: const Icon(Icons.clear_rounded),
                           ),
                         IconButton(
                           tooltip: 'Ask Atlas',
                           onPressed: _submitQuestion,
-                          icon: const Icon(
-                            Icons.arrow_upward_rounded,
-                          ),
+                          icon: const Icon(Icons.arrow_upward_rounded),
                         ),
                       ],
                     ),
@@ -457,8 +443,7 @@ class _VaultAskAtlasSheetState extends State<_VaultAskAtlasSheet> {
                       _UnsupportedRequestPanel(
                         message: _friendlyUnsupportedAnswerText!,
                         isPartial: _answer.hasVaultAction,
-                        suggestionQuestions:
-                        _unsupportedSuggestionQuestions,
+                        suggestionQuestions: _unsupportedSuggestionQuestions,
                         onAskQuestion: _askSuggestedQuestion,
                       ),
                     ],
@@ -494,10 +479,7 @@ class _VaultAskAtlasSheetState extends State<_VaultAskAtlasSheet> {
                 ),
               ),
               const SizedBox(height: AtlasSpacing.lg),
-              Text(
-                'Suggested Questions',
-                style: AtlasTypography.headingSmall,
-              ),
+              Text('Suggested Questions', style: AtlasTypography.headingSmall),
               const SizedBox(height: AtlasSpacing.sm),
               Wrap(
                 spacing: AtlasSpacing.sm,
@@ -505,16 +487,16 @@ class _VaultAskAtlasSheetState extends State<_VaultAskAtlasSheet> {
                 children: _answer.suggestedQuestions
                     .map(
                       (question) => ActionChip(
-                    avatar: const Icon(
-                      Icons.auto_awesome_rounded,
-                      size: 18,
-                    ),
-                    label: Text(question),
-                    onPressed: () {
-                      _askSuggestedQuestion(question);
-                    },
-                  ),
-                )
+                        avatar: const Icon(
+                          Icons.auto_awesome_rounded,
+                          size: 18,
+                        ),
+                        label: Text(question),
+                        onPressed: () {
+                          _askSuggestedQuestion(question);
+                        },
+                      ),
+                    )
                     .toList(),
               ),
               const SizedBox(height: AtlasSpacing.lg),
@@ -545,6 +527,7 @@ class _VaultAskAtlasSheetState extends State<_VaultAskAtlasSheet> {
     );
   }
 }
+
 class _UnsupportedRequestPanel extends StatelessWidget {
   const _UnsupportedRequestPanel({
     required this.message,
@@ -562,27 +545,16 @@ class _UnsupportedRequestPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(
-        AtlasSpacing.md,
-      ),
+      padding: const EdgeInsets.all(AtlasSpacing.md),
       decoration: BoxDecoration(
-        color: Colors.amber.withValues(
-          alpha: 0.10,
-        ),
+        color: Colors.amber.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Colors.amber.withValues(
-            alpha: 0.45,
-          ),
-        ),
+        border: Border.all(color: Colors.amber.withValues(alpha: 0.45)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(
-            Icons.warning_amber_rounded,
-            color: Colors.amber,
-          ),
+          const Icon(Icons.warning_amber_rounded, color: Colors.amber),
           const SizedBox(width: AtlasSpacing.md),
           Expanded(
             child: Column(
@@ -619,16 +591,16 @@ class _UnsupportedRequestPanel extends StatelessWidget {
                   children: suggestionQuestions
                       .map(
                         (question) => ActionChip(
-                      avatar: const Icon(
-                        Icons.auto_awesome_rounded,
-                        size: 16,
-                      ),
-                      label: Text(question),
-                      onPressed: () {
-                        onAskQuestion(question);
-                      },
-                    ),
-                  )
+                          avatar: const Icon(
+                            Icons.auto_awesome_rounded,
+                            size: 16,
+                          ),
+                          label: Text(question),
+                          onPressed: () {
+                            onAskQuestion(question);
+                          },
+                        ),
+                      )
                       .toList(),
                 ),
               ],
@@ -639,6 +611,7 @@ class _UnsupportedRequestPanel extends StatelessWidget {
     );
   }
 }
+
 class _VaultQueryPreviewPanel extends StatelessWidget {
   const _VaultQueryPreviewPanel({
     required this.message,
@@ -683,21 +656,15 @@ class _VaultQueryPreviewPanel extends StatelessWidget {
     }
 
     if (totalValue != null && totalValue! > 0) {
-      summaryItems.add(
-        'Total value: \$${totalValue!.toStringAsFixed(2)}',
-      );
+      summaryItems.add('Total value: \$${totalValue!.toStringAsFixed(2)}');
     }
 
     if (highestValue != null && highestValue! > 0) {
-      summaryItems.add(
-        'Highest value: \$${highestValue!.toStringAsFixed(2)}',
-      );
+      summaryItems.add('Highest value: \$${highestValue!.toStringAsFixed(2)}');
     }
 
     if (averageValue != null && averageValue! > 0) {
-      summaryItems.add(
-        'Average value: \$${averageValue!.toStringAsFixed(2)}',
-      );
+      summaryItems.add('Average value: \$${averageValue!.toStringAsFixed(2)}');
     }
 
     if (missingValueCount != null && missingValueCount! > 0) {
@@ -713,22 +680,15 @@ class _VaultQueryPreviewPanel extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        color: theme.colorScheme.primary.withValues(
-          alpha: 0.08,
-        ),
+        color: theme.colorScheme.primary.withValues(alpha: 0.08),
         border: Border.all(
-          color: theme.colorScheme.primary.withValues(
-            alpha: 0.22,
-          ),
+          color: theme.colorScheme.primary.withValues(alpha: 0.22),
         ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            Icons.manage_search_rounded,
-            color: theme.colorScheme.primary,
-          ),
+          Icon(Icons.manage_search_rounded, color: theme.colorScheme.primary),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -743,14 +703,9 @@ class _VaultQueryPreviewPanel extends StatelessWidget {
                 if (summaryItems.isNotEmpty) ...[
                   const SizedBox(height: 10),
                   ...summaryItems.map(
-                        (item) => Padding(
-                      padding: const EdgeInsets.only(
-                        bottom: 4,
-                      ),
-                      child: Text(
-                        '• $item',
-                        style: theme.textTheme.bodySmall,
-                      ),
+                    (item) => Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Text('• $item', style: theme.textTheme.bodySmall),
                     ),
                   ),
                 ],

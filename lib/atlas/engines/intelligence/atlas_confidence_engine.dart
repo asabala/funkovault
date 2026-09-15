@@ -1,10 +1,7 @@
 import '../../../models/pop.dart';
 
 class AtlasConfidenceResult {
-  const AtlasConfidenceResult({
-    required this.score,
-    required this.message,
-  });
+  const AtlasConfidenceResult({required this.score, required this.message});
 
   final double score;
   final String message;
@@ -13,9 +10,7 @@ class AtlasConfidenceResult {
 class AtlasConfidenceEngine {
   const AtlasConfidenceEngine();
 
-  AtlasConfidenceResult calculate(
-      List<Pop> pops,
-      ) {
+  AtlasConfidenceResult calculate(List<Pop> pops) {
     if (pops.isEmpty) {
       return const AtlasConfidenceResult(
         score: 100,
@@ -38,28 +33,23 @@ class AtlasConfidenceEngine {
       if (pop.signature != 'Unsigned') completedFields++;
     }
 
-    final score =
-        (completedFields / possibleFields) * 100;
+    final score = (completedFields / possibleFields) * 100;
 
     String message;
 
     if (score >= 90) {
-      message =
-      'High confidence. Atlas can make reliable recommendations.';
+      message = 'High confidence. Atlas can make reliable recommendations.';
     } else if (score >= 75) {
       message =
-      'Good confidence. A little more information will improve Atlas.';
+          'Good confidence. A little more information will improve Atlas.';
     } else if (score >= 50) {
       message =
-      'Medium confidence. Completing collector details will improve analysis.';
+          'Medium confidence. Completing collector details will improve analysis.';
     } else {
       message =
-      'Low confidence. Atlas recommends completing your collection data.';
+          'Low confidence. Atlas recommends completing your collection data.';
     }
 
-    return AtlasConfidenceResult(
-      score: score,
-      message: message,
-    );
+    return AtlasConfidenceResult(score: score, message: message);
   }
 }

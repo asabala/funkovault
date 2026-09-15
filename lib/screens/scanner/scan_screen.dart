@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:provider/provider.dart';
 
@@ -282,7 +282,7 @@ class _ScanScreenState extends State<ScanScreen> {
                       key: const ValueKey('open-live-sniffer'),
                       onPressed: _openLiveSniffer,
                       icon: const Icon(Icons.picture_in_picture_alt_rounded),
-                      label: const Text('Android Live Sniffer'),
+                      label: const Text('Atlas LiveLens'),
                     ),
                   ),
                 ],
@@ -332,20 +332,20 @@ class _TrackingStatusOverlay extends StatelessWidget {
 
     if (snapshot.hasWorkInFlight) {
       label =
-          '🧠 ${snapshot.activeResolutionCount} resolving • '
+          'ðŸ§  ${snapshot.activeResolutionCount} resolving â€¢ '
           '${snapshot.pendingResolutionCount} queued';
     } else if (snapshot.completedCount > 0) {
       label =
-          '✅ ${snapshot.completedCount} resolved • '
+          'âœ… ${snapshot.completedCount} resolved â€¢ '
           '$activeTrackCount tracked';
     } else if (confirmedTrackCount > 0) {
       label =
-          '🎯 $confirmedTrackCount confirmed • '
+          'ðŸŽ¯ $confirmedTrackCount confirmed â€¢ '
           '$activeTrackCount tracked';
     } else if (activeTrackCount > 0) {
-      label = '👀 $activeTrackCount tracked • stabilizing';
+      label = 'ðŸ‘€ $activeTrackCount tracked â€¢ stabilizing';
     } else {
-      label = '📷 Continuous tracking active';
+      label = 'ðŸ“· Continuous tracking active';
     }
 
     return IgnorePointer(

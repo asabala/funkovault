@@ -51,12 +51,10 @@ class VisualIdentity {
   bool get hasCharacterEvidence => detectedCharacters.isNotEmpty;
 
   bool get hasImageFingerprint =>
-      imageFingerprint != null &&
-          imageFingerprint!.isNotEmpty;
+      imageFingerprint != null && imageFingerprint!.isNotEmpty;
 
   bool get hasVisualEmbedding =>
-      visualEmbedding != null &&
-          visualEmbedding!.isNotEmpty;
+      visualEmbedding != null && visualEmbedding!.isNotEmpty;
 
   bool get isEmpty {
     return !hasBoxNumber &&
@@ -84,30 +82,16 @@ class VisualIdentity {
   }) {
     return VisualIdentity(
       boxNumber: boxNumber ?? this.boxNumber,
-      detectedStickers:
-      detectedStickers ?? this.detectedStickers,
-      detectedLogos:
-      detectedLogos ?? this.detectedLogos,
-      detectedAutographs:
-      detectedAutographs ??
-          this.detectedAutographs,
-      detectedCharacters:
-      detectedCharacters ??
-          this.detectedCharacters,
-      imageFingerprint:
-      imageFingerprint ?? this.imageFingerprint,
-      visualEmbedding:
-      visualEmbedding ?? this.visualEmbedding,
-      colorSignature:
-      colorSignature ?? this.colorSignature,
-      boxConditionScore:
-      boxConditionScore ??
-          this.boxConditionScore,
-      windowConditionScore:
-      windowConditionScore ??
-          this.windowConditionScore,
-      confidence:
-      confidence ?? this.confidence,
+      detectedStickers: detectedStickers ?? this.detectedStickers,
+      detectedLogos: detectedLogos ?? this.detectedLogos,
+      detectedAutographs: detectedAutographs ?? this.detectedAutographs,
+      detectedCharacters: detectedCharacters ?? this.detectedCharacters,
+      imageFingerprint: imageFingerprint ?? this.imageFingerprint,
+      visualEmbedding: visualEmbedding ?? this.visualEmbedding,
+      colorSignature: colorSignature ?? this.colorSignature,
+      boxConditionScore: boxConditionScore ?? this.boxConditionScore,
+      windowConditionScore: windowConditionScore ?? this.windowConditionScore,
+      confidence: confidence ?? this.confidence,
     );
   }
 }

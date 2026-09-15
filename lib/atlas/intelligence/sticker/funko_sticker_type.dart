@@ -3,10 +3,7 @@
 // These represent the meaning of a sticker, not the specific retailer
 // or convention. Retailers and conventions are modeled separately.
 enum FunkoStickerType {
-  none(
-    code: 'none',
-    displayName: 'None',
-  ),
+  none(code: 'none', displayName: 'None'),
 
   retailerExclusive(
     code: 'retailer-exclusive',
@@ -18,58 +15,33 @@ enum FunkoStickerType {
     displayName: 'Official Convention',
   ),
 
-  sharedConvention(
-    code: 'shared-convention',
-    displayName: 'Shared Convention',
-  ),
+  sharedConvention(code: 'shared-convention', displayName: 'Shared Convention'),
 
-  specialEdition(
-    code: 'special-edition',
-    displayName: 'Special Edition',
-  ),
+  specialEdition(code: 'special-edition', displayName: 'Special Edition'),
 
-  specialtySeries(
-    code: 'specialty-series',
-    displayName: 'Specialty Series',
-  ),
+  specialtySeries(code: 'specialty-series', displayName: 'Specialty Series'),
 
-  subscriptionBox(
-    code: 'subscription-box',
-    displayName: 'Subscription Box',
-  ),
+  subscriptionBox(code: 'subscription-box', displayName: 'Subscription Box'),
 
   employeeExclusive(
     code: 'employee-exclusive',
     displayName: 'Employee Exclusive',
   ),
 
-  prototype(
-    code: 'prototype',
-    displayName: 'Prototype',
-  ),
+  prototype(code: 'prototype', displayName: 'Prototype'),
 
-  sample(
-    code: 'sample',
-    displayName: 'Sample',
-  ),
+  sample(code: 'sample', displayName: 'Sample'),
 
-  unknown(
-    code: 'unknown',
-    displayName: 'Unknown',
-  );
+  unknown(code: 'unknown', displayName: 'Unknown');
 
-  const FunkoStickerType({
-    required this.code,
-    required this.displayName,
-  });
+  const FunkoStickerType({required this.code, required this.displayName});
 
   final String code;
 
   final String displayName;
 
   bool get affectsIdentity {
-    return this != FunkoStickerType.none &&
-        this != FunkoStickerType.unknown;
+    return this != FunkoStickerType.none && this != FunkoStickerType.unknown;
   }
 
   bool get isConvention {
@@ -88,20 +60,15 @@ enum FunkoStickerType {
       FunkoStickerType.subscriptionBox ||
       FunkoStickerType.employeeExclusive ||
       FunkoStickerType.prototype ||
-      FunkoStickerType.sample =>
-      true,
+      FunkoStickerType.sample => true,
       _ => false,
     };
   }
 
-  static FunkoStickerType fromCode(
-      String? code,
-      ) {
-    final String normalized =
-        code?.trim().toLowerCase() ?? '';
+  static FunkoStickerType fromCode(String? code) {
+    final String normalized = code?.trim().toLowerCase() ?? '';
 
-    for (final FunkoStickerType value
-    in FunkoStickerType.values) {
+    for (final FunkoStickerType value in FunkoStickerType.values) {
       if (value.code == normalized) {
         return value;
       }

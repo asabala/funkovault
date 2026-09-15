@@ -17,16 +17,13 @@ class AtlasMission {
 class AtlasMissionEngine {
   const AtlasMissionEngine();
 
-  AtlasMission buildMission(
-      AtlasDecision decision,
-      ) {
+  AtlasMission buildMission(AtlasDecision decision) {
     switch (decision.severity) {
       case 'High':
         return AtlasMission(
           title: 'Priority Mission',
           description: decision.message,
-          reward:
-          '+Health  +Confidence',
+          reward: '+Health  +Confidence',
           estimatedTime: '2-5 min',
         );
 
@@ -34,8 +31,7 @@ class AtlasMissionEngine {
         return AtlasMission(
           title: 'Improvement Mission',
           description: decision.message,
-          reward:
-          '+Atlas Accuracy',
+          reward: '+Atlas Accuracy',
           estimatedTime: '5 min',
         );
 
@@ -43,9 +39,8 @@ class AtlasMissionEngine {
         return const AtlasMission(
           title: 'Enjoy Your Collection',
           description:
-          'No critical work today. Spend some time enjoying your Vault.',
-          reward:
-          'Collector Satisfaction 😊',
+              'No critical work today. Spend some time enjoying your Vault.',
+          reward: 'Collector Satisfaction 😊',
           estimatedTime: 'Relax',
         );
     }

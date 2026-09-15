@@ -9,14 +9,10 @@ class KnowledgeQuery {
     this.barcode,
     this.catalogNumber,
     this.externalId,
-    Map<String, String> attributes =
-    const <String, String>{},
-    Map<String, String> metadata =
-    const <String, String>{},
-  })  : attributes =
-  Map<String, String>.unmodifiable(attributes),
-        metadata =
-        Map<String, String>.unmodifiable(metadata);
+    Map<String, String> attributes = const <String, String>{},
+    Map<String, String> metadata = const <String, String>{},
+  }) : attributes = Map<String, String>.unmodifiable(attributes),
+       metadata = Map<String, String>.unmodifiable(metadata);
 
   // General search text supplied by the user or another Atlas engine.
   final String? text;
@@ -76,8 +72,7 @@ class KnowledgeQuery {
       text: text ?? this.text,
       category: category ?? this.category,
       barcode: barcode ?? this.barcode,
-      catalogNumber:
-      catalogNumber ?? this.catalogNumber,
+      catalogNumber: catalogNumber ?? this.catalogNumber,
       externalId: externalId ?? this.externalId,
       attributes: attributes ?? this.attributes,
       metadata: metadata ?? this.metadata,

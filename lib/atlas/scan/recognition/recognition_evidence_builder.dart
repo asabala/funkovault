@@ -10,26 +10,18 @@ import 'recognition_evidence.dart';
 // Identity and later engines consume strongly typed evidence instead of
 // querying the contribution collection directly.
 abstract final class RecognitionEvidenceBuilder {
-  static RecognitionEvidence fromSession(
-      ScanSession session,
-      ) {
-    return fromContributions(
-      session.contributions,
-    );
+  static RecognitionEvidence fromSession(ScanSession session) {
+    return fromContributions(session.contributions);
   }
 
   static RecognitionEvidence fromContributions(
-      ContributionCollection contributions,
-      ) {
+    ContributionCollection contributions,
+  ) {
     return RecognitionEvidence(
-      barcodes:
-      contributions
-          .ofType<BarcodeContribution>()
-          .toList(growable: false),
-      ocr:
-      contributions
-          .ofType<OCRContribution>()
-          .toList(growable: false),
+      barcodes: contributions.ofType<BarcodeContribution>().toList(
+        growable: false,
+      ),
+      ocr: contributions.ofType<OCRContribution>().toList(growable: false),
     );
   }
 }

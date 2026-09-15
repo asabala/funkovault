@@ -65,30 +65,18 @@ class AtlasMemory {
     DateTime? lastSearch,
   }) {
     return AtlasMemory(
-      favoriteFranchises:
-      favoriteFranchises ?? this.favoriteFranchises,
-      favoriteCharacters:
-      favoriteCharacters ?? this.favoriteCharacters,
-      favoriteSeries:
-      favoriteSeries ?? this.favoriteSeries,
-      favoriteRetailers:
-      favoriteRetailers ?? this.favoriteRetailers,
-      recentBarcodes:
-      recentBarcodes ?? this.recentBarcodes,
-      recentSearches:
-      recentSearches ?? this.recentSearches,
-      favoriteCollection:
-      favoriteCollection ?? this.favoriteCollection,
-      totalScans:
-      totalScans ?? this.totalScans,
-      totalSearches:
-      totalSearches ?? this.totalSearches,
-      successfulMatches:
-      successfulMatches ?? this.successfulMatches,
-      lastScan:
-      lastScan ?? this.lastScan,
-      lastSearch:
-      lastSearch ?? this.lastSearch,
+      favoriteFranchises: favoriteFranchises ?? this.favoriteFranchises,
+      favoriteCharacters: favoriteCharacters ?? this.favoriteCharacters,
+      favoriteSeries: favoriteSeries ?? this.favoriteSeries,
+      favoriteRetailers: favoriteRetailers ?? this.favoriteRetailers,
+      recentBarcodes: recentBarcodes ?? this.recentBarcodes,
+      recentSearches: recentSearches ?? this.recentSearches,
+      favoriteCollection: favoriteCollection ?? this.favoriteCollection,
+      totalScans: totalScans ?? this.totalScans,
+      totalSearches: totalSearches ?? this.totalSearches,
+      successfulMatches: successfulMatches ?? this.successfulMatches,
+      lastScan: lastScan ?? this.lastScan,
+      lastSearch: lastSearch ?? this.lastSearch,
     );
   }
 }

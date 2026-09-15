@@ -24,9 +24,7 @@ class AtlasMetricCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: InkWell(
-        borderRadius: BorderRadius.circular(
-          AtlasRadius.lg,
-        ),
+        borderRadius: BorderRadius.circular(AtlasRadius.lg),
         onTap: onTap,
         child: AnimatedContainer(
           duration: AtlasAnimation.fast,
@@ -37,24 +35,13 @@ class AtlasMetricCard extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Icon(
-                icon,
-                color: AtlasColors.vaultGold,
-              ),
+              Icon(icon, color: AtlasColors.vaultGold),
 
               const SizedBox(width: AtlasSpacing.md),
 
-              Expanded(
-                child: Text(
-                  title,
-                  style: AtlasTypography.bodyLarge,
-                ),
-              ),
+              Expanded(child: Text(title, style: AtlasTypography.bodyLarge)),
 
-              Text(
-                value,
-                style: AtlasTypography.metricSmall,
-              ),
+              Text(value, style: AtlasTypography.metricSmall),
             ],
           ),
         ),

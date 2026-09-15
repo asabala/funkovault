@@ -12,21 +12,16 @@ import 'variant_comparator.dart';
 // Generic registration and discovery behavior is delegated to
 // AtlasRegistry while this class retains identity-specific execution.
 class IdentityComparatorRegistry {
-  IdentityComparatorRegistry(
-      List<IdentityComparator> comparators,
-      ) : _registry = AtlasRegistry<IdentityComparator>(
-    comparators,
-  );
+  IdentityComparatorRegistry(List<IdentityComparator> comparators)
+    : _registry = AtlasRegistry<IdentityComparator>(comparators);
 
   // Creates the standard Atlas identity comparator registry.
   factory IdentityComparatorRegistry.standard() {
-    return IdentityComparatorRegistry(
-      const <IdentityComparator>[
-        CoreAnchorComparator(),
-        VariantComparator(),
-        ReleaseContextComparator(),
-      ],
-    );
+    return IdentityComparatorRegistry(const <IdentityComparator>[
+      CoreAnchorComparator(),
+      VariantComparator(),
+      ReleaseContextComparator(),
+    ]);
   }
 
   final AtlasRegistry<IdentityComparator> _registry;
@@ -63,15 +58,9 @@ class IdentityComparatorRegistry {
     required IdentityProfile right,
     required IdentityPolicy policy,
   }) {
-    return _registry.where(
-          (IdentityComparator comparator) {
-        return comparator.supports(
-          left: left,
-          right: right,
-          policy: policy,
-        );
-      },
-    );
+    return _registry.where((IdentityComparator comparator) {
+      return comparator.supports(left: left, right: right, policy: policy);
+    });
   }
 
   // Executes every supported comparator and returns structured results.
@@ -83,28 +72,18 @@ class IdentityComparatorRegistry {
     required IdentityProfile right,
     required IdentityPolicy policy,
   }) {
-    final List<IdentityComparatorResult> results =
-    <IdentityComparatorResult>[];
+    final List<IdentityComparatorResult> results = <IdentityComparatorResult>[];
 
-    final List<IdentityComparator> supported =
-    supportedComparators(
+    final List<IdentityComparator> supported = supportedComparators(
       left: left,
       right: right,
       policy: policy,
     );
 
     for (final IdentityComparator comparator in supported) {
-      results.add(
-        comparator.compare(
-          left: left,
-          right: right,
-          policy: policy,
-        ),
-      );
+      results.add(comparator.compare(left: left, right: right, policy: policy));
     }
 
-    return List<IdentityComparatorResult>.unmodifiable(
-      results,
-    );
+    return List<IdentityComparatorResult>.unmodifiable(results);
   }
 }

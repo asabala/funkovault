@@ -5,25 +5,18 @@ import '../atlas_registry_entry.dart';
 import '../atlas_registry_provider.dart';
 
 // Supplies Retailer entries for the Atlas Registry.
-final class RetailerRegistryProvider
-    implements AtlasRegistryProvider {
-  RetailerRegistryProvider({
-    FunkoRetailerNormalizer? normalizer,
-  }) : _normalizer =
-      normalizer ??
-          const FunkoRetailerNormalizer();
+final class RetailerRegistryProvider implements AtlasRegistryProvider {
+  RetailerRegistryProvider({FunkoRetailerNormalizer? normalizer})
+    : _normalizer = normalizer ?? const FunkoRetailerNormalizer();
 
   final FunkoRetailerNormalizer _normalizer;
 
   @override
   Iterable<AtlasRegistryEntry> buildEntries() {
-    final List<AtlasRegistryEntry> entries =
-    <AtlasRegistryEntry>[];
+    final List<AtlasRegistryEntry> entries = <AtlasRegistryEntry>[];
 
-    for (final entry
-    in _normalizer.aliases.entries) {
-      final FunkoRetailer retailer =
-          entry.key;
+    for (final entry in _normalizer.aliases.entries) {
+      final FunkoRetailer retailer = entry.key;
 
       if (retailer == FunkoRetailer.unknown) {
         continue;
@@ -39,8 +32,6 @@ final class RetailerRegistryProvider
       );
     }
 
-    return List<AtlasRegistryEntry>.unmodifiable(
-      entries,
-    );
+    return List<AtlasRegistryEntry>.unmodifiable(entries);
   }
 }

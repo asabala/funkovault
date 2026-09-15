@@ -49,10 +49,9 @@ class SubscriptionState {
       tier: tier ?? this.tier,
       status: status ?? this.status,
       billingPeriod: billingPeriod ?? this.billingPeriod,
-      currentPeriodEnd:
-      currentPeriodEnd ?? this.currentPeriodEnd,
+      currentPeriodEnd: currentPeriodEnd ?? this.currentPeriodEnd,
       willCancelAtPeriodEnd:
-      willCancelAtPeriodEnd ?? this.willCancelAtPeriodEnd,
+          willCancelAtPeriodEnd ?? this.willCancelAtPeriodEnd,
     );
   }
 }

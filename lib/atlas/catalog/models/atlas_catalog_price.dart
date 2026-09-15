@@ -33,9 +33,7 @@ final class AtlasCatalogPrice {
       highPrice,
       marketPrice,
       directLowPrice,
-    ].any(
-          (double? value) => value != null && value > 0,
-    );
+    ].any((double? value) => value != null && value > 0);
   }
 
   double? get preferredValue {

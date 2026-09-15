@@ -5,25 +5,18 @@ import '../atlas_registry_entry.dart';
 import '../atlas_registry_provider.dart';
 
 // Supplies Variant entries for the Atlas Registry.
-final class VariantRegistryProvider
-    implements AtlasRegistryProvider {
-  VariantRegistryProvider({
-    AtlasVariantNormalizer? normalizer,
-  }) : _normalizer =
-      normalizer ??
-          const AtlasVariantNormalizer();
+final class VariantRegistryProvider implements AtlasRegistryProvider {
+  VariantRegistryProvider({AtlasVariantNormalizer? normalizer})
+    : _normalizer = normalizer ?? const AtlasVariantNormalizer();
 
   final AtlasVariantNormalizer _normalizer;
 
   @override
   Iterable<AtlasRegistryEntry> buildEntries() {
-    final List<AtlasRegistryEntry> entries =
-    <AtlasRegistryEntry>[];
+    final List<AtlasRegistryEntry> entries = <AtlasRegistryEntry>[];
 
-    for (final entry
-    in _normalizer.aliases.entries) {
-      final AtlasVariantType variant =
-          entry.key;
+    for (final entry in _normalizer.aliases.entries) {
+      final AtlasVariantType variant = entry.key;
 
       if (!variant.isSpecial) {
         continue;
@@ -39,8 +32,6 @@ final class VariantRegistryProvider
       );
     }
 
-    return List<AtlasRegistryEntry>.unmodifiable(
-      entries,
-    );
+    return List<AtlasRegistryEntry>.unmodifiable(entries);
   }
 }

@@ -4,17 +4,14 @@ import '../atlas_registry_entry.dart';
 import '../atlas_registry_provider.dart';
 
 // Supplies Event entries for the Atlas Registry.
-final class EventRegistryProvider
-    implements AtlasRegistryProvider {
+final class EventRegistryProvider implements AtlasRegistryProvider {
   const EventRegistryProvider();
 
   @override
   Iterable<AtlasRegistryEntry> buildEntries() {
-    final List<AtlasRegistryEntry> entries =
-    <AtlasRegistryEntry>[];
+    final List<AtlasRegistryEntry> entries = <AtlasRegistryEntry>[];
 
-    for (final FunkoEvent event
-    in FunkoEvent.values) {
+    for (final FunkoEvent event in FunkoEvent.values) {
       if (!event.isKnown) {
         continue;
       }
@@ -29,8 +26,6 @@ final class EventRegistryProvider
       );
     }
 
-    return List<AtlasRegistryEntry>.unmodifiable(
-      entries,
-    );
+    return List<AtlasRegistryEntry>.unmodifiable(entries);
   }
 }

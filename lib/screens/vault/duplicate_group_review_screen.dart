@@ -85,21 +85,14 @@ class DuplicateGroupReviewScreen extends StatelessWidget {
     return null;
   }
 
-  String? _resolveCollectionName(
-      BuildContext context,
-      Pop pop,
-      ) {
+  String? _resolveCollectionName(BuildContext context, Pop pop) {
     final appState = context.read<AppState>();
 
-    final explicitCollectionName =
-        collectionName;
+    final explicitCollectionName = collectionName;
 
     if (explicitCollectionName != null) {
-      if (!appState.hasCollection(
-        explicitCollectionName,
-      )) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(
+      if (!appState.hasCollection(explicitCollectionName)) {
+        ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
               'Could not edit this Pop because its collection no longer exists.',
@@ -113,14 +106,10 @@ class DuplicateGroupReviewScreen extends StatelessWidget {
       return explicitCollectionName;
     }
 
-    final collectionNames =
-    appState.collectionNamesContainingPop(
-      pop,
-    );
+    final collectionNames = appState.collectionNamesContainingPop(pop);
 
     if (collectionNames.length != 1) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
             'Could not edit this Pop because its collection could not be resolved safely.',
@@ -134,15 +123,8 @@ class DuplicateGroupReviewScreen extends StatelessWidget {
     return collectionNames.single;
   }
 
-  Future<void> _openEditor(
-      BuildContext context,
-      Pop pop,
-      ) async {
-    final targetCollectionName =
-    _resolveCollectionName(
-      context,
-      pop,
-    );
+  Future<void> _openEditor(BuildContext context, Pop pop) async {
+    final targetCollectionName = _resolveCollectionName(context, pop);
 
     if (targetCollectionName == null) {
       return;
@@ -151,24 +133,14 @@ class DuplicateGroupReviewScreen extends StatelessWidget {
     await Navigator.push<Pop>(
       context,
       MaterialPageRoute(
-        builder: (_) => EditPopScreen(
-          pop: pop,
-          collectionName:
-          targetCollectionName,
-        ),
+        builder: (_) =>
+            EditPopScreen(pop: pop, collectionName: targetCollectionName),
       ),
     );
   }
 
-  Future<void> _openValueEditor(
-      BuildContext context,
-      Pop pop,
-      ) async {
-    final targetCollectionName =
-    _resolveCollectionName(
-      context,
-      pop,
-    );
+  Future<void> _openValueEditor(BuildContext context, Pop pop) async {
+    final targetCollectionName = _resolveCollectionName(context, pop);
 
     if (targetCollectionName == null) {
       return;
@@ -179,8 +151,7 @@ class DuplicateGroupReviewScreen extends StatelessWidget {
       MaterialPageRoute(
         builder: (_) => EditPopScreen(
           pop: pop,
-          collectionName:
-          targetCollectionName,
+          collectionName: targetCollectionName,
           focusValueField: true,
         ),
       ),

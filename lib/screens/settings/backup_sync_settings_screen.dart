@@ -9,18 +9,12 @@ import '../../widgets/atlas/components/atlas_section_header.dart';
 import '../../widgets/atlas/components/atlas_status_chip.dart';
 
 class BackupSyncSettingsScreen extends StatelessWidget {
-  const BackupSyncSettingsScreen({
-    super.key,
-  });
+  const BackupSyncSettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Backup & Sync',
-        ),
-      ),
+      appBar: AppBar(title: const Text('Backup & Sync')),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(
@@ -37,15 +31,13 @@ class BackupSyncSettingsScreen extends StatelessWidget {
                 child: AtlasSectionHeader(
                   title: 'Backup & Sync',
                   subtitle:
-                  'Prepare cloud backup, restore, and multi-device sync options for your vault.',
+                      'Prepare cloud backup, restore, and multi-device sync options for your vault.',
                   icon: Icons.cloud_sync_rounded,
                   accentColor: AtlasColors.vaultGold,
                 ),
               ),
 
-              const SizedBox(
-                height: AtlasSpacing.lg,
-              ),
+              const SizedBox(height: AtlasSpacing.lg),
 
               const AtlasGlassCard(
                 child: Column(
@@ -54,18 +46,15 @@ class BackupSyncSettingsScreen extends StatelessWidget {
                     AtlasSectionHeader(
                       title: 'Backup Status',
                       subtitle:
-                      'Atlas is currently using local vault data. Cloud backup and restore tools will be connected later.',
+                          'Atlas is currently using local vault data. Cloud backup and restore tools will be connected later.',
                       icon: Icons.storage_rounded,
                     ),
 
-                    SizedBox(
-                      height: AtlasSpacing.lg,
-                    ),
+                    SizedBox(height: AtlasSpacing.lg),
 
                     AtlasActionRow(
                       title: 'Local Data',
-                      description:
-                      'Your vault is available on this device.',
+                      description: 'Your vault is available on this device.',
                       icon: Icons.storage_rounded,
                       showChevron: false,
                       compact: true,
@@ -76,14 +65,12 @@ class BackupSyncSettingsScreen extends StatelessWidget {
                       ),
                     ),
 
-                    SizedBox(
-                      height: AtlasSpacing.sm,
-                    ),
+                    SizedBox(height: AtlasSpacing.sm),
 
                     AtlasActionRow(
                       title: 'Cloud Backup',
                       description:
-                      'Future backup support will protect your vault in the cloud.',
+                          'Future backup support will protect your vault in the cloud.',
                       icon: Icons.cloud_queue_rounded,
                       showChevron: false,
                       compact: true,
@@ -94,14 +81,12 @@ class BackupSyncSettingsScreen extends StatelessWidget {
                       ),
                     ),
 
-                    SizedBox(
-                      height: AtlasSpacing.sm,
-                    ),
+                    SizedBox(height: AtlasSpacing.sm),
 
                     AtlasActionRow(
                       title: 'Multi-Device Sync',
                       description:
-                      'Future sync support will help keep devices aligned.',
+                          'Future sync support will help keep devices aligned.',
                       icon: Icons.sync_rounded,
                       showChevron: false,
                       compact: true,
@@ -115,9 +100,7 @@ class BackupSyncSettingsScreen extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(
-                height: AtlasSpacing.lg,
-              ),
+              const SizedBox(height: AtlasSpacing.lg),
 
               AtlasGlassCard(
                 child: Column(
@@ -126,18 +109,15 @@ class BackupSyncSettingsScreen extends StatelessWidget {
                     const AtlasSectionHeader(
                       title: 'Future Sync Tools',
                       subtitle:
-                      'These actions are staged now so backup and sync can be added safely later.',
+                          'These actions are staged now so backup and sync can be added safely later.',
                       icon: Icons.cloud_done_outlined,
                     ),
 
-                    const SizedBox(
-                      height: AtlasSpacing.lg,
-                    ),
+                    const SizedBox(height: AtlasSpacing.lg),
 
                     AtlasActionRow(
                       title: 'Cloud Backup',
-                      description:
-                      'Back up your vault to your Atlas account.',
+                      description: 'Back up your vault to your Atlas account.',
                       icon: Icons.cloud_upload_outlined,
                       onTap: () {
                         _showComingSoonMessage(
@@ -147,14 +127,11 @@ class BackupSyncSettingsScreen extends StatelessWidget {
                       },
                     ),
 
-                    const SizedBox(
-                      height: AtlasSpacing.sm,
-                    ),
+                    const SizedBox(height: AtlasSpacing.sm),
 
                     AtlasActionRow(
                       title: 'Restore Vault',
-                      description:
-                      'Restore vault data from a previous backup.',
+                      description: 'Restore vault data from a previous backup.',
                       icon: Icons.restore_rounded,
                       onTap: () {
                         _showComingSoonMessage(
@@ -164,14 +141,12 @@ class BackupSyncSettingsScreen extends StatelessWidget {
                       },
                     ),
 
-                    const SizedBox(
-                      height: AtlasSpacing.sm,
-                    ),
+                    const SizedBox(height: AtlasSpacing.sm),
 
                     AtlasActionRow(
                       title: 'Sync Devices',
                       description:
-                      'Keep your collection available across devices.',
+                          'Keep your collection available across devices.',
                       icon: Icons.devices_other_rounded,
                       onTap: () {
                         _showComingSoonMessage(
@@ -181,14 +156,12 @@ class BackupSyncSettingsScreen extends StatelessWidget {
                       },
                     ),
 
-                    const SizedBox(
-                      height: AtlasSpacing.sm,
-                    ),
+                    const SizedBox(height: AtlasSpacing.sm),
 
                     AtlasActionRow(
                       title: 'Export Backup',
                       description:
-                      'Create an export copy of your collection data.',
+                          'Create an export copy of your collection data.',
                       icon: Icons.file_download_outlined,
                       onTap: () {
                         _showComingSoonMessage(
@@ -201,15 +174,13 @@ class BackupSyncSettingsScreen extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(
-                height: AtlasSpacing.lg,
-              ),
+              const SizedBox(height: AtlasSpacing.lg),
 
               const AtlasInfoBanner(
                 icon: Icons.info_outline_rounded,
                 title: 'Data Safety',
                 message:
-                'Backup and sync should be added carefully so vault data stays safe, recoverable, and consistent across devices.',
+                    'Backup and sync should be added carefully so vault data stays safe, recoverable, and consistent across devices.',
               ),
             ],
           ),
@@ -218,16 +189,9 @@ class BackupSyncSettingsScreen extends StatelessWidget {
     );
   }
 
-  static void _showComingSoonMessage(
-      BuildContext context,
-      String message,
-      ) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-        ),
-      ),
-    );
+  static void _showComingSoonMessage(BuildContext context, String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 }

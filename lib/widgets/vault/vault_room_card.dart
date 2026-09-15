@@ -34,11 +34,7 @@ class VaultRoomCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Icon(
-            icon,
-            size: 34,
-            color: effectiveAccent,
-          ),
+          Icon(icon, size: 34, color: effectiveAccent),
 
           const SizedBox(height: AtlasSpacing.md),
 
@@ -61,9 +57,7 @@ class VaultRoomCard extends StatelessWidget {
           if (lastAdded != null) ...[
             const SizedBox(height: AtlasSpacing.md),
 
-            Divider(
-              color: Colors.white.withValues(alpha: 0.08),
-            ),
+            Divider(color: Colors.white.withValues(alpha: 0.08)),
 
             const SizedBox(height: AtlasSpacing.xs),
 
@@ -81,9 +75,7 @@ class VaultRoomCard extends StatelessWidget {
               textAlign: TextAlign.center,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: AtlasTypography.bodySmall.copyWith(
-                color: effectiveAccent,
-              ),
+              style: AtlasTypography.bodySmall.copyWith(color: effectiveAccent),
             ),
           ],
         ],

@@ -27,13 +27,10 @@ class AtlasMetricPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String cleanedSupportingText =
-        supportingText?.trim() ?? '';
+    final String cleanedSupportingText = supportingText?.trim() ?? '';
 
     return ConstrainedBox(
-      constraints: BoxConstraints(
-        minHeight: minHeight,
-      ),
+      constraints: BoxConstraints(minHeight: minHeight),
       child: AtlasGlassPanel(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -43,14 +40,8 @@ class AtlasMetricPanel extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (icon != null) ...[
-                  Icon(
-                    icon,
-                    size: 16,
-                    color: accentColor,
-                  ),
-                  const SizedBox(
-                    width: AtlasSpacing.xs,
-                  ),
+                  Icon(icon, size: 16, color: accentColor),
+                  const SizedBox(width: AtlasSpacing.xs),
                 ],
                 Flexible(
                   child: Text(
@@ -66,9 +57,7 @@ class AtlasMetricPanel extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(
-              height: AtlasSpacing.sm,
-            ),
+            const SizedBox(height: AtlasSpacing.sm),
             Text(
               value,
               maxLines: 1,
@@ -80,9 +69,7 @@ class AtlasMetricPanel extends StatelessWidget {
               ),
             ),
             if (cleanedSupportingText.isNotEmpty) ...[
-              const SizedBox(
-                height: AtlasSpacing.xs,
-              ),
+              const SizedBox(height: AtlasSpacing.xs),
               Text(
                 cleanedSupportingText,
                 maxLines: 2,

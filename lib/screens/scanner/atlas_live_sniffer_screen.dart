@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../atlas/live_sniffer/atlas_live_sniffer_controller.dart';
@@ -86,7 +86,7 @@ class _AtlasLiveSnifferScreenState extends State<AtlasLiveSnifferScreen>
     final AtlasLiveSnifferHudSnapshot hud = _recognitionController.hud;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Atlas Live Sniffer')),
+      appBar: AppBar(title: const Text('Atlas LiveLens')),
       body: VaultScrollView(
         children: [
           AtlasGlassCard(
@@ -95,7 +95,7 @@ class _AtlasLiveSnifferScreenState extends State<AtlasLiveSnifferScreen>
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 AtlasSectionHeader(
-                  title: '📡 Android Live Sniffer',
+                  title: 'ðŸ“¡ Atlas LiveLens',
                   subtitle:
                       'Floating collector intelligence while you browse another app.',
                   icon: Icons.picture_in_picture_alt_rounded,
@@ -310,7 +310,7 @@ class _AtlasLiveSnifferScreenState extends State<AtlasLiveSnifferScreen>
                 if (_controller.message != null) ...[
                   const SizedBox(height: AtlasSpacing.md),
                   AtlasInfoBanner(
-                    title: 'Atlas Live Sniffer',
+                    title: 'Atlas LiveLens',
                     message: _controller.message!,
                     icon: Icons.info_outline_rounded,
                     accentColor: AtlasColors.intelligenceBlue,
@@ -334,7 +334,7 @@ class _AtlasLiveSnifferScreenState extends State<AtlasLiveSnifferScreen>
                           )
                         : const Icon(Icons.play_circle_outline_rounded),
                     label: Text(
-                      _controller.busy ? 'Working...' : 'Start Live Sniffer',
+                      _controller.busy ? 'Working...' : 'Start LiveLens',
                     ),
                   ),
                 const SizedBox(height: AtlasSpacing.sm),

@@ -27,42 +27,33 @@ class _AskAtlasCardState extends State<AskAtlasCard> {
   static const int _maxQuestionLength = 180;
   static const int _maxVisibleSuggestions = 4;
 
-  final TextEditingController _questionController =
-  TextEditingController();
+  final TextEditingController _questionController = TextEditingController();
 
   bool get _canSubmit {
     return _questionController.text.trim().isNotEmpty;
   }
 
   List<String> get _visibleSuggestions {
-    final Set<String> seen =
-    <String>{};
+    final Set<String> seen = <String>{};
 
-    final List<String> suggestions =
-    <String>[];
+    final List<String> suggestions = <String>[];
 
-    for (final String rawSuggestion
-    in widget.suggestions) {
-      final String suggestion =
-      rawSuggestion.trim();
+    for (final String rawSuggestion in widget.suggestions) {
+      final String suggestion = rawSuggestion.trim();
 
       if (suggestion.isEmpty) {
         continue;
       }
 
-      final String normalized =
-      suggestion.toLowerCase();
+      final String normalized = suggestion.toLowerCase();
 
       if (!seen.add(normalized)) {
         continue;
       }
 
-      suggestions.add(
-        suggestion,
-      );
+      suggestions.add(suggestion);
 
-      if (suggestions.length >=
-          _maxVisibleSuggestions) {
+      if (suggestions.length >= _maxVisibleSuggestions) {
         break;
       }
     }
@@ -74,16 +65,12 @@ class _AskAtlasCardState extends State<AskAtlasCard> {
   void initState() {
     super.initState();
 
-    _questionController.addListener(
-      _handleQuestionChanged,
-    );
+    _questionController.addListener(_handleQuestionChanged);
   }
 
   @override
   void dispose() {
-    _questionController.removeListener(
-      _handleQuestionChanged,
-    );
+    _questionController.removeListener(_handleQuestionChanged);
 
     _questionController.dispose();
 
@@ -99,85 +86,60 @@ class _AskAtlasCardState extends State<AskAtlasCard> {
   }
 
   void _submitTypedQuestion() {
-    final String question =
-    _questionController.text.trim();
+    final String question = _questionController.text.trim();
 
     if (question.isEmpty) {
       return;
     }
 
-    _askQuestion(
-      question,
-    );
+    _askQuestion(question);
 
     _questionController.clear();
 
     FocusScope.of(context).unfocus();
   }
 
-  void _askSuggestion(
-      String question,
-      ) {
+  void _askSuggestion(String question) {
     FocusScope.of(context).unfocus();
 
-    _askQuestion(
-      question,
-    );
+    _askQuestion(question);
   }
 
-  void _askQuestion(
-      String question,
-      ) {
-    final String cleanedQuestion =
-    question.trim();
+  void _askQuestion(String question) {
+    final String cleanedQuestion = question.trim();
 
     if (cleanedQuestion.isEmpty) {
       return;
     }
 
-    widget.onAsk(
-      cleanedQuestion,
-    );
+    widget.onAsk(cleanedQuestion);
   }
 
   @override
   Widget build(BuildContext context) {
-    final List<String> visibleSuggestions =
-        _visibleSuggestions;
+    final List<String> visibleSuggestions = _visibleSuggestions;
 
     return AtlasGlassCard(
-      accentColor:
-      AtlasColors.intelligenceBlue,
+      accentColor: AtlasColors.intelligenceBlue,
       child: Column(
-        crossAxisAlignment:
-        CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const AtlasSectionHeader(
             title: 'Ask Atlas',
             subtitle:
-            'Ask a collector question and Atlas will answer using approved Academy knowledge.',
-            icon:
-            Icons.auto_awesome_rounded,
-            accentColor:
-            AtlasColors.intelligenceBlue,
+                'Ask a collector question and Atlas will answer using approved Academy knowledge.',
+            icon: Icons.auto_awesome_rounded,
+            accentColor: AtlasColors.intelligenceBlue,
           ),
-          const SizedBox(
-            height: AtlasSpacing.lg,
-          ),
+          const SizedBox(height: AtlasSpacing.lg),
           AtlasFormField(
-            controller:
-            _questionController,
+            controller: _questionController,
             label: 'Collector Question',
-            hintText:
-            'Example: What is a Chase?',
-            icon:
-            Icons.search_rounded,
-            maxLength:
-            _maxQuestionLength,
-            textInputAction:
-            TextInputAction.search,
-            textCapitalization:
-            TextCapitalization.sentences,
+            hintText: 'Example: What is a Chase?',
+            icon: Icons.search_rounded,
+            maxLength: _maxQuestionLength,
+            textInputAction: TextInputAction.search,
+            textCapitalization: TextCapitalization.sentences,
             onFieldSubmitted: (_) {
               if (_canSubmit) {
                 _submitTypedQuestion();
@@ -185,57 +147,30 @@ class _AskAtlasCardState extends State<AskAtlasCard> {
             },
             suffixIcon: IconButton(
               tooltip: 'Ask Atlas',
-              onPressed: _canSubmit
-                  ? _submitTypedQuestion
-                  : null,
-              icon: const Icon(
-                Icons.arrow_forward_rounded,
-              ),
+              onPressed: _canSubmit ? _submitTypedQuestion : null,
+              icon: const Icon(Icons.arrow_forward_rounded),
             ),
           ),
           if (visibleSuggestions.isNotEmpty) ...[
-            const SizedBox(
-              height: AtlasSpacing.lg,
-            ),
+            const SizedBox(height: AtlasSpacing.lg),
             const AtlasSectionHeader(
               title: 'Suggested Questions',
-              subtitle:
-              'Start with one of these Academy topics.',
-              icon:
-              Icons.question_answer_outlined,
+              subtitle: 'Start with one of these Academy topics.',
+              icon: Icons.question_answer_outlined,
             ),
-            const SizedBox(
-              height: AtlasSpacing.md,
-            ),
-            for (
-            int index = 0;
-            index <
-                visibleSuggestions.length;
-            index++
-            ) ...[
+            const SizedBox(height: AtlasSpacing.md),
+            for (int index = 0; index < visibleSuggestions.length; index++) ...[
               AtlasActionRow(
-                title:
-                visibleSuggestions[index],
-                description:
-                'Ask Atlas about this collector topic.',
-                icon: Icons
-                    .question_answer_outlined,
-                accentColor:
-                AtlasColors
-                    .intelligenceBlue,
+                title: visibleSuggestions[index],
+                description: 'Ask Atlas about this collector topic.',
+                icon: Icons.question_answer_outlined,
+                accentColor: AtlasColors.intelligenceBlue,
                 onTap: () {
-                  _askSuggestion(
-                    visibleSuggestions[index],
-                  );
+                  _askSuggestion(visibleSuggestions[index]);
                 },
               ),
-              if (index !=
-                  visibleSuggestions.length -
-                      1)
-                const SizedBox(
-                  height:
-                  AtlasSpacing.sm,
-                ),
+              if (index != visibleSuggestions.length - 1)
+                const SizedBox(height: AtlasSpacing.sm),
             ],
           ],
         ],

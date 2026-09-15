@@ -4,22 +4,18 @@
 // engine cannot report that it should run while also providing a skip reason.
 class EngineExecutionDecision {
   factory EngineExecutionDecision.run({
-    Map<String, Object?> attributes =
-    const <String, Object?>{},
+    Map<String, Object?> attributes = const <String, Object?>{},
   }) {
     return EngineExecutionDecision._(
       shouldRun: true,
       reason: null,
-      attributes: Map<String, Object?>.unmodifiable(
-        attributes,
-      ),
+      attributes: Map<String, Object?>.unmodifiable(attributes),
     );
   }
 
   factory EngineExecutionDecision.skip({
     required String reason,
-    Map<String, Object?> attributes =
-    const <String, Object?>{},
+    Map<String, Object?> attributes = const <String, Object?>{},
   }) {
     final String normalizedReason = reason.trim();
 
@@ -34,9 +30,7 @@ class EngineExecutionDecision {
     return EngineExecutionDecision._(
       shouldRun: false,
       reason: normalizedReason,
-      attributes: Map<String, Object?>.unmodifiable(
-        attributes,
-      ),
+      attributes: Map<String, Object?>.unmodifiable(attributes),
     );
   }
 

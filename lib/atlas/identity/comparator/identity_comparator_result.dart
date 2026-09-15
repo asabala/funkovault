@@ -37,15 +37,11 @@ class IdentityComparatorResult {
   bool get hasEvidence => evidence.isNotEmpty;
 
   bool get hasConflicts {
-    return evidence.any(
-          (IdentityEvidence item) => item.isConflict,
-    );
+    return evidence.any((IdentityEvidence item) => item.isConflict);
   }
 
   bool get hasMissingEvidence {
-    return evidence.any(
-          (IdentityEvidence item) => item.isMissing,
-    );
+    return evidence.any((IdentityEvidence item) => item.isMissing);
   }
 
   double get weightedConfidence {
@@ -53,10 +49,8 @@ class IdentityComparatorResult {
       return confidence;
     }
 
-    final Iterable<IdentityEvidence> participating =
-    evidence.where(
-          (IdentityEvidence item) =>
-      item.participatesInDecision,
+    final Iterable<IdentityEvidence> participating = evidence.where(
+      (IdentityEvidence item) => item.participatesInDecision,
     );
 
     if (participating.isEmpty) {
@@ -87,10 +81,8 @@ class IdentityComparatorResult {
     List<String>? notes,
   }) {
     return IdentityComparatorResult(
-      comparatorId:
-      comparatorId ?? this.comparatorId,
-      comparatorName:
-      comparatorName ?? this.comparatorName,
+      comparatorId: comparatorId ?? this.comparatorId,
+      comparatorName: comparatorName ?? this.comparatorName,
       isMatch: isMatch ?? this.isMatch,
       confidence: confidence ?? this.confidence,
       evidence: evidence ?? this.evidence,
@@ -132,10 +124,7 @@ class IdentityComparatorResult {
     );
   }
 
-  static bool _listEquals<T>(
-      List<T> first,
-      List<T> second,
-      ) {
+  static bool _listEquals<T>(List<T> first, List<T> second) {
     if (identical(first, second)) {
       return true;
     }

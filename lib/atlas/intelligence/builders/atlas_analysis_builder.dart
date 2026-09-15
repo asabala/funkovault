@@ -18,55 +18,39 @@ class AtlasAnalysisBuilder<TResult> {
   double get confidence => _confidence;
 
   set confidence(double value) {
-    assert(
-    value >= 0 && value <= 1,
-    'confidence must be between 0 and 1',
-    );
+    assert(value >= 0 && value <= 1, 'confidence must be between 0 and 1');
 
     _confidence = value;
   }
 
-  List<AnalysisFinding> get findings =>
-      List.unmodifiable(_findings);
+  List<AnalysisFinding> get findings => List.unmodifiable(_findings);
 
   List<Recommendation> get recommendations =>
       List.unmodifiable(_recommendations);
 
-  Map<String, Object?> get metadata =>
-      Map.unmodifiable(_metadata);
+  Map<String, Object?> get metadata => Map.unmodifiable(_metadata);
 
   void addFinding(AnalysisFinding finding) {
     _findings.add(finding);
   }
 
-  void addFindings(
-      Iterable<AnalysisFinding> findings,
-      ) {
+  void addFindings(Iterable<AnalysisFinding> findings) {
     _findings.addAll(findings);
   }
 
-  void addRecommendation(
-      Recommendation recommendation,
-      ) {
+  void addRecommendation(Recommendation recommendation) {
     _recommendations.add(recommendation);
   }
 
-  void addRecommendations(
-      Iterable<Recommendation> recommendations,
-      ) {
+  void addRecommendations(Iterable<Recommendation> recommendations) {
     _recommendations.addAll(recommendations);
   }
 
-  void addMetadata(
-      String key,
-      Object? value,
-      ) {
+  void addMetadata(String key, Object? value) {
     _metadata[key] = value;
   }
 
-  void addAllMetadata(
-      Map<String, Object?> values,
-      ) {
+  void addAllMetadata(Map<String, Object?> values) {
     _metadata.addAll(values);
   }
 
@@ -75,8 +59,7 @@ class AtlasAnalysisBuilder<TResult> {
       result: result,
       confidence: _confidence,
       findings: List.unmodifiable(_findings),
-      recommendations:
-      List.unmodifiable(_recommendations),
+      recommendations: List.unmodifiable(_recommendations),
       metadata: Map.unmodifiable(_metadata),
     );
   }

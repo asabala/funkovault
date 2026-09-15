@@ -26,12 +26,8 @@ class AcademyLocalAdminToolsSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        AcademyAdminRequestBadgeCard(
-          newRequestCount: newRequestCount,
-        ),
-        const SizedBox(
-          height: AtlasSpacing.sm,
-        ),
+        AcademyAdminRequestBadgeCard(newRequestCount: newRequestCount),
+        const SizedBox(height: AtlasSpacing.sm),
         AcademyAdminRequestInboxCard(
           requests: requests,
           onReviewTap: onReviewTap,

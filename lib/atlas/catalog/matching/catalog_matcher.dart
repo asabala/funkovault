@@ -17,46 +17,36 @@ final class CatalogMatcher {
     String? series,
     String? variantName,
   }) {
-    final List<CatalogMatch> matches =
-    <CatalogMatch>[];
+    final List<CatalogMatch> matches = <CatalogMatch>[];
 
-    final String normalizedName =
-    _normalize(displayName);
+    final String normalizedName = _normalize(displayName);
 
-    final String normalizedSeries =
-    _normalize(series);
+    final String normalizedSeries = _normalize(series);
 
-    final String normalizedNumber =
-    _normalize(productNumber);
+    final String normalizedNumber = _normalize(productNumber);
 
-    final String normalizedVariant =
-    _normalize(variantName);
+    final String normalizedVariant = _normalize(variantName);
 
-    for (final AtlasCatalogProduct product
-    in candidates) {
+    for (final AtlasCatalogProduct product in candidates) {
       double score = 0.0;
 
       if (normalizedName.isNotEmpty &&
-          _normalize(product.displayName) ==
-              normalizedName) {
+          _normalize(product.displayName) == normalizedName) {
         score += 0.50;
       }
 
       if (normalizedSeries.isNotEmpty &&
-          _normalize(product.series) ==
-              normalizedSeries) {
+          _normalize(product.series) == normalizedSeries) {
         score += 0.20;
       }
 
       if (normalizedNumber.isNotEmpty &&
-          _normalize(product.productNumber) ==
-              normalizedNumber) {
+          _normalize(product.productNumber) == normalizedNumber) {
         score += 0.20;
       }
 
       if (normalizedVariant.isNotEmpty &&
-          _normalize(product.variantName) ==
-              normalizedVariant) {
+          _normalize(product.variantName) == normalizedVariant) {
         score += 0.10;
       }
 
@@ -69,33 +59,20 @@ final class CatalogMatcher {
           product: product,
           confidence: score.clamp(0.0, 1.0),
           requiresReview: score < 0.95,
-          matchReason:
-          'Identity similarity',
-          attributes: <String, Object?>{
-            'score': score,
-          },
+          matchReason: 'Identity similarity',
+          attributes: <String, Object?>{'score': score},
         ),
       );
     }
 
     matches.sort(
-          (CatalogMatch a, CatalogMatch b) =>
-          b.confidence.compareTo(
-            a.confidence,
-          ),
+      (CatalogMatch a, CatalogMatch b) => b.confidence.compareTo(a.confidence),
     );
 
-    return List<CatalogMatch>.unmodifiable(
-      matches,
-    );
+    return List<CatalogMatch>.unmodifiable(matches);
   }
 
-  String _normalize(
-      String? value,
-      ) {
-    return value
-        ?.trim()
-        .toLowerCase() ??
-        '';
+  String _normalize(String? value) {
+    return value?.trim().toLowerCase() ?? '';
   }
 }

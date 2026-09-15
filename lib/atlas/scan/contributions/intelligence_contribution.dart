@@ -21,10 +21,7 @@ abstract interface class IntelligenceContribution {
 
 // Shared validation helpers for concrete contribution implementations.
 abstract final class IntelligenceContributionValidation {
-  static String requireIdentifier(
-      String value, {
-        required String fieldName,
-      }) {
+  static String requireIdentifier(String value, {required String fieldName}) {
     final String normalized = value.trim();
 
     if (normalized.isEmpty) {
@@ -38,17 +35,12 @@ abstract final class IntelligenceContributionValidation {
     return normalized;
   }
 
-  static double? normalizeConfidence(
-      double? value,
-      ) {
+  static double? normalizeConfidence(double? value) {
     if (value == null) {
       return null;
     }
 
-    if (value.isNaN ||
-        value.isInfinite ||
-        value < 0 ||
-        value > 1) {
+    if (value.isNaN || value.isInfinite || value < 0 || value > 1) {
       throw ArgumentError.value(
         value,
         'confidence',
@@ -59,11 +51,7 @@ abstract final class IntelligenceContributionValidation {
     return value;
   }
 
-  static Map<String, Object?> immutableAttributes(
-      Map<String, Object?> values,
-      ) {
-    return Map<String, Object?>.unmodifiable(
-      values,
-    );
+  static Map<String, Object?> immutableAttributes(Map<String, Object?> values) {
+    return Map<String, Object?>.unmodifiable(values);
   }
 }

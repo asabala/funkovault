@@ -46,26 +46,22 @@ class AtlasRecommendationsCard extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    final List<AtlasRecommendation> visibleRecommendations =
-    summary.recommendations
+    final List<AtlasRecommendation> visibleRecommendations = summary
+        .recommendations
         .take(maxRecommendations)
-        .toList(
-      growable: false,
-    );
+        .toList(growable: false);
 
     final AtlasRecommendation? primaryRecommendation =
         summary.primaryRecommendation;
 
     return AtlasExpandableSection(
       title: 'Atlas Recommendations',
-      subtitle: _buildRecommendationSubtitle(
-        summary,
-      ),
+      subtitle: _buildRecommendationSubtitle(summary),
       icon: Icons.recommend_outlined,
       initiallyExpanded: initiallyExpanded,
       badge: AtlasExpandableBadge(
         label:
-        '${summary.count} '
+            '${summary.count} '
             '${summary.count == 1 ? 'Action' : 'Actions'}',
         icon: Icons.lightbulb_outline,
       ),
@@ -77,7 +73,7 @@ class AtlasRecommendationsCard extends StatelessWidget {
               eyebrow: 'Recommendations',
               title: 'Profile looks complete',
               message:
-              'Atlas did not identify any immediate collectible record improvements.',
+                  'Atlas did not identify any immediate collectible record improvements.',
               icon: Icons.task_alt_rounded,
               tone: AtlasEmptyStateTone.recommendation,
               compact: true,
@@ -91,46 +87,30 @@ class AtlasRecommendationsCard extends StatelessWidget {
                 icon: Icons.auto_awesome_rounded,
                 tone: AtlasInsightPanelTone.recommendation,
               ),
-              const SizedBox(
-                height: AtlasSpacing.md,
-              ),
+              const SizedBox(height: AtlasSpacing.md),
             ],
 
-            ...visibleRecommendations.map(
-                  (
-                  AtlasRecommendation recommendation,
-                  ) {
-                return Padding(
-                  padding: const EdgeInsets.only(
-                    bottom: AtlasSpacing.sm,
-                  ),
-                  child: AtlasRecommendationTile(
-                    recommendation: recommendation,
-                    onAction: onRecommendationAction,
-                    showAction:
-                    onRecommendationAction != null,
-                  ),
-                );
-              },
-            ),
+            ...visibleRecommendations.map((AtlasRecommendation recommendation) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: AtlasSpacing.sm),
+                child: AtlasRecommendationTile(
+                  recommendation: recommendation,
+                  onAction: onRecommendationAction,
+                  showAction: onRecommendationAction != null,
+                ),
+              );
+            }),
 
-            if (summary.count >
-                visibleRecommendations.length ||
+            if (summary.count > visibleRecommendations.length ||
                 onViewAll != null) ...[
-              const SizedBox(
-                height: AtlasSpacing.sm,
-              ),
+              const SizedBox(height: AtlasSpacing.sm),
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton.icon(
                   onPressed: onViewAll,
-                  icon: const Icon(
-                    Icons.list_alt_rounded,
-                    size: 18,
-                  ),
+                  icon: const Icon(Icons.list_alt_rounded, size: 18),
                   label: Text(
-                    summary.count >
-                        visibleRecommendations.length
+                    summary.count > visibleRecommendations.length
                         ? 'View All ${summary.count}'
                         : 'View All Recommendations',
                   ),
@@ -144,15 +124,12 @@ class AtlasRecommendationsCard extends StatelessWidget {
   }
 }
 
-String _buildRecommendationSubtitle(
-    AtlasRecommendationSummary summary,
-    ) {
+String _buildRecommendationSubtitle(AtlasRecommendationSummary summary) {
   if (!summary.hasRecommendations) {
     return 'No immediate improvements recommended';
   }
 
-  final AtlasRecommendation? primary =
-      summary.primaryRecommendation;
+  final AtlasRecommendation? primary = summary.primaryRecommendation;
 
   if (primary == null) {
     return '${summary.count} recommendations available';

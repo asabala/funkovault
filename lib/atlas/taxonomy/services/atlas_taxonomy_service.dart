@@ -3,79 +3,50 @@ import 'package:funkovault2/atlas/taxonomy/engines/atlas_taxonomy_engine.dart';
 import 'package:funkovault2/atlas/taxonomy/models/atlas_taxonomy.dart';
 
 final class AtlasTaxonomyService {
-  AtlasTaxonomyService({
-    AtlasTaxonomyEngine? engine,
-  }) : _engine =
-      engine ?? const AtlasTaxonomyEngine();
+  AtlasTaxonomyService({AtlasTaxonomyEngine? engine})
+    : _engine = engine ?? const AtlasTaxonomyEngine();
 
-  static final AtlasTaxonomyService instance =
-  AtlasTaxonomyService();
+  static final AtlasTaxonomyService instance = AtlasTaxonomyService();
 
   final AtlasTaxonomyEngine _engine;
 
-  final Map<String, AtlasTaxonomy>
-  _taxonomyByProductId =
-  <String, AtlasTaxonomy>{};
+  final Map<String, AtlasTaxonomy> _taxonomyByProductId =
+      <String, AtlasTaxonomy>{};
 
-  AtlasTaxonomy resolve(
-      AtlasCatalogProduct product,
-      ) {
-    final String productId =
-    product.productId.value.trim();
+  AtlasTaxonomy resolve(AtlasCatalogProduct product) {
+    final String productId = product.productId.value.trim();
 
     if (productId.isEmpty) {
-      return _engine.resolve(
-        product,
-      );
+      return _engine.resolve(product);
     }
 
-    return _taxonomyByProductId.putIfAbsent(
-      productId,
-          () {
-        return _engine.resolve(
-          product,
-        );
-      },
-    );
+    return _taxonomyByProductId.putIfAbsent(productId, () {
+      return _engine.resolve(product);
+    });
   }
 
-  List<AtlasTaxonomy> resolveAll(
-      Iterable<AtlasCatalogProduct> products,
-      ) {
-    return List<AtlasTaxonomy>.unmodifiable(
-      products.map(
-        resolve,
-      ),
-    );
+  List<AtlasTaxonomy> resolveAll(Iterable<AtlasCatalogProduct> products) {
+    return List<AtlasTaxonomy>.unmodifiable(products.map(resolve));
   }
 
-  bool containsProduct(
-      String productId,
-      ) {
-    final String normalizedId =
-    productId.trim();
+  bool containsProduct(String productId) {
+    final String normalizedId = productId.trim();
 
     if (normalizedId.isEmpty) {
       return false;
     }
 
-    return _taxonomyByProductId.containsKey(
-      normalizedId,
-    );
+    return _taxonomyByProductId.containsKey(normalizedId);
   }
 
-  AtlasTaxonomy? cachedTaxonomyFor(
-      String productId,
-      ) {
-    final String normalizedId =
-    productId.trim();
+  AtlasTaxonomy? cachedTaxonomyFor(String productId) {
+    final String normalizedId = productId.trim();
 
     if (normalizedId.isEmpty) {
       return null;
     }
 
-    return _taxonomyByProductId[
-    normalizedId];
+    return _taxonomyByProductId[normalizedId];
   }
 
   int get cachedProductCount {
@@ -86,18 +57,13 @@ final class AtlasTaxonomyService {
     _taxonomyByProductId.clear();
   }
 
-  void removeFromCache(
-      String productId,
-      ) {
-    final String normalizedId =
-    productId.trim();
+  void removeFromCache(String productId) {
+    final String normalizedId = productId.trim();
 
     if (normalizedId.isEmpty) {
       return;
     }
 
-    _taxonomyByProductId.remove(
-      normalizedId,
-    );
+    _taxonomyByProductId.remove(normalizedId);
   }
 }

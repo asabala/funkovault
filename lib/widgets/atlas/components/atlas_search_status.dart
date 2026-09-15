@@ -30,14 +30,8 @@ class AtlasSearchStatus extends StatelessWidget {
             ),
           ),
         ),
-        Icon(
-          icon,
-          size: 16,
-          color: accentColor,
-        ),
-        const SizedBox(
-          width: AtlasSpacing.xs,
-        ),
+        Icon(icon, size: 16, color: accentColor),
+        const SizedBox(width: AtlasSpacing.xs),
         Flexible(
           child: Text(
             contextLabel,

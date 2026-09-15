@@ -28,9 +28,7 @@ class AtlasGlassPanel extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.36),
         borderRadius: BorderRadius.circular(borderRadius),
-        border: Border.all(
-          color: effectiveAccent.withValues(alpha: 0.18),
-        ),
+        border: Border.all(color: effectiveAccent.withValues(alpha: 0.18)),
         boxShadow: [
           BoxShadow(
             color: effectiveAccent.withValues(alpha: 0.06),

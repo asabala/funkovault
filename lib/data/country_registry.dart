@@ -11,58 +11,22 @@ class CountryRegistry {
 
   static const all = [
     defaultCountry,
-    CountryOption(
-      name: 'Mexico',
-      code: 'MX',
-      flag: '🇲🇽',
-    ),
-    CountryOption(
-      name: 'Canada',
-      code: 'CA',
-      flag: '🇨🇦',
-    ),
-    CountryOption(
-      name: 'Japan',
-      code: 'JP',
-      flag: '🇯🇵',
-    ),
-    CountryOption(
-      name: 'United Kingdom',
-      code: 'GB',
-      flag: '🇬🇧',
-    ),
-    CountryOption(
-      name: 'France',
-      code: 'FR',
-      flag: '🇫🇷',
-    ),
-    CountryOption(
-      name: 'Germany',
-      code: 'DE',
-      flag: '🇩🇪',
-    ),
-    CountryOption(
-      name: 'Brazil',
-      code: 'BR',
-      flag: '🇧🇷',
-    ),
-    CountryOption(
-      name: 'Spain',
-      code: 'ES',
-      flag: '🇪🇸',
-    ),
-    CountryOption(
-      name: 'Italy',
-      code: 'IT',
-      flag: '🇮🇹',
-    ),
+    CountryOption(name: 'Mexico', code: 'MX', flag: '🇲🇽'),
+    CountryOption(name: 'Canada', code: 'CA', flag: '🇨🇦'),
+    CountryOption(name: 'Japan', code: 'JP', flag: '🇯🇵'),
+    CountryOption(name: 'United Kingdom', code: 'GB', flag: '🇬🇧'),
+    CountryOption(name: 'France', code: 'FR', flag: '🇫🇷'),
+    CountryOption(name: 'Germany', code: 'DE', flag: '🇩🇪'),
+    CountryOption(name: 'Brazil', code: 'BR', flag: '🇧🇷'),
+    CountryOption(name: 'Spain', code: 'ES', flag: '🇪🇸'),
+    CountryOption(name: 'Italy', code: 'IT', flag: '🇮🇹'),
   ];
 
   static CountryOption findByCode(String code) {
     final normalizedCode = code.trim().toUpperCase();
 
     return all.firstWhere(
-          (country) => country.code == normalizedCode,
+      (country) => country.code == normalizedCode,
       orElse: () => defaultCountry,
     );
   }
@@ -71,7 +35,7 @@ class CountryRegistry {
     final normalizedName = name.trim().toLowerCase();
 
     return all.firstWhere(
-          (country) => country.name.toLowerCase() == normalizedName,
+      (country) => country.name.toLowerCase() == normalizedName,
       orElse: () => defaultCountry,
     );
   }

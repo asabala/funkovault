@@ -21,19 +21,12 @@ class CollectorMemory {
     double? collectorConfidence,
   }) {
     return CollectorMemory(
-      favoriteCategory:
-      favoriteCategory ?? this.favoriteCategory,
-      favoriteSeries:
-      favoriteSeries ?? this.favoriteSeries,
+      favoriteCategory: favoriteCategory ?? this.favoriteCategory,
+      favoriteSeries: favoriteSeries ?? this.favoriteSeries,
       totalCollectionGrowth:
-      totalCollectionGrowth ??
-          this.totalCollectionGrowth,
-      lastRecommendation:
-      lastRecommendation ??
-          this.lastRecommendation,
-      collectorConfidence:
-      collectorConfidence ??
-          this.collectorConfidence,
+          totalCollectionGrowth ?? this.totalCollectionGrowth,
+      lastRecommendation: lastRecommendation ?? this.lastRecommendation,
+      collectorConfidence: collectorConfidence ?? this.collectorConfidence,
     );
   }
 }

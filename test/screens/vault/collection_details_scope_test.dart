@@ -26,10 +26,10 @@ class RecordingAppState extends AppState {
 
   @override
   Future<bool> deletePop(
-      String popId, {
-        String? collectionName,
-        String? recordKey,
-      }) async {
+    String popId, {
+    String? collectionName,
+    String? recordKey,
+  }) async {
     deleteCallCount += 1;
     deletedPopId = popId;
     deletedCollectionName = collectionName;
@@ -62,10 +62,10 @@ void main() {
   }
 
   Future<void> pumpCollectionDetails(
-      WidgetTester tester,
-      RecordingAppState state, {
-        bool includePop = false,
-      }) async {
+    WidgetTester tester,
+    RecordingAppState state, {
+    bool includePop = false,
+  }) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(1200, 5000);
 
@@ -83,9 +83,7 @@ void main() {
       ChangeNotifierProvider<AppState>.value(
         value: state,
         child: const MaterialApp(
-          home: CollectionDetailsScreen(
-            collectionName: collectionName,
-          ),
+          home: CollectionDetailsScreen(collectionName: collectionName),
         ),
       ),
     );
@@ -93,129 +91,96 @@ void main() {
     await tester.pump();
   }
 
-  testWidgets(
-    'merge duplicates targets the collection shown by the screen',
-        (tester) async {
-      final state = RecordingAppState();
+  testWidgets('merge duplicates targets the collection shown by the screen', (
+    tester,
+  ) async {
+    final state = RecordingAppState();
 
-      expect(state.selectedCollection, 'Entire Family Collection');
+    expect(state.selectedCollection, 'Entire Family Collection');
 
-      await pumpCollectionDetails(
-        tester,
-        state,
-      );
+    await pumpCollectionDetails(tester, state);
 
-      await tester.tap(find.byTooltip('Merge Duplicates'));
+    await tester.tap(find.byTooltip('Merge Duplicates'));
 
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
 
-      expect(state.mergeCallCount, 1);
-      expect(state.requestedMergeCollection, collectionName);
-      expect(state.selectedCollection, 'Entire Family Collection');
-      expect(find.text('Duplicates merged'), findsOneWidget);
-    },
-  );
+    expect(state.mergeCallCount, 1);
+    expect(state.requestedMergeCollection, collectionName);
+    expect(state.selectedCollection, 'Entire Family Collection');
+    expect(find.text('Duplicates merged'), findsOneWidget);
+  });
 
-  testWidgets(
-    'Pop Details receives the collection shown by the screen',
-        (tester) async {
-      final state = RecordingAppState();
+  testWidgets('Pop Details receives the collection shown by the screen', (
+    tester,
+  ) async {
+    final state = RecordingAppState();
 
-      await pumpCollectionDetails(
-        tester,
-        state,
-        includePop: true,
-      );
+    await pumpCollectionDetails(tester, state, includePop: true);
 
-      expect(find.text('Scoped Batman'), findsOneWidget);
+    expect(find.text('Scoped Batman'), findsOneWidget);
 
-      await tester.tap(find.text('Scoped Batman'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.text('Scoped Batman'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
 
-      expect(find.byType(PopDetailsScreen), findsOneWidget);
+    expect(find.byType(PopDetailsScreen), findsOneWidget);
 
-      final details = tester.widget<PopDetailsScreen>(
-        find.byType(PopDetailsScreen),
-      );
+    final details = tester.widget<PopDetailsScreen>(
+      find.byType(PopDetailsScreen),
+    );
 
-      expect(details.collectionName, collectionName);
-      expect(details.pop.id, 'scoped-pop');
-      expect(state.selectedCollection, 'Entire Family Collection');
-    },
-  );
+    expect(details.collectionName, collectionName);
+    expect(details.pop.id, 'scoped-pop');
+    expect(state.selectedCollection, 'Entire Family Collection');
+  });
 
-  testWidgets(
-    'Add Pop receives the collection shown by the screen',
-        (tester) async {
-      final state = RecordingAppState();
+  testWidgets('Add Pop receives the collection shown by the screen', (
+    tester,
+  ) async {
+    final state = RecordingAppState();
 
-      await pumpCollectionDetails(
-        tester,
-        state,
-      );
+    await pumpCollectionDetails(tester, state);
 
-      await tester.tap(find.text('Add Pop'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.text('Add Pop'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
 
-      expect(find.byType(AddPopScreen), findsOneWidget);
+    expect(find.byType(AddPopScreen), findsOneWidget);
 
-      final addScreen = tester.widget<AddPopScreen>(
-        find.byType(AddPopScreen),
-      );
+    final addScreen = tester.widget<AddPopScreen>(find.byType(AddPopScreen));
 
-      expect(addScreen.collectionName, collectionName);
-      expect(state.selectedCollection, 'Entire Family Collection');
-    },
-  );
+    expect(addScreen.collectionName, collectionName);
+    expect(state.selectedCollection, 'Entire Family Collection');
+  });
 
-  testWidgets(
-    'delete targets collection and exact record identity',
-        (tester) async {
-      final state = RecordingAppState();
-      final displayedPop = testPop();
+  testWidgets('delete targets collection and exact record identity', (
+    tester,
+  ) async {
+    final state = RecordingAppState();
+    final displayedPop = testPop();
 
-      await pumpCollectionDetails(
-        tester,
-        state,
-        includePop: true,
-      );
+    await pumpCollectionDetails(tester, state, includePop: true);
 
-      final dismissible = find.byKey(
-        const Key('scoped-pop'),
-      );
+    final dismissible = find.byKey(const Key('scoped-pop'));
 
-      expect(dismissible, findsOneWidget);
+    expect(dismissible, findsOneWidget);
 
-      await tester.drag(
-        dismissible,
-        const Offset(-800, 0),
-      );
+    await tester.drag(dismissible, const Offset(-800, 0));
 
-      await tester.pumpAndSettle();
+    await tester.pumpAndSettle();
 
-      expect(find.text('Delete Pop'), findsOneWidget);
+    expect(find.text('Delete Pop'), findsOneWidget);
 
-      await tester.tap(
-        find.widgetWithText(
-          ElevatedButton,
-          'Delete',
-        ),
-      );
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Delete'));
 
-      await tester.pumpAndSettle();
+    await tester.pumpAndSettle();
 
-      expect(state.deleteCallCount, 1);
-      expect(state.deletedPopId, displayedPop.id);
-      expect(state.deletedCollectionName, collectionName);
-      expect(
-        state.deletedRecordKey,
-        displayedPop.collectionRecordKey,
-      );
+    expect(state.deleteCallCount, 1);
+    expect(state.deletedPopId, displayedPop.id);
+    expect(state.deletedCollectionName, collectionName);
+    expect(state.deletedRecordKey, displayedPop.collectionRecordKey);
 
-      expect(state.selectedCollection, 'Entire Family Collection');
-    },
-  );
+    expect(state.selectedCollection, 'Entire Family Collection');
+  });
 }

@@ -9,11 +9,8 @@ import 'funko_sticker_type.dart';
 
 // Detects sticker classifications and contributes them to the shared
 // Atlas identity analysis.
-final class FunkoStickerDetector
-    implements AtlasIdentityDetector {
-  const FunkoStickerDetector({
-    required this.lookup,
-  });
+final class FunkoStickerDetector implements AtlasIdentityDetector {
+  const FunkoStickerDetector({required this.lookup});
 
   final AtlasIdentityLookup lookup;
 
@@ -22,15 +19,11 @@ final class FunkoStickerDetector
     required List<AtlasIdentityPhrase> phrases,
     required AtlasIdentityAnalysis analysis,
   }) {
-    final Map<FunkoStickerType, FunkoStickerEvidence>
-    evidence =
-    <FunkoStickerType, FunkoStickerEvidence>{};
+    final Map<FunkoStickerType, FunkoStickerEvidence> evidence =
+        <FunkoStickerType, FunkoStickerEvidence>{};
 
     for (final AtlasIdentityPhrase phrase in phrases) {
-      final FunkoStickerType? sticker =
-      lookup.sticker(
-        phrase.normalizedText,
-      );
+      final FunkoStickerType? sticker = lookup.sticker(phrase.normalizedText);
 
       if (sticker == null) {
         continue;
@@ -38,7 +31,7 @@ final class FunkoStickerDetector
 
       evidence.putIfAbsent(
         sticker,
-            () => FunkoStickerEvidence(
+        () => FunkoStickerEvidence(
           sticker: sticker,
           confidence: 1.0,
           source: FunkoStickerEvidenceSource.rule,
@@ -50,9 +43,7 @@ final class FunkoStickerDetector
 
     return analysis.copyWith(
       stickerResult: FunkoStickerDetectionResult(
-        evidence: List<FunkoStickerEvidence>.unmodifiable(
-          evidence.values,
-        ),
+        evidence: List<FunkoStickerEvidence>.unmodifiable(evidence.values),
       ),
     );
   }

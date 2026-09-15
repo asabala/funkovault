@@ -29,11 +29,7 @@ class ProfileStatTile extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Icon(
-            icon,
-            color: AtlasColors.vaultGold,
-            size: 22,
-          ),
+          Icon(icon, color: AtlasColors.vaultGold, size: 22),
           const SizedBox(height: AtlasSpacing.sm),
           Text(
             value,

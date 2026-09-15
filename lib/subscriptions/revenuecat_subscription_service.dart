@@ -20,27 +20,19 @@ class RevenueCatSubscriptionService implements SubscriptionService {
       return;
     }
 
-    await Purchases.configure(
-      PurchasesConfiguration(
-        apiKey,
-      ),
-    );
+    await Purchases.configure(PurchasesConfiguration(apiKey));
 
     _isConfigured = true;
   }
 
-  static Future<void> logIn(
-      String userId,
-      ) async {
+  static Future<void> logIn(String userId) async {
     final cleanedUserId = userId.trim();
 
     if (!_isConfigured || cleanedUserId.isEmpty) {
       return;
     }
 
-    await Purchases.logIn(
-      cleanedUserId,
-    );
+    await Purchases.logIn(cleanedUserId);
   }
 
   static Future<void> logOut() async {
@@ -93,11 +85,8 @@ class RevenueCatSubscriptionService implements SubscriptionService {
     return _mapCustomerInfo(customerInfo);
   }
 
-  SubscriptionState _mapCustomerInfo(
-      CustomerInfo customerInfo,
-      ) {
-    final premiumEntitlement =
-    customerInfo.entitlements.all['premium'];
+  SubscriptionState _mapCustomerInfo(CustomerInfo customerInfo) {
+    final premiumEntitlement = customerInfo.entitlements.all['premium'];
 
     if (premiumEntitlement?.isActive != true) {
       return SubscriptionState.basic();

@@ -16,15 +16,12 @@ import 'engine_support.dart';
 // This initial implementation is intentionally conservative. It combines
 // structured OCR evidence into an identity hypothesis without performing
 // catalog lookups or canonical product resolution.
-final class IdentityIntelligenceEngine
-    extends AbstractScanEngine {
+final class IdentityIntelligenceEngine extends AbstractScanEngine {
   const IdentityIntelligenceEngine();
 
-  static const String id =
-      'atlas.scan.identity-intelligence';
+  static const String id = 'atlas.scan.identity-intelligence';
 
-  static const String capabilityId =
-      'atlas.capability.identity-intelligence';
+  static const String capabilityId = 'atlas.capability.identity-intelligence';
 
   @override
   String get engineId {
@@ -38,11 +35,10 @@ final class IdentityIntelligenceEngine
 
   @override
   Future<EngineResult> execute(
-      ScanSession session,
-      EngineContext context,
-      ) async {
-    final RecognitionEvidence evidence =
-    RecognitionEvidenceBuilder.fromSession(
+    ScanSession session,
+    EngineContext context,
+  ) async {
+    final RecognitionEvidence evidence = RecognitionEvidenceBuilder.fromSession(
       session,
     );
 
@@ -57,16 +53,13 @@ final class IdentityIntelligenceEngine
       );
     }
 
-    final List<IdentityHypothesis> hypotheses =
-    _buildHypotheses(
-      evidence,
-    );
+    final List<IdentityHypothesis> hypotheses = _buildHypotheses(evidence);
 
     if (hypotheses.isEmpty) {
       return EngineResult.skipped(
         session: session,
         reason:
-        'Recognition evidence did not produce a usable identity hypothesis.',
+            'Recognition evidence did not produce a usable identity hypothesis.',
         attributes: <String, Object?>{
           'recognitionCount': evidence.recognitionCount,
           'barcodeCount': evidence.barcodes.length,
@@ -75,15 +68,10 @@ final class IdentityIntelligenceEngine
       );
     }
 
-    final IdentityHypothesis primaryHypothesis =
-        hypotheses.first;
+    final IdentityHypothesis primaryHypothesis = hypotheses.first;
 
-    final IdentityContribution contribution =
-    IdentityContribution(
-      contributionId: _buildContributionId(
-        session,
-        primaryHypothesis,
-      ),
+    final IdentityContribution contribution = IdentityContribution(
+      contributionId: _buildContributionId(session, primaryHypothesis),
       sourceEngineId: engineId,
       createdAt: session.startedAt,
       hypotheses: hypotheses,
@@ -97,13 +85,9 @@ final class IdentityIntelligenceEngine
       },
     );
 
-    final ScanSession updatedSession =
-    session.addContributions(
-      <IdentityContribution>[
-        contribution,
-      ],
-      conflictPolicy:
-      ContributionConflictPolicy.replaceExisting,
+    final ScanSession updatedSession = session.addContributions(
+      <IdentityContribution>[contribution],
+      conflictPolicy: ContributionConflictPolicy.replaceExisting,
     );
 
     return EngineResult.success(
@@ -111,83 +95,61 @@ final class IdentityIntelligenceEngine
       attributes: <String, Object?>{
         'identityContributionCount': 1,
         'hypothesisCount': hypotheses.length,
-        'primaryHypothesisId':
-        primaryHypothesis.hypothesisId,
-        'primaryDisplayName':
-        primaryHypothesis.displayName,
-        'primaryConfidence':
-        primaryHypothesis.confidence,
+        'primaryHypothesisId': primaryHypothesis.hypothesisId,
+        'primaryDisplayName': primaryHypothesis.displayName,
+        'primaryConfidence': primaryHypothesis.confidence,
       },
     );
   }
 
-  List<IdentityHypothesis> _buildHypotheses(
-      RecognitionEvidence evidence,
-      ) {
-    final OCRContribution? productLineEvidence =
-    _firstOcrOfType(
+  List<IdentityHypothesis> _buildHypotheses(RecognitionEvidence evidence) {
+    final OCRContribution? productLineEvidence = _firstOcrOfType(
       evidence,
       OCRRecognitionType.productLine,
     );
 
-    final OCRContribution? brandEvidence =
-    _firstOcrOfType(
+    final OCRContribution? brandEvidence = _firstOcrOfType(
       evidence,
       OCRRecognitionType.brand,
     );
 
-    final OCRContribution? seriesEvidence =
-    _firstOcrOfType(
+    final OCRContribution? seriesEvidence = _firstOcrOfType(
       evidence,
       OCRRecognitionType.series,
     );
 
-    final OCRContribution? characterEvidence =
-    _firstOcrOfType(
+    final OCRContribution? characterEvidence = _firstOcrOfType(
       evidence,
       OCRRecognitionType.characterName,
     );
 
-    final OCRContribution? titleEvidence =
-    _firstOcrOfType(
+    final OCRContribution? titleEvidence = _firstOcrOfType(
       evidence,
       OCRRecognitionType.title,
     );
 
-    final OCRContribution? productNumberEvidence =
-    _firstOcrOfType(
+    final OCRContribution? productNumberEvidence = _firstOcrOfType(
       evidence,
       OCRRecognitionType.productNumber,
     );
 
-    final OCRContribution? variantEvidence =
-    _firstVariantEvidence(
-      evidence,
-    );
+    final OCRContribution? variantEvidence = _firstVariantEvidence(evidence);
 
-    final String? productLine =
-    _normalizedValue(productLineEvidence);
+    final String? productLine = _normalizedValue(productLineEvidence);
 
-    final String? brand =
-    _normalizedValue(brandEvidence);
+    final String? brand = _normalizedValue(brandEvidence);
 
-    final String? series =
-    _normalizedValue(seriesEvidence);
+    final String? series = _normalizedValue(seriesEvidence);
 
-    final String? characterName =
-    _normalizedValue(characterEvidence);
+    final String? characterName = _normalizedValue(characterEvidence);
 
-    final String? title =
-    _normalizedValue(titleEvidence);
+    final String? title = _normalizedValue(titleEvidence);
 
-    final String? productNumber =
-    _normalizedValue(productNumberEvidence);
+    final String? productNumber = _normalizedValue(productNumberEvidence);
 
-    final String? variantName =
-    _normalizedValue(variantEvidence);
+    final String? variantName = _normalizedValue(variantEvidence);
 
-    final String? primaryName =
-        characterName ?? title;
+    final String? primaryName = characterName ?? title;
 
     if (primaryName == null &&
         productNumber == null &&
@@ -208,8 +170,7 @@ final class IdentityIntelligenceEngine
       return const <IdentityHypothesis>[];
     }
 
-    final List<OCRContribution> supportingEvidence =
-    <OCRContribution>[
+    final List<OCRContribution> supportingEvidence = <OCRContribution>[
       ?productLineEvidence,
       ?brandEvidence,
       ?seriesEvidence,
@@ -219,13 +180,9 @@ final class IdentityIntelligenceEngine
       ?variantEvidence,
     ];
 
-    final double confidence =
-    _calculateConfidence(
-      supportingEvidence,
-    );
+    final double confidence = _calculateConfidence(supportingEvidence);
 
-    final String hypothesisId =
-    EngineSupport.buildContributionId(
+    final String hypothesisId = EngineSupport.buildContributionId(
       namespace: 'atlas.identity.hypothesis',
       segments: <Object?>[
         productLine,
@@ -248,38 +205,26 @@ final class IdentityIntelligenceEngine
         productNumber: productNumber,
         variantName: variantName,
         confidence: confidence,
-        supportingContributionIds:
-        supportingEvidence
-            .map(
-              (OCRContribution contribution) =>
-          contribution.contributionId,
-        )
+        supportingContributionIds: supportingEvidence
+            .map((OCRContribution contribution) => contribution.contributionId)
             .toList(growable: false),
         attributes: <String, Object?>{
-          'hasCharacterName':
-          characterName != null,
-          'usedTitleAsPrimaryName':
-          characterName == null &&
-              title != null,
-          'hasProductNumber':
-          productNumber != null,
-          'hasVariant':
-          variantName != null,
-          'supportingEvidenceCount':
-          supportingEvidence.length,
+          'hasCharacterName': characterName != null,
+          'usedTitleAsPrimaryName': characterName == null && title != null,
+          'hasProductNumber': productNumber != null,
+          'hasVariant': variantName != null,
+          'supportingEvidenceCount': supportingEvidence.length,
         },
       ),
     ];
   }
 
   OCRContribution? _firstOcrOfType(
-      RecognitionEvidence evidence,
-      OCRRecognitionType recognitionType,
-      ) {
-    for (final OCRContribution contribution
-    in evidence.ocr) {
-      if (contribution.recognitionType ==
-          recognitionType &&
+    RecognitionEvidence evidence,
+    OCRRecognitionType recognitionType,
+  ) {
+    for (final OCRContribution contribution in evidence.ocr) {
+      if (contribution.recognitionType == recognitionType &&
           contribution.hasNormalizedText &&
           contribution.passedValidation) {
         return contribution;
@@ -289,13 +234,9 @@ final class IdentityIntelligenceEngine
     return null;
   }
 
-  OCRContribution? _firstVariantEvidence(
-      RecognitionEvidence evidence,
-      ) {
-    for (final OCRContribution contribution
-    in evidence.variantText) {
-      if (contribution.hasNormalizedText &&
-          contribution.passedValidation) {
+  OCRContribution? _firstVariantEvidence(RecognitionEvidence evidence) {
+    for (final OCRContribution contribution in evidence.variantText) {
+      if (contribution.hasNormalizedText && contribution.passedValidation) {
         return contribution;
       }
     }
@@ -303,15 +244,12 @@ final class IdentityIntelligenceEngine
     return null;
   }
 
-  String? _normalizedValue(
-      OCRContribution? contribution,
-      ) {
+  String? _normalizedValue(OCRContribution? contribution) {
     if (contribution == null) {
       return null;
     }
 
-    final String normalized =
-    contribution.normalizedText.trim();
+    final String normalized = contribution.normalizedText.trim();
 
     if (normalized.isEmpty) {
       return null;
@@ -348,15 +286,9 @@ final class IdentityIntelligenceEngine
     return parts.join(' ').trim();
   }
 
-  double _calculateConfidence(
-      List<OCRContribution> evidence,
-      ) {
-    final List<double> knownConfidenceValues =
-    evidence
-        .map(
-          (OCRContribution contribution) =>
-      contribution.confidence,
-    )
+  double _calculateConfidence(List<OCRContribution> evidence) {
+    final List<double> knownConfidenceValues = evidence
+        .map((OCRContribution contribution) => contribution.confidence)
         .whereType<double>()
         .toList(growable: false);
 
@@ -364,19 +296,12 @@ final class IdentityIntelligenceEngine
       return 0.80;
     }
 
-    final double total =
-    knownConfidenceValues.fold<double>(
-      0.0,
-          (
-          double currentTotal,
-          double confidence,
-          ) {
-        return currentTotal +
-            EngineSupport.normalizeConfidence(
-              confidence,
-            );
-      },
-    );
+    final double total = knownConfidenceValues.fold<double>(0.0, (
+      double currentTotal,
+      double confidence,
+    ) {
+      return currentTotal + EngineSupport.normalizeConfidence(confidence);
+    });
 
     return EngineSupport.normalizeConfidence(
       total / knownConfidenceValues.length,
@@ -385,15 +310,12 @@ final class IdentityIntelligenceEngine
   }
 
   String _buildContributionId(
-      ScanSession session,
-      IdentityHypothesis hypothesis,
-      ) {
+    ScanSession session,
+    IdentityHypothesis hypothesis,
+  ) {
     return EngineSupport.buildContributionId(
       namespace: 'atlas.identity',
-      segments: <Object?>[
-        session.sessionId,
-        hypothesis.hypothesisId,
-      ],
+      segments: <Object?>[session.sessionId, hypothesis.hypothesisId],
     );
   }
 }

@@ -2,38 +2,30 @@ import 'package:funkovault2/atlas/catalog/models/atlas_catalog_product.dart';
 import 'package:funkovault2/atlas/identity/product/atlas_product_id.dart';
 
 final class AtlasCatalogIndex {
-  AtlasCatalogIndex({
-    required Iterable<AtlasCatalogProduct> products,
-  }) {
+  AtlasCatalogIndex({required Iterable<AtlasCatalogProduct> products}) {
     final List<AtlasCatalogProduct> productList =
-    List<AtlasCatalogProduct>.unmodifiable(
-      products,
-    );
+        List<AtlasCatalogProduct>.unmodifiable(products);
 
     final Map<String, AtlasCatalogProduct> productsById =
-    <String, AtlasCatalogProduct>{};
+        <String, AtlasCatalogProduct>{};
 
     final Map<String, List<AtlasCatalogProduct>> productsByBarcode =
-    <String, List<AtlasCatalogProduct>>{};
+        <String, List<AtlasCatalogProduct>>{};
 
-    final Map<String, List<AtlasCatalogProduct>>
-    productsByProductNumber =
-    <String, List<AtlasCatalogProduct>>{};
+    final Map<String, List<AtlasCatalogProduct>> productsByProductNumber =
+        <String, List<AtlasCatalogProduct>>{};
 
-    final Map<String, List<AtlasCatalogProduct>>
-    productsByDisplayName =
-    <String, List<AtlasCatalogProduct>>{};
+    final Map<String, List<AtlasCatalogProduct>> productsByDisplayName =
+        <String, List<AtlasCatalogProduct>>{};
 
     final Map<String, List<AtlasCatalogProduct>> productsBySeries =
-    <String, List<AtlasCatalogProduct>>{};
+        <String, List<AtlasCatalogProduct>>{};
 
     for (final AtlasCatalogProduct product in productList) {
       final String productId = product.productId.value;
 
       if (productsById.containsKey(productId)) {
-        throw StateError(
-          'Duplicate Atlas product ID detected: $productId.',
-        );
+        throw StateError('Duplicate Atlas product ID detected: $productId.');
       }
 
       productsById[productId] = product;
@@ -75,25 +67,15 @@ final class AtlasCatalogIndex {
 
     this.products = productList;
 
-    byProductId = Map<String, AtlasCatalogProduct>.unmodifiable(
-      productsById,
-    );
+    byProductId = Map<String, AtlasCatalogProduct>.unmodifiable(productsById);
 
-    byBarcode = _freezeGroupedIndex(
-      productsByBarcode,
-    );
+    byBarcode = _freezeGroupedIndex(productsByBarcode);
 
-    byProductNumber = _freezeGroupedIndex(
-      productsByProductNumber,
-    );
+    byProductNumber = _freezeGroupedIndex(productsByProductNumber);
 
-    byDisplayName = _freezeGroupedIndex(
-      productsByDisplayName,
-    );
+    byDisplayName = _freezeGroupedIndex(productsByDisplayName);
 
-    bySeries = _freezeGroupedIndex(
-      productsBySeries,
-    );
+    bySeries = _freezeGroupedIndex(productsBySeries);
   }
 
   late final List<AtlasCatalogProduct> products;
@@ -102,11 +84,9 @@ final class AtlasCatalogIndex {
 
   late final Map<String, List<AtlasCatalogProduct>> byBarcode;
 
-  late final Map<String, List<AtlasCatalogProduct>>
-  byProductNumber;
+  late final Map<String, List<AtlasCatalogProduct>> byProductNumber;
 
-  late final Map<String, List<AtlasCatalogProduct>>
-  byDisplayName;
+  late final Map<String, List<AtlasCatalogProduct>> byDisplayName;
 
   late final Map<String, List<AtlasCatalogProduct>> bySeries;
 
@@ -114,45 +94,30 @@ final class AtlasCatalogIndex {
     return products.length;
   }
 
-  bool containsProductId(
-      String productId,
-      ) {
-    return byProductId.containsKey(
-      productId.trim(),
-    );
+  bool containsProductId(String productId) {
+    return byProductId.containsKey(productId.trim());
   }
 
-  AtlasCatalogProduct? findByProductId(
-      String productId,
-      ) {
+  AtlasCatalogProduct? findByProductId(String productId) {
     return byProductId[productId.trim()];
   }
 
-  AtlasCatalogProduct? findByAtlasProductId(
-      AtlasProductId productId,
-      ) {
+  AtlasCatalogProduct? findByAtlasProductId(AtlasProductId productId) {
     return byProductId[productId.value];
   }
 
-  List<AtlasCatalogProduct> findByBarcode(
-      String barcode,
-      ) {
-    final String normalizedBarcode =
-    _normalizeBarcode(barcode);
+  List<AtlasCatalogProduct> findByBarcode(String barcode) {
+    final String normalizedBarcode = _normalizeBarcode(barcode);
 
     if (normalizedBarcode.isEmpty) {
       return const <AtlasCatalogProduct>[];
     }
 
-    return byBarcode[normalizedBarcode] ??
-        const <AtlasCatalogProduct>[];
+    return byBarcode[normalizedBarcode] ?? const <AtlasCatalogProduct>[];
   }
 
-  List<AtlasCatalogProduct> findByProductNumber(
-      String productNumber,
-      ) {
-    final String normalizedProductNumber =
-    _normalizeText(productNumber);
+  List<AtlasCatalogProduct> findByProductNumber(String productNumber) {
+    final String normalizedProductNumber = _normalizeText(productNumber);
 
     if (normalizedProductNumber.isEmpty) {
       return const <AtlasCatalogProduct>[];
@@ -162,11 +127,8 @@ final class AtlasCatalogIndex {
         const <AtlasCatalogProduct>[];
   }
 
-  List<AtlasCatalogProduct> findByDisplayName(
-      String displayName,
-      ) {
-    final String normalizedDisplayName =
-    _normalizeText(displayName);
+  List<AtlasCatalogProduct> findByDisplayName(String displayName) {
+    final String normalizedDisplayName = _normalizeText(displayName);
 
     if (normalizedDisplayName.isEmpty) {
       return const <AtlasCatalogProduct>[];
@@ -176,18 +138,14 @@ final class AtlasCatalogIndex {
         const <AtlasCatalogProduct>[];
   }
 
-  List<AtlasCatalogProduct> findBySeries(
-      String series,
-      ) {
-    final String normalizedSeries =
-    _normalizeText(series);
+  List<AtlasCatalogProduct> findBySeries(String series) {
+    final String normalizedSeries = _normalizeText(series);
 
     if (normalizedSeries.isEmpty) {
       return const <AtlasCatalogProduct>[];
     }
 
-    return bySeries[normalizedSeries] ??
-        const <AtlasCatalogProduct>[];
+    return bySeries[normalizedSeries] ?? const <AtlasCatalogProduct>[];
   }
 
   static void _addToGroupedIndex({
@@ -199,47 +157,27 @@ final class AtlasCatalogIndex {
       return;
     }
 
-    index
-        .putIfAbsent(
-      key,
-          () => <AtlasCatalogProduct>[],
-    )
-        .add(product);
+    index.putIfAbsent(key, () => <AtlasCatalogProduct>[]).add(product);
   }
 
-  static Map<String, List<AtlasCatalogProduct>>
-  _freezeGroupedIndex(
-      Map<String, List<AtlasCatalogProduct>> index,
-      ) {
+  static Map<String, List<AtlasCatalogProduct>> _freezeGroupedIndex(
+    Map<String, List<AtlasCatalogProduct>> index,
+  ) {
     return Map<String, List<AtlasCatalogProduct>>.unmodifiable(
-      index.map(
-            (
-            String key,
-            List<AtlasCatalogProduct> products,
-            ) {
-          return MapEntry<String, List<AtlasCatalogProduct>>(
-            key,
-            List<AtlasCatalogProduct>.unmodifiable(
-              products,
-            ),
-          );
-        },
-      ),
+      index.map((String key, List<AtlasCatalogProduct> products) {
+        return MapEntry<String, List<AtlasCatalogProduct>>(
+          key,
+          List<AtlasCatalogProduct>.unmodifiable(products),
+        );
+      }),
     );
   }
 
-  static String _normalizeText(
-      String value,
-      ) {
+  static String _normalizeText(String value) {
     return value.trim().toLowerCase();
   }
 
-  static String _normalizeBarcode(
-      String value,
-      ) {
-    return value.replaceAll(
-      RegExp(r'[^0-9A-Za-z]'),
-      '',
-    );
+  static String _normalizeBarcode(String value) {
+    return value.replaceAll(RegExp(r'[^0-9A-Za-z]'), '');
   }
 }

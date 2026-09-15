@@ -1,10 +1,5 @@
 // Describes the outcome of one Atlas engine execution.
-enum EngineStatus {
-  succeeded,
-  completedWithWarnings,
-  skipped,
-  failed,
-}
+enum EngineStatus { succeeded, completedWithWarnings, skipped, failed }
 
 extension EngineStatusX on EngineStatus {
   bool get isSuccessful {

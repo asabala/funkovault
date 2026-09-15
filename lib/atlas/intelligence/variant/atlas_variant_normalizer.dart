@@ -9,16 +9,12 @@ final class AtlasVariantNormalizer {
   Map<AtlasVariantType, List<String>> get aliases {
     return Map<AtlasVariantType, List<String>>.unmodifiable(
       _aliases.map(
-            (key, value) => MapEntry(
-          key,
-          List<String>.unmodifiable(value),
-        ),
+        (key, value) => MapEntry(key, List<String>.unmodifiable(value)),
       ),
     );
   }
-  AtlasVariantType normalize(
-      String? value,
-      ) {
+
+  AtlasVariantType normalize(String? value) {
     final String normalized = normalizeText(value);
 
     if (normalized.isEmpty) {
@@ -26,7 +22,7 @@ final class AtlasVariantNormalizer {
     }
 
     for (final MapEntry<AtlasVariantType, List<String>> entry
-    in _aliases.entries) {
+        in _aliases.entries) {
       if (entry.value.contains(normalized)) {
         return entry.key;
       }
@@ -35,46 +31,31 @@ final class AtlasVariantNormalizer {
     return AtlasVariantType.unknown;
   }
 
-  bool isKnownVariant(
-      String? value,
-      ) {
-    return normalize(value) !=
-        AtlasVariantType.unknown;
+  bool isKnownVariant(String? value) {
+    return normalize(value) != AtlasVariantType.unknown;
   }
 
-  String normalizeText(
-      String? value,
-      ) {
+  String normalizeText(String? value) {
     return value
-        ?.trim()
-        .toLowerCase()
-        .replaceAll('&', ' and ')
-        .replaceAll('-', ' ')
-        .replaceAll('_', ' ')
-        .replaceAll(
-      RegExp(r'[^a-z0-9\s]'),
-      ' ',
-    )
-        .replaceAll(
-      RegExp(r'\s+'),
-      ' ',
-    )
-        .trim() ??
+            ?.trim()
+            .toLowerCase()
+            .replaceAll('&', ' and ')
+            .replaceAll('-', ' ')
+            .replaceAll('_', ' ')
+            .replaceAll(RegExp(r'[^a-z0-9\s]'), ' ')
+            .replaceAll(RegExp(r'\s+'), ' ')
+            .trim() ??
         '';
   }
 
-  static const Map<AtlasVariantType, List<String>>
-  _aliases = {
+  static const Map<AtlasVariantType, List<String>> _aliases = {
     AtlasVariantType.common: [
       'common',
       'standard',
       'regular',
       'standard edition',
     ],
-    AtlasVariantType.chase: [
-      'chase',
-      'chase variant',
-    ],
+    AtlasVariantType.chase: ['chase', 'chase variant'],
     AtlasVariantType.blacklight: [
       'blacklight',
       'black light',
@@ -106,16 +87,8 @@ final class AtlasVariantNormalizer {
       'diamond collection',
       'diamond edition',
     ],
-    AtlasVariantType.glitter: [
-      'glitter',
-      'glitter finish',
-      'glitter edition',
-    ],
-    AtlasVariantType.flocked: [
-      'flocked',
-      'flock',
-      'fuzzy',
-    ],
+    AtlasVariantType.glitter: ['glitter', 'glitter finish', 'glitter edition'],
+    AtlasVariantType.flocked: ['flocked', 'flock', 'fuzzy'],
     AtlasVariantType.scented: [
       'scented',
       'scented edition',
@@ -127,91 +100,38 @@ final class AtlasVariantNormalizer {
       'die cast edition',
       'diecast edition',
     ],
-    AtlasVariantType.translucent: [
-      'translucent',
-      'clear',
-      'transparent',
-    ],
-    AtlasVariantType.woodDeco: [
-      'wood deco',
-      'wooden deco',
-      'wood finish',
-    ],
-    AtlasVariantType.patina: [
-      'patina',
-      'patina finish',
-    ],
-    AtlasVariantType.sepia: [
-      'sepia',
-      'sepia tone',
-    ],
+    AtlasVariantType.translucent: ['translucent', 'clear', 'transparent'],
+    AtlasVariantType.woodDeco: ['wood deco', 'wooden deco', 'wood finish'],
+    AtlasVariantType.patina: ['patina', 'patina finish'],
+    AtlasVariantType.sepia: ['sepia', 'sepia tone'],
     AtlasVariantType.grayscale: [
       'grayscale',
       'greyscale',
       'black and white',
       'monochrome',
     ],
-    AtlasVariantType.signed: [
-      'signed',
-      'autographed',
-      'autograph',
-      'auto',
-    ],
-    AtlasVariantType.limitedEdition: [
-      'limited edition',
-      'limited',
-      'le',
-    ],
+    AtlasVariantType.signed: ['signed', 'autographed', 'autograph', 'auto'],
+    AtlasVariantType.limitedEdition: ['limited edition', 'limited', 'le'],
     AtlasVariantType.numbered: [
       'numbered',
       'numbered piece',
       'piece count',
       'pcs',
     ],
-    AtlasVariantType.artistProof: [
-      'artist proof',
-      'ap',
-    ],
-    AtlasVariantType.prototype: [
-      'prototype',
-      'proto',
-    ],
+    AtlasVariantType.artistProof: ['artist proof', 'ap'],
+    AtlasVariantType.prototype: ['prototype', 'proto'],
     AtlasVariantType.error: [
       'error',
       'error variant',
       'misprint',
       'factory error',
     ],
-    AtlasVariantType.nft: [
-      'nft',
-      'digital pop',
-      'digital collectible',
-    ],
-    AtlasVariantType.soda: [
-      'soda',
-      'funko soda',
-    ],
-    AtlasVariantType.jumbo: [
-      'jumbo',
-      'jumbo sized',
-    ],
-    AtlasVariantType.superSized: [
-      'super sized',
-      'supersized',
-      'super size',
-    ],
-    AtlasVariantType.mini: [
-      'mini',
-      'miniature',
-    ],
-    AtlasVariantType.pocket: [
-      'pocket',
-      'pocket pop',
-    ],
-    AtlasVariantType.keychain: [
-      'keychain',
-      'key chain',
-      'keyring',
-    ],
+    AtlasVariantType.nft: ['nft', 'digital pop', 'digital collectible'],
+    AtlasVariantType.soda: ['soda', 'funko soda'],
+    AtlasVariantType.jumbo: ['jumbo', 'jumbo sized'],
+    AtlasVariantType.superSized: ['super sized', 'supersized', 'super size'],
+    AtlasVariantType.mini: ['mini', 'miniature'],
+    AtlasVariantType.pocket: ['pocket', 'pocket pop'],
+    AtlasVariantType.keychain: ['keychain', 'key chain', 'keyring'],
   };
 }

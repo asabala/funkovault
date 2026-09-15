@@ -20,7 +20,7 @@ class AdvancedVaultHealthPreview extends StatelessWidget {
       isPremium: isPremium,
       lockedTitle: 'Advanced Vault Health',
       lockedDescription:
-      'Unlock deeper vault scoring, duplicate intelligence, value cleanup priority, and collection risk insights.',
+          'Unlock deeper vault scoring, duplicate intelligence, value cleanup priority, and collection risk insights.',
       lockedIcon: Icons.health_and_safety_rounded,
       onUpgrade: onUpgrade,
       child: child,

@@ -10,39 +10,29 @@ import 'package:funkovault2/atlas/identity/product/atlas_product_id.dart';
 ///
 /// The repository can later be replaced with a Supabase, cloud, cached, or
 /// combined implementation without changing catalog consumers.
-final class AtlasCatalogService
-    implements AtlasCatalogRepository {
-  AtlasCatalogService({
-    AtlasCatalogRepository? repository,
-  }) : _repository =
-      repository ?? LocalAtlasCatalogRepository();
+final class AtlasCatalogService implements AtlasCatalogRepository {
+  AtlasCatalogService({AtlasCatalogRepository? repository})
+    : _repository = repository ?? LocalAtlasCatalogRepository();
 
   /// Shared catalog service used throughout Atlas.
-  static final AtlasCatalogService instance =
-  AtlasCatalogService();
+  static final AtlasCatalogService instance = AtlasCatalogService();
 
   final AtlasCatalogRepository _repository;
   @override
   /// Finds one catalog product using its Atlas-owned product ID.
-  Future<AtlasCatalogProduct?> findByProductId(
-      AtlasProductId productId,
-      ) {
-    return _repository.findByProductId(
-      productId,
-    );
+  Future<AtlasCatalogProduct?> findByProductId(AtlasProductId productId) {
+    return _repository.findByProductId(productId);
   }
+
   @override
   /// Finds all catalog products associated with a barcode.
   ///
   /// A list is returned because more than one catalog record may
   /// legitimately share or reference the same barcode.
-  Future<List<AtlasCatalogProduct>> findByBarcode(
-      String barcode,
-      ) {
-    return _repository.findByBarcode(
-      barcode,
-    );
+  Future<List<AtlasCatalogProduct>> findByBarcode(String barcode) {
+    return _repository.findByBarcode(barcode);
   }
+
   @override
   /// Searches the catalog using a general query and optional filters.
   ///

@@ -8,26 +8,18 @@ import '../../../theme/atlas_colors.dart';
 import '../../../theme/atlas_spacing.dart';
 import '../../../theme/atlas_typography.dart';
 
-
 class AtlasIdentityCard extends StatelessWidget {
-  const AtlasIdentityCard({
-    required this.profile,
-    this.onEdit,
-    super.key,
-  });
+  const AtlasIdentityCard({required this.profile, this.onEdit, super.key});
 
   final CollectorProfile profile;
   final VoidCallback? onEdit;
 
   @override
   Widget build(BuildContext context) {
-
     return AtlasGlassCard(
       child: Column(
         children: [
-          AtlasHeroBanner(
-            bannerUrl: profile.bannerUrl,
-          ),
+          AtlasHeroBanner(bannerUrl: profile.bannerUrl),
           const SizedBox(height: AtlasSpacing.lg),
           AtlasAvatar(
             displayName: profile.displayName,
@@ -86,10 +78,7 @@ class AtlasIdentityCard extends StatelessWidget {
                 icon: Icons.public,
                 label: '${profile.countryFlag} ${profile.country}',
               ),
-              _IdentityBadge(
-                icon: Icons.fingerprint,
-                label: profile.atlasId,
-              ),
+              _IdentityBadge(icon: Icons.fingerprint, label: profile.atlasId),
             ],
           ),
           const SizedBox(height: AtlasSpacing.lg),
@@ -100,10 +89,7 @@ class AtlasIdentityCard extends StatelessWidget {
 }
 
 class _IdentityBadge extends StatelessWidget {
-  const _IdentityBadge({
-    required this.icon,
-    required this.label,
-  });
+  const _IdentityBadge({required this.icon, required this.label});
 
   final IconData icon;
   final String label;
@@ -111,10 +97,7 @@ class _IdentityBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 12,
-        vertical: 7,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.35),
         borderRadius: BorderRadius.circular(30),
@@ -125,11 +108,7 @@ class _IdentityBadge extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            icon,
-            color: AtlasColors.vaultGold,
-            size: 15,
-          ),
+          Icon(icon, color: AtlasColors.vaultGold, size: 15),
           const SizedBox(width: 6),
           Text(
             label,

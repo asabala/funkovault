@@ -37,12 +37,8 @@ Future<void> main() async {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider.value(
-          value: appState,
-        ),
-        ChangeNotifierProvider(
-          create: (_) => AuthProvider(),
-        ),
+        ChangeNotifierProvider.value(value: appState),
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
       ],
       child: const FunkoVaultApp(),
     ),

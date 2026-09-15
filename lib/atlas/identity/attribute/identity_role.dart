@@ -69,11 +69,7 @@ enum IdentityRole {
         return IdentityRole.variantModifier;
 
       default:
-        throw ArgumentError.value(
-          value,
-          'value',
-          'Unknown IdentityRole.',
-        );
+        throw ArgumentError.value(value, 'value', 'Unknown IdentityRole.');
     }
   }
 

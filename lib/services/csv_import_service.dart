@@ -16,10 +16,7 @@ class CsvImportParseResult {
   int get totalIssues => skippedRows + errors.length;
 
   int get totalPhysicalCopies {
-    return pops.fold<int>(
-      0,
-          (total, pop) => total + pop.quantity,
-    );
+    return pops.fold<int>(0, (total, pop) => total + pop.quantity);
   }
 }
 
@@ -33,9 +30,7 @@ class CsvImportService {
   CsvImportParseResult parsePops(String rawContent) {
     final lines = rawContent
         .split(RegExp(r'\r?\n'))
-        .where(
-          (line) => line.trim().isNotEmpty,
-    )
+        .where((line) => line.trim().isNotEmpty)
         .toList();
 
     if (lines.isEmpty) {
@@ -46,16 +41,12 @@ class CsvImportService {
       );
     }
 
-    final delimiter = _detectDelimiter(
-      lines.first,
-    );
+    final delimiter = _detectDelimiter(lines.first);
 
     final headers = _parseLine(
       lines.first,
       delimiter,
-    )
-        .map(_normalizeHeader)
-        .toList();
+    ).map(_normalizeHeader).toList();
 
     final pops = <Pop>[];
     final errors = <String>[];
@@ -64,77 +55,40 @@ class CsvImportService {
     for (var index = 1; index < lines.length; index++) {
       final rowNumber = index + 1;
 
-      final values = _parseLine(
-        lines[index],
-        delimiter,
-      );
+      final values = _parseLine(lines[index], delimiter);
 
-      if (values.every(
-            (value) => value.trim().isEmpty,
-      )) {
+      if (values.every((value) => value.trim().isEmpty)) {
         skippedRows++;
         continue;
       }
 
-      final row = _buildRowMap(
-        headers,
-        values,
-      );
+      final row = _buildRowMap(headers, values);
 
-      final name = _read(
-        row,
-        'Name',
-      );
+      final name = _read(row, 'Name');
 
       if (name.isEmpty) {
         skippedRows++;
 
-        errors.add(
-          'Row $rowNumber skipped: missing Name.',
-        );
+        errors.add('Row $rowNumber skipped: missing Name.');
 
         continue;
       }
 
-      final hdbId = _read(
-        row,
-        'HDBID',
-      );
+      final hdbId = _read(row, 'HDBID');
 
-      final hdbcNumber = _read(
-        row,
-        'HDBC Number',
-      );
+      final hdbcNumber = _read(row, 'HDBC Number');
 
-      final productionStatus = _read(
-        row,
-        'Production Status',
-      );
+      final productionStatus = _read(row, 'Production Status');
 
-      final gradingCompany = _read(
-        row,
-        'Grading Company',
-      );
+      final gradingCompany = _read(row, 'Grading Company');
 
-      final authenticityNumber = _read(
-        row,
-        'Grade Authenticity Number',
-      );
+      final authenticityNumber = _read(row, 'Grade Authenticity Number');
 
-      final description = _read(
-        row,
-        'Description',
-      );
+      final description = _read(row, 'Description');
 
-      final moreDetails = _read(
-        row,
-        'More Details',
-      );
+      final moreDetails = _read(row, 'More Details');
 
-      final privateNotes = _read(
-        row,
-        'Private Notes',
-      );
+      final privateNotes = _read(row, 'Private Notes');
 
       final combinedDetails = [
         name,
@@ -156,15 +110,10 @@ class CsvImportService {
         variant: variant,
       );
 
-      final retailExclusive = _firstNotEmpty(
-        [
-          _read(
-            row,
-            'Exclusive To',
-          ),
-          'None',
-        ],
-      );
+      final retailExclusive = _firstNotEmpty([
+        _read(row, 'Exclusive To'),
+        'None',
+      ]);
 
       final eventSticker = _resolveSticker(
         row: row,
@@ -186,33 +135,15 @@ class CsvImportService {
         Pop(
           // HDBC Number identifies this specific collector record.
           // It is safer than HDBID for editing and deleting one owned copy.
-          id: hdbcNumber.isNotEmpty
-              ? hdbcNumber
-              : _generatedId(
-            rowNumber,
-          ),
+          id: hdbcNumber.isNotEmpty ? hdbcNumber : _generatedId(rowNumber),
           name: name,
-          number: _read(
-            row,
-            'Reference Number',
-          ),
-          category: _firstNotEmpty(
-            [
-              _read(
-                row,
-                'Brand',
-              ),
-              _read(
-                row,
-                'Series',
-              ),
-              'Unknown',
-            ],
-          ),
-          series: _read(
-            row,
-            'Series',
-          ),
+          number: _read(row, 'Reference Number'),
+          category: _firstNotEmpty([
+            _read(row, 'Brand'),
+            _read(row, 'Series'),
+            'Unknown',
+          ]),
+          series: _read(row, 'Series'),
           edition: edition,
           variant: variant,
           retailExclusive: retailExclusive,
@@ -223,65 +154,22 @@ class CsvImportService {
           // HobbyDB source identity.
           sourceCatalogId: hdbId,
           sourceCollectibleId: hdbcNumber,
-          sourceUpc: _read(
-            row,
-            'UPC',
-          ),
+          sourceUpc: _read(row, 'UPC'),
           productionStatus: productionStatus,
-          releaseDate: _read(
-            row,
-            'Release Date',
-          ),
+          releaseDate: _read(row, 'Release Date'),
           gradingCompany: gradingCompany,
           authenticityNumber: authenticityNumber,
 
-          value: _parseMoney(
-            _read(
-              row,
-              'Estimated Value',
-            ),
-          ),
-          pricePaid: _parseMoney(
-            _read(
-              row,
-              'Price Paid',
-            ),
-          ),
-          quantity: _parseQuantity(
-            _read(
-              row,
-              'Quantity',
-            ),
-          ),
-          itemCondition: _read(
-            row,
-            'Item Condition',
-          ),
-          boxCondition: _read(
-            row,
-            'Packaging Condition',
-          ),
-          imageUrl: _read(
-            row,
-            'Image URL',
-          ),
-          owner: _firstNotEmpty(
-            [
-              _read(
-                row,
-                'List Name',
-              ),
-              'Shared',
-            ],
-          ),
-          isWishlist: _isWishlistRow(
-            row,
-          ),
+          value: _parseMoney(_read(row, 'Estimated Value')),
+          pricePaid: _parseMoney(_read(row, 'Price Paid')),
+          quantity: _parseQuantity(_read(row, 'Quantity')),
+          itemCondition: _read(row, 'Item Condition'),
+          boxCondition: _read(row, 'Packaging Condition'),
+          imageUrl: _read(row, 'Image URL'),
+          owner: _firstNotEmpty([_read(row, 'List Name'), 'Shared']),
+          isWishlist: _isWishlistRow(row),
           dateAdded: _normalizeImportedDate(
-            _read(
-              row,
-              'Date Added To Collectible',
-            ),
+            _read(row, 'Date Added To Collectible'),
           ),
         ),
       );
@@ -300,18 +188,12 @@ class CsvImportService {
   }) {
     final statusParts = productionStatus
         .split(',')
-        .map(
-          (value) => value.trim(),
-    )
-        .where(
-          (value) => value.isNotEmpty,
-    )
+        .map((value) => value.trim())
+        .where((value) => value.isNotEmpty)
         .toList();
 
     final normalizedStatuses = statusParts
-        .map(
-          (value) => value.toLowerCase(),
-    )
+        .map((value) => value.toLowerCase())
         .toSet();
 
     // Chase must take priority over Standard.
@@ -327,9 +209,7 @@ class CsvImportService {
       return 'Reproduction';
     }
 
-    final detectedVariant = _detectVariantFromText(
-      combinedDetails,
-    );
+    final detectedVariant = _detectVariantFromText(combinedDetails);
 
     if (detectedVariant != null) {
       return detectedVariant;
@@ -357,26 +237,17 @@ class CsvImportService {
   }) {
     // The current HobbyDB export has no dedicated sticker column.
     // We only use explicit text when it is actually present.
-    final detectedSticker = _detectStickerFromText(
-      combinedDetails,
-    );
+    final detectedSticker = _detectStickerFromText(combinedDetails);
 
     if (detectedSticker != null) {
       return detectedSticker;
     }
 
-    final exclusiveTo = _read(
-      row,
-      'Exclusive To',
-    );
+    final exclusiveTo = _read(row, 'Exclusive To');
 
-    final productionStatus = _read(
-      row,
-      'Production Status',
-    ).toLowerCase();
+    final productionStatus = _read(row, 'Production Status').toLowerCase();
 
-    if (exclusiveTo.isNotEmpty &&
-        productionStatus.contains('exclusive')) {
+    if (exclusiveTo.isNotEmpty && productionStatus.contains('exclusive')) {
       return '$exclusiveTo Exclusive';
     }
 
@@ -387,17 +258,13 @@ class CsvImportService {
     required String productionStatus,
     required String combinedDetails,
   }) {
-    final detectedPieceCount = _detectPieceCount(
-      combinedDetails,
-    );
+    final detectedPieceCount = _detectPieceCount(combinedDetails);
 
     if (detectedPieceCount != null) {
       return detectedPieceCount;
     }
 
-    if (productionStatus
-        .toLowerCase()
-        .contains('limited edition')) {
+    if (productionStatus.toLowerCase().contains('limited edition')) {
       return 'Limited Edition';
     }
 
@@ -412,15 +279,11 @@ class CsvImportService {
     if (gradingCompany.trim().isNotEmpty ||
         authenticityNumber.trim().isNotEmpty) {
       final details = <String>[
-        if (gradingCompany.trim().isNotEmpty)
-          gradingCompany.trim(),
-        if (authenticityNumber.trim().isNotEmpty)
-          authenticityNumber.trim(),
+        if (gradingCompany.trim().isNotEmpty) gradingCompany.trim(),
+        if (authenticityNumber.trim().isNotEmpty) authenticityNumber.trim(),
       ];
 
-      return details.isEmpty
-          ? 'Signed'
-          : 'Signed • ${details.join(' • ')}';
+      return details.isEmpty ? 'Signed' : 'Signed • ${details.join(' • ')}';
     }
 
     final lowerDetails = combinedDetails.toLowerCase();
@@ -471,20 +334,13 @@ class CsvImportService {
     final lowerValue = value.toLowerCase();
 
     const patterns = <String, String>{
-      'official convention sticker':
-      'Official Convention Sticker',
-      'convention exclusive sticker':
-      'Convention Exclusive Sticker',
-      'shared exclusive sticker':
-      'Shared Exclusive Sticker',
-      'shared sticker':
-      'Shared Exclusive Sticker',
-      'special edition sticker':
-      'Special Edition Sticker',
-      'funko shop sticker':
-      'Funko Shop Sticker',
-      'limited edition sticker':
-      'Limited Edition Sticker',
+      'official convention sticker': 'Official Convention Sticker',
+      'convention exclusive sticker': 'Convention Exclusive Sticker',
+      'shared exclusive sticker': 'Shared Exclusive Sticker',
+      'shared sticker': 'Shared Exclusive Sticker',
+      'special edition sticker': 'Special Edition Sticker',
+      'funko shop sticker': 'Funko Shop Sticker',
+      'limited edition sticker': 'Limited Edition Sticker',
     };
 
     for (final entry in patterns.entries) {
@@ -496,9 +352,7 @@ class CsvImportService {
     final conventionMatch = RegExp(
       r'\b(sdcc|nycc|ecc|wondercon|fundays|funkon)\b',
       caseSensitive: false,
-    ).firstMatch(
-      value,
-    );
+    ).firstMatch(value);
 
     if (conventionMatch != null) {
       return '${conventionMatch.group(0)!.toUpperCase()} Sticker';
@@ -512,9 +366,7 @@ class CsvImportService {
       r'\b(?:limited\s*(?:edition)?\s*)?'
       r'(\d{2,6})\s*(?:pcs|pieces|piece)\b',
       caseSensitive: false,
-    ).firstMatch(
-      value,
-    );
+    ).firstMatch(value);
 
     if (match == null) {
       return null;
@@ -531,17 +383,12 @@ class CsvImportService {
     return ',';
   }
 
-  List<String> _parseLine(
-      String line,
-      String delimiter,
-      ) {
+  List<String> _parseLine(String line, String delimiter) {
     if (delimiter == '\t') {
       return line.split('\t');
     }
 
-    return _parseCsvLine(
-      line,
-    );
+    return _parseCsvLine(line);
   }
 
   List<String> _parseCsvLine(String line) {
@@ -553,9 +400,8 @@ class CsvImportService {
       final character = line[index];
 
       if (character == '"') {
-        final hasEscapedQuote = insideQuotes &&
-            index + 1 < line.length &&
-            line[index + 1] == '"';
+        final hasEscapedQuote =
+            insideQuotes && index + 1 < line.length && line[index + 1] == '"';
 
         if (hasEscapedQuote) {
           buffer.write('"');
@@ -568,35 +414,25 @@ class CsvImportService {
       }
 
       if (character == ',' && !insideQuotes) {
-        values.add(
-          buffer.toString(),
-        );
+        values.add(buffer.toString());
 
         buffer.clear();
         continue;
       }
 
-      buffer.write(
-        character,
-      );
+      buffer.write(character);
     }
 
-    values.add(
-      buffer.toString(),
-    );
+    values.add(buffer.toString());
 
     return values;
   }
 
-  Map<String, String> _buildRowMap(
-      List<String> headers,
-      List<String> values,
-      ) {
+  Map<String, String> _buildRowMap(List<String> headers, List<String> values) {
     final row = <String, String>{};
 
     for (var index = 0; index < headers.length; index++) {
-      final value =
-      index < values.length ? values[index].trim() : '';
+      final value = index < values.length ? values[index].trim() : '';
 
       row[headers[index]] = value;
     }
@@ -604,10 +440,7 @@ class CsvImportService {
     return row;
   }
 
-  String _read(
-      Map<String, String> row,
-      String key,
-      ) {
+  String _read(Map<String, String> row, String key) {
     return row[_normalizeHeader(key)]?.trim() ?? '';
   }
 
@@ -626,21 +459,13 @@ class CsvImportService {
   }
 
   double _parseMoney(String value) {
-    final cleaned = value
-        .replaceAll(r'$', '')
-        .replaceAll(',', '')
-        .trim();
+    final cleaned = value.replaceAll(r'$', '').replaceAll(',', '').trim();
 
-    return double.tryParse(
-      cleaned,
-    ) ??
-        0;
+    return double.tryParse(cleaned) ?? 0;
   }
 
   int _parseQuantity(String value) {
-    final parsed = int.tryParse(
-      value.trim(),
-    );
+    final parsed = int.tryParse(value.trim());
 
     if (parsed == null || parsed <= 0) {
       return 1;
@@ -656,9 +481,7 @@ class CsvImportService {
       return '';
     }
 
-    final directParsed = DateTime.tryParse(
-      cleaned,
-    );
+    final directParsed = DateTime.tryParse(cleaned);
 
     if (directParsed != null) {
       return directParsed.toIso8601String();
@@ -667,24 +490,14 @@ class CsvImportService {
     final parts = cleaned.split('/');
 
     if (parts.length == 3) {
-      final year = int.tryParse(
-        parts[0],
-      );
+      final year = int.tryParse(parts[0]);
 
-      final month = int.tryParse(
-        parts[1],
-      );
+      final month = int.tryParse(parts[1]);
 
-      final day = int.tryParse(
-        parts[2],
-      );
+      final day = int.tryParse(parts[2]);
 
       if (year != null && month != null && day != null) {
-        return DateTime(
-          year,
-          month,
-          day,
-        ).toIso8601String();
+        return DateTime(year, month, day).toIso8601String();
       }
     }
 
@@ -692,20 +505,11 @@ class CsvImportService {
   }
 
   bool _isWishlistRow(Map<String, String> row) {
-    final listName = _read(
-      row,
-      'List Name',
-    ).toLowerCase();
+    final listName = _read(row, 'List Name').toLowerCase();
 
-    final privateNotes = _read(
-      row,
-      'Private Notes',
-    ).toLowerCase();
+    final privateNotes = _read(row, 'Private Notes').toLowerCase();
 
-    final description = _read(
-      row,
-      'Description',
-    ).toLowerCase();
+    final description = _read(row, 'Description').toLowerCase();
 
     return listName.contains('wishlist') ||
         privateNotes.contains('wishlist') ||

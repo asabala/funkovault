@@ -7,10 +7,7 @@ import '../../../theme/atlas_typography.dart';
 import '../../atlas/atlas_glass_card.dart';
 
 class VaultStatusCard extends StatelessWidget {
-  const VaultStatusCard({
-    required this.isPremium,
-    super.key,
-  });
+  const VaultStatusCard({required this.isPremium, super.key});
 
   final bool isPremium;
 
@@ -20,10 +17,7 @@ class VaultStatusCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Atlas Systems',
-            style: AtlasTypography.headingSmall,
-          ),
+          Text('Atlas Systems', style: AtlasTypography.headingSmall),
           const SizedBox(height: AtlasSpacing.md),
           Row(
             children: [
@@ -57,9 +51,7 @@ class VaultStatusCard extends StatelessWidget {
               const SizedBox(width: AtlasSpacing.sm),
               Expanded(
                 child: _StatusPill(
-                  icon: isPremium
-                      ? Icons.workspace_premium
-                      : Icons.lock_open,
+                  icon: isPremium ? Icons.workspace_premium : Icons.lock_open,
                   label: 'Membership',
                   value: isPremium ? 'Premium' : 'Basic',
                 ),
@@ -96,11 +88,7 @@ class _StatusPill extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Icon(
-            icon,
-            color: AtlasColors.vaultGold,
-            size: 20,
-          ),
+          Icon(icon, color: AtlasColors.vaultGold, size: 20),
           const SizedBox(height: AtlasSpacing.xs),
           Text(
             value,

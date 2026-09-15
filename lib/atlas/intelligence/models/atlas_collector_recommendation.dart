@@ -53,10 +53,8 @@ class AtlasCollectorRecommendation {
   }
 
   bool get isImportant {
-    return severity ==
-        AtlasCollectorRecommendationSeverity.warning ||
-        severity ==
-            AtlasCollectorRecommendationSeverity.critical;
+    return severity == AtlasCollectorRecommendationSeverity.warning ||
+        severity == AtlasCollectorRecommendationSeverity.critical;
   }
 
   String get categoryLabel {
@@ -102,9 +100,7 @@ class AtlasCollectorRecommendation {
   }
 
   @override
-  bool operator ==(
-      Object other,
-      ) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         other is AtlasCollectorRecommendation &&
             runtimeType == other.runtimeType &&
@@ -114,10 +110,7 @@ class AtlasCollectorRecommendation {
             title == other.title &&
             message == other.message &&
             priority == other.priority &&
-            listEquals(
-              details,
-              other.details,
-            );
+            listEquals(details, other.details);
   }
 
   @override
@@ -129,9 +122,7 @@ class AtlasCollectorRecommendation {
       title,
       message,
       priority,
-      Object.hashAll(
-        details,
-      ),
+      Object.hashAll(details),
     );
   }
 

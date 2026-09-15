@@ -33,23 +33,15 @@ class RecommendationCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          AtlasPriorityChip(
-            severity: severity,
-          ),
+          AtlasPriorityChip(severity: severity),
 
           const SizedBox(height: AtlasSpacing.md),
 
-          Text(
-            title,
-            style: AtlasTypography.headingSmall,
-          ),
+          Text(title, style: AtlasTypography.headingSmall),
 
           const SizedBox(height: AtlasSpacing.sm),
 
-          Text(
-            message,
-            style: AtlasTypography.bodyMedium,
-          ),
+          Text(message, style: AtlasTypography.bodyMedium),
 
           const SizedBox(height: AtlasSpacing.md),
 
@@ -62,26 +54,18 @@ class RecommendationCard extends StatelessWidget {
 
           const SizedBox(height: AtlasSpacing.sm),
 
-          Text(
-            confidenceMessage,
-            style: AtlasTypography.bodySmall,
-          ),
+          Text(confidenceMessage, style: AtlasTypography.bodySmall),
 
           const SizedBox(height: AtlasSpacing.md),
 
           Text(
             'Why Atlas selected this:',
-            style: AtlasTypography.label.copyWith(
-              color: AtlasColors.vaultGold,
-            ),
+            style: AtlasTypography.label.copyWith(color: AtlasColors.vaultGold),
           ),
 
           const SizedBox(height: AtlasSpacing.sm),
 
-          Text(
-            why,
-            style: AtlasTypography.bodySmall,
-          ),
+          Text(why, style: AtlasTypography.bodySmall),
         ],
       ),
     );

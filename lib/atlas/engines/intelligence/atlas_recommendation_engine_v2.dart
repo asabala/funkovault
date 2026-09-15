@@ -35,7 +35,7 @@ class AtlasRecommendationEngineV2 {
         AtlasSmartRecommendation(
           title: 'Review Duplicate Groups',
           message:
-          'Atlas found $duplicateCount possible duplicate group${duplicateCount == 1 ? '' : 's'}.',
+              'Atlas found $duplicateCount possible duplicate group${duplicateCount == 1 ? '' : 's'}.',
           priority: 100,
           severity: 'High',
           estimatedImpact: 'Improves Vault Health',
@@ -48,7 +48,7 @@ class AtlasRecommendationEngineV2 {
         AtlasSmartRecommendation(
           title: 'Complete Missing Values',
           message:
-          '$missingValueCount Pop${missingValueCount == 1 ? '' : 's'} need estimated values.',
+              '$missingValueCount Pop${missingValueCount == 1 ? '' : 's'} need estimated values.',
           priority: 90,
           severity: 'Medium',
           estimatedImpact: 'Improves Atlas accuracy',
@@ -56,15 +56,14 @@ class AtlasRecommendationEngineV2 {
       );
     }
 
-    final missingImages =
-        pops.where((pop) => pop.imageUrl.isEmpty).length;
+    final missingImages = pops.where((pop) => pop.imageUrl.isEmpty).length;
 
     if (missingImages > 0) {
       recommendations.add(
         AtlasSmartRecommendation(
           title: 'Add Missing Images',
           message:
-          '$missingImages Pop${missingImages == 1 ? '' : 's'} are missing images.',
+              '$missingImages Pop${missingImages == 1 ? '' : 's'} are missing images.',
           priority: 60,
           severity: 'Low',
           estimatedImpact: 'Improves collection browsing',
@@ -85,7 +84,7 @@ class AtlasRecommendationEngineV2 {
         AtlasSmartRecommendation(
           title: 'Review Collector Identity',
           message:
-          '$incompleteIdentity Pop${incompleteIdentity == 1 ? '' : 's'} may need collector identity details.',
+              '$incompleteIdentity Pop${incompleteIdentity == 1 ? '' : 's'} may need collector identity details.',
           priority: confidence.score < 75 ? 85 : 50,
           severity: confidence.score < 75 ? 'Medium' : 'Low',
           estimatedImpact: 'Improves Atlas Confidence',
@@ -93,9 +92,7 @@ class AtlasRecommendationEngineV2 {
       );
     }
 
-    recommendations.sort(
-          (a, b) => b.priority.compareTo(a.priority),
-    );
+    recommendations.sort((a, b) => b.priority.compareTo(a.priority));
 
     return recommendations;
   }

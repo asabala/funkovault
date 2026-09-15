@@ -42,8 +42,7 @@ class VaultCleanupCard extends StatelessWidget {
         label: 'Needs Value',
         count: needsValueCount,
         icon: Icons.attach_money_rounded,
-        message:
-        'Add missing values so Atlas can calculate your vault better.',
+        message: 'Add missing values so Atlas can calculate your vault better.',
       ),
       _VaultCleanupItem(
         key: 'duplicates',
@@ -51,15 +50,14 @@ class VaultCleanupCard extends StatelessWidget {
         count: duplicateGroupCount,
         icon: Icons.content_copy_rounded,
         message:
-        'Review possible duplicate or variant groups before making changes.',
+            'Review possible duplicate or variant groups before making changes.',
       ),
       _VaultCleanupItem(
         key: 'wishlist',
         label: 'Wishlist Items',
         count: wishlistCount,
         icon: Icons.favorite_rounded,
-        message:
-        'Review wishlist items and decide what belongs in the vault.',
+        message: 'Review wishlist items and decide what belongs in the vault.',
       ),
       _VaultCleanupItem(
         key: 'variants',
@@ -67,7 +65,7 @@ class VaultCleanupCard extends StatelessWidget {
         count: variantCount,
         icon: Icons.auto_awesome_rounded,
         message:
-        'Confirm variants so common, chase, glow, and special editions stay accurate.',
+            'Confirm variants so common, chase, glow, and special editions stay accurate.',
       ),
       _VaultCleanupItem(
         key: 'exclusives',
@@ -75,23 +73,21 @@ class VaultCleanupCard extends StatelessWidget {
         count: exclusiveCount,
         icon: Icons.workspace_premium_rounded,
         message:
-        'Check exclusives so stickers, retailers, and releases stay clean.',
+            'Check exclusives so stickers, retailers, and releases stay clean.',
       ),
       _VaultCleanupItem(
         key: 'signed',
         label: 'Signed',
         count: signedCount,
         icon: Icons.edit_rounded,
-        message:
-        'Review signed Pops and keep signature details accurate.',
+        message: 'Review signed Pops and keep signature details accurate.',
       ),
       _VaultCleanupItem(
         key: 'limited',
         label: 'Limited',
         count: limitedCount,
         icon: Icons.confirmation_number_rounded,
-        message:
-        'Verify limited editions and numbered pieces.',
+        message: 'Verify limited editions and numbered pieces.',
       ),
       _VaultCleanupItem(
         key: 'stickers',
@@ -99,28 +95,22 @@ class VaultCleanupCard extends StatelessWidget {
         count: stickerCount,
         icon: Icons.local_offer_rounded,
         message:
-        'Confirm sticker details so variants and exclusives are easier to track.',
+            'Confirm sticker details so variants and exclusives are easier to track.',
       ),
     ];
 
-    final activeItems = items
-        .where(
-          (item) => item.count > 0,
-    )
-        .toList()
-      ..sort(
-            (a, b) {
-          final priorityCompare = _cleanupPriority(a.key).compareTo(
-            _cleanupPriority(b.key),
-          );
+    final activeItems = items.where((item) => item.count > 0).toList()
+      ..sort((a, b) {
+        final priorityCompare = _cleanupPriority(
+          a.key,
+        ).compareTo(_cleanupPriority(b.key));
 
-          if (priorityCompare != 0) {
-            return priorityCompare;
-          }
+        if (priorityCompare != 0) {
+          return priorityCompare;
+        }
 
-          return b.count.compareTo(a.count);
-        },
-      );
+        return b.count.compareTo(a.count);
+      });
 
     final visibleItems = activeItems.take(3).toList();
     final hasCleanupItems = visibleItems.isNotEmpty;
@@ -138,25 +128,21 @@ class VaultCleanupCard extends StatelessWidget {
             icon: Icons.cleaning_services_rounded,
             accentColor: AtlasColors.vaultGold,
           ),
-          const SizedBox(
-            height: AtlasSpacing.lg,
-          ),
+          const SizedBox(height: AtlasSpacing.lg),
           if (hasCleanupItems)
             Column(
               children: visibleItems
                   .map(
                     (item) => Padding(
-                  padding: const EdgeInsets.only(
-                    bottom: AtlasSpacing.sm,
-                  ),
-                  child: _VaultCleanupRow(
-                    item: item,
-                    onTap: onCleanupItemTap == null
-                        ? null
-                        : () => onCleanupItemTap!(item.key),
-                  ),
-                ),
-              )
+                      padding: const EdgeInsets.only(bottom: AtlasSpacing.sm),
+                      child: _VaultCleanupRow(
+                        item: item,
+                        onTap: onCleanupItemTap == null
+                            ? null
+                            : () => onCleanupItemTap!(item.key),
+                      ),
+                    ),
+                  )
                   .toList(),
             )
           else
@@ -164,24 +150,18 @@ class VaultCleanupCard extends StatelessWidget {
               eyebrow: 'Vault Cleanup',
               title: 'Vault Looking Clean',
               message:
-              'No cleanup items found. Atlas has a clean snapshot to work with.',
+                  'No cleanup items found. Atlas has a clean snapshot to work with.',
               icon: Icons.verified_rounded,
               compact: true,
             ),
           if (onReviewVault != null) ...[
-            const SizedBox(
-              height: AtlasSpacing.md,
-            ),
+            const SizedBox(height: AtlasSpacing.md),
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
                 onPressed: onReviewVault,
-                icon: const Icon(
-                  Icons.visibility_rounded,
-                ),
-                label: const Text(
-                  'Review Entire Vault',
-                ),
+                icon: const Icon(Icons.visibility_rounded),
+                label: const Text('Review Entire Vault'),
               ),
             ),
           ],
@@ -215,10 +195,7 @@ int _cleanupPriority(String key) {
 }
 
 class _VaultCleanupRow extends StatelessWidget {
-  const _VaultCleanupRow({
-    required this.item,
-    required this.onTap,
-  });
+  const _VaultCleanupRow({required this.item, required this.onTap});
 
   final _VaultCleanupItem item;
   final VoidCallback? onTap;

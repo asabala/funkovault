@@ -47,12 +47,8 @@ class AtlasTheme {
         color: AtlasColors.card,
         elevation: 2,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(
-            AtlasRadius.lg,
-          ),
-          side: const BorderSide(
-            color: AtlasColors.border,
-          ),
+          borderRadius: BorderRadius.circular(AtlasRadius.lg),
+          side: const BorderSide(color: AtlasColors.border),
         ),
       ),
 
@@ -60,29 +56,17 @@ class AtlasTheme {
         filled: true,
         fillColor: AtlasColors.surface,
         labelStyle: AtlasTypography.label,
-        hintStyle: const TextStyle(
-          color: AtlasColors.textMuted,
-        ),
+        hintStyle: const TextStyle(color: AtlasColors.textMuted),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(
-            AtlasRadius.md,
-          ),
-          borderSide: const BorderSide(
-            color: AtlasColors.border,
-          ),
+          borderRadius: BorderRadius.circular(AtlasRadius.md),
+          borderSide: const BorderSide(color: AtlasColors.border),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(
-            AtlasRadius.md,
-          ),
-          borderSide: const BorderSide(
-            color: AtlasColors.border,
-          ),
+          borderRadius: BorderRadius.circular(AtlasRadius.md),
+          borderSide: const BorderSide(color: AtlasColors.border),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(
-            AtlasRadius.md,
-          ),
+          borderRadius: BorderRadius.circular(AtlasRadius.md),
           borderSide: const BorderSide(
             color: AtlasColors.intelligenceBlue,
             width: 2,
@@ -96,14 +80,9 @@ class AtlasTheme {
           foregroundColor: AtlasColors.textPrimary,
           textStyle: AtlasTypography.label,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(
-              AtlasRadius.md,
-            ),
+            borderRadius: BorderRadius.circular(AtlasRadius.md),
           ),
-          padding: const EdgeInsets.symmetric(
-            horizontal: 18,
-            vertical: 14,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
         ),
       ),
 
@@ -121,18 +100,12 @@ class AtlasTheme {
         labelStyle: AtlasTypography.bodySmall,
         secondaryLabelStyle: AtlasTypography.bodySmall,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(
-            AtlasRadius.pill,
-          ),
-          side: const BorderSide(
-            color: AtlasColors.border,
-          ),
+          borderRadius: BorderRadius.circular(AtlasRadius.pill),
+          side: const BorderSide(color: AtlasColors.border),
         ),
       ),
 
-      dividerTheme: const DividerThemeData(
-        color: AtlasColors.divider,
-      ),
+      dividerTheme: const DividerThemeData(color: AtlasColors.divider),
 
       listTileTheme: const ListTileThemeData(
         iconColor: AtlasColors.atlasSilver,
@@ -140,8 +113,7 @@ class AtlasTheme {
         subtitleTextStyle: AtlasTypography.bodySmall,
       ),
 
-      floatingActionButtonTheme:
-      const FloatingActionButtonThemeData(
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
         backgroundColor: AtlasColors.vaultGold,
         foregroundColor: AtlasColors.midnight,
       ),

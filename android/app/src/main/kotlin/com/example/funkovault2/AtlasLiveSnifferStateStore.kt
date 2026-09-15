@@ -8,7 +8,7 @@ object AtlasLiveSnifferStateStore {
     @Volatile var isCapturing: Boolean = false
     @Volatile var isOverlayVisible: Boolean = false
     @Volatile var lastError: String? = null
-    @Volatile var hudText: String = "ATLAS LIVE\nListening..."
+    @Volatile var hudText: String = "ATLAS LIVELENS\nListening..."
     @Volatile var showScanChoices: Boolean = false
     @Volatile var detectedCount: Int = 0
 

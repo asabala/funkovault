@@ -43,8 +43,7 @@ class CollectorProfile {
       atlasId: json['atlasId'] ?? 'ATL-000001',
       displayName: json['displayName'] ?? 'Arthur',
       collectorTitle: json['collectorTitle'] ?? 'Atlas Collector',
-      collectorMotto:
-      json['collectorMotto'] ?? 'Collector. Curator. Explorer.',
+      collectorMotto: json['collectorMotto'] ?? 'Collector. Curator. Explorer.',
       bio: json['bio'] ?? 'Building a collection one Pop at a time.',
       favoriteCategory: json['favoriteCategory'] ?? 'Marvel',
       favoriteFranchise: json['favoriteFranchise'] ?? 'Spider-Man',

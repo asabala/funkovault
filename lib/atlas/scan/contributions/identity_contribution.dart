@@ -7,8 +7,7 @@ import 'contribution_category.dart';
 // The Identity Engine may produce one or more hypotheses. The first hypothesis
 // is considered the current best candidate, while additional hypotheses are
 // retained for review or future resolution.
-final class IdentityContribution
-    extends AbstractIntelligenceContribution {
+final class IdentityContribution extends AbstractIntelligenceContribution {
   IdentityContribution({
     required super.contributionId,
     required super.sourceEngineId,
@@ -16,9 +15,7 @@ final class IdentityContribution
     required List<IdentityHypothesis> hypotheses,
     super.confidence,
     super.attributes,
-  }) : hypotheses = List<IdentityHypothesis>.unmodifiable(
-    hypotheses,
-  );
+  }) : hypotheses = List<IdentityHypothesis>.unmodifiable(hypotheses);
 
   // Candidate identities ordered from strongest to weakest.
   final List<IdentityHypothesis> hypotheses;

@@ -26,12 +26,8 @@ class AcademyAdminRequestInboxCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          AcademyAdminInboxHeader(
-            requestCount: requests.length,
-          ),
-          const SizedBox(
-            height: AtlasSpacing.lg,
-          ),
+          AcademyAdminInboxHeader(requestCount: requests.length),
+          const SizedBox(height: AtlasSpacing.lg),
           AcademyAdminRequestList(
             requests: requests,
             onReviewTap: onReviewTap,

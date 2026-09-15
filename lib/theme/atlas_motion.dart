@@ -11,25 +11,15 @@ final class AtlasMotion {
   // Durations
   // ----------------------------------------------------------
 
-  static const Duration instant = Duration(
-    milliseconds: 80,
-  );
+  static const Duration instant = Duration(milliseconds: 80);
 
-  static const Duration fast = Duration(
-    milliseconds: 140,
-  );
+  static const Duration fast = Duration(milliseconds: 140);
 
-  static const Duration standard = Duration(
-    milliseconds: 220,
-  );
+  static const Duration standard = Duration(milliseconds: 220);
 
-  static const Duration emphasis = Duration(
-    milliseconds: 320,
-  );
+  static const Duration emphasis = Duration(milliseconds: 320);
 
-  static const Duration slow = Duration(
-    milliseconds: 480,
-  );
+  static const Duration slow = Duration(milliseconds: 480);
 
   // ----------------------------------------------------------
   // Curves
@@ -59,9 +49,7 @@ final class AtlasMotion {
 
   static const Duration pageTransitionDuration = emphasis;
 
-  static const Duration searchDebounceDuration = Duration(
-    milliseconds: 350,
-  );
+  static const Duration searchDebounceDuration = Duration(milliseconds: 350);
 
   static const Curve pressCurve = enter;
 
@@ -70,5 +58,4 @@ final class AtlasMotion {
   static const Curve progressCurve = enter;
 
   static const Curve pageTransitionCurve = standardCurve;
-
 }

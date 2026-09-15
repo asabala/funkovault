@@ -81,29 +81,18 @@ class AtlasCollectorInsight {
   }
 
   @override
-  bool operator ==(
-      Object other,
-      ) {
-    return identical(
-      this,
-      other,
-    ) ||
+  bool operator ==(Object other) {
+    return identical(this, other) ||
         other is AtlasCollectorInsight &&
             runtimeType == other.runtimeType &&
             state == other.state &&
             summary == other.summary &&
             intelligence == other.intelligence &&
-            listEquals(
-              actions,
-              other.actions,
-            ) &&
+            listEquals(actions, other.actions) &&
             generatedAt == other.generatedAt &&
             confidence == other.confidence &&
             source == other.source &&
-            listEquals(
-              diagnostics,
-              other.diagnostics,
-            );
+            listEquals(diagnostics, other.diagnostics);
   }
 
   @override
@@ -112,15 +101,11 @@ class AtlasCollectorInsight {
       state,
       summary,
       intelligence,
-      Object.hashAll(
-        actions,
-      ),
+      Object.hashAll(actions),
       generatedAt,
       confidence,
       source,
-      Object.hashAll(
-        diagnostics,
-      ),
+      Object.hashAll(diagnostics),
     );
   }
 

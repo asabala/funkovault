@@ -8,11 +8,8 @@ import 'knowledge_provider_result.dart';
 // Generic storage and discovery behavior is handled by AtlasRegistry.
 // This class retains knowledge-specific support checks and execution.
 class KnowledgeProviderRegistry {
-  KnowledgeProviderRegistry(
-      List<KnowledgeProvider> providers,
-      ) : _registry = AtlasRegistry<KnowledgeProvider>(
-    providers,
-  );
+  KnowledgeProviderRegistry(List<KnowledgeProvider> providers)
+    : _registry = AtlasRegistry<KnowledgeProvider>(providers);
 
   final AtlasRegistry<KnowledgeProvider> _registry;
 
@@ -43,39 +40,28 @@ class KnowledgeProviderRegistry {
   }
 
   // Returns only providers capable of handling the supplied query.
-  List<KnowledgeProvider> supportedProviders(
-      KnowledgeQuery query,
-      ) {
-    return _registry.where(
-          (KnowledgeProvider provider) {
-        return provider.supports(query);
-      },
-    );
+  List<KnowledgeProvider> supportedProviders(KnowledgeQuery query) {
+    return _registry.where((KnowledgeProvider provider) {
+      return provider.supports(query);
+    });
   }
 
   // Executes all providers that support the supplied query.
   //
   // Results remain separated by provider so a future resolver can
   // evaluate source confidence, conflicts, and supporting evidence.
-  Future<List<KnowledgeProviderResult>> fetchAll(
-      KnowledgeQuery query,
-      ) async {
-    final List<KnowledgeProvider> supported =
-    supportedProviders(query);
+  Future<List<KnowledgeProviderResult>> fetchAll(KnowledgeQuery query) async {
+    final List<KnowledgeProvider> supported = supportedProviders(query);
 
-    final List<KnowledgeProviderResult> results =
-    <KnowledgeProviderResult>[];
+    final List<KnowledgeProviderResult> results = <KnowledgeProviderResult>[];
 
     for (final KnowledgeProvider provider in supported) {
-      final KnowledgeProviderResult result =
-      await provider.fetch(query);
+      final KnowledgeProviderResult result = await provider.fetch(query);
 
       results.add(result);
     }
 
-    return List<KnowledgeProviderResult>.unmodifiable(
-      results,
-    );
+    return List<KnowledgeProviderResult>.unmodifiable(results);
   }
 
   // Executes one specific provider when it supports the query.
@@ -86,11 +72,9 @@ class KnowledgeProviderRegistry {
     required String providerId,
     required KnowledgeQuery query,
   }) async {
-    final KnowledgeProvider? provider =
-    byId(providerId);
+    final KnowledgeProvider? provider = byId(providerId);
 
-    if (provider == null ||
-        !provider.supports(query)) {
+    if (provider == null || !provider.supports(query)) {
       return null;
     }
 

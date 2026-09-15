@@ -7,8 +7,7 @@ import 'abstract_recognition_contribution.dart';
 // OCRContribution represents one semantic piece of text recognized from a
 // collectible. The contribution intentionally stores normalized collector
 // knowledge rather than raw OCR engine output.
-final class OCRContribution
-    extends AbstractRecognitionContribution {
+final class OCRContribution extends AbstractRecognitionContribution {
   OCRContribution({
     required super.contributionId,
     required super.sourceEngineId,
@@ -52,8 +51,7 @@ final class OCRContribution
   }
 
   bool get hasUsefulEvidence {
-    return hasNormalizedText &&
-        (isIdentityEvidence || isVariantEvidence);
+    return hasNormalizedText && (isIdentityEvidence || isVariantEvidence);
   }
 
   bool get isStickerRecognition {

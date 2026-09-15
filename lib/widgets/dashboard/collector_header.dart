@@ -19,28 +19,19 @@ class CollectorHeader extends StatelessWidget {
           children: [
             const Text(
               '🛡️ ATLAS',
-              style: TextStyle(
-                fontSize: 34,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 34, fontWeight: FontWeight.bold),
             ),
 
             const SizedBox(height: 8),
 
             Text(
               'Good ${_dayPart()}, $collectorName',
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-              ),
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
             ),
 
             const SizedBox(height: 12),
 
-            Chip(
-              avatar: const Icon(Icons.verified_user),
-              label: Text(status),
-            ),
+            Chip(avatar: const Icon(Icons.verified_user), label: Text(status)),
           ],
         ),
       ),

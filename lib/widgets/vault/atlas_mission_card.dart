@@ -33,22 +33,15 @@ class AtlasMissionCard extends StatelessWidget {
           const AtlasSectionHeader(
             title: "Today's Atlas Mission",
             subtitle:
-            'A focused next step based on your current collector profile and vault.',
+                'A focused next step based on your current collector profile and vault.',
             icon: AtlasIcons.intelligence,
             accentColor: AtlasColors.vaultGold,
           ),
-          const SizedBox(
-            height: AtlasSpacing.md,
-          ),
+          const SizedBox(height: AtlasSpacing.md),
           AtlasGlassPanel(
-            child: Text(
-              mission,
-              style: AtlasTypography.bodyMedium,
-            ),
+            child: Text(mission, style: AtlasTypography.bodyMedium),
           ),
-          const SizedBox(
-            height: AtlasSpacing.md,
-          ),
+          const SizedBox(height: AtlasSpacing.md),
           Wrap(
             spacing: AtlasSpacing.sm,
             runSpacing: AtlasSpacing.sm,
@@ -68,20 +61,13 @@ class AtlasMissionCard extends StatelessWidget {
             ],
           ),
           if (onContinue != null) ...[
-            const SizedBox(
-              height: AtlasSpacing.md,
-            ),
+            const SizedBox(height: AtlasSpacing.md),
             Align(
               alignment: Alignment.centerRight,
               child: OutlinedButton.icon(
                 onPressed: onContinue,
-                icon: const Icon(
-                  Icons.arrow_forward_rounded,
-                  size: 16,
-                ),
-                label: const Text(
-                  'Continue',
-                ),
+                icon: const Icon(Icons.arrow_forward_rounded, size: 16),
+                label: const Text('Continue'),
               ),
             ),
           ],

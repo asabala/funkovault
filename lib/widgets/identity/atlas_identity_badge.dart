@@ -6,18 +6,13 @@ import 'package:funkovault2/theme/atlas_spacing.dart';
 import 'package:funkovault2/theme/atlas_typography.dart';
 
 class AtlasIdentityBadge extends StatelessWidget {
-  const AtlasIdentityBadge({
-    required this.badge,
-    super.key,
-  });
+  const AtlasIdentityBadge({required this.badge, super.key});
 
   final PopIdentityBadgeData badge;
 
   @override
   Widget build(BuildContext context) {
-    final Color accentColor = _accentColorFor(
-      badge.id,
-    );
+    final Color accentColor = _accentColorFor(badge.id);
 
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -25,43 +20,22 @@ class AtlasIdentityBadge extends StatelessWidget {
         vertical: AtlasSpacing.sm,
       ),
       decoration: BoxDecoration(
-        color: accentColor.withValues(
-          alpha: 0.12,
-        ),
-        borderRadius: BorderRadius.circular(
-          999,
-        ),
-        border: Border.all(
-          color: accentColor.withValues(
-            alpha: 0.38,
-          ),
-        ),
+        color: accentColor.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: accentColor.withValues(alpha: 0.38)),
         boxShadow: [
           BoxShadow(
-            color: accentColor.withValues(
-              alpha: 0.10,
-            ),
+            color: accentColor.withValues(alpha: 0.10),
             blurRadius: 12,
-            offset: const Offset(
-              0,
-              5,
-            ),
+            offset: const Offset(0, 5),
           ),
         ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            badge.emoji,
-            style: const TextStyle(
-              fontSize: 15,
-              height: 1,
-            ),
-          ),
-          const SizedBox(
-            width: AtlasSpacing.sm,
-          ),
+          Text(badge.emoji, style: const TextStyle(fontSize: 15, height: 1)),
+          const SizedBox(width: AtlasSpacing.sm),
           Flexible(
             child: Text(
               badge.label,
@@ -78,9 +52,7 @@ class AtlasIdentityBadge extends StatelessWidget {
     );
   }
 
-  Color _accentColorFor(
-      String badgeId,
-      ) {
+  Color _accentColorFor(String badgeId) {
     switch (badgeId.trim().toLowerCase()) {
       case 'chase':
         return AtlasColors.warning;
@@ -89,45 +61,31 @@ class AtlasIdentityBadge extends StatelessWidget {
         return AtlasColors.success;
 
       case 'blacklight':
-        return const Color(
-          0xFF9B5DE5,
-        );
+        return const Color(0xFF9B5DE5);
 
       case 'diamond':
-        return const Color(
-          0xFF4DD0E1,
-        );
+        return const Color(0xFF4DD0E1);
 
       case 'flocked':
-        return const Color(
-          0xFFBCAAA4,
-        );
+        return const Color(0xFFBCAAA4);
 
       case 'metallic':
         return AtlasColors.atlasSilver;
 
       case 'scented':
-        return const Color(
-          0xFFF48FB1,
-        );
+        return const Color(0xFFF48FB1);
 
       case 'art_series':
-        return const Color(
-          0xFFFF8A65,
-        );
+        return const Color(0xFFFF8A65);
 
       case 'nft':
         return AtlasColors.intelligenceBlue;
 
       case 'translucent':
-        return const Color(
-          0xFF80DEEA,
-        );
+        return const Color(0xFF80DEEA);
 
       case 'oversized':
-        return const Color(
-          0xFFFFB74D,
-        );
+        return const Color(0xFFFFB74D);
 
       case 'vaulted':
         return AtlasColors.textSecondary;
@@ -136,34 +94,22 @@ class AtlasIdentityBadge extends StatelessWidget {
         return AtlasColors.danger;
 
       case 'pearlescent':
-        return const Color(
-          0xFFCE93D8,
-        );
+        return const Color(0xFFCE93D8);
 
       case 'patina':
-        return const Color(
-          0xFF80CBC4,
-        );
+        return const Color(0xFF80CBC4);
 
       case 'light_up':
-        return const Color(
-          0xFFFFD54F,
-        );
+        return const Color(0xFFFFD54F);
 
       case 'sound':
-        return const Color(
-          0xFF7986CB,
-        );
+        return const Color(0xFF7986CB);
 
       case 'pop_cover':
-        return const Color(
-          0xFF9575CD,
-        );
+        return const Color(0xFF9575CD);
 
       case 'prototype':
-        return const Color(
-          0xFF26A69A,
-        );
+        return const Color(0xFF26A69A);
 
       case 'funko_shop':
       case 'retail_exclusive':
@@ -177,24 +123,16 @@ class AtlasIdentityBadge extends StatelessWidget {
         return AtlasColors.vaultGold;
 
       case 'limited_edition':
-        return const Color(
-          0xFF7E57C2,
-        );
+        return const Color(0xFF7E57C2);
 
       case 'signed':
-        return const Color(
-          0xFFFFCA28,
-        );
+        return const Color(0xFFFFCA28);
 
       case 'wishlist':
-        return const Color(
-          0xFFEC407A,
-        );
+        return const Color(0xFFEC407A);
 
       case 'custom_variant':
-        return const Color(
-          0xFFAB47BC,
-        );
+        return const Color(0xFFAB47BC);
 
       default:
         return AtlasColors.intelligenceBlue;

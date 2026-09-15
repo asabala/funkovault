@@ -1,4 +1,1 @@
-enum FunkoEventEvidenceSource {
-  token,
-  phrase,
-}
+enum FunkoEventEvidenceSource { token, phrase }

@@ -29,7 +29,7 @@ class AtlasRecommendationEngine {
         const AtlasRecommendation(
           title: 'Verify Estimated Value',
           message:
-          'This variant may have a different value than the Common version. Add an estimated value when available.',
+              'This variant may have a different value than the Common version. Add an estimated value when available.',
           priority: 90,
         ),
       );
@@ -40,7 +40,7 @@ class AtlasRecommendationEngine {
         const AtlasRecommendation(
           title: 'Record Purchase Details',
           message:
-          'Limited Edition Pops are easier to track when purchase history is recorded.',
+              'Limited Edition Pops are easier to track when purchase history is recorded.',
           priority: 85,
         ),
       );
@@ -51,7 +51,7 @@ class AtlasRecommendationEngine {
         const AtlasRecommendation(
           title: 'Save Authentication Info Later',
           message:
-          'Signed collectibles may need authentication details, certificate numbers, or proof photos in a future update.',
+              'Signed collectibles may need authentication details, certificate numbers, or proof photos in a future update.',
           priority: 80,
         ),
       );
@@ -62,7 +62,7 @@ class AtlasRecommendationEngine {
         const AtlasRecommendation(
           title: 'Confirm Sticker Type',
           message:
-          'Event and shared stickers can affect identity and value. Confirm the sticker before saving.',
+              'Event and shared stickers can affect identity and value. Confirm the sticker before saving.',
           priority: 75,
         ),
       );
@@ -73,7 +73,7 @@ class AtlasRecommendationEngine {
         const AtlasRecommendation(
           title: 'Exclusive Detected',
           message:
-          'Retail exclusives are tracked separately so Atlas can prevent false duplicates.',
+              'Retail exclusives are tracked separately so Atlas can prevent false duplicates.',
           priority: 70,
         ),
       );
@@ -83,9 +83,7 @@ class AtlasRecommendationEngine {
       return null;
     }
 
-    recommendations.sort(
-          (a, b) => b.priority.compareTo(a.priority),
-    );
+    recommendations.sort((a, b) => b.priority.compareTo(a.priority));
 
     return recommendations.first;
   }

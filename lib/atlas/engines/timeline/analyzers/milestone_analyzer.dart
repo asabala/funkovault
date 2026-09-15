@@ -21,7 +21,7 @@ class MilestoneAnalyzer {
             type: TimelineMilestoneType.anniversary,
             title: 'Owned One Year',
             description:
-            'You have owned this collectible for at least one year.',
+                'You have owned this collectible for at least one year.',
             achievedAt: generatedAt,
           ),
         );
@@ -34,7 +34,7 @@ class MilestoneAnalyzer {
             type: TimelineMilestoneType.anniversary,
             title: 'Five-Year Collector',
             description:
-            'This collectible has been part of your collection for over five years.',
+                'This collectible has been part of your collection for over five years.',
             achievedAt: generatedAt,
           ),
         );
@@ -48,7 +48,7 @@ class MilestoneAnalyzer {
           type: TimelineMilestoneType.value,
           title: 'Value Increased',
           description:
-          'This collectible has increased in value since it was first recorded.',
+              'This collectible has increased in value since it was first recorded.',
           achievedAt: generatedAt,
         ),
       );
@@ -60,8 +60,7 @@ class MilestoneAnalyzer {
           id: 'value-doubled',
           type: TimelineMilestoneType.value,
           title: 'Value Doubled',
-          description:
-          'The recorded value has increased by at least 100%.',
+          description: 'The recorded value has increased by at least 100%.',
           achievedAt: generatedAt,
         ),
       );

@@ -12,7 +12,6 @@ import '../components/atlas_progress_bar.dart';
 import '../components/atlas_section_header.dart';
 import '../components/atlas_status_chip.dart';
 
-
 class AtlasCompletionCard extends StatelessWidget {
   const AtlasCompletionCard({
     super.key,
@@ -54,20 +53,12 @@ class AtlasCompletionCard extends StatelessWidget {
               size: AtlasStatusChipSize.compact,
             ),
           ),
-          const SizedBox(
-            height: AtlasSpacing.lg,
-          ),
-          _CompletionProgress(
-            result: result,
-          ),
+          const SizedBox(height: AtlasSpacing.lg),
+          _CompletionProgress(result: result),
           if (result.isNotEmpty) ...[
-            const SizedBox(
-              height: AtlasSpacing.lg,
-            ),
+            const SizedBox(height: AtlasSpacing.lg),
             AtlasInsightPanel(
-              eyebrow: result.isComplete
-                  ? 'Milestone'
-                  : 'Next Goal',
+              eyebrow: result.isComplete ? 'Milestone' : 'Next Goal',
               title: result.nextGoalLabel,
               message: result.isComplete
                   ? 'Every release in this catalog group is owned.'
@@ -80,22 +71,13 @@ class AtlasCompletionCard extends StatelessWidget {
                   : AtlasInsightPanelTone.recommendation,
             ),
           ],
-          if (showItemBreakdown &&
-              result.isNotEmpty) ...[
-            const SizedBox(
-              height: AtlasSpacing.lg,
-            ),
-            const Divider(
-              color: AtlasColors.divider,
-              height: 1,
-            ),
-            const SizedBox(
-              height: AtlasSpacing.lg,
-            ),
+          if (showItemBreakdown && result.isNotEmpty) ...[
+            const SizedBox(height: AtlasSpacing.lg),
+            const Divider(color: AtlasColors.divider, height: 1),
+            const SizedBox(height: AtlasSpacing.lg),
             _CompletionBreakdown(
               result: result,
-              maxVisibleItemsPerSection:
-              maxVisibleItemsPerSection,
+              maxVisibleItemsPerSection: maxVisibleItemsPerSection,
             ),
           ],
         ],
@@ -117,9 +99,7 @@ class AtlasCompletionCard extends StatelessWidget {
 }
 
 class _CompletionProgress extends StatelessWidget {
-  const _CompletionProgress({
-    required this.result,
-  });
+  const _CompletionProgress({required this.result});
 
   final AtlasCompletionResult result;
 
@@ -141,9 +121,7 @@ class _CompletionProgress extends StatelessWidget {
             fontWeight: FontWeight.w900,
           ),
         ),
-        const SizedBox(
-          height: AtlasSpacing.xs,
-        ),
+        const SizedBox(height: AtlasSpacing.xs),
         Text(
           result.formattedReleaseProgress,
           style: AtlasTypography.headingSmall.copyWith(
@@ -151,17 +129,13 @@ class _CompletionProgress extends StatelessWidget {
             fontWeight: FontWeight.bold,
           ),
         ),
-        const SizedBox(
-          height: AtlasSpacing.md,
-        ),
+        const SizedBox(height: AtlasSpacing.md),
         AtlasProgressBar(
           value: result.completionRatio,
           accentColor: progressColor,
           height: 10,
         ),
-        const SizedBox(
-          height: AtlasSpacing.md,
-        ),
+        const SizedBox(height: AtlasSpacing.md),
         Wrap(
           spacing: AtlasSpacing.sm,
           runSpacing: AtlasSpacing.sm,
@@ -191,8 +165,7 @@ class _CompletionProgress extends StatelessWidget {
   }
 }
 
-class _CompletionBreakdown
-    extends StatelessWidget {
+class _CompletionBreakdown extends StatelessWidget {
   const _CompletionBreakdown({
     required this.result,
     required this.maxVisibleItemsPerSection,
@@ -204,14 +177,12 @@ class _CompletionBreakdown
 
   @override
   Widget build(BuildContext context) {
-    final int safeLimit =
-    maxVisibleItemsPerSection < 1
+    final int safeLimit = maxVisibleItemsPerSection < 1
         ? 1
         : maxVisibleItemsPerSection;
 
     return Column(
-      crossAxisAlignment:
-      CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (result.ownedItems.isNotEmpty)
           _CompletionSection(
@@ -222,13 +193,8 @@ class _CompletionBreakdown
             maxVisibleItems: safeLimit,
           ),
         if (result.ownedItems.isNotEmpty &&
-            (
-                result.wishlistItems.isNotEmpty ||
-                    result.missingItems.isNotEmpty
-            ))
-          const SizedBox(
-            height: AtlasSpacing.lg,
-          ),
+            (result.wishlistItems.isNotEmpty || result.missingItems.isNotEmpty))
+          const SizedBox(height: AtlasSpacing.lg),
         if (result.wishlistItems.isNotEmpty)
           _CompletionSection(
             title: 'Wishlist',
@@ -237,11 +203,8 @@ class _CompletionBreakdown
             items: result.wishlistItems,
             maxVisibleItems: safeLimit,
           ),
-        if (result.wishlistItems.isNotEmpty &&
-            result.missingItems.isNotEmpty)
-          const SizedBox(
-            height: AtlasSpacing.lg,
-          ),
+        if (result.wishlistItems.isNotEmpty && result.missingItems.isNotEmpty)
+          const SizedBox(height: AtlasSpacing.lg),
         if (result.missingItems.isNotEmpty)
           _CompletionSection(
             title: 'Missing',
@@ -272,63 +235,38 @@ class _CompletionSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final List<AtlasCompletionItem> visibleItems =
-    items
-        .take(
-      maxVisibleItems,
-    )
-        .toList(
-      growable: false,
-    );
+    final List<AtlasCompletionItem> visibleItems = items
+        .take(maxVisibleItems)
+        .toList(growable: false);
 
-    final int remainingCount =
-        items.length - visibleItems.length;
+    final int remainingCount = items.length - visibleItems.length;
 
     return Column(
-      crossAxisAlignment:
-      CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Text(
-              emoji,
-              style: const TextStyle(
-                fontSize: 18,
-              ),
-            ),
-            const SizedBox(
-              width: AtlasSpacing.sm,
-            ),
+            Text(emoji, style: const TextStyle(fontSize: 18)),
+            const SizedBox(width: AtlasSpacing.sm),
             Expanded(
               child: Text(
                 title,
-                style: AtlasTypography
-                    .headingSmall
-                    .copyWith(
-                  color: color,
-                ),
+                style: AtlasTypography.headingSmall.copyWith(color: color),
               ),
             ),
             Text(
               '${items.length}',
-              style: AtlasTypography.bodySmall
-                  .copyWith(
-                color:
-                AtlasColors.textSecondary,
+              style: AtlasTypography.bodySmall.copyWith(
+                color: AtlasColors.textSecondary,
                 fontWeight: FontWeight.bold,
               ),
             ),
           ],
         ),
-        const SizedBox(
-          height: AtlasSpacing.sm,
-        ),
-        for (final AtlasCompletionItem item
-        in visibleItems)
+        const SizedBox(height: AtlasSpacing.sm),
+        for (final AtlasCompletionItem item in visibleItems)
           Padding(
-            padding: const EdgeInsets.only(
-              bottom: AtlasSpacing.sm,
-            ),
+            padding: const EdgeInsets.only(bottom: AtlasSpacing.sm),
             child: _CompletionReleaseRow(
               item: item,
               emoji: emoji,
@@ -338,11 +276,9 @@ class _CompletionSection extends StatelessWidget {
         if (remainingCount > 0)
           Text(
             '+$remainingCount more release'
-                '${remainingCount == 1 ? '' : 's'}',
-            style: AtlasTypography.bodySmall
-                .copyWith(
-              color:
-              AtlasColors.intelligenceBlue,
+            '${remainingCount == 1 ? '' : 's'}',
+            style: AtlasTypography.bodySmall.copyWith(
+              color: AtlasColors.intelligenceBlue,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -364,10 +300,7 @@ class _CompletionReleaseRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String subtitle =
-    _releaseSubtitle(
-      item,
-    );
+    final String subtitle = _releaseSubtitle(item);
 
     return Container(
       width: double.infinity,
@@ -376,76 +309,44 @@ class _CompletionReleaseRow extends StatelessWidget {
         vertical: AtlasSpacing.sm,
       ),
       decoration: BoxDecoration(
-        borderRadius:
-        BorderRadius.circular(
-          14,
-        ),
-        color: AtlasColors.surface
-            .withValues(
-          alpha: 0.55,
-        ),
-        border: Border.all(
-          color: color.withValues(
-            alpha: 0.20,
-          ),
-        ),
+        borderRadius: BorderRadius.circular(14),
+        color: AtlasColors.surface.withValues(alpha: 0.55),
+        border: Border.all(color: color.withValues(alpha: 0.20)),
       ),
       child: Row(
-        crossAxisAlignment:
-        CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            emoji,
-            style: const TextStyle(
-              fontSize: 17,
-            ),
-          ),
-          const SizedBox(
-            width: AtlasSpacing.sm,
-          ),
+          Text(emoji, style: const TextStyle(fontSize: 17)),
+          const SizedBox(width: AtlasSpacing.sm),
           Expanded(
             child: Column(
-              crossAxisAlignment:
-              CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   item.displayName,
                   maxLines: 2,
-                  overflow:
-                  TextOverflow.ellipsis,
-                  style: AtlasTypography
-                      .bodyMedium
-                      .copyWith(
-                    fontWeight:
-                    FontWeight.w600,
+                  overflow: TextOverflow.ellipsis,
+                  style: AtlasTypography.bodyMedium.copyWith(
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
                 if (subtitle.isNotEmpty) ...[
-                  const SizedBox(
-                    height: AtlasSpacing.xs,
-                  ),
+                  const SizedBox(height: AtlasSpacing.xs),
                   Text(
                     subtitle,
-                    style: AtlasTypography
-                        .bodySmall
-                        .copyWith(
-                      color: AtlasColors
-                          .textSecondary,
+                    style: AtlasTypography.bodySmall.copyWith(
+                      color: AtlasColors.textSecondary,
                     ),
                   ),
                 ],
               ],
             ),
           ),
-          if (item.isOwned &&
-              item.ownedQuantity > 1) ...[
-            const SizedBox(
-              width: AtlasSpacing.sm,
-            ),
+          if (item.isOwned && item.ownedQuantity > 1) ...[
+            const SizedBox(width: AtlasSpacing.sm),
             Text(
               'x${item.ownedQuantity}',
-              style: AtlasTypography.bodySmall
-                  .copyWith(
+              style: AtlasTypography.bodySmall.copyWith(
                 color: AtlasColors.success,
                 fontWeight: FontWeight.bold,
               ),
@@ -456,34 +357,21 @@ class _CompletionReleaseRow extends StatelessWidget {
     );
   }
 
-  String _releaseSubtitle(
-      AtlasCompletionItem item,
-      ) {
-    final List<String> parts =
-    <String>[];
+  String _releaseSubtitle(AtlasCompletionItem item) {
+    final List<String> parts = <String>[];
 
-    final String number =
-        item.productNumber?.trim() ?? '';
+    final String number = item.productNumber?.trim() ?? '';
 
-    final String variant =
-        item.variantName?.trim() ?? '';
+    final String variant = item.variantName?.trim() ?? '';
 
     if (number.isNotEmpty) {
-      parts.add(
-        '#$number',
-      );
+      parts.add('#$number');
     }
 
-    if (variant.isNotEmpty &&
-        variant.toLowerCase() !=
-            'common') {
-      parts.add(
-        variant,
-      );
+    if (variant.isNotEmpty && variant.toLowerCase() != 'common') {
+      parts.add(variant);
     }
 
-    return parts.join(
-      ' • ',
-    );
+    return parts.join(' • ');
   }
 }

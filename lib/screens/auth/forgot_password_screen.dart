@@ -11,9 +11,7 @@ import '../../widgets/atlas/components/atlas_info_banner.dart';
 import '../../widgets/atlas/components/atlas_section_header.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
-  const ForgotPasswordScreen({
-    super.key,
-  });
+  const ForgotPasswordScreen({super.key});
 
   @override
   State<ForgotPasswordScreen> createState() {
@@ -21,13 +19,10 @@ class ForgotPasswordScreen extends StatefulWidget {
   }
 }
 
-class _ForgotPasswordScreenState
-    extends State<ForgotPasswordScreen> {
-  final GlobalKey<FormState> _formKey =
-  GlobalKey<FormState>();
+class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
-  final TextEditingController _emailController =
-  TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
 
   bool _isLoading = false;
 
@@ -54,10 +49,7 @@ class _ForgotPasswordScreenState
     });
 
     try {
-      await context
-          .read<AuthProvider>()
-          .controller
-          .sendPasswordResetEmail(
+      await context.read<AuthProvider>().controller.sendPasswordResetEmail(
         _emailController.text.trim(),
       );
 
@@ -95,19 +87,14 @@ class _ForgotPasswordScreenState
     }
   }
 
-  String? _validateEmail(
-      String? value,
-      ) {
-    final String email =
-        value?.trim() ?? '';
+  String? _validateEmail(String? value) {
+    final String email = value?.trim() ?? '';
 
     if (email.isEmpty) {
       return 'Enter your email.';
     }
 
-    final RegExp emailPattern = RegExp(
-      r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
-    );
+    final RegExp emailPattern = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
 
     if (!emailPattern.hasMatch(email)) {
       return 'Enter a valid email address.';
@@ -119,122 +106,71 @@ class _ForgotPasswordScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor:
-      AtlasColors.background,
-      appBar: AppBar(
-        title: const Text(
-          'Reset Password',
-        ),
-      ),
+      backgroundColor: AtlasColors.background,
+      appBar: AppBar(title: const Text('Reset Password')),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(
-              AtlasSpacing.xl,
-            ),
+            padding: const EdgeInsets.all(AtlasSpacing.xl),
             child: ConstrainedBox(
-              constraints:
-              const BoxConstraints(
-                maxWidth: 460,
-              ),
+              constraints: const BoxConstraints(maxWidth: 460),
               child: AtlasGlassCard(
-                accentColor:
-                AtlasColors.vaultGold,
+                accentColor: AtlasColors.vaultGold,
                 child: Form(
                   key: _formKey,
                   child: AutofillGroup(
                     child: Column(
-                      crossAxisAlignment:
-                      CrossAxisAlignment
-                          .stretch,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         const AtlasSectionHeader(
-                          title:
-                          'Recover Access',
+                          title: 'Recover Access',
                           subtitle:
-                          'Enter your account email and Atlas will send password reset instructions.',
-                          icon: Icons
-                              .lock_reset_rounded,
-                          accentColor:
-                          AtlasColors.vaultGold,
-                          titleStyle:
-                          AtlasTypography
-                              .headingLarge,
+                              'Enter your account email and Atlas will send password reset instructions.',
+                          icon: Icons.lock_reset_rounded,
+                          accentColor: AtlasColors.vaultGold,
+                          titleStyle: AtlasTypography.headingLarge,
                         ),
-                        const SizedBox(
-                          height:
-                          AtlasSpacing.lg,
-                        ),
+                        const SizedBox(height: AtlasSpacing.lg),
                         const AtlasInfoBanner(
-                          icon:
-                          Icons.email_outlined,
-                          title:
-                          'Password Recovery',
+                          icon: Icons.email_outlined,
+                          title: 'Password Recovery',
                           message:
-                          'For account security, Atlas will use the same confirmation message whether or not an account exists for the email entered.',
+                              'For account security, Atlas will use the same confirmation message whether or not an account exists for the email entered.',
                         ),
-                        const SizedBox(
-                          height:
-                          AtlasSpacing.lg,
-                        ),
+                        const SizedBox(height: AtlasSpacing.lg),
                         AtlasFormField(
-                          controller:
-                          _emailController,
+                          controller: _emailController,
                           label: 'Email',
-                          icon:
-                          Icons.email_outlined,
-                          enabled:
-                          !_isLoading,
-                          keyboardType:
-                          TextInputType
-                              .emailAddress,
-                          textInputAction:
-                          TextInputAction.done,
-                          textCapitalization:
-                          TextCapitalization
-                              .none,
+                          icon: Icons.email_outlined,
+                          enabled: !_isLoading,
+                          keyboardType: TextInputType.emailAddress,
+                          textInputAction: TextInputAction.done,
+                          textCapitalization: TextCapitalization.none,
                           autocorrect: false,
-                          enableSuggestions:
-                          false,
+                          enableSuggestions: false,
                           autofillHints: const [
                             AutofillHints.email,
-                            AutofillHints
-                                .username,
+                            AutofillHints.username,
                           ],
-                          validator:
-                          _validateEmail,
-                          onFieldSubmitted:
-                              (_) {
+                          validator: _validateEmail,
+                          onFieldSubmitted: (_) {
                             _sendResetLink();
                           },
                         ),
-                        const SizedBox(
-                          height:
-                          AtlasSpacing.xl,
-                        ),
+                        const SizedBox(height: AtlasSpacing.xl),
                         SizedBox(
-                          width:
-                          double.infinity,
-                          child:
-                          FilledButton.icon(
-                            onPressed:
-                            _isLoading
-                                ? null
-                                : _sendResetLink,
+                          width: double.infinity,
+                          child: FilledButton.icon(
+                            onPressed: _isLoading ? null : _sendResetLink,
                             icon: _isLoading
                                 ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child:
-                              CircularProgressIndicator(
-                                strokeWidth:
-                                2,
-                              ),
-                            )
-                                : const Icon(
-                              Icons
-                                  .send_rounded,
-                            ),
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Icon(Icons.send_rounded),
                             label: Text(
                               _isLoading
                                   ? 'Sending Reset Link'

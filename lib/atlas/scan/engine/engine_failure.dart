@@ -7,16 +7,13 @@ class EngineFailure {
     required String code,
     required String message,
     bool isRetryable = false,
-    Map<String, Object?> details =
-    const <String, Object?>{},
+    Map<String, Object?> details = const <String, Object?>{},
   }) {
     return EngineFailure._(
       code: code.trim(),
       message: message.trim(),
       isRetryable: isRetryable,
-      details: Map<String, Object?>.unmodifiable(
-        details,
-      ),
+      details: Map<String, Object?>.unmodifiable(details),
     );
   }
 

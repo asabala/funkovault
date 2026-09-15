@@ -5,11 +5,8 @@ import 'pop_identity_rules.dart';
 class PopIdentityEngine {
   const PopIdentityEngine();
 
-  List<PopIdentityBadgeData> buildBadges(
-      Pop pop,
-      ) {
-    final List<PopIdentityBadgeData> badges =
-    <PopIdentityBadgeData>[];
+  List<PopIdentityBadgeData> buildBadges(Pop pop) {
+    final List<PopIdentityBadgeData> badges = <PopIdentityBadgeData>[];
 
     final Set<String> addedIds = <String>{};
     final Set<String> addedLabels = <String>{};
@@ -19,19 +16,15 @@ class PopIdentityEngine {
       required String emoji,
       required String label,
     }) {
-      final String cleanedLabel = _cleanLabel(
-        label,
-      );
+      final String cleanedLabel = _cleanLabel(label);
 
       if (!_hasMeaningfulValue(cleanedLabel)) {
         return;
       }
 
-      final String normalizedId =
-      id.trim().toLowerCase();
+      final String normalizedId = id.trim().toLowerCase();
 
-      final String normalizedLabel =
-      cleanedLabel.toLowerCase();
+      final String normalizedLabel = cleanedLabel.toLowerCase();
 
       if (addedIds.contains(normalizedId) ||
           addedLabels.contains(normalizedLabel)) {
@@ -50,98 +43,56 @@ class PopIdentityEngine {
       );
     }
 
-    final String retailExclusive = _cleanLabel(
-      pop.retailExclusive,
-    );
+    final String retailExclusive = _cleanLabel(pop.retailExclusive);
 
-    final String eventSticker = _cleanLabel(
-      pop.eventSticker,
-    );
+    final String eventSticker = _cleanLabel(pop.eventSticker);
 
-    final String limitedEdition = _cleanLabel(
-      pop.limitedEdition,
-    );
+    final String limitedEdition = _cleanLabel(pop.limitedEdition);
 
-    final String signature = _cleanLabel(
-      pop.signature,
-    );
+    final String signature = _cleanLabel(pop.signature);
 
-    final String variant = _cleanLabel(
-      pop.variant,
-    );
+    final String variant = _cleanLabel(pop.variant);
 
-    final String collectorLabel = _cleanLabel(
-      pop.collectorLabel,
-    );
+    final String collectorLabel = _cleanLabel(pop.collectorLabel);
 
-    final bool hasRetailExclusive =
-    _hasMeaningfulValue(
-      retailExclusive,
-    );
+    final bool hasRetailExclusive = _hasMeaningfulValue(retailExclusive);
 
-    final bool hasEventSticker =
-    _hasMeaningfulValue(
-      eventSticker,
-    );
+    final bool hasEventSticker = _hasMeaningfulValue(eventSticker);
 
-    final bool hasLimitedEdition =
-    _hasMeaningfulValue(
-      limitedEdition,
-    );
+    final bool hasLimitedEdition = _hasMeaningfulValue(limitedEdition);
 
-    final bool hasSignature =
-    _hasMeaningfulValue(
-      signature,
-    );
+    final bool hasSignature = _hasMeaningfulValue(signature);
 
-    final bool hasVariant =
-    _hasMeaningfulValue(
-      variant,
-    );
+    final bool hasVariant = _hasMeaningfulValue(variant);
 
     // Direct fields remain authoritative.
     if (hasRetailExclusive) {
       addBadge(
         id: 'retail_exclusive',
         emoji: '🏪',
-        label: _exclusiveLabel(
-          retailExclusive,
-        ),
+        label: _exclusiveLabel(retailExclusive),
       );
     }
 
     if (hasEventSticker) {
-      addBadge(
-        id: 'event_sticker',
-        emoji: '🎟️',
-        label: eventSticker,
-      );
+      addBadge(id: 'event_sticker', emoji: '🎟️', label: eventSticker);
     }
 
     if (hasLimitedEdition) {
       addBadge(
         id: 'limited_edition',
         emoji: '🏆',
-        label: _limitedEditionLabel(
-          limitedEdition,
-        ),
+        label: _limitedEditionLabel(limitedEdition),
       );
     }
 
     if (hasSignature) {
-      addBadge(
-        id: 'signed',
-        emoji: '🖋️',
-        label: _signatureLabel(
-          signature,
-        ),
-      );
+      addBadge(id: 'signed', emoji: '🖋️', label: _signatureLabel(signature));
     }
 
     bool variantMatchedKnownRule = false;
 
-    for (final PopIdentityRule rule
-    in PopIdentityRules.all) {
+    for (final PopIdentityRule rule in PopIdentityRules.all) {
       final bool matchesRule = _ruleMatchesPop(
         rule: rule,
         variant: variant,
@@ -156,67 +107,40 @@ class PopIdentityEngine {
         continue;
       }
 
-      if (rule.targets(PopIdentityScope.variant) &&
-          rule.matches(variant)) {
+      if (rule.targets(PopIdentityScope.variant) && rule.matches(variant)) {
         variantMatchedKnownRule = true;
       }
 
-      addBadge(
-        id: rule.id,
-        emoji: rule.emoji,
-        label: rule.label,
-      );
+      addBadge(id: rule.id, emoji: rule.emoji, label: rule.label);
     }
 
-    if (hasVariant &&
-        !variantMatchedKnownRule) {
-      addBadge(
-        id: 'custom_variant',
-        emoji: '🧬',
-        label: variant,
-      );
+    if (hasVariant && !variantMatchedKnownRule) {
+      addBadge(id: 'custom_variant', emoji: '🧬', label: variant);
     }
 
     final String exclusiveText = <String>[
       retailExclusive,
       eventSticker,
       variant,
-    ].join(
-      ' ',
-    ).toLowerCase();
+    ].join(' ').toLowerCase();
 
-    final bool hasKnownRetailer =
-    PopIdentityRules.knownRetailers.any(
-          (String retailer) {
-        return exclusiveText.contains(
-          retailer.toLowerCase(),
-        );
-      },
-    );
+    final bool hasKnownRetailer = PopIdentityRules.knownRetailers.any((
+      String retailer,
+    ) {
+      return exclusiveText.contains(retailer.toLowerCase());
+    });
 
-    final bool hasSpecificExclusive =
-        hasRetailExclusive || hasKnownRetailer;
+    final bool hasSpecificExclusive = hasRetailExclusive || hasKnownRetailer;
 
-    if (!hasSpecificExclusive &&
-        exclusiveText.contains('exclusive')) {
-      addBadge(
-        id: 'exclusive',
-        emoji: '⭐',
-        label: 'Exclusive',
-      );
+    if (!hasSpecificExclusive && exclusiveText.contains('exclusive')) {
+      addBadge(id: 'exclusive', emoji: '⭐', label: 'Exclusive');
     }
 
     if (pop.isWishlist) {
-      addBadge(
-        id: 'wishlist',
-        emoji: '❤️',
-        label: 'Wishlist',
-      );
+      addBadge(id: 'wishlist', emoji: '❤️', label: 'Wishlist');
     }
 
-    return List<PopIdentityBadgeData>.unmodifiable(
-      badges,
-    );
+    return List<PopIdentityBadgeData>.unmodifiable(badges);
   }
 
   bool _ruleMatchesPop({
@@ -229,23 +153,17 @@ class PopIdentityEngine {
     required String collectorLabel,
   }) {
     final Map<PopIdentityScope, String> scopedValues =
-    <PopIdentityScope, String>{
-      PopIdentityScope.variant: variant,
-      PopIdentityScope.retailExclusive:
-      retailExclusive,
-      PopIdentityScope.eventSticker:
-      eventSticker,
-      PopIdentityScope.limitedEdition:
-      limitedEdition,
-      PopIdentityScope.signature: signature,
-      PopIdentityScope.collectorLabel:
-      collectorLabel,
-    };
+        <PopIdentityScope, String>{
+          PopIdentityScope.variant: variant,
+          PopIdentityScope.retailExclusive: retailExclusive,
+          PopIdentityScope.eventSticker: eventSticker,
+          PopIdentityScope.limitedEdition: limitedEdition,
+          PopIdentityScope.signature: signature,
+          PopIdentityScope.collectorLabel: collectorLabel,
+        };
 
-    for (final PopIdentityScope scope
-    in rule.targetScopes) {
-      final String scopedValue =
-          scopedValues[scope] ?? '';
+    for (final PopIdentityScope scope in rule.targetScopes) {
+      final String scopedValue = scopedValues[scope] ?? '';
 
       if (!_hasMeaningfulValue(scopedValue)) {
         continue;
@@ -259,15 +177,10 @@ class PopIdentityEngine {
     return false;
   }
 
-  String _exclusiveLabel(
-      String value,
-      ) {
-    final String cleaned = _cleanLabel(
-      value,
-    );
+  String _exclusiveLabel(String value) {
+    final String cleaned = _cleanLabel(value);
 
-    final String normalized =
-    cleaned.toLowerCase();
+    final String normalized = cleaned.toLowerCase();
 
     if (normalized == 'exclusive' ||
         normalized == 'retail exclusive' ||
@@ -279,15 +192,10 @@ class PopIdentityEngine {
     return cleaned;
   }
 
-  String _limitedEditionLabel(
-      String value,
-      ) {
-    final String cleaned = _cleanLabel(
-      value,
-    );
+  String _limitedEditionLabel(String value) {
+    final String cleaned = _cleanLabel(value);
 
-    final String normalized =
-    cleaned.toLowerCase();
+    final String normalized = cleaned.toLowerCase();
 
     if (normalized == 'limited' ||
         normalized == 'limited edition' ||
@@ -299,15 +207,10 @@ class PopIdentityEngine {
     return cleaned;
   }
 
-  String _signatureLabel(
-      String value,
-      ) {
-    final String cleaned = _cleanLabel(
-      value,
-    );
+  String _signatureLabel(String value) {
+    final String cleaned = _cleanLabel(value);
 
-    final String normalized =
-    cleaned.toLowerCase();
+    final String normalized = cleaned.toLowerCase();
 
     if (normalized == 'signed' ||
         normalized == 'signature' ||
@@ -321,11 +224,8 @@ class PopIdentityEngine {
     return cleaned;
   }
 
-  bool _hasMeaningfulValue(
-      String value,
-      ) {
-    final String cleaned =
-    value.trim().toLowerCase();
+  bool _hasMeaningfulValue(String value) {
+    final String cleaned = value.trim().toLowerCase();
 
     if (cleaned.isEmpty) {
       return false;
@@ -343,18 +243,10 @@ class PopIdentityEngine {
         cleaned != 'unknown';
   }
 
-  String _cleanLabel(
-      String value,
-      ) {
+  String _cleanLabel(String value) {
     return value
         .trim()
-        .replaceAll(
-      RegExp(r'\s+'),
-      ' ',
-    )
-        .replaceAll(
-      RegExp(r'^[-–—\s]+|[-–—\s]+$'),
-      '',
-    );
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .replaceAll(RegExp(r'^[-–—\s]+|[-–—\s]+$'), '');
   }
 }

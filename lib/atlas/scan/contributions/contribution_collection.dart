@@ -9,36 +9,29 @@ import 'intelligence_contribution.dart';
 class ContributionCollection {
   factory ContributionCollection({
     Iterable<IntelligenceContribution> contributions =
-    const <IntelligenceContribution>[],
+        const <IntelligenceContribution>[],
   }) {
     final Map<String, IntelligenceContribution> byId =
-    <String, IntelligenceContribution>{};
+        <String, IntelligenceContribution>{};
 
-    for (final IntelligenceContribution contribution
-    in contributions) {
-      final String contributionId =
-      _normalizedContributionId(contribution);
+    for (final IntelligenceContribution contribution in contributions) {
+      final String contributionId = _normalizedContributionId(contribution);
 
       if (byId.containsKey(contributionId)) {
-        throw StateError(
-          'Duplicate contribution ID: $contributionId',
-        );
+        throw StateError('Duplicate contribution ID: $contributionId');
       }
 
       byId[contributionId] = contribution;
     }
 
     return ContributionCollection._(
-      Map<String, IntelligenceContribution>.unmodifiable(
-        byId,
-      ),
+      Map<String, IntelligenceContribution>.unmodifiable(byId),
     );
   }
 
   const ContributionCollection._(this._byId);
 
-  static final ContributionCollection empty =
-  ContributionCollection();
+  static final ContributionCollection empty = ContributionCollection();
 
   final Map<String, IntelligenceContribution> _byId;
 
@@ -55,31 +48,23 @@ class ContributionCollection {
   }
 
   List<IntelligenceContribution> get values {
-    return List<IntelligenceContribution>.unmodifiable(
-      _byId.values,
-    );
+    return List<IntelligenceContribution>.unmodifiable(_byId.values);
   }
 
-  bool containsId(
-      String contributionId,
-      ) {
-    return _byId.containsKey(
-      contributionId.trim(),
-    );
+  bool containsId(String contributionId) {
+    return _byId.containsKey(contributionId.trim());
   }
 
-  IntelligenceContribution? contributionForId(
-      String contributionId,
-      ) {
+  IntelligenceContribution? contributionForId(String contributionId) {
     return _byId[contributionId.trim()];
   }
 
-  T? contributionForIdAs<
-  T extends IntelligenceContribution>(
-      String contributionId,
-      ) {
-    final IntelligenceContribution? contribution =
-    contributionForId(contributionId);
+  T? contributionForIdAs<T extends IntelligenceContribution>(
+    String contributionId,
+  ) {
+    final IntelligenceContribution? contribution = contributionForId(
+      contributionId,
+    );
 
     if (contribution is T) {
       return contribution;
@@ -89,21 +74,14 @@ class ContributionCollection {
   }
 
   List<T> ofType<T extends IntelligenceContribution>() {
-    return List<T>.unmodifiable(
-      _byId.values.whereType<T>(),
-    );
+    return List<T>.unmodifiable(_byId.values.whereType<T>());
   }
 
-  T? latestOfType<
-  T extends IntelligenceContribution>() {
+  T? latestOfType<T extends IntelligenceContribution>() {
     T? latest;
 
-    for (final T contribution
-    in _byId.values.whereType<T>()) {
-      if (latest == null ||
-          contribution.createdAt.isAfter(
-            latest.createdAt,
-          )) {
+    for (final T contribution in _byId.values.whereType<T>()) {
+      if (latest == null || contribution.createdAt.isAfter(latest.createdAt)) {
         latest = contribution;
       }
     }
@@ -111,78 +89,60 @@ class ContributionCollection {
     return latest;
   }
 
-  List<IntelligenceContribution> forCategory(
-      ContributionCategory category,
-      ) {
+  List<IntelligenceContribution> forCategory(ContributionCategory category) {
     return List<IntelligenceContribution>.unmodifiable(
-      _byId.values.where(
-            (IntelligenceContribution contribution) {
-          return contribution.category == category;
-        },
-      ),
+      _byId.values.where((IntelligenceContribution contribution) {
+        return contribution.category == category;
+      }),
     );
   }
 
-  List<IntelligenceContribution> fromEngine(
-      String engineId,
-      ) {
-    final String normalizedEngineId =
-    engineId.trim();
+  List<IntelligenceContribution> fromEngine(String engineId) {
+    final String normalizedEngineId = engineId.trim();
 
     if (normalizedEngineId.isEmpty) {
       return const <IntelligenceContribution>[];
     }
 
     return List<IntelligenceContribution>.unmodifiable(
-      _byId.values.where(
-            (IntelligenceContribution contribution) {
-          return contribution.sourceEngineId ==
-              normalizedEngineId;
-        },
-      ),
+      _byId.values.where((IntelligenceContribution contribution) {
+        return contribution.sourceEngineId == normalizedEngineId;
+      }),
     );
   }
 
-  List<IntelligenceContribution>
-  withMinimumConfidence(
-      double minimumConfidence,
-      ) {
+  List<IntelligenceContribution> withMinimumConfidence(
+    double minimumConfidence,
+  ) {
     final double normalizedMinimum =
-    IntelligenceContributionValidation
-        .normalizeConfidence(
-      minimumConfidence,
-    )!;
+        IntelligenceContributionValidation.normalizeConfidence(
+          minimumConfidence,
+        )!;
 
     return List<IntelligenceContribution>.unmodifiable(
-      _byId.values.where(
-            (IntelligenceContribution contribution) {
-          final double? confidence =
-              contribution.confidence;
+      _byId.values.where((IntelligenceContribution contribution) {
+        final double? confidence = contribution.confidence;
 
-          return confidence != null &&
-              confidence >= normalizedMinimum;
-        },
-      ),
+        return confidence != null && confidence >= normalizedMinimum;
+      }),
     );
   }
 
   ContributionCollection add(
-      IntelligenceContribution contribution, {
-        ContributionConflictPolicy conflictPolicy =
-            ContributionConflictPolicy.reject,
-      }) {
-    final String contributionId =
-    _normalizedContributionId(contribution);
+    IntelligenceContribution contribution, {
+    ContributionConflictPolicy conflictPolicy =
+        ContributionConflictPolicy.reject,
+  }) {
+    final String contributionId = _normalizedContributionId(contribution);
 
-    final bool alreadyExists =
-    _byId.containsKey(contributionId);
+    final bool alreadyExists = _byId.containsKey(contributionId);
 
     if (alreadyExists) {
       switch (conflictPolicy) {
         case ContributionConflictPolicy.reject:
           throw StateError(
             'Contribution "$contributionId" '
-                'already exists.',
+            'already exists.',
           );
 
         case ContributionConflictPolicy.keepExisting:
@@ -194,109 +154,83 @@ class ContributionCollection {
     }
 
     return ContributionCollection(
-      contributions:
-      <IntelligenceContribution>[
-        ..._byId.values.where(
-              (IntelligenceContribution existing) {
-            return existing.contributionId.trim() !=
-                contributionId;
-          },
-        ),
+      contributions: <IntelligenceContribution>[
+        ..._byId.values.where((IntelligenceContribution existing) {
+          return existing.contributionId.trim() != contributionId;
+        }),
         contribution,
       ],
     );
   }
 
   ContributionCollection addAll(
-      Iterable<IntelligenceContribution> contributions, {
-        ContributionConflictPolicy conflictPolicy =
-            ContributionConflictPolicy.reject,
-      }) {
+    Iterable<IntelligenceContribution> contributions, {
+    ContributionConflictPolicy conflictPolicy =
+        ContributionConflictPolicy.reject,
+  }) {
     ContributionCollection current = this;
 
-    for (final IntelligenceContribution contribution
-    in contributions) {
-      current = current.add(
-        contribution,
-        conflictPolicy: conflictPolicy,
-      );
+    for (final IntelligenceContribution contribution in contributions) {
+      current = current.add(contribution, conflictPolicy: conflictPolicy);
     }
 
     return current;
   }
 
-  ContributionCollection removeById(
-      String contributionId,
-      ) {
-    final String normalized =
-    contributionId.trim();
+  ContributionCollection removeById(String contributionId) {
+    final String normalized = contributionId.trim();
 
-    if (normalized.isEmpty ||
-        !_byId.containsKey(normalized)) {
+    if (normalized.isEmpty || !_byId.containsKey(normalized)) {
       return this;
     }
 
     return ContributionCollection(
-      contributions: _byId.values.where(
-            (IntelligenceContribution contribution) {
-          return contribution.contributionId.trim() !=
-              normalized;
-        },
-      ),
+      contributions: _byId.values.where((
+        IntelligenceContribution contribution,
+      ) {
+        return contribution.contributionId.trim() != normalized;
+      }),
     );
   }
 
-  ContributionCollection removeFromEngine(
-      String engineId,
-      ) {
-    final String normalizedEngineId =
-    engineId.trim();
+  ContributionCollection removeFromEngine(String engineId) {
+    final String normalizedEngineId = engineId.trim();
 
     if (normalizedEngineId.isEmpty) {
       return this;
     }
 
-    final List<IntelligenceContribution> remaining =
-    _byId.values.where(
-          (IntelligenceContribution contribution) {
-        return contribution.sourceEngineId !=
-            normalizedEngineId;
-      },
-    ).toList(growable: false);
+    final List<IntelligenceContribution> remaining = _byId.values
+        .where((IntelligenceContribution contribution) {
+          return contribution.sourceEngineId != normalizedEngineId;
+        })
+        .toList(growable: false);
 
     if (remaining.length == length) {
       return this;
     }
 
-    return ContributionCollection(
-      contributions: remaining,
-    );
+    return ContributionCollection(contributions: remaining);
   }
 
-  ContributionCollection removeCategory(
-      ContributionCategory category,
-      ) {
-    final List<IntelligenceContribution> remaining =
-    _byId.values.where(
-          (IntelligenceContribution contribution) {
-        return contribution.category != category;
-      },
-    ).toList(growable: false);
+  ContributionCollection removeCategory(ContributionCategory category) {
+    final List<IntelligenceContribution> remaining = _byId.values
+        .where((IntelligenceContribution contribution) {
+          return contribution.category != category;
+        })
+        .toList(growable: false);
 
     if (remaining.length == length) {
       return this;
     }
 
-    return ContributionCollection(
-      contributions: remaining,
-    );
+    return ContributionCollection(contributions: remaining);
   }
 
   static String _normalizedContributionId(
-      IntelligenceContribution contribution,
-      ) {
-    return IntelligenceContributionValidation
-        .requireIdentifier(
+    IntelligenceContribution contribution,
+  ) {
+    return IntelligenceContributionValidation.requireIdentifier(
       contribution.contributionId,
       fieldName: 'contributionId',
     );

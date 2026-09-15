@@ -27,10 +27,7 @@ class CollectorScoreCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Collector Score',
-            style: AtlasTypography.headingSmall,
-          ),
+          Text('Collector Score', style: AtlasTypography.headingSmall),
 
           const SizedBox(height: AtlasSpacing.lg),
 
@@ -64,9 +61,7 @@ class CollectorScoreCard extends StatelessWidget {
               value: progress,
               minHeight: 10,
               backgroundColor: Colors.white10,
-              valueColor: const AlwaysStoppedAnimation(
-                AtlasColors.vaultGold,
-              ),
+              valueColor: const AlwaysStoppedAnimation(AtlasColors.vaultGold),
             ),
           ),
 

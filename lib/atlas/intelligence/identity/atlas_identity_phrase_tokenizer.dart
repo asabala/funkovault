@@ -10,38 +10,30 @@ import 'atlas_identity_token.dart';
 // convention, etc.) can recognize collector terminology without
 // rebuilding phrases themselves.
 final class AtlasIdentityPhraseTokenizer {
-  const AtlasIdentityPhraseTokenizer({
-    this.maxPhraseLength = 4,
-  });
+  const AtlasIdentityPhraseTokenizer({this.maxPhraseLength = 4});
 
   final int maxPhraseLength;
 
-  List<AtlasIdentityPhrase> tokenize(
-      List<AtlasIdentityToken> tokens,
-      ) {
+  List<AtlasIdentityPhrase> tokenize(List<AtlasIdentityToken> tokens) {
     if (tokens.isEmpty) {
       return const <AtlasIdentityPhrase>[];
     }
 
     final LinkedHashMap<String, AtlasIdentityPhrase> phrases =
-    LinkedHashMap<String, AtlasIdentityPhrase>();
+        LinkedHashMap<String, AtlasIdentityPhrase>();
 
     for (int start = 0; start < tokens.length; start++) {
       for (
-      int length = 1;
-      length <= maxPhraseLength &&
-          start + length <= tokens.length;
-      length++
+        int length = 1;
+        length <= maxPhraseLength && start + length <= tokens.length;
+        length++
       ) {
-        final List<AtlasIdentityToken> slice =
-        tokens.sublist(
+        final List<AtlasIdentityToken> slice = tokens.sublist(
           start,
           start + length,
         );
 
-        final String text = slice
-            .map((token) => token.text)
-            .join(' ');
+        final String text = slice.map((token) => token.text).join(' ');
 
         final String normalized = slice
             .map((token) => token.normalizedText)
@@ -49,19 +41,15 @@ final class AtlasIdentityPhraseTokenizer {
 
         phrases.putIfAbsent(
           normalized,
-              () => AtlasIdentityPhrase(
+          () => AtlasIdentityPhrase(
             text: text,
             normalizedText: normalized,
-            tokens: List<AtlasIdentityToken>.unmodifiable(
-              slice,
-            ),
+            tokens: List<AtlasIdentityToken>.unmodifiable(slice),
           ),
         );
       }
     }
 
-    return List<AtlasIdentityPhrase>.unmodifiable(
-      phrases.values,
-    );
+    return List<AtlasIdentityPhrase>.unmodifiable(phrases.values);
   }
 }

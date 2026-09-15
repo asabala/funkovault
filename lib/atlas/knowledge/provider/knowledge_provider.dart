@@ -6,13 +6,10 @@ import 'knowledge_provider_result.dart';
 //
 // Providers may represent APIs, CSV datasets, barcode services, local
 // databases, manual entry, scanners, or other trusted data sources.
-abstract interface class KnowledgeProvider
-    implements AtlasModule {
+abstract interface class KnowledgeProvider implements AtlasModule {
   // Determines whether this provider can handle the supplied query.
   bool supports(KnowledgeQuery query);
 
   // Retrieves zero or more identity candidates for the supplied query.
-  Future<KnowledgeProviderResult> fetch(
-      KnowledgeQuery query,
-      );
+  Future<KnowledgeProviderResult> fetch(KnowledgeQuery query);
 }

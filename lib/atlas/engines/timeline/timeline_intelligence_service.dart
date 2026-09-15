@@ -9,10 +9,7 @@ class TimelineIntelligenceService {
 
   final AtlasTimelineIntelligenceEngine engine;
 
-  AtlasTimelineIntelligenceReport buildReport(
-      Pop pop, {
-        DateTime? now,
-      }) {
+  AtlasTimelineIntelligenceReport buildReport(Pop pop, {DateTime? now}) {
     return engine.analyze(
       timeline: pop.timeline,
       valueHistory: pop.valueHistory,

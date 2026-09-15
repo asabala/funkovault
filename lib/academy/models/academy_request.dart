@@ -1,16 +1,8 @@
 import '../data/academy_request_table.dart';
 
-enum AcademyRequestType {
-  topic,
-  track,
-}
+enum AcademyRequestType { topic, track }
 
-enum AcademyRequestStatus {
-  newRequest,
-  reviewed,
-  approved,
-  declined,
-}
+enum AcademyRequestStatus { newRequest, reviewed, approved, declined }
 
 class AcademyRequest {
   AcademyRequest({
@@ -133,9 +125,7 @@ class AcademyRequest {
       createdAt: createdAt,
       updatedAt: map[AcademyRequestTable.updatedAt] == null
           ? createdAt
-          : DateTime.parse(
-        map[AcademyRequestTable.updatedAt] as String,
-      ),
+          : DateTime.parse(map[AcademyRequestTable.updatedAt] as String),
     );
   }
 }

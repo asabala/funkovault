@@ -23,24 +23,18 @@ class AtlasInsightsScreen extends StatelessWidget {
     final appState = context.watch<AppState>();
     const repository = VaultRepository();
 
-    final ownerLeaderboard =
-    repository.ownerLeaderboard(appState);
+    final ownerLeaderboard = repository.ownerLeaderboard(appState);
 
-    final categoryCounts =
-    repository.categoryCounts(appState).entries.toList()
+    final categoryCounts = repository.categoryCounts(appState).entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
 
-    final categoryValues =
-    repository.categoryValues(appState).entries.toList()
+    final categoryValues = repository.categoryValues(appState).entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
 
-    final topPops =
-    repository.mostValuablePops(appState);
+    final topPops = repository.mostValuablePops(appState);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Atlas Insights'),
-      ),
+      appBar: AppBar(title: const Text('Atlas Insights')),
       body: VaultScrollView(
         children: [
           AtlasGlassCard(
@@ -76,10 +70,10 @@ class AtlasInsightsScreen extends StatelessWidget {
                 .take(6)
                 .map(
                   (entry) => _InsightItem(
-                title: entry.key,
-                value: _formatCurrency(entry.value),
-              ),
-            )
+                    title: entry.key,
+                    value: _formatCurrency(entry.value),
+                  ),
+                )
                 .toList(),
           ),
 
@@ -91,10 +85,10 @@ class AtlasInsightsScreen extends StatelessWidget {
                 .take(6)
                 .map(
                   (entry) => _InsightItem(
-                title: entry.key,
-                value: '${entry.value} Pops',
-              ),
-            )
+                    title: entry.key,
+                    value: '${entry.value} Pops',
+                  ),
+                )
                 .toList(),
           ),
 
@@ -106,10 +100,10 @@ class AtlasInsightsScreen extends StatelessWidget {
                 .take(6)
                 .map(
                   (entry) => _InsightItem(
-                title: entry.key,
-                value: _formatCurrency(entry.value),
-              ),
-            )
+                    title: entry.key,
+                    value: _formatCurrency(entry.value),
+                  ),
+                )
                 .toList(),
           ),
 
@@ -121,10 +115,10 @@ class AtlasInsightsScreen extends StatelessWidget {
                 .take(6)
                 .map(
                   (pop) => _InsightItem(
-                title: pop.name,
-                value: _formatCurrency(pop.value),
-              ),
-            )
+                    title: pop.name,
+                    value: _formatCurrency(pop.value),
+                  ),
+                )
                 .toList(),
           ),
         ],
@@ -134,10 +128,7 @@ class AtlasInsightsScreen extends StatelessWidget {
 }
 
 class _InsightListCard extends StatelessWidget {
-  const _InsightListCard({
-    required this.title,
-    required this.items,
-  });
+  const _InsightListCard({required this.title, required this.items});
 
   final String title;
   final List<_InsightItem> items;
@@ -148,10 +139,7 @@ class _InsightListCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: AtlasTypography.headingSmall,
-          ),
+          Text(title, style: AtlasTypography.headingSmall),
           const SizedBox(height: AtlasSpacing.md),
           if (items.isEmpty)
             AtlasGlassPanel(
@@ -164,52 +152,48 @@ class _InsightListCard extends StatelessWidget {
             )
           else
             Column(
-              children: List.generate(
-                items.length,
-                    (index) {
-                  final item = items[index];
+              children: List.generate(items.length, (index) {
+                final item = items[index];
 
-                  return Padding(
-                    padding: EdgeInsets.only(
-                      bottom: index == items.length - 1
-                          ? 0
-                          : AtlasSpacing.sm,
-                    ),
-                    child: AtlasGlassPanel(
-                      child: Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 15,
-                            backgroundColor:
-                            AtlasColors.vaultGold.withValues(alpha: 0.18),
-                            child: Text(
-                              '${index + 1}',
-                              style: AtlasTypography.bodySmall.copyWith(
-                                color: AtlasColors.vaultGold,
-                              ),
-                            ),
+                return Padding(
+                  padding: EdgeInsets.only(
+                    bottom: index == items.length - 1 ? 0 : AtlasSpacing.sm,
+                  ),
+                  child: AtlasGlassPanel(
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 15,
+                          backgroundColor: AtlasColors.vaultGold.withValues(
+                            alpha: 0.18,
                           ),
-                          const SizedBox(width: AtlasSpacing.md),
-                          Expanded(
-                            child: Text(
-                              item.title,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: AtlasTypography.bodyMedium,
-                            ),
-                          ),
-                          Text(
-                            item.value,
+                          child: Text(
+                            '${index + 1}',
                             style: AtlasTypography.bodySmall.copyWith(
                               color: AtlasColors.vaultGold,
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                        const SizedBox(width: AtlasSpacing.md),
+                        Expanded(
+                          child: Text(
+                            item.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AtlasTypography.bodyMedium,
+                          ),
+                        ),
+                        Text(
+                          item.value,
+                          style: AtlasTypography.bodySmall.copyWith(
+                            color: AtlasColors.vaultGold,
+                          ),
+                        ),
+                      ],
                     ),
-                  );
-                },
-              ),
+                  ),
+                );
+              }),
             ),
         ],
       ),
@@ -218,10 +202,7 @@ class _InsightListCard extends StatelessWidget {
 }
 
 class _InsightItem {
-  const _InsightItem({
-    required this.title,
-    required this.value,
-  });
+  const _InsightItem({required this.title, required this.value});
 
   final String title;
   final String value;

@@ -17,29 +17,21 @@ class AtlasCollectorDNA {
 class AtlasCollectorDNAEngine {
   const AtlasCollectorDNAEngine();
 
-  AtlasCollectorDNA analyze(
-      List<Pop> pops,
-      ) {
+  AtlasCollectorDNA analyze(List<Pop> pops) {
     if (pops.isEmpty) {
       return const AtlasCollectorDNA(
         primaryTrait: 'New Collector',
         secondaryTrait: 'Explorer',
         confidence: 100,
-        summary:
-        'Every great collection begins with a single collectible.',
+        summary: 'Every great collection begins with a single collectible.',
       );
     }
 
-    final totalValue = pops.fold<double>(
-      0,
-          (sum, pop) => sum + pop.value,
-    );
+    final totalValue = pops.fold<double>(0, (sum, pop) => sum + pop.value);
 
-    final grails =
-        pops.where((pop) => pop.value >= 100).length;
+    final grails = pops.where((pop) => pop.value >= 100).length;
 
-    final averageValue =
-        totalValue / pops.length;
+    final averageValue = totalValue / pops.length;
 
     String primaryTrait;
     String secondaryTrait;
@@ -62,8 +54,7 @@ class AtlasCollectorDNAEngine {
       primaryTrait: primaryTrait,
       secondaryTrait: secondaryTrait,
       confidence: 94,
-      summary:
-      'Atlas is continuously learning your collecting habits.',
+      summary: 'Atlas is continuously learning your collecting habits.',
     );
   }
 }

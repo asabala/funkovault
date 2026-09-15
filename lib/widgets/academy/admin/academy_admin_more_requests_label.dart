@@ -17,8 +17,7 @@ class AcademyAdminMoreRequestsLabel extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    final String label =
-    hiddenRequestCount == 1
+    final String label = hiddenRequestCount == 1
         ? '+1 more request'
         : '+$hiddenRequestCount more requests';
 

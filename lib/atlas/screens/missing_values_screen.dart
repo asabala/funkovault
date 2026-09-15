@@ -19,45 +19,41 @@ class MissingValuesScreen extends StatelessWidget {
         .toList();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Missing Values'),
-      ),
+      appBar: AppBar(title: const Text('Missing Values')),
       body: pops.isEmpty
           ? const Center(
-        child: Text(
-          'No missing values found.\nYour Vault looks strong.',
-          textAlign: TextAlign.center,
-        ),
-      )
-          : ListView.separated(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-        itemCount: pops.length,
-        separatorBuilder: (context, index) =>
-        const SizedBox(height: 12),
-        itemBuilder: (context, index) {
-          final pop = pops[index];
-
-          return Card(
-            child: ListTile(
-              leading: const Icon(Icons.sell),
-              title: Text(pop.name),
-              subtitle: Text(
-                'Pop #${pop.number} • ${pop.collectorLabel}',
+              child: Text(
+                'No missing values found.\nYour Vault looks strong.',
+                textAlign: TextAlign.center,
               ),
-              trailing: const Icon(Icons.arrow_forward_ios),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        PopDetailsScreen(pop: pop),
+            )
+          : ListView.separated(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+              itemCount: pops.length,
+              separatorBuilder: (context, index) => const SizedBox(height: 12),
+              itemBuilder: (context, index) {
+                final pop = pops[index];
+
+                return Card(
+                  child: ListTile(
+                    leading: const Icon(Icons.sell),
+                    title: Text(pop.name),
+                    subtitle: Text(
+                      'Pop #${pop.number} • ${pop.collectorLabel}',
+                    ),
+                    trailing: const Icon(Icons.arrow_forward_ios),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => PopDetailsScreen(pop: pop),
+                        ),
+                      );
+                    },
                   ),
                 );
               },
             ),
-          );
-        },
-      ),
     );
   }
 }

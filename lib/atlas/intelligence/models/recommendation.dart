@@ -2,12 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import 'recommendation_reason.dart';
 
-enum RecommendationPriority {
-  low,
-  medium,
-  high,
-  critical,
-}
+enum RecommendationPriority { low, medium, high, critical }
 
 @immutable
 class Recommendation {
@@ -21,9 +16,9 @@ class Recommendation {
     this.expectedImpact,
     this.metadata = const <String, Object?>{},
   }) : assert(
-  confidence >= 0 && confidence <= 1,
-  'confidence must be between 0 and 1',
-  );
+         confidence >= 0 && confidence <= 1,
+         'confidence must be between 0 and 1',
+       );
 
   final String id;
 
@@ -53,14 +48,12 @@ class Recommendation {
   /// Expandable structured context.
   final Map<String, Object?> metadata;
 
-  int get confidencePercent =>
-      (confidence * 100).round();
+  int get confidencePercent => (confidence * 100).round();
 
   bool get hasReasons => reasons.isNotEmpty;
 
   bool get hasExpectedImpact =>
-      expectedImpact != null &&
-          expectedImpact!.trim().isNotEmpty;
+      expectedImpact != null && expectedImpact!.trim().isNotEmpty;
 
   Recommendation copyWith({
     String? id,
@@ -113,9 +106,7 @@ class Recommendation {
       Object.hashAll(reasons),
       expectedImpact,
       Object.hashAll(
-        metadata.entries.map(
-              (entry) => Object.hash(entry.key, entry.value),
-        ),
+        metadata.entries.map((entry) => Object.hash(entry.key, entry.value)),
       ),
     );
   }

@@ -17,8 +17,6 @@ class AtlasBootController {
     // - Load user settings
     //
 
-    await Future.delayed(
-      const Duration(milliseconds: 2400),
-    );
+    await Future.delayed(const Duration(milliseconds: 2400));
   }
 }

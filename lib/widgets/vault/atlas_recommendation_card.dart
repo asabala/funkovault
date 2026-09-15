@@ -35,22 +35,18 @@ class AtlasRecommendationCard extends StatelessWidget {
           const AtlasSectionHeader(
             title: 'Atlas Recommendation',
             subtitle:
-            'Collector guidance generated from your current vault snapshot.',
+                'Collector guidance generated from your current vault snapshot.',
             icon: AtlasIcons.intelligence,
             accentColor: AtlasColors.vaultGold,
           ),
-          const SizedBox(
-            height: AtlasSpacing.md,
-          ),
+          const SizedBox(height: AtlasSpacing.md),
           AtlasStatusChip(
             label: '$confidence% Confidence',
             icon: Icons.verified_rounded,
             accentColor: AtlasColors.vaultGold,
             size: AtlasStatusChipSize.compact,
           ),
-          const SizedBox(
-            height: AtlasSpacing.md,
-          ),
+          const SizedBox(height: AtlasSpacing.md),
           AtlasGlassPanel(
             child: Text(
               message,
@@ -59,9 +55,7 @@ class AtlasRecommendationCard extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(
-            height: AtlasSpacing.md,
-          ),
+          const SizedBox(height: AtlasSpacing.md),
           Row(
             children: [
               Expanded(
@@ -70,9 +64,7 @@ class AtlasRecommendationCard extends StatelessWidget {
                   value: estimatedCost ?? 'Learning',
                 ),
               ),
-              const SizedBox(
-                width: AtlasSpacing.sm,
-              ),
+              const SizedBox(width: AtlasSpacing.sm),
               Expanded(
                 child: _RecommendationMeta(
                   label: 'Difficulty',
@@ -82,20 +74,13 @@ class AtlasRecommendationCard extends StatelessWidget {
             ],
           ),
           if (onViewDetails != null) ...[
-            const SizedBox(
-              height: AtlasSpacing.md,
-            ),
+            const SizedBox(height: AtlasSpacing.md),
             Align(
               alignment: Alignment.centerRight,
               child: OutlinedButton.icon(
                 onPressed: onViewDetails,
-                icon: const Icon(
-                  Icons.arrow_forward_rounded,
-                  size: 16,
-                ),
-                label: const Text(
-                  'View Details',
-                ),
+                icon: const Icon(Icons.arrow_forward_rounded, size: 16),
+                label: const Text('View Details'),
               ),
             ),
           ],
@@ -106,10 +91,7 @@ class AtlasRecommendationCard extends StatelessWidget {
 }
 
 class _RecommendationMeta extends StatelessWidget {
-  const _RecommendationMeta({
-    required this.label,
-    required this.value,
-  });
+  const _RecommendationMeta({required this.label, required this.value});
 
   final String label;
   final String value;
@@ -117,9 +99,7 @@ class _RecommendationMeta extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AtlasGlassPanel(
-      padding: const EdgeInsets.all(
-        AtlasSpacing.sm,
-      ),
+      padding: const EdgeInsets.all(AtlasSpacing.sm),
       borderRadius: 16,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -130,9 +110,7 @@ class _RecommendationMeta extends StatelessWidget {
               color: AtlasColors.textSecondary,
             ),
           ),
-          const SizedBox(
-            height: AtlasSpacing.xs,
-          ),
+          const SizedBox(height: AtlasSpacing.xs),
           Text(
             value,
             maxLines: 1,

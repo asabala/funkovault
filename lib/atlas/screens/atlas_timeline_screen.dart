@@ -14,26 +14,20 @@ class AtlasTimelineScreen extends StatelessWidget {
     final activities = context.watch<AppState>().recentActivities;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Atlas Timeline'),
-      ),
+      appBar: AppBar(title: const Text('Atlas Timeline')),
       body: VaultScrollView(
         children: [
           const AtlasGreetingCard(
             title: 'Atlas Timeline',
             message:
-            'Atlas remembers important events in your collecting journey.',
+                'Atlas remembers important events in your collecting journey.',
             icon: Icons.timeline,
           ),
           const SizedBox(height: 16),
           if (activities.isEmpty)
             const _EmptyTimelineCard()
           else
-            ...activities.map(
-                  (activity) => _ActivityTile(
-                activity: activity,
-              ),
-            ),
+            ...activities.map((activity) => _ActivityTile(activity: activity)),
         ],
       ),
     );
@@ -50,15 +44,9 @@ class _EmptyTimelineCard extends StatelessWidget {
         padding: EdgeInsets.all(20),
         child: Column(
           children: [
-            Icon(
-              Icons.history_toggle_off_rounded,
-              size: 42,
-            ),
+            Icon(Icons.history_toggle_off_rounded, size: 42),
             SizedBox(height: 12),
-            Text(
-              'No activity recorded yet',
-              textAlign: TextAlign.center,
-            ),
+            Text('No activity recorded yet', textAlign: TextAlign.center),
             SizedBox(height: 6),
             Text(
               'Important Vault changes will appear here.',
@@ -72,9 +60,7 @@ class _EmptyTimelineCard extends StatelessWidget {
 }
 
 class _ActivityTile extends StatelessWidget {
-  const _ActivityTile({
-    required this.activity,
-  });
+  const _ActivityTile({required this.activity});
 
   final Activity activity;
 
@@ -82,20 +68,13 @@ class _ActivityTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: ListTile(
-        leading: Icon(
-          _iconForAction(activity.action),
-        ),
-        title: Text(
-          _titleForActivity(activity),
-        ),
+        leading: Icon(_iconForAction(activity.action)),
+        title: Text(_titleForActivity(activity)),
         subtitle: Text(activity.details),
         trailing: Text(
           _formatTime(activity.timestamp),
           textAlign: TextAlign.right,
-          style: const TextStyle(
-            color: Colors.grey,
-            fontSize: 12,
-          ),
+          style: const TextStyle(color: Colors.grey, fontSize: 12),
         ),
       ),
     );

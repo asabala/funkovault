@@ -6,10 +6,7 @@ import 'academy_request_status_badge.dart';
 import 'academy_request_type_badge.dart';
 
 class AcademyRequestBadgeRow extends StatelessWidget {
-  const AcademyRequestBadgeRow({
-    super.key,
-    required this.request,
-  });
+  const AcademyRequestBadgeRow({super.key, required this.request});
 
   final AcademyRequest request;
 
@@ -19,12 +16,8 @@ class AcademyRequestBadgeRow extends StatelessWidget {
       spacing: AtlasSpacing.sm,
       runSpacing: AtlasSpacing.sm,
       children: [
-        AcademyRequestTypeBadge(
-          request: request,
-        ),
-        AcademyRequestStatusBadge(
-          request: request,
-        ),
+        AcademyRequestTypeBadge(request: request),
+        AcademyRequestStatusBadge(request: request),
       ],
     );
   }

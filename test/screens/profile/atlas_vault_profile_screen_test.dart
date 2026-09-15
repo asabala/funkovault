@@ -39,9 +39,7 @@ class _TestAuthService implements AuthService {
   Future<void> signOut() async {}
 
   @override
-  Future<void> sendPasswordResetEmail(
-      String email,
-      ) async {}
+  Future<void> sendPasswordResetEmail(String email) async {}
 
   @override
   Future<void> resendVerificationEmail() async {}
@@ -53,23 +51,18 @@ class _TestAuthService implements AuthService {
 }
 
 class _TestAuthProvider extends AuthProvider {
-  _TestAuthProvider({
-    required AuthState authState,
-  }) : _testController = AuthController(
-    authService: _TestAuthService(
-      authState,
-    ),
-  );
+  _TestAuthProvider({required AuthState authState})
+    : _testController = AuthController(
+        authService: _TestAuthService(authState),
+      );
 
   final AuthController _testController;
 
   @override
-  AuthController get controller =>
-      _testController;
+  AuthController get controller => _testController;
 
   @override
-  bool get isLoggedIn =>
-      _testController.isLoggedIn;
+  bool get isLoggedIn => _testController.isLoggedIn;
 
   Future<void> initializeForTest() async {
     await _testController.loadCurrentUser();
@@ -85,20 +78,15 @@ class _TestAuthProvider extends AuthProvider {
 
 void main() {
   Future<void> pumpProfile(
-      WidgetTester tester, {
-        required AuthState authState,
-      }) async {
+    WidgetTester tester, {
+    required AuthState authState,
+  }) async {
     tester.view.devicePixelRatio = 1;
-    tester.view.physicalSize = const Size(
-      1200,
-      2400,
-    );
+    tester.view.physicalSize = const Size(1200, 2400);
 
     final appState = AppState();
 
-    final authProvider = _TestAuthProvider(
-      authState: authState,
-    );
+    final authProvider = _TestAuthProvider(authState: authState);
 
     await authProvider.initializeForTest();
 
@@ -113,130 +101,78 @@ void main() {
     await tester.pumpWidget(
       MultiProvider(
         providers: [
-          ChangeNotifierProvider<AppState>.value(
-            value: appState,
-          ),
-          ChangeNotifierProvider<AuthProvider>.value(
-            value: authProvider,
-          ),
+          ChangeNotifierProvider<AppState>.value(value: appState),
+          ChangeNotifierProvider<AuthProvider>.value(value: authProvider),
         ],
-        child: const MaterialApp(
-          home: AtlasVaultProfileScreen(),
-        ),
+        child: const MaterialApp(home: AtlasVaultProfileScreen()),
       ),
     );
 
     await tester.pump();
   }
 
-  testWidgets(
-    'guest profile shows guest account state',
-        (tester) async {
-      await pumpProfile(
-        tester,
-        authState: AuthState.guest(),
-      );
+  testWidgets('guest profile shows guest account state', (tester) async {
+    await pumpProfile(tester, authState: AuthState.guest());
 
-      expect(
-        find.text('Atlas Account'),
-        findsOneWidget,
-      );
+    expect(find.text('Atlas Account'), findsOneWidget);
 
-      expect(
-        find.text('Using Atlas as Guest'),
-        findsOneWidget,
-      );
+    expect(find.text('Using Atlas as Guest'), findsOneWidget);
 
-      expect(
-        find.text(
-          'Sign in to connect this collector profile to an Atlas account.',
-        ),
-        findsOneWidget,
-      );
+    expect(
+      find.text(
+        'Sign in to connect this collector profile to an Atlas account.',
+      ),
+      findsOneWidget,
+    );
 
-      expect(
-        find.text('Email verified'),
-        findsNothing,
-      );
+    expect(find.text('Email verified'), findsNothing);
 
-      await tester.pumpWidget(
-        const SizedBox.shrink(),
-      );
-    },
-  );
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
 
-  testWidgets(
-    'verified account shows email and verified state',
-        (tester) async {
-      await pumpProfile(
-        tester,
-        authState: const AuthState(
-          status: AuthStatus.authenticated,
-          email: 'arthur@example.com',
-          displayName: 'Arthur',
-          isPremium: false,
-          emailVerified: true,
-        ),
-      );
+  testWidgets('verified account shows email and verified state', (
+    tester,
+  ) async {
+    await pumpProfile(
+      tester,
+      authState: const AuthState(
+        status: AuthStatus.authenticated,
+        email: 'arthur@example.com',
+        displayName: 'Arthur',
+        isPremium: false,
+        emailVerified: true,
+      ),
+    );
 
-      expect(
-        find.text('Atlas Account'),
-        findsOneWidget,
-      );
+    expect(find.text('Atlas Account'), findsOneWidget);
 
-      expect(
-        find.text('arthur@example.com'),
-        findsOneWidget,
-      );
+    expect(find.text('arthur@example.com'), findsOneWidget);
 
-      expect(
-        find.text('Email verified'),
-        findsOneWidget,
-      );
+    expect(find.text('Email verified'), findsOneWidget);
 
-      expect(
-        find.text('Using Atlas as Guest'),
-        findsNothing,
-      );
+    expect(find.text('Using Atlas as Guest'), findsNothing);
 
-      await tester.pumpWidget(
-        const SizedBox.shrink(),
-      );
-    },
-  );
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
 
-  testWidgets(
-    'unverified account shows pending verification',
-        (tester) async {
-      await pumpProfile(
-        tester,
-        authState: const AuthState(
-          status: AuthStatus.authenticated,
-          email: 'arthur@example.com',
-          displayName: 'Arthur',
-          isPremium: false,
-          emailVerified: false,
-        ),
-      );
+  testWidgets('unverified account shows pending verification', (tester) async {
+    await pumpProfile(
+      tester,
+      authState: const AuthState(
+        status: AuthStatus.authenticated,
+        email: 'arthur@example.com',
+        displayName: 'Arthur',
+        isPremium: false,
+        emailVerified: false,
+      ),
+    );
 
-      expect(
-        find.text('arthur@example.com'),
-        findsOneWidget,
-      );
+    expect(find.text('arthur@example.com'), findsOneWidget);
 
-      expect(
-        find.text('Email verification pending'),
-        findsOneWidget,
-      );
+    expect(find.text('Email verification pending'), findsOneWidget);
 
-      expect(
-        find.text('Email verified'),
-        findsNothing,
-      );
+    expect(find.text('Email verified'), findsNothing);
 
-      await tester.pumpWidget(
-        const SizedBox.shrink(),
-      );
-    },
-  );
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
 }

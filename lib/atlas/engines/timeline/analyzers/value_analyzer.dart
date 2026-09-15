@@ -8,16 +8,15 @@ class ValueAnalyzer {
     required double currentValue,
     required List<ValueHistoryEntry> valueHistory,
   }) {
-    final validEntries = valueHistory
-        .where(
-          (entry) =>
-      entry.value > 0 &&
-          entry.recordedAt.millisecondsSinceEpoch > 0,
-    )
-        .toList(growable: false)
-      ..sort(
-            (a, b) => a.recordedAt.compareTo(b.recordedAt),
-      );
+    final validEntries =
+        valueHistory
+            .where(
+              (entry) =>
+                  entry.value > 0 &&
+                  entry.recordedAt.millisecondsSinceEpoch > 0,
+            )
+            .toList(growable: false)
+          ..sort((a, b) => a.recordedAt.compareTo(b.recordedAt));
 
     if (validEntries.isEmpty) {
       return ValueAnalysis(
@@ -77,17 +76,14 @@ class ValueAnalyzer {
       }
     }
 
-    final totalChange =
-        latestEntry.value - firstEntry.value;
+    final totalChange = latestEntry.value - firstEntry.value;
 
     final percentageChange = firstEntry.value > 0
         ? (totalChange / firstEntry.value) * 100
         : 0.0;
 
     return ValueAnalysis(
-      currentValue: currentValue > 0
-          ? currentValue
-          : latestEntry.value,
+      currentValue: currentValue > 0 ? currentValue : latestEntry.value,
       firstValue: firstEntry.value,
       latestValue: latestEntry.value,
       highestValue: highestValue,

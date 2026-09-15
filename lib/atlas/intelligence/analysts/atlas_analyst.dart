@@ -137,17 +137,13 @@ abstract class AtlasAnalyst<TInput, TResult> {
     final issues = validateInput(input);
 
     if (issues.isNotEmpty) {
-      final formattedIssues = issues
-          .map(
-            (issue) => '- $issue',
-      )
-          .join('\n');
+      final formattedIssues = issues.map((issue) => '- $issue').join('\n');
 
       throw StateError(
         '$name cannot perform analysis.\n'
-            'Analyst: $id\n'
-            'Version: $version\n'
-            '$formattedIssues',
+        'Analyst: $id\n'
+        'Version: $version\n'
+        '$formattedIssues',
       );
     }
 

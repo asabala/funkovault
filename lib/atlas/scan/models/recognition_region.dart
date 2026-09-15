@@ -54,8 +54,7 @@ extension RecognitionRegionX on RecognitionRegion {
       RecognitionRegion.leftSide ||
       RecognitionRegion.rightSide ||
       RecognitionRegion.top ||
-      RecognitionRegion.bottom =>
-      true,
+      RecognitionRegion.bottom => true,
       _ => false,
     };
   }
@@ -67,8 +66,7 @@ extension RecognitionRegionX on RecognitionRegion {
       RecognitionRegion.logo ||
       RecognitionRegion.title ||
       RecognitionRegion.characterName ||
-      RecognitionRegion.productNumber =>
-      true,
+      RecognitionRegion.productNumber => true,
       _ => false,
     };
   }
@@ -80,8 +78,7 @@ extension RecognitionRegionX on RecognitionRegion {
       RecognitionRegion.editionMarking ||
       RecognitionRegion.exclusiveMarking ||
       RecognitionRegion.limitedEditionMarking ||
-      RecognitionRegion.certification =>
-      true,
+      RecognitionRegion.certification => true,
       _ => false,
     };
   }
@@ -96,8 +93,7 @@ extension RecognitionRegionX on RecognitionRegion {
       RecognitionRegion.frontArtwork ||
       RecognitionRegion.window ||
       RecognitionRegion.productImage ||
-      RecognitionRegion.backgroundArtwork =>
-      true,
+      RecognitionRegion.backgroundArtwork => true,
       _ => false,
     };
   }
@@ -121,16 +117,14 @@ extension RecognitionRegionX on RecognitionRegion {
       RecognitionRegion.autograph => 'Autograph',
       RecognitionRegion.editionMarking => 'Edition Marking',
       RecognitionRegion.exclusiveMarking => 'Exclusive Marking',
-      RecognitionRegion.limitedEditionMarking =>
-      'Limited Edition Marking',
+      RecognitionRegion.limitedEditionMarking => 'Limited Edition Marking',
       RecognitionRegion.certification => 'Certification',
       RecognitionRegion.barcode => 'Barcode',
       RecognitionRegion.qrCode => 'QR Code',
       RecognitionRegion.frontArtwork => 'Front Artwork',
       RecognitionRegion.window => 'Window',
       RecognitionRegion.productImage => 'Product Image',
-      RecognitionRegion.backgroundArtwork =>
-      'Background Artwork',
+      RecognitionRegion.backgroundArtwork => 'Background Artwork',
     };
   }
 }

@@ -45,7 +45,8 @@ final class AtlasSymbols {
   static const String collection = '📦';
   static const String instance = '👤';
   static const String owned = '✅';
-  static const String wishlist = '🎯'; // Replaced ⭐ to avoid clash with favorites/ratings
+  static const String wishlist =
+      '🎯'; // Replaced ⭐ to avoid clash with favorites/ratings
   static const String missing = '⭕';
   static const String duplicate = '👯'; // Distinct from community/users
   static const String quantity = '📚';
@@ -73,8 +74,10 @@ final class AtlasSymbols {
 
   static const String slab = '🖼️'; // Professional grading (PSA, CGC, BGS)
   static const String coa = '🪪'; // Certificate of Authenticity (JSA, Beckett)
-  static const String protection = '🛡️'; // Soft protector, hard stack, one-touch
-  static const String defect = '🔬'; // Surface wear, box dings, creases, centering
+  static const String protection =
+      '🛡️'; // Soft protector, hard stack, one-touch
+  static const String defect =
+      '🔬'; // Surface wear, box dings, creases, centering
 
   // ----------------------------------------------------------
   // Intelligence & Analytics
@@ -93,7 +96,8 @@ final class AtlasSymbols {
   // Review, Audit & Data Engine
   // ----------------------------------------------------------
 
-  static const String reviewVariant = '🔀'; // Replaced 🔍 to avoid duplicate with search
+  static const String reviewVariant =
+      '🔀'; // Replaced 🔍 to avoid duplicate with search
   static const String review = '🧐';
   static const String verify = '🛡️';
   static const String evidence = '⚖️';
@@ -150,8 +154,8 @@ final class AtlasSymbols {
   static const String settings = '⚙️';
 
   // ----------------------------------------------------------
-// Social & Community
-// ----------------------------------------------------------
+  // Social & Community
+  // ----------------------------------------------------------
 
   static const String friend = '🤝';
   static const String share = '📤';

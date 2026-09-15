@@ -25,9 +25,7 @@ class AtlasUnifiedSearchLauncher extends StatelessWidget {
           Expanded(
             child: InkWell(
               onTap: onSearchPressed,
-              borderRadius: BorderRadius.circular(
-                16,
-              ),
+              borderRadius: BorderRadius.circular(16),
               child: Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: AtlasSpacing.md,
@@ -37,19 +35,14 @@ class AtlasUnifiedSearchLauncher extends StatelessWidget {
                   children: [
                     const Icon(
                       Icons.search_rounded,
-                      color:
-                      AtlasColors.intelligenceBlue,
+                      color: AtlasColors.intelligenceBlue,
                     ),
-                    const SizedBox(
-                      width: AtlasSpacing.md,
-                    ),
+                    const SizedBox(width: AtlasSpacing.md),
                     Expanded(
                       child: Text(
                         hintText,
-                        style: AtlasTypography.bodyMedium
-                            .copyWith(
-                          color:
-                          AtlasColors.textSecondary,
+                        style: AtlasTypography.bodyMedium.copyWith(
+                          color: AtlasColors.textSecondary,
                         ),
                       ),
                     ),
@@ -61,10 +54,7 @@ class AtlasUnifiedSearchLauncher extends StatelessWidget {
           Container(
             width: 1,
             height: 32,
-            color: AtlasColors.textSecondary
-                .withValues(
-              alpha: 0.22,
-            ),
+            color: AtlasColors.textSecondary.withValues(alpha: 0.22),
           ),
           IconButton(
             tooltip: 'Scan Barcode',
@@ -74,9 +64,7 @@ class AtlasUnifiedSearchLauncher extends StatelessWidget {
               color: AtlasColors.vaultGold,
             ),
           ),
-          const SizedBox(
-            width: AtlasSpacing.xs,
-          ),
+          const SizedBox(width: AtlasSpacing.xs),
         ],
       ),
     );

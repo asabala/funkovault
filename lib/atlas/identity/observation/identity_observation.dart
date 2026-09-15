@@ -17,9 +17,9 @@ class IdentityObservation {
     this.observedAt,
     this.sourceReference,
   }) : assert(
-  confidence >= 0.0 && confidence <= 1.0,
-  'Confidence must be between 0.0 and 1.0.',
-  );
+         confidence >= 0.0 && confidence <= 1.0,
+         'Confidence must be between 0.0 and 1.0.',
+       );
 
   // The identity role this observation represents.
   final IdentityRole role;
@@ -83,13 +83,9 @@ class IdentityObservation {
     };
   }
 
-  factory IdentityObservation.fromJson(
-      Map<String, dynamic> json,
-      ) {
+  factory IdentityObservation.fromJson(Map<String, dynamic> json) {
     return IdentityObservation(
-      role: IdentityRole.fromSerializedValue(
-        json['role'] as String,
-      ),
+      role: IdentityRole.fromSerializedValue(json['role'] as String),
       value: json['value'] as String? ?? '',
       presence: IdentityPresence.fromSerializedValue(
         json['presence'] as String,

@@ -5,10 +5,7 @@ import '../../../theme/atlas_colors.dart';
 import '../../atlas/components/atlas_status_chip.dart';
 
 class AcademyRequestTypeBadge extends StatelessWidget {
-  const AcademyRequestTypeBadge({
-    super.key,
-    required this.request,
-  });
+  const AcademyRequestTypeBadge({super.key, required this.request});
 
   final AcademyRequest request;
 

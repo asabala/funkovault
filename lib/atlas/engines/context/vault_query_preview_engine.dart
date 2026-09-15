@@ -27,8 +27,7 @@ class VaultQueryPreviewResult {
 
   bool get hasRecordedValue => totalValue > 0;
 
-  int get recordedValueCount =>
-      matchCount - missingValueCount;
+  int get recordedValueCount => matchCount - missingValueCount;
 }
 
 class VaultQueryPreviewEngine {
@@ -47,12 +46,7 @@ class VaultQueryPreviewEngine {
     final cleanedSearch = searchQuery?.trim().toLowerCase();
 
     if (cleanedSearch != null && cleanedSearch.isNotEmpty) {
-      results = results.where(
-            (pop) => _matchesSearch(
-          pop,
-          cleanedSearch,
-        ),
-      );
+      results = results.where((pop) => _matchesSearch(pop, cleanedSearch));
     }
 
     if (filterKey != null && filterKey.trim().isNotEmpty) {
@@ -64,60 +58,44 @@ class VaultQueryPreviewEngine {
     }
 
     if (minimumValue != null) {
-      results = results.where(
-            (pop) => pop.value >= minimumValue,
-      );
+      results = results.where((pop) => pop.value >= minimumValue);
     }
 
     if (maximumValue != null) {
-      results = results.where(
-            (pop) => pop.value <= maximumValue,
-      );
+      results = results.where((pop) => pop.value <= maximumValue);
     }
 
     final sortedResults = results.toList();
 
-    _applySort(
-      sortedResults,
-      sortKey,
-    );
+    _applySort(sortedResults, sortKey);
 
     final totalValue = sortedResults.fold<double>(
       0,
-          (sum, pop) => sum + pop.value,
+      (sum, pop) => sum + pop.value,
     );
 
     final highestValue = sortedResults.isEmpty
         ? 0.0
         : sortedResults
-        .map((pop) => pop.value)
-        .reduce(
-          (current, next) =>
-      next > current ? next : current,
-    );
+              .map((pop) => pop.value)
+              .reduce((current, next) => next > current ? next : current);
 
     final missingValueCount = sortedResults
         .where((pop) => pop.value <= 0)
         .length;
 
-    final recordedValueCount =
-        sortedResults.length - missingValueCount;
+    final recordedValueCount = sortedResults.length - missingValueCount;
 
     final averageValue = recordedValueCount == 0
         ? 0.0
         : totalValue / recordedValueCount;
 
-    final wishlistCount = sortedResults
-        .where((pop) => pop.isWishlist)
-        .length;
+    final wishlistCount = sortedResults.where((pop) => pop.isWishlist).length;
 
-    final ownedCount =
-        sortedResults.length - wishlistCount;
+    final ownedCount = sortedResults.length - wishlistCount;
 
     return VaultQueryPreviewResult(
-      matches: List<Pop>.unmodifiable(
-        sortedResults,
-      ),
+      matches: List<Pop>.unmodifiable(sortedResults),
       totalValue: totalValue,
       highestValue: highestValue,
       averageValue: averageValue,
@@ -127,10 +105,7 @@ class VaultQueryPreviewEngine {
     );
   }
 
-  bool _matchesSearch(
-      Pop pop,
-      String search,
-      ) {
+  bool _matchesSearch(Pop pop, String search) {
     final searchableValues = [
       pop.name,
       pop.number,
@@ -140,7 +115,7 @@ class VaultQueryPreviewEngine {
     ];
 
     return searchableValues.any(
-          (value) => value.toLowerCase().contains(search),
+      (value) => value.toLowerCase().contains(search),
     );
   }
 
@@ -152,81 +127,57 @@ class VaultQueryPreviewEngine {
     switch (filterKey) {
       case 'signed':
         return currentResults.where(
-              (pop) => _hasMeaningfulValue(
+          (pop) => _hasMeaningfulValue(
             pop.signature,
-            ignoredValues: const {
-              'unsigned',
-            },
+            ignoredValues: const {'unsigned'},
           ),
         );
 
       case 'exclusives':
         return currentResults.where(
-              (pop) => _hasMeaningfulValue(
-            pop.retailExclusive,
-          ),
+          (pop) => _hasMeaningfulValue(pop.retailExclusive),
         );
 
       case 'stickers':
         return currentResults.where(
-              (pop) => _hasMeaningfulValue(
-            pop.eventSticker,
-          ),
+          (pop) => _hasMeaningfulValue(pop.eventSticker),
         );
 
       case 'variants':
-        return currentResults.where(
-          _isVariant,
-        );
+        return currentResults.where(_isVariant);
 
       case 'limited':
         return currentResults.where(
-              (pop) => _hasMeaningfulValue(
-            pop.limitedEdition,
-          ),
+          (pop) => _hasMeaningfulValue(pop.limitedEdition),
         );
 
       case 'wishlist':
-        return currentResults.where(
-              (pop) => pop.isWishlist,
-        );
+        return currentResults.where((pop) => pop.isWishlist);
 
       case 'owned':
-        return currentResults.where(
-              (pop) => !pop.isWishlist,
-        );
+        return currentResults.where((pop) => !pop.isWishlist);
 
       case 'needsValue':
-        return currentResults.where(
-              (pop) => pop.value <= 0,
-        );
+        return currentResults.where((pop) => pop.value <= 0);
 
       case 'hasValue':
-        return currentResults.where(
-              (pop) => pop.value > 0,
-        );
+        return currentResults.where((pop) => pop.value > 0);
 
       case 'duplicates':
-        final duplicateIdentities =
-        _buildDuplicateIdentities(pops);
+        final duplicateIdentities = _buildDuplicateIdentities(pops);
 
-        return currentResults.where(
-              (pop) {
-            final identity = pop.collectorIdentity;
+        return currentResults.where((pop) {
+          final identity = pop.collectorIdentity;
 
-            return identity.isNotEmpty &&
-                duplicateIdentities.contains(identity);
-          },
-        );
+          return identity.isNotEmpty && duplicateIdentities.contains(identity);
+        });
 
       default:
         return currentResults;
     }
   }
 
-  Set<String> _buildDuplicateIdentities(
-      List<Pop> pops,
-      ) {
+  Set<String> _buildDuplicateIdentities(List<Pop> pops) {
     final identityCounts = <String, int>{};
 
     for (final pop in pops) {
@@ -236,8 +187,7 @@ class VaultQueryPreviewEngine {
         continue;
       }
 
-      identityCounts[identity] =
-          (identityCounts[identity] ?? 0) + 1;
+      identityCounts[identity] = (identityCounts[identity] ?? 0) + 1;
     }
 
     return identityCounts.entries
@@ -248,25 +198,19 @@ class VaultQueryPreviewEngine {
 
   bool _isVariant(Pop pop) {
     return _hasMeaningfulValue(
-      pop.variant,
-      ignoredValues: const {
-        'common',
-        'standard',
-      },
-    ) ||
+          pop.variant,
+          ignoredValues: const {'common', 'standard'},
+        ) ||
         _hasMeaningfulValue(
           pop.edition,
-          ignoredValues: const {
-            'common',
-            'standard',
-          },
+          ignoredValues: const {'common', 'standard'},
         );
   }
 
   bool _hasMeaningfulValue(
-      String value, {
-        Set<String> ignoredValues = const {},
-      }) {
+    String value, {
+    Set<String> ignoredValues = const {},
+  }) {
     final cleaned = value.trim().toLowerCase();
 
     if (cleaned.isEmpty ||
@@ -280,42 +224,27 @@ class VaultQueryPreviewEngine {
     return !ignoredValues.contains(cleaned);
   }
 
-  void _applySort(
-      List<Pop> results,
-      String? sortKey,
-      ) {
+  void _applySort(List<Pop> results, String? sortKey) {
     switch (sortKey) {
       case 'highestValue':
-        results.sort(
-              (first, second) =>
-              second.value.compareTo(first.value),
-        );
+        results.sort((first, second) => second.value.compareTo(first.value));
         return;
 
       case 'lowestValue':
-        results.sort(
-              (first, second) =>
-              first.value.compareTo(second.value),
-        );
+        results.sort((first, second) => first.value.compareTo(second.value));
         return;
 
       case 'nameAZ':
         results.sort(
-              (first, second) => first.name
-              .toLowerCase()
-              .compareTo(
-            second.name.toLowerCase(),
-          ),
+          (first, second) =>
+              first.name.toLowerCase().compareTo(second.name.toLowerCase()),
         );
         return;
 
       case 'nameZA':
         results.sort(
-              (first, second) => second.name
-              .toLowerCase()
-              .compareTo(
-            first.name.toLowerCase(),
-          ),
+          (first, second) =>
+              second.name.toLowerCase().compareTo(first.name.toLowerCase()),
         );
         return;
 

@@ -8,11 +8,8 @@ import 'atlas_variant_evidence_source.dart';
 import 'atlas_variant_type.dart';
 
 // Detects variants and contributes them to the shared identity analysis.
-final class AtlasVariantDetector
-    implements AtlasIdentityDetector {
-  const AtlasVariantDetector({
-    required this.lookup,
-  });
+final class AtlasVariantDetector implements AtlasIdentityDetector {
+  const AtlasVariantDetector({required this.lookup});
 
   final AtlasIdentityLookup lookup;
 
@@ -22,12 +19,10 @@ final class AtlasVariantDetector
     required AtlasIdentityAnalysis analysis,
   }) {
     final Map<AtlasVariantType, AtlasVariantEvidence> evidence =
-    <AtlasVariantType, AtlasVariantEvidence>{};
+        <AtlasVariantType, AtlasVariantEvidence>{};
 
     for (final AtlasIdentityPhrase phrase in phrases) {
-      final AtlasVariantType? variant = lookup.variant(
-        phrase.normalizedText,
-      );
+      final AtlasVariantType? variant = lookup.variant(phrase.normalizedText);
 
       if (variant == null || !variant.isSpecial) {
         continue;
@@ -35,7 +30,7 @@ final class AtlasVariantDetector
 
       evidence.putIfAbsent(
         variant,
-            () => AtlasVariantEvidence(
+        () => AtlasVariantEvidence(
           type: variant,
           confidence: 1.0,
           source: AtlasVariantEvidenceSource.rule,
@@ -47,9 +42,7 @@ final class AtlasVariantDetector
 
     return analysis.copyWith(
       variantResult: AtlasVariantDetectionResult(
-        evidence: List<AtlasVariantEvidence>.unmodifiable(
-          evidence.values,
-        ),
+        evidence: List<AtlasVariantEvidence>.unmodifiable(evidence.values),
       ),
     );
   }

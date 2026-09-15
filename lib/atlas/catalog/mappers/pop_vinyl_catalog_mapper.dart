@@ -3,48 +3,28 @@ import 'package:funkovault2/atlas/catalog/models/atlas_catalog_product.dart';
 import 'package:funkovault2/atlas/identity/product/atlas_product_id.dart';
 
 abstract final class PopVinylCatalogMapper {
-  static AtlasCatalogProduct fromJson(
-      Map<String, Object?> json,
-      ) {
+  static AtlasCatalogProduct fromJson(Map<String, Object?> json) {
     final int productId = _requiredPositiveInt(
       json['productId'],
       fieldName: 'productId',
     );
 
-    final String displayName = _requiredText(
-      json['name'],
-      fieldName: 'name',
-    );
+    final String displayName = _requiredText(json['name'], fieldName: 'name');
 
-    final String? printing = _optionalText(
-      json['extPrinting'],
-    );
+    final String? printing = _optionalText(json['extPrinting']);
 
-    final String? treatment = _optionalText(
-      json['extTreatment'],
-    );
+    final String? treatment = _optionalText(json['extTreatment']);
 
     return AtlasCatalogProduct(
-      productId: AtlasProductId.funko(
-        numericId: productId,
-      ),
+      productId: AtlasProductId.funko(numericId: productId),
       displayName: displayName,
       categoryCode: 'FNK',
       brand: 'Funko',
       productLine: 'Pop! Vinyl',
-      series: _optionalText(
-        json['extSeries'],
-      ),
-      characterName: _characterNameFrom(
-        displayName,
-      ),
-      productNumber: _optionalText(
-        json['extNumber'],
-      ),
-      variantName: _variantNameFrom(
-        printing: printing,
-        treatment: treatment,
-      ),
+      series: _optionalText(json['extSeries']),
+      characterName: _characterNameFrom(displayName),
+      productNumber: _optionalText(json['extNumber']),
+      variantName: _variantNameFrom(printing: printing, treatment: treatment),
       barcodes: _barcodesFrom(json),
       attributes: _attributesFrom(
         json,
@@ -54,33 +34,19 @@ abstract final class PopVinylCatalogMapper {
     );
   }
 
-  static List<AtlasCatalogProduct> fromJsonList(
-      Iterable<Object?> values,
-      ) {
+  static List<AtlasCatalogProduct> fromJsonList(Iterable<Object?> values) {
     return values
         .whereType<Map>()
-        .map(
-          (Map value) => fromJson(
-        Map<String, Object?>.from(value),
-      ),
-    )
-        .toList(
-      growable: false,
-    );
+        .map((Map value) => fromJson(Map<String, Object?>.from(value)))
+        .toList(growable: false);
   }
 
-  static List<String> _barcodesFrom(
-      Map<String, Object?> json,
-      ) {
+  static List<String> _barcodesFrom(Map<String, Object?> json) {
     final List<String> barcodes = <String>[];
 
-    final String? upc = _optionalText(
-      json['extUPC'],
-    );
+    final String? upc = _optionalText(json['extUPC']);
 
-    final String? gtin = _optionalText(
-      json['extGTIN'],
-    );
+    final String? gtin = _optionalText(json['extGTIN']);
 
     if (upc != null) {
       barcodes.add(upc);
@@ -94,18 +60,13 @@ abstract final class PopVinylCatalogMapper {
   }
 
   static Map<String, Object?> _attributesFrom(
-      Map<String, Object?> json, {
-        required String? printing,
-        required String? treatment,
-      }) {
-    final Map<String, Object?> attributes =
-    <String, Object?>{};
+    Map<String, Object?> json, {
+    required String? printing,
+    required String? treatment,
+  }) {
+    final Map<String, Object?> attributes = <String, Object?>{};
 
-    _addText(
-      attributes,
-      AtlasCatalogAttributeKeys.source,
-      'TCGCSV',
-    );
+    _addText(attributes, AtlasCatalogAttributeKeys.source, 'TCGCSV');
 
     _addText(
       attributes,
@@ -125,11 +86,7 @@ abstract final class PopVinylCatalogMapper {
       json['groupId'],
     );
 
-    _addText(
-      attributes,
-      AtlasCatalogAttributeKeys.sourceUrl,
-      json['url'],
-    );
+    _addText(attributes, AtlasCatalogAttributeKeys.sourceUrl, json['url']);
 
     _addText(
       attributes,
@@ -137,11 +94,7 @@ abstract final class PopVinylCatalogMapper {
       json['cleanName'],
     );
 
-    _addText(
-      attributes,
-      AtlasCatalogAttributeKeys.imageUrl,
-      json['imageUrl'],
-    );
+    _addText(attributes, AtlasCatalogAttributeKeys.imageUrl, json['imageUrl']);
 
     _addInteger(
       attributes,
@@ -155,11 +108,7 @@ abstract final class PopVinylCatalogMapper {
       json['modifiedOn'],
     );
 
-    _addText(
-      attributes,
-      AtlasCatalogAttributeKeys.rarity,
-      json['extRarity'],
-    );
+    _addText(attributes, AtlasCatalogAttributeKeys.rarity, json['extRarity']);
 
     _addText(
       attributes,
@@ -167,38 +116,20 @@ abstract final class PopVinylCatalogMapper {
       json['extDescription'],
     );
 
-    _addText(
-      attributes,
-      AtlasCatalogAttributeKeys.genre,
-      json['extGenre'],
-    );
+    _addText(attributes, AtlasCatalogAttributeKeys.genre, json['extGenre']);
 
-    _addText(
-      attributes,
-      AtlasCatalogAttributeKeys.model,
-      json['extModel'],
-    );
+    _addText(attributes, AtlasCatalogAttributeKeys.model, json['extModel']);
 
-    _addText(
-      attributes,
-      AtlasCatalogAttributeKeys.gtin,
-      json['extGTIN'],
-    );
+    _addText(attributes, AtlasCatalogAttributeKeys.gtin, json['extGTIN']);
 
-    _addText(
-      attributes,
-      AtlasCatalogAttributeKeys.upc,
-      json['extUPC'],
-    );
+    _addText(attributes, AtlasCatalogAttributeKeys.upc, json['extUPC']);
 
     if (printing != null) {
-      attributes[AtlasCatalogAttributeKeys.printing] =
-          printing;
+      attributes[AtlasCatalogAttributeKeys.printing] = printing;
     }
 
     if (treatment != null) {
-      attributes[AtlasCatalogAttributeKeys.treatment] =
-          treatment;
+      attributes[AtlasCatalogAttributeKeys.treatment] = treatment;
     }
 
     _addText(
@@ -240,20 +171,12 @@ abstract final class PopVinylCatalogMapper {
     return attributes;
   }
 
-  static String? _characterNameFrom(
-      String displayName,
-      ) {
+  static String? _characterNameFrom(String displayName) {
     final List<String> segments = displayName
         .split(':')
-        .map(
-          (String value) => value.trim(),
-    )
-        .where(
-          (String value) => value.isNotEmpty,
-    )
-        .toList(
-      growable: false,
-    );
+        .map((String value) => value.trim())
+        .where((String value) => value.isNotEmpty)
+        .toList(growable: false);
 
     if (segments.length < 2) {
       return null;
@@ -266,10 +189,7 @@ abstract final class PopVinylCatalogMapper {
     required String? printing,
     required String? treatment,
   }) {
-    final List<String> values = <String>[
-      ?printing,
-      ?treatment,
-    ];
+    final List<String> values = <String>[?printing, ?treatment];
 
     if (values.isEmpty) {
       return null;
@@ -279,10 +199,10 @@ abstract final class PopVinylCatalogMapper {
   }
 
   static void _addText(
-      Map<String, Object?> attributes,
-      String key,
-      Object? value,
-      ) {
+    Map<String, Object?> attributes,
+    String key,
+    Object? value,
+  ) {
     final String? normalized = _optionalText(value);
 
     if (normalized != null) {
@@ -291,10 +211,10 @@ abstract final class PopVinylCatalogMapper {
   }
 
   static void _addInteger(
-      Map<String, Object?> attributes,
-      String key,
-      Object? value,
-      ) {
+    Map<String, Object?> attributes,
+    String key,
+    Object? value,
+  ) {
     final int? parsed = _optionalInt(value);
 
     if (parsed != null) {
@@ -303,10 +223,10 @@ abstract final class PopVinylCatalogMapper {
   }
 
   static void _addDecimal(
-      Map<String, Object?> attributes,
-      String key,
-      Object? value,
-      ) {
+    Map<String, Object?> attributes,
+    String key,
+    Object? value,
+  ) {
     final double? parsed = _optionalDouble(value);
 
     if (parsed != null) {
@@ -314,10 +234,7 @@ abstract final class PopVinylCatalogMapper {
     }
   }
 
-  static String _requiredText(
-      Object? value, {
-        required String fieldName,
-      }) {
+  static String _requiredText(Object? value, {required String fieldName}) {
     final String? normalized = _optionalText(value);
 
     if (normalized == null) {
@@ -329,10 +246,7 @@ abstract final class PopVinylCatalogMapper {
     return normalized;
   }
 
-  static int _requiredPositiveInt(
-      Object? value, {
-        required String fieldName,
-      }) {
+  static int _requiredPositiveInt(Object? value, {required String fieldName}) {
     final int? parsed = _optionalInt(value);
 
     if (parsed == null || parsed <= 0) {
@@ -344,9 +258,7 @@ abstract final class PopVinylCatalogMapper {
     return parsed;
   }
 
-  static String? _optionalText(
-      Object? value,
-      ) {
+  static String? _optionalText(Object? value) {
     if (value == null) {
       return null;
     }
@@ -360,9 +272,7 @@ abstract final class PopVinylCatalogMapper {
     return normalized;
   }
 
-  static int? _optionalInt(
-      Object? value,
-      ) {
+  static int? _optionalInt(Object? value) {
     if (value is int) {
       return value;
     }
@@ -380,9 +290,7 @@ abstract final class PopVinylCatalogMapper {
     return int.tryParse(normalized);
   }
 
-  static double? _optionalDouble(
-      Object? value,
-      ) {
+  static double? _optionalDouble(Object? value) {
     if (value is double) {
       return value;
     }
@@ -397,11 +305,6 @@ abstract final class PopVinylCatalogMapper {
       return null;
     }
 
-    return double.tryParse(
-      normalized.replaceAll(
-        RegExp(r'[^0-9.\-]'),
-        '',
-      ),
-    );
+    return double.tryParse(normalized.replaceAll(RegExp(r'[^0-9.\-]'), ''));
   }
 }

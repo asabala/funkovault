@@ -8,14 +8,11 @@ class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
   @override
-  State<SettingsScreen> createState() =>
-      _SettingsScreenState();
+  State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState
-    extends State<SettingsScreen> {
-  final TextEditingController _commandController =
-  TextEditingController();
+class _SettingsScreenState extends State<SettingsScreen> {
+  final TextEditingController _commandController = TextEditingController();
 
   AtlasResponse? _lastResponse;
   bool _isProcessing = false;
@@ -27,8 +24,7 @@ class _SettingsScreenState
   }
 
   Future<void> _runAtlasCommand() async {
-    final command =
-    _commandController.text.trim();
+    final command = _commandController.text.trim();
 
     if (command.isEmpty) {
       return;
@@ -38,8 +34,7 @@ class _SettingsScreenState
       _isProcessing = true;
     });
 
-    final response =
-    await AtlasService.instance.ask(command);
+    final response = await AtlasService.instance.ask(command);
 
     setState(() {
       _lastResponse = response;
@@ -52,18 +47,13 @@ class _SettingsScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Settings'),
-      ),
+      appBar: AppBar(title: const Text('Settings')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           const Text(
             'Settings',
-            style: TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
           ),
 
           const SizedBox(height: 24),
@@ -80,17 +70,15 @@ class _SettingsScreenState
 
           const Text(
             '🛡️ Atlas',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
           ),
           Card(
-
             child: ListTile(
               leading: const Icon(Icons.shield),
               title: const Text('Atlas Command Center'),
-              subtitle: const Text('View Vault health, tasks, and recommendations'),
+              subtitle: const Text(
+                'View Vault health, tasks, and recommendations',
+              ),
               trailing: const Icon(Icons.arrow_forward_ios),
               onTap: () {
                 Navigator.push(
@@ -107,8 +95,7 @@ class _SettingsScreenState
           FutureBuilder<String>(
             future: AtlasService.instance.status(),
             builder: (context, snapshot) {
-              final status =
-                  snapshot.data ?? 'Checking Atlas...';
+              final status = snapshot.data ?? 'Checking Atlas...';
 
               return Card(
                 child: ListTile(
@@ -142,10 +129,7 @@ class _SettingsScreenState
 
           const Text(
             'Atlas Console',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
           ),
 
           const SizedBox(height: 12),
@@ -174,23 +158,17 @@ class _SettingsScreenState
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
-                      onPressed: _isProcessing
-                          ? null
-                          : _runAtlasCommand,
+                      onPressed: _isProcessing ? null : _runAtlasCommand,
                       icon: const Icon(Icons.shield),
                       label: Text(
-                        _isProcessing
-                            ? 'Atlas is thinking...'
-                            : 'Run Command',
+                        _isProcessing ? 'Atlas is thinking...' : 'Run Command',
                       ),
                     ),
                   ),
 
                   if (_lastResponse != null) ...[
                     const SizedBox(height: 16),
-                    _AtlasResponseCard(
-                      response: _lastResponse!,
-                    ),
+                    _AtlasResponseCard(response: _lastResponse!),
                   ],
                 ],
               ),
@@ -214,10 +192,7 @@ class _SettingsScreenState
           Center(
             child: Text(
               AtlasService.version,
-              style: TextStyle(
-                color: Colors.grey.shade500,
-                fontSize: 12,
-              ),
+              style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
             ),
           ),
         ],
@@ -227,39 +202,28 @@ class _SettingsScreenState
 }
 
 class _AtlasResponseCard extends StatelessWidget {
-  const _AtlasResponseCard({
-    required this.response,
-  });
+  const _AtlasResponseCard({required this.response});
 
   final AtlasResponse response;
 
   @override
   Widget build(BuildContext context) {
-    final title =
-        response.title ?? 'Atlas Response';
+    final title = response.title ?? 'Atlas Response';
 
-    final message =
-        response.message;
+    final message = response.message;
 
-    final suggestedAction =
-        response.suggestedAction;
+    final suggestedAction = response.suggestedAction;
 
     return Card(
-      color: Theme.of(context)
-          .colorScheme
-          .surfaceContainerHighest,
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
-          crossAxisAlignment:
-          CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               title,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
 
             const SizedBox(height: 8),

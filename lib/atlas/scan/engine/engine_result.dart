@@ -15,17 +15,16 @@ class EngineResult {
     String? skipReason,
     EngineFailure? failure,
     EngineExecutionMetadata? metadata,
-    Map<String, Object?> attributes =
-    const <String, Object?>{},
+    Map<String, Object?> attributes = const <String, Object?>{},
   }) {
     assert(
-    status != EngineStatus.failed || failure != null,
-    'A failed EngineResult must include an EngineFailure.',
+      status != EngineStatus.failed || failure != null,
+      'A failed EngineResult must include an EngineFailure.',
     );
 
     assert(
-    status == EngineStatus.failed || failure == null,
-    'Only a failed EngineResult may include an EngineFailure.',
+      status == EngineStatus.failed || failure == null,
+      'Only a failed EngineResult may include an EngineFailure.',
     );
 
     return EngineResult._(
@@ -39,9 +38,7 @@ class EngineResult {
       skipReason: skipReason?.trim(),
       failure: failure,
       metadata: metadata,
-      attributes: Map<String, Object?>.unmodifiable(
-        attributes,
-      ),
+      attributes: Map<String, Object?>.unmodifiable(attributes),
     );
   }
 
@@ -58,8 +55,7 @@ class EngineResult {
   factory EngineResult.success({
     required ScanSession session,
     List<String> warnings = const <String>[],
-    Map<String, Object?> attributes =
-    const <String, Object?>{},
+    Map<String, Object?> attributes = const <String, Object?>{},
   }) {
     return EngineResult(
       session: session,
@@ -74,8 +70,7 @@ class EngineResult {
   factory EngineResult.skipped({
     required ScanSession session,
     required String reason,
-    Map<String, Object?> attributes =
-    const <String, Object?>{},
+    Map<String, Object?> attributes = const <String, Object?>{},
   }) {
     return EngineResult(
       session: session,
@@ -89,8 +84,7 @@ class EngineResult {
     required ScanSession session,
     required EngineFailure failure,
     List<String> warnings = const <String>[],
-    Map<String, Object?> attributes =
-    const <String, Object?>{},
+    Map<String, Object?> attributes = const <String, Object?>{},
   }) {
     return EngineResult(
       session: session,
@@ -149,9 +143,7 @@ class EngineResult {
     return null;
   }
 
-  EngineResult withMetadata(
-      EngineExecutionMetadata value,
-      ) {
+  EngineResult withMetadata(EngineExecutionMetadata value) {
     return EngineResult(
       session: session,
       status: status,

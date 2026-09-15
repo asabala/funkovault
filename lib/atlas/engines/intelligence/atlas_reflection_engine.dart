@@ -22,11 +22,9 @@ class AtlasReflectionEngine {
     final hour = DateTime.now().hour;
     final totalPops = pops.length;
 
-    final missingValues =
-        pops.where((pop) => pop.value <= 0).length;
+    final missingValues = pops.where((pop) => pop.value <= 0).length;
 
-    final grails =
-        pops.where((pop) => pop.value >= 100).length;
+    final grails = pops.where((pop) => pop.value >= 100).length;
 
     if (hour >= 18) {
       return AtlasReflection(

@@ -37,17 +37,14 @@ final class FunkoStickerEvidence {
   }
 
   bool get isModerateConfidence {
-    return confidence >= 0.60 &&
-        confidence < 0.85;
+    return confidence >= 0.60 && confidence < 0.85;
   }
 
   bool get isLowConfidence {
     return confidence < 0.60;
   }
 
-  T? attribute<T>(
-      String key,
-      ) {
+  T? attribute<T>(String key) {
     final Object? value = attributes[key];
 
     if (value is T) {
@@ -57,9 +54,7 @@ final class FunkoStickerEvidence {
     return null;
   }
 
-  bool hasAttribute(
-      String key,
-      ) {
+  bool hasAttribute(String key) {
     return attributes.containsKey(key);
   }
 }

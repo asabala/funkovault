@@ -25,15 +25,10 @@ class AtlasCollectorActionBar extends StatelessWidget {
     }
 
     final List<AtlasCollectorAction> sortedActions =
-    List<AtlasCollectorAction>.from(actions)
-      ..sort(
-            (
-            AtlasCollectorAction first,
-            AtlasCollectorAction second,
-            ) {
-          return first.priority.compareTo(second.priority);
-        },
-      );
+        List<AtlasCollectorAction>.from(actions)
+          ..sort((AtlasCollectorAction first, AtlasCollectorAction second) {
+            return first.priority.compareTo(second.priority);
+          });
 
     final AtlasCollectorAction? primaryAction = _findPrimaryAction(
       sortedActions,
@@ -48,17 +43,17 @@ class AtlasCollectorActionBar extends StatelessWidget {
           AtlasSectionHeader(
             title: 'Quick Actions',
             subtitle:
-            'Recommended actions based on this collectible and your collection.',
+                'Recommended actions based on this collectible and your collection.',
             icon: Icons.bolt_rounded,
             accentColor: AtlasColors.intelligenceBlue,
             badge: primaryAction == null
                 ? null
                 : const AtlasStatusChip(
-              label: 'Atlas Ready',
-              icon: Icons.auto_awesome_rounded,
-              accentColor: AtlasColors.vaultGold,
-              size: AtlasStatusChipSize.compact,
-            ),
+                    label: 'Atlas Ready',
+                    icon: Icons.auto_awesome_rounded,
+                    accentColor: AtlasColors.vaultGold,
+                    size: AtlasStatusChipSize.compact,
+                  ),
           ),
           const SizedBox(height: AtlasSpacing.lg),
           for (int index = 0; index < sortedActions.length; index++) ...[
@@ -76,9 +71,7 @@ class AtlasCollectorActionBar extends StatelessWidget {
     );
   }
 
-  AtlasCollectorAction? _findPrimaryAction(
-      List<AtlasCollectorAction> actions,
-      ) {
+  AtlasCollectorAction? _findPrimaryAction(List<AtlasCollectorAction> actions) {
     for (final AtlasCollectorAction action in actions) {
       if (action.isPrimary) {
         return action;
@@ -90,10 +83,7 @@ class AtlasCollectorActionBar extends StatelessWidget {
 }
 
 class _CollectorActionRow extends StatelessWidget {
-  const _CollectorActionRow({
-    required this.action,
-    required this.onPressed,
-  });
+  const _CollectorActionRow({required this.action, required this.onPressed});
 
   final AtlasCollectorAction action;
   final VoidCallback onPressed;
@@ -109,11 +99,11 @@ class _CollectorActionRow extends StatelessWidget {
       accentColor: presentation.accentColor,
       badge: action.isPrimary
           ? const AtlasStatusChip(
-        label: 'Recommended',
-        icon: Icons.star_rounded,
-        accentColor: AtlasColors.vaultGold,
-        size: AtlasStatusChipSize.compact,
-      )
+              label: 'Recommended',
+              icon: Icons.star_rounded,
+              accentColor: AtlasColors.vaultGold,
+              size: AtlasStatusChipSize.compact,
+            )
           : null,
       compact: action.type == AtlasCollectorActionType.scanAnother,
       showChevron: action.type != AtlasCollectorActionType.scanAnother,
@@ -121,63 +111,59 @@ class _CollectorActionRow extends StatelessWidget {
     );
   }
 
-  _ActionPresentation _presentationFor(
-      AtlasCollectorActionType type,
-      ) {
+  _ActionPresentation _presentationFor(AtlasCollectorActionType type) {
     switch (type) {
       case AtlasCollectorActionType.viewExistingItem:
         return const _ActionPresentation(
           description:
-          'Open the collectible already stored in this collection.',
+              'Open the collectible already stored in this collection.',
           accentColor: AtlasColors.success,
         );
 
       case AtlasCollectorActionType.addToVault:
         return const _ActionPresentation(
-          description:
-          'Add this collectible to the selected collection.',
+          description: 'Add this collectible to the selected collection.',
           accentColor: AtlasColors.vaultGold,
         );
 
       case AtlasCollectorActionType.addAnotherCopy:
         return const _ActionPresentation(
           description:
-          'Add another physical copy while preserving the existing collectible.',
+              'Add another physical copy while preserving the existing collectible.',
           accentColor: AtlasColors.vaultGold,
         );
 
       case AtlasCollectorActionType.reviewVariantSticker:
         return const _ActionPresentation(
           description:
-          'Review variant, exclusive, sticker, limited edition, and signature details.',
+              'Review variant, exclusive, sticker, limited edition, and signature details.',
           accentColor: AtlasColors.intelligenceBlue,
         );
 
       case AtlasCollectorActionType.updateCondition:
         return const _ActionPresentation(
           description:
-          'Update the collectible and box condition for your existing copy.',
+              'Update the collectible and box condition for your existing copy.',
           accentColor: AtlasColors.intelligenceBlue,
         );
 
       case AtlasCollectorActionType.addToWishlist:
         return const _ActionPresentation(
-          description:
-          'Track this collectible on your wishlist for later.',
+          description: 'Track this collectible on your wishlist for later.',
           accentColor: AtlasColors.intelligenceBlue,
         );
 
       case AtlasCollectorActionType.removeFromWishlist:
         return const _ActionPresentation(
           description:
-          'Remove this collectible from the wishlist for this collection.',
+              'Remove this collectible from the wishlist for this collection.',
           accentColor: AtlasColors.warning,
         );
 
       case AtlasCollectorActionType.scanAnother:
         return const _ActionPresentation(
           description:
-          'Return to the scanner and identify another collectible.',
+              'Return to the scanner and identify another collectible.',
           accentColor: AtlasColors.textSecondary,
         );
     }

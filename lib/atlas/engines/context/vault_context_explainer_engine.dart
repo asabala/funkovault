@@ -65,43 +65,43 @@ class VaultContextAnswer {
   bool get hasPreviewMatchCount => previewMatchCount != null;
   bool get hasPreviewSummary =>
       previewMatchCount != null &&
-          previewTotalValue != null &&
-          previewHighestValue != null &&
-          previewAverageValue != null &&
-          previewOwnedCount != null &&
-          previewWishlistCount != null &&
-          previewMissingValueCount != null;
+      previewTotalValue != null &&
+      previewHighestValue != null &&
+      previewAverageValue != null &&
+      previewOwnedCount != null &&
+      previewWishlistCount != null &&
+      previewMissingValueCount != null;
 
   bool get hasUnsupportedParts => unsupportedParts.isNotEmpty;
 
   bool get hasVaultFilterAction =>
       actionLabel != null &&
-          actionLabel!.trim().isNotEmpty &&
-          vaultFilterKey != null &&
-          vaultFilterKey!.trim().isNotEmpty;
+      actionLabel!.trim().isNotEmpty &&
+      vaultFilterKey != null &&
+      vaultFilterKey!.trim().isNotEmpty;
 
   bool get hasVaultSearchAction =>
       actionLabel != null &&
-          actionLabel!.trim().isNotEmpty &&
-          vaultSearchQuery != null &&
-          vaultSearchQuery!.trim().isNotEmpty;
+      actionLabel!.trim().isNotEmpty &&
+      vaultSearchQuery != null &&
+      vaultSearchQuery!.trim().isNotEmpty;
 
   bool get hasVaultValueAction =>
       actionLabel != null &&
-          actionLabel!.trim().isNotEmpty &&
-          (minimumValue != null || maximumValue != null);
+      actionLabel!.trim().isNotEmpty &&
+      (minimumValue != null || maximumValue != null);
 
   bool get hasVaultSortAction =>
       actionLabel != null &&
-          actionLabel!.trim().isNotEmpty &&
-          vaultSortKey != null &&
-          vaultSortKey!.trim().isNotEmpty;
+      actionLabel!.trim().isNotEmpty &&
+      vaultSortKey != null &&
+      vaultSortKey!.trim().isNotEmpty;
 
   bool get hasVaultAction =>
       hasVaultFilterAction ||
-          hasVaultSearchAction ||
-          hasVaultValueAction ||
-          hasVaultSortAction;
+      hasVaultSearchAction ||
+      hasVaultValueAction ||
+      hasVaultSortAction;
 }
 
 class VaultContextExplainerEngine {
@@ -155,8 +155,7 @@ class VaultContextExplainerEngine {
 
     final searchIntent = searchEngine.interpret(question);
 
-    if (searchIntent.hasNavigationAction ||
-        searchIntent.hasUnsupportedParts) {
+    if (searchIntent.hasNavigationAction || searchIntent.hasUnsupportedParts) {
       return _buildSearchIntentAnswer(
         intent: searchIntent,
         dashboard: dashboard,
@@ -166,9 +165,7 @@ class VaultContextExplainerEngine {
     return _buildOverviewAnswer(dashboard);
   }
 
-  VaultContextAnswer _buildCountAnswer(
-      AtlasDashboardModel dashboard,
-      ) {
+  VaultContextAnswer _buildCountAnswer(AtlasDashboardModel dashboard) {
     final countLabel = dashboard.totalPops == 1
         ? '1 collectible'
         : '${dashboard.totalPops} collectibles';
@@ -176,11 +173,11 @@ class VaultContextExplainerEngine {
     return VaultContextAnswer(
       title: 'Vault Count',
       answer:
-      'Your selected Vault currently contains $countLabel across '
+          'Your selected Vault currently contains $countLabel across '
           '${dashboard.uniqueCategories} '
           '${dashboard.uniqueCategories == 1 ? 'category' : 'categories'}.',
       atlasTip:
-      'Atlas currently reports the number of saved collectible records. Quantity values may represent additional identical copies.',
+          'Atlas currently reports the number of saved collectible records. Quantity values may represent additional identical copies.',
       suggestedQuestions: const [
         'What is my total collection value?',
         'What should I clean up first?',
@@ -189,16 +186,14 @@ class VaultContextExplainerEngine {
     );
   }
 
-  VaultContextAnswer _buildValueAnswer(
-      AtlasDashboardModel dashboard,
-      ) {
+  VaultContextAnswer _buildValueAnswer(AtlasDashboardModel dashboard) {
     if (dashboard.totalPops == 0) {
       return const VaultContextAnswer(
         title: 'Vault Value',
         answer:
-        'Your selected Vault does not contain any collectibles yet, so no collection value is available.',
+            'Your selected Vault does not contain any collectibles yet, so no collection value is available.',
         atlasTip:
-        'Add your first collectible and estimated value to begin building Atlas value intelligence.',
+            'Add your first collectible and estimated value to begin building Atlas value intelligence.',
         suggestedQuestions: _defaultSuggestedQuestions,
       );
     }
@@ -208,14 +203,14 @@ class VaultContextExplainerEngine {
     return VaultContextAnswer(
       title: 'Vault Value',
       answer:
-      'Your selected Vault has a recorded value of '
+          'Your selected Vault has a recorded value of '
           '\$${dashboard.totalValue.toStringAsFixed(2)}. '
           'The average recorded value per collectible is '
           '\$${averageValue.toStringAsFixed(2)}.',
       atlasTip: dashboard.missingValueCount > 0
           ? '${dashboard.missingValueCount} '
-          '${dashboard.missingValueCount == 1 ? 'collectible still needs' : 'collectibles still need'} '
-          'an estimated value, so the total is incomplete.'
+                '${dashboard.missingValueCount == 1 ? 'collectible still needs' : 'collectibles still need'} '
+                'an estimated value, so the total is incomplete.'
           : 'All collectibles currently have estimated values recorded.',
       suggestedQuestions: const [
         'How many Pops need values?',
@@ -225,9 +220,7 @@ class VaultContextExplainerEngine {
     );
   }
 
-  VaultContextAnswer _buildCleanupAnswer(
-      AtlasDashboardModel dashboard,
-      ) {
+  VaultContextAnswer _buildCleanupAnswer(AtlasDashboardModel dashboard) {
     final intelligenceReport = intelligenceEngine.analyze(
       pops: dashboard.pops,
       duplicateCount: dashboard.duplicateGroupCount,
@@ -249,7 +242,7 @@ class VaultContextExplainerEngine {
       title: intelligenceReport.primaryFocusTitle,
       answer: intelligenceReport.primaryFocusMessage,
       atlasTip:
-      'Atlas prioritizes duplicate review before missing values because duplicate and variant decisions require careful collector verification.',
+          'Atlas prioritizes duplicate review before missing values because duplicate and variant decisions require careful collector verification.',
       suggestedQuestions: const [
         'Are there possible duplicate groups?',
         'How many Pops need values?',
@@ -260,16 +253,14 @@ class VaultContextExplainerEngine {
     );
   }
 
-  VaultContextAnswer _buildMissingValueAnswer(
-      AtlasDashboardModel dashboard,
-      ) {
+  VaultContextAnswer _buildMissingValueAnswer(AtlasDashboardModel dashboard) {
     if (dashboard.missingValueCount == 0) {
       return const VaultContextAnswer(
         title: 'Missing Values',
         answer:
-        'Every collectible in the selected Vault currently has an estimated value.',
+            'Every collectible in the selected Vault currently has an estimated value.',
         atlasTip:
-        'Review values periodically so collection totals remain useful and accurate.',
+            'Review values periodically so collection totals remain useful and accurate.',
         suggestedQuestions: _defaultSuggestedQuestions,
       );
     }
@@ -277,11 +268,11 @@ class VaultContextExplainerEngine {
     return VaultContextAnswer(
       title: 'Missing Values',
       answer:
-      '${dashboard.missingValueCount} '
+          '${dashboard.missingValueCount} '
           '${dashboard.missingValueCount == 1 ? 'collectible needs' : 'collectibles need'} '
           'an estimated value.',
       atlasTip:
-      'Adding missing values will improve Vault totals, cleanup readiness, and Atlas Confidence.',
+          'Adding missing values will improve Vault totals, cleanup readiness, and Atlas Confidence.',
       suggestedQuestions: const [
         'What should I clean up first?',
         'What is my total collection value?',
@@ -292,16 +283,14 @@ class VaultContextExplainerEngine {
     );
   }
 
-  VaultContextAnswer _buildDuplicateAnswer(
-      AtlasDashboardModel dashboard,
-      ) {
+  VaultContextAnswer _buildDuplicateAnswer(AtlasDashboardModel dashboard) {
     if (dashboard.duplicateGroupCount == 0) {
       return const VaultContextAnswer(
         title: 'Duplicate Review',
         answer:
-        'Atlas has not identified any possible duplicate groups in the selected Vault.',
+            'Atlas has not identified any possible duplicate groups in the selected Vault.',
         atlasTip:
-        'Different variants, stickers, exclusives, signed editions, and limited releases should remain separate collectible records.',
+            'Different variants, stickers, exclusives, signed editions, and limited releases should remain separate collectible records.',
         suggestedQuestions: _defaultSuggestedQuestions,
       );
     }
@@ -309,11 +298,11 @@ class VaultContextExplainerEngine {
     return VaultContextAnswer(
       title: 'Duplicate Review',
       answer:
-      'Atlas found ${dashboard.duplicateGroupCount} possible duplicate '
+          'Atlas found ${dashboard.duplicateGroupCount} possible duplicate '
           '${dashboard.duplicateGroupCount == 1 ? 'group' : 'groups'} '
           'that may need collector review.',
       atlasTip:
-      'Do not merge records based only on name and number. Confirm variant, sticker, exclusive, signed, limited-edition, and other identity details first.',
+          'Do not merge records based only on name and number. Confirm variant, sticker, exclusive, signed, limited-edition, and other identity details first.',
       suggestedQuestions: const [
         'What should I clean up first?',
         'Show me my variants',
@@ -324,32 +313,30 @@ class VaultContextExplainerEngine {
     );
   }
 
-  VaultContextAnswer _buildHealthAnswer(
-      AtlasDashboardModel dashboard,
-      ) {
+  VaultContextAnswer _buildHealthAnswer(AtlasDashboardModel dashboard) {
     final healthLabel = dashboard.vaultHealth.toStringAsFixed(0);
 
     String healthMessage;
 
     if (dashboard.vaultHealth >= 90) {
       healthMessage =
-      'Your selected Vault is in strong condition with only minor cleanup needs.';
+          'Your selected Vault is in strong condition with only minor cleanup needs.';
     } else if (dashboard.vaultHealth >= 70) {
       healthMessage =
-      'Your selected Vault is healthy, but Atlas found some cleanup opportunities.';
+          'Your selected Vault is healthy, but Atlas found some cleanup opportunities.';
     } else if (dashboard.vaultHealth >= 50) {
       healthMessage =
-      'Your selected Vault needs attention before Atlas can provide stronger collection intelligence.';
+          'Your selected Vault needs attention before Atlas can provide stronger collection intelligence.';
     } else {
       healthMessage =
-      'Your selected Vault has significant cleanup work remaining.';
+          'Your selected Vault has significant cleanup work remaining.';
     }
 
     return VaultContextAnswer(
       title: 'Vault Health',
       answer: 'Vault Health is currently $healthLabel%. $healthMessage',
       atlasTip:
-      '${dashboard.missingValueCount} missing values and '
+          '${dashboard.missingValueCount} missing values and '
           '${dashboard.duplicateGroupCount} possible duplicate groups are currently affecting the score.',
       suggestedQuestions: const [
         'What should I clean up first?',
@@ -359,39 +346,33 @@ class VaultContextExplainerEngine {
     );
   }
 
-  VaultContextAnswer _buildWishlistAnswer(
-      AtlasDashboardModel dashboard,
-      ) {
+  VaultContextAnswer _buildWishlistAnswer(AtlasDashboardModel dashboard) {
     return VaultContextAnswer(
       title: 'Wishlist Summary',
       answer:
-      'Your selected Vault currently includes ${dashboard.wishlistCount} '
+          'Your selected Vault currently includes ${dashboard.wishlistCount} '
           '${dashboard.wishlistCount == 1 ? 'wishlist collectible' : 'wishlist collectibles'}.',
       atlasTip:
-      'Wishlist records stay in Atlas so you can preserve identity, value, and collecting-interest data without marking them as owned.',
+          'Wishlist records stay in Atlas so you can preserve identity, value, and collecting-interest data without marking them as owned.',
       suggestedQuestions: const [
         'Show me my wishlist',
         'How many Pops are in my Vault?',
         'What is my total collection value?',
       ],
-      actionLabel:
-      dashboard.wishlistCount > 0 ? 'Open Wishlist' : null,
-      vaultFilterKey:
-      dashboard.wishlistCount > 0 ? 'wishlist' : null,
+      actionLabel: dashboard.wishlistCount > 0 ? 'Open Wishlist' : null,
+      vaultFilterKey: dashboard.wishlistCount > 0 ? 'wishlist' : null,
     );
   }
 
-  VaultContextAnswer _buildConfidenceAnswer(
-      AtlasDashboardModel dashboard,
-      ) {
+  VaultContextAnswer _buildConfidenceAnswer(AtlasDashboardModel dashboard) {
     return VaultContextAnswer(
       title: 'Atlas Confidence',
       answer:
-      'Atlas Confidence is currently '
+          'Atlas Confidence is currently '
           '${dashboard.confidence.score.toStringAsFixed(0)}%. '
           '${dashboard.confidence.message}',
       atlasTip:
-      'Complete values and accurate collector identity details help Atlas produce stronger recommendations.',
+          'Complete values and accurate collector identity details help Atlas produce stronger recommendations.',
       suggestedQuestions: const [
         'How healthy is my Vault?',
         'What should I clean up first?',
@@ -414,13 +395,13 @@ class VaultContextExplainerEngine {
     );
     final previewResult = intent.hasNavigationAction
         ? previewEngine.preview(
-      pops: dashboard.pops,
-      filterKey: intent.filterKey,
-      searchQuery: intent.searchQuery,
-      minimumValue: intent.minimumValue,
-      maximumValue: intent.maximumValue,
-      sortKey: intent.sortKey,
-    )
+            pops: dashboard.pops,
+            filterKey: intent.filterKey,
+            searchQuery: intent.searchQuery,
+            minimumValue: intent.minimumValue,
+            maximumValue: intent.maximumValue,
+            sortKey: intent.sortKey,
+          )
         : null;
     final unsupportedText = querySummary.unsupportedText;
 
@@ -433,41 +414,40 @@ class VaultContextExplainerEngine {
         answer = '$answer\n\n$unsupportedText';
       }
     } else {
-      answer = unsupportedText ??
+      answer =
+          unsupportedText ??
           'Atlas could not identify supported Vault search criteria.';
     }
 
     String atlasTip;
 
-    if (intent.hasUnsupportedParts &&
-        intent.hasNavigationAction) {
+    if (intent.hasUnsupportedParts && intent.hasNavigationAction) {
       atlasTip =
-      'Atlas will apply the supported criteria only. Unsupported criteria will not affect the Entire Vault results.';
+          'Atlas will apply the supported criteria only. Unsupported criteria will not affect the Entire Vault results.';
     } else if (intent.hasUnsupportedParts) {
       atlasTip =
-      'Try searching by collectible name, number, category, series, owner, Vault status, recorded value, or supported sorting.';
+          'Try searching by collectible name, number, category, series, owner, Vault status, recorded value, or supported sorting.';
     } else if (intent.hasValueRange) {
       atlasTip =
-      'Atlas will use the recorded value on each collectible and apply the requested inclusive value range.';
+          'Atlas will use the recorded value on each collectible and apply the requested inclusive value range.';
     } else if (intent.hasFilter) {
       atlasTip =
-      'Atlas will use an existing Entire Vault filter, so the same trusted collection rules remain in effect.';
+          'Atlas will use an existing Entire Vault filter, so the same trusted collection rules remain in effect.';
     } else if (intent.hasSearch) {
       atlasTip =
-      'Atlas will use the existing Entire Vault search across name, number, category, series, and owner.';
+          'Atlas will use the existing Entire Vault search across name, number, category, series, and owner.';
     } else if (intent.hasSort) {
-      atlasTip =
-      'Atlas will use the existing Entire Vault sorting system.';
+      atlasTip = 'Atlas will use the existing Entire Vault sorting system.';
     } else {
       atlasTip =
-      'Atlas will open Entire Vault using the supported request details.';
+          'Atlas will open Entire Vault using the supported request details.';
     }
 
     return VaultContextAnswer(
       title: intent.hasUnsupportedParts
           ? intent.hasNavigationAction
-          ? 'Partially Supported Request'
-          : 'Unsupported Vault Request'
+                ? 'Partially Supported Request'
+                : 'Unsupported Vault Request'
           : intent.title,
       answer: answer,
       atlasTip: atlasTip,
@@ -498,9 +478,7 @@ class VaultContextExplainerEngine {
     );
   }
 
-  String _actionLabelForIntent(
-      VaultSearchIntent intent,
-      ) {
+  String _actionLabelForIntent(VaultSearchIntent intent) {
     if (intent.hasValueRange) {
       return 'Open Value Results';
     }
@@ -516,9 +494,7 @@ class VaultContextExplainerEngine {
     return 'Open Filtered Vault';
   }
 
-  VaultContextAnswer _buildOverviewAnswer(
-      AtlasDashboardModel dashboard,
-      ) {
+  VaultContextAnswer _buildOverviewAnswer(AtlasDashboardModel dashboard) {
     final intelligenceReport = intelligenceEngine.analyze(
       pops: dashboard.pops,
       duplicateCount: dashboard.duplicateGroupCount,
@@ -528,14 +504,14 @@ class VaultContextExplainerEngine {
     return VaultContextAnswer(
       title: 'Vault Overview',
       answer:
-      'Your selected Vault contains ${dashboard.totalPops} '
+          'Your selected Vault contains ${dashboard.totalPops} '
           '${dashboard.totalPops == 1 ? 'collectible' : 'collectibles'} '
           'with a recorded value of '
           '\$${dashboard.totalValue.toStringAsFixed(2)}. '
           'Vault Health is ${dashboard.vaultHealth.toStringAsFixed(0)}%. '
           '${intelligenceReport.primaryFocusMessage}',
       atlasTip:
-      'Atlas is answering from trusted Vault metrics and existing collection engines only.',
+          'Atlas is answering from trusted Vault metrics and existing collection engines only.',
       suggestedQuestions: _defaultSuggestedQuestions,
     );
   }
@@ -550,13 +526,13 @@ class VaultContextExplainerEngine {
   bool _asksAboutValue(String question) {
     final isValueRangeRequest =
         question.contains('over') ||
-            question.contains('above') ||
-            question.contains('under') ||
-            question.contains('below') ||
-            question.contains('between') ||
-            question.contains('most valuable') ||
-            question.contains('highest value') ||
-            question.contains('most expensive');
+        question.contains('above') ||
+        question.contains('under') ||
+        question.contains('below') ||
+        question.contains('between') ||
+        question.contains('most valuable') ||
+        question.contains('highest value') ||
+        question.contains('most expensive');
 
     if (isValueRangeRequest) {
       return false;
@@ -596,8 +572,7 @@ class VaultContextExplainerEngine {
   }
 
   bool _asksAboutWishlist(String question) {
-    return question.contains('how many') &&
-        question.contains('wishlist');
+    return question.contains('how many') && question.contains('wishlist');
   }
 
   bool _asksAboutConfidence(String question) {

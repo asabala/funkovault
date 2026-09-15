@@ -14,10 +14,7 @@ class AtlasDashboard {
 
     final totalPops = pops.length;
 
-    final totalValue = pops.fold<double>(
-      0,
-          (sum, pop) => sum + pop.value,
-    );
+    final totalValue = pops.fold<double>(0, (sum, pop) => sum + pop.value);
 
     final uniqueCategories = pops
         .map((pop) => pop.category.trim())
@@ -25,14 +22,11 @@ class AtlasDashboard {
         .toSet()
         .length;
 
-    final grailCount =
-        pops.where((pop) => pop.value >= 100).length;
+    final grailCount = pops.where((pop) => pop.value >= 100).length;
 
-    final wishlistCount =
-        pops.where((pop) => pop.isWishlist).length;
+    final wishlistCount = pops.where((pop) => pop.isWishlist).length;
 
-    final missingValueCount =
-        pops.where((pop) => pop.value <= 0).length;
+    final missingValueCount = pops.where((pop) => pop.value <= 0).length;
 
     final duplicates = <String, int>{};
 
@@ -41,15 +35,17 @@ class AtlasDashboard {
           (duplicates[pop.collectorIdentity] ?? 0) + 1;
     }
 
-    final duplicateGroupCount =
-        duplicates.values.where((count) => count > 1).length;
+    final duplicateGroupCount = duplicates.values
+        .where((count) => count > 1)
+        .length;
 
     final double vaultHealth = totalPops == 0
         ? 100.0
         : (100.0 -
-        (((duplicateGroupCount + missingValueCount) / totalPops) * 100))
-        .clamp(0.0, 100.0)
-        .toDouble();
+                  (((duplicateGroupCount + missingValueCount) / totalPops) *
+                      100))
+              .clamp(0.0, 100.0)
+              .toDouble();
 
     const scoreEngine = AtlasCollectorScoreEngine();
     const dnaEngine = AtlasCollectorDNAEngine();
@@ -75,9 +71,7 @@ class AtlasDashboard {
       dna: dnaEngine.analyze(pops),
       confidence: confidenceEngine.calculate(pops),
       achievements: achievementEngine.evaluate(pops),
-      memory: memoryEngine.remember(
-        pops: pops,
-      ),
+      memory: memoryEngine.remember(pops: pops),
     );
   }
 }

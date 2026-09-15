@@ -29,9 +29,7 @@ class ValueHistoryEntry {
   /// - legacy_value
   final String source;
 
-  factory ValueHistoryEntry.fromJson(
-      Map<String, dynamic> json,
-      ) {
+  factory ValueHistoryEntry.fromJson(Map<String, dynamic> json) {
     return ValueHistoryEntry(
       value: _readDouble(json['value']),
       recordedAt: _readDateTime(json['recordedAt']),
@@ -87,16 +85,11 @@ class ValueHistoryEntry {
       return value.toDouble();
     }
 
-    return double.tryParse(
-      value?.toString().trim() ?? '',
-    ) ??
-        0;
+    return double.tryParse(value?.toString().trim() ?? '') ?? 0;
   }
 
   static DateTime _readDateTime(dynamic value) {
-    final parsed = DateTime.tryParse(
-      value?.toString().trim() ?? '',
-    );
+    final parsed = DateTime.tryParse(value?.toString().trim() ?? '');
 
     return parsed ?? DateTime.fromMillisecondsSinceEpoch(0);
   }

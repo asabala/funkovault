@@ -24,10 +24,9 @@ class AtlasDecisionEngine {
       return const AtlasDecision(
         title: 'No Mission Needed',
         message:
-        'Atlas found no urgent action for today. Your Vault is in good shape.',
+            'Atlas found no urgent action for today. Your Vault is in good shape.',
         severity: 'Low',
-        why:
-        'No high-priority recommendations were detected.',
+        why: 'No high-priority recommendations were detected.',
       );
     }
 
@@ -38,7 +37,7 @@ class AtlasDecisionEngine {
       message: topRecommendation.message,
       severity: topRecommendation.severity,
       why:
-      'Atlas selected this because it has the highest priority score and the greatest expected impact: ${topRecommendation.estimatedImpact}.',
+          'Atlas selected this because it has the highest priority score and the greatest expected impact: ${topRecommendation.estimatedImpact}.',
     );
   }
 }

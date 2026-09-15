@@ -28,24 +28,15 @@ class CollectorDNACard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _DNAStat(
-            label: 'Primary Trait',
-            value: primaryTrait,
-          ),
+          _DNAStat(label: 'Primary Trait', value: primaryTrait),
 
           const SizedBox(height: AtlasSpacing.md),
 
-          _DNAStat(
-            label: 'Secondary Trait',
-            value: secondaryTrait,
-          ),
+          _DNAStat(label: 'Secondary Trait', value: secondaryTrait),
 
           const SizedBox(height: AtlasSpacing.lg),
 
-          Text(
-            'Atlas Confidence',
-            style: AtlasTypography.label,
-          ),
+          Text('Atlas Confidence', style: AtlasTypography.label),
 
           const SizedBox(height: AtlasSpacing.sm),
 
@@ -70,10 +61,7 @@ class CollectorDNACard extends StatelessWidget {
 
           const SizedBox(height: AtlasSpacing.lg),
 
-          Text(
-            summary,
-            style: AtlasTypography.bodyMedium,
-          ),
+          Text(summary, style: AtlasTypography.bodyMedium),
         ],
       ),
     );
@@ -81,10 +69,7 @@ class CollectorDNACard extends StatelessWidget {
 }
 
 class _DNAStat extends StatelessWidget {
-  const _DNAStat({
-    required this.label,
-    required this.value,
-  });
+  const _DNAStat({required this.label, required this.value});
 
   final String label;
   final String value;
@@ -96,15 +81,10 @@ class _DNAStat extends StatelessWidget {
         Expanded(
           child: Text(
             label,
-            style: AtlasTypography.label.copyWith(
-              color: AtlasColors.textMuted,
-            ),
+            style: AtlasTypography.label.copyWith(color: AtlasColors.textMuted),
           ),
         ),
-        Text(
-          value,
-          style: AtlasTypography.headingSmall,
-        ),
+        Text(value, style: AtlasTypography.headingSmall),
       ],
     );
   }

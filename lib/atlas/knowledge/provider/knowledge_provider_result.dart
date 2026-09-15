@@ -14,19 +14,14 @@ class KnowledgeProviderResult {
     required this.startedAt,
     required this.completedAt,
     List<String> notes = const <String>[],
-    Map<String, String> metadata =
-    const <String, String>{},
-  })  : assert(
-  confidence >= 0.0 && confidence <= 1.0,
-  'Confidence must be between 0.0 and 1.0.',
-  ),
-        records = List<KnowledgeRecord>.unmodifiable(
-          records,
-        ),
-        notes = List<String>.unmodifiable(notes),
-        metadata = Map<String, String>.unmodifiable(
-          metadata,
-        );
+    Map<String, String> metadata = const <String, String>{},
+  }) : assert(
+         confidence >= 0.0 && confidence <= 1.0,
+         'Confidence must be between 0.0 and 1.0.',
+       ),
+       records = List<KnowledgeRecord>.unmodifiable(records),
+       notes = List<String>.unmodifiable(notes),
+       metadata = Map<String, String>.unmodifiable(metadata);
 
   final String providerId;
 
@@ -86,8 +81,7 @@ class KnowledgeProviderResult {
     return KnowledgeProviderResult(
       providerId: providerId ?? this.providerId,
       providerName: providerName ?? this.providerName,
-      providerVersion:
-      providerVersion ?? this.providerVersion,
+      providerVersion: providerVersion ?? this.providerVersion,
       records: records ?? this.records,
       confidence: confidence ?? this.confidence,
       startedAt: startedAt ?? this.startedAt,

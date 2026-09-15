@@ -4,10 +4,7 @@ import '../../../theme/atlas_colors.dart';
 import '../../../theme/atlas_spacing.dart';
 import '../../../theme/atlas_typography.dart';
 
-enum AtlasChipSize {
-  compact,
-  regular,
-}
+enum AtlasChipSize { compact, regular }
 
 class AtlasChip extends StatelessWidget {
   const AtlasChip({
@@ -68,31 +65,18 @@ class AtlasChip extends StatelessWidget {
         vertical: _verticalPadding,
       ),
       decoration: BoxDecoration(
-        color: accentColor.withValues(
-          alpha: 0.14,
-        ),
+        color: accentColor.withValues(alpha: 0.14),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(
-          color: accentColor.withValues(
-            alpha: 0.36,
-          ),
-        ),
+        border: Border.all(color: accentColor.withValues(alpha: 0.36)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (icon != null) ...[
-            Icon(
-              icon,
-              color: accentColor,
-              size: _iconSize,
-            ),
+            Icon(icon, color: accentColor, size: _iconSize),
             const SizedBox(width: AtlasSpacing.xs),
           ],
-          Text(
-            label,
-            style: _textStyle,
-          ),
+          Text(label, style: _textStyle),
         ],
       ),
     );

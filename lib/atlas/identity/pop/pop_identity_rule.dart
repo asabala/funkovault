@@ -22,56 +22,34 @@ class PopIdentityRule {
   final List<String> keywords;
   final Set<PopIdentityScope> targetScopes;
 
-  bool matches(
-      String text,
-      ) {
-    final String normalizedText = _normalizeText(
-      text,
-    );
+  bool matches(String text) {
+    final String normalizedText = _normalizeText(text);
 
     if (normalizedText.isEmpty) {
       return false;
     }
 
-    return keywords.any(
-          (String keyword) {
-        final String normalizedKeyword = _normalizeText(
-          keyword,
-        );
+    return keywords.any((String keyword) {
+      final String normalizedKeyword = _normalizeText(keyword);
 
-        if (normalizedKeyword.isEmpty) {
-          return false;
-        }
+      if (normalizedKeyword.isEmpty) {
+        return false;
+      }
 
-        return normalizedText.contains(
-          normalizedKeyword,
-        );
-      },
-    );
+      return normalizedText.contains(normalizedKeyword);
+    });
   }
 
-  bool targets(
-      PopIdentityScope scope,
-      ) {
-    return targetScopes.contains(
-      scope,
-    );
+  bool targets(PopIdentityScope scope) {
+    return targetScopes.contains(scope);
   }
 
-  static String _normalizeText(
-      String value,
-      ) {
+  static String _normalizeText(String value) {
     return value
         .trim()
         .toLowerCase()
-        .replaceAll(
-      RegExp(r'[-_]+'),
-      ' ',
-    )
-        .replaceAll(
-      RegExp(r'\s+'),
-      ' ',
-    );
+        .replaceAll(RegExp(r'[-_]+'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ');
   }
 }
 

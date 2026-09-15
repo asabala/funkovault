@@ -21,9 +21,7 @@ class Activity {
     required this.timestamp,
   });
 
-  factory Activity.fromJson(
-      Map<String, dynamic> json,
-      ) {
+  factory Activity.fromJson(Map<String, dynamic> json) {
     return Activity(
       id: json['id'] ?? '',
       popId: json['popId'] ?? '',
@@ -33,10 +31,7 @@ class Activity {
       owner: json['owner'] ?? '',
       actor: json['actor'] ?? '',
       details: json['details'] ?? '',
-      timestamp: DateTime.tryParse(
-        json['timestamp'] ?? '',
-      ) ??
-          DateTime.now(),
+      timestamp: DateTime.tryParse(json['timestamp'] ?? '') ?? DateTime.now(),
     );
   }
 

@@ -19,9 +19,7 @@ final class AtlasBarcodeResolution {
     required this.matches,
   });
 
-  factory AtlasBarcodeResolution.invalid({
-    required String barcode,
-  }) {
+  factory AtlasBarcodeResolution.invalid({required String barcode}) {
     return AtlasBarcodeResolution._(
       barcode: barcode,
       status: AtlasBarcodeResolutionStatus.invalidBarcode,
@@ -29,9 +27,7 @@ final class AtlasBarcodeResolution {
     );
   }
 
-  factory AtlasBarcodeResolution.noMatch({
-    required String barcode,
-  }) {
+  factory AtlasBarcodeResolution.noMatch({required String barcode}) {
     return AtlasBarcodeResolution._(
       barcode: barcode,
       status: AtlasBarcodeResolutionStatus.noMatch,
@@ -44,9 +40,7 @@ final class AtlasBarcodeResolution {
     required List<AtlasCatalogProduct> matches,
   }) {
     final List<AtlasCatalogProduct> immutableMatches =
-    List<AtlasCatalogProduct>.unmodifiable(
-      matches,
-    );
+        List<AtlasCatalogProduct>.unmodifiable(matches);
 
     return AtlasBarcodeResolution._(
       barcode: barcode,
@@ -93,35 +87,23 @@ final class AtlasBarcodeResolution {
 /// Scanner screens and scan workflows should use this resolver rather than
 /// creating repository implementations or performing catalog scans directly.
 final class AtlasBarcodeCatalogResolver {
-  AtlasBarcodeCatalogResolver({
-    AtlasCatalogService? catalogService,
-  }) : _catalogService =
-      catalogService ?? AtlasCatalogService.instance;
+  AtlasBarcodeCatalogResolver({AtlasCatalogService? catalogService})
+    : _catalogService = catalogService ?? AtlasCatalogService.instance;
 
   final AtlasCatalogService _catalogService;
 
-  Future<AtlasBarcodeResolution> resolve(
-      String barcode,
-      ) async {
-    final String normalizedBarcode = _normalizeBarcode(
-      barcode,
-    );
+  Future<AtlasBarcodeResolution> resolve(String barcode) async {
+    final String normalizedBarcode = _normalizeBarcode(barcode);
 
     if (normalizedBarcode.isEmpty) {
-      return AtlasBarcodeResolution.invalid(
-        barcode: barcode,
-      );
+      return AtlasBarcodeResolution.invalid(barcode: barcode);
     }
 
-    final List<AtlasCatalogProduct> matches =
-    await _catalogService.findByBarcode(
-      normalizedBarcode,
-    );
+    final List<AtlasCatalogProduct> matches = await _catalogService
+        .findByBarcode(normalizedBarcode);
 
     if (matches.isEmpty) {
-      return AtlasBarcodeResolution.noMatch(
-        barcode: normalizedBarcode,
-      );
+      return AtlasBarcodeResolution.noMatch(barcode: normalizedBarcode);
     }
 
     return AtlasBarcodeResolution.matches(
@@ -130,12 +112,7 @@ final class AtlasBarcodeCatalogResolver {
     );
   }
 
-  static String _normalizeBarcode(
-      String value,
-      ) {
-    return value.replaceAll(
-      RegExp(r'[^0-9A-Za-z]'),
-      '',
-    );
+  static String _normalizeBarcode(String value) {
+    return value.replaceAll(RegExp(r'[^0-9A-Za-z]'), '');
   }
 }

@@ -25,8 +25,7 @@ class VaultSearchSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool hasSearch =
-        controller.text.trim().isNotEmpty;
+    final bool hasSearch = controller.text.trim().isNotEmpty;
 
     return AtlasGlassCard(
       child: Column(
@@ -36,19 +35,14 @@ class VaultSearchSection extends StatelessWidget {
             title: 'Search Vault',
             icon: Icons.search_rounded,
           ),
-          const SizedBox(
-            height: AtlasSpacing.md,
-          ),
+          const SizedBox(height: AtlasSpacing.md),
           AtlasSearchField(
             controller: controller,
-            hintText:
-            'Search by name, number, category, series, or owner...',
+            hintText: 'Search by name, number, category, series, or owner...',
             onChanged: onChanged,
             onClear: onClear,
           ),
-          const SizedBox(
-            height: AtlasSpacing.sm,
-          ),
+          const SizedBox(height: AtlasSpacing.sm),
           Text(
             hasSearch
                 ? '$resultCount of $totalCount Pops match your search.'

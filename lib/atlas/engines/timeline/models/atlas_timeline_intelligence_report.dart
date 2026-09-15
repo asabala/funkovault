@@ -36,43 +36,30 @@ class AtlasTimelineIntelligenceReport {
 
   bool get hasMilestones => milestones.isNotEmpty;
 
-  bool get hasOwnershipHistory =>
-      ownership.hasOwnershipHistory;
+  bool get hasOwnershipHistory => ownership.hasOwnershipHistory;
 
-  bool get hasValueHistory =>
-      value.hasValueHistory;
+  bool get hasValueHistory => value.hasValueHistory;
 
   bool get hasMeaningfulIntelligence =>
-      hasOwnershipHistory ||
-          hasValueHistory ||
-          hasInsights ||
-          hasMilestones;
+      hasOwnershipHistory || hasValueHistory || hasInsights || hasMilestones;
 
   int get highPriorityInsightCount {
-    return insights.where(
-          (insight) => insight.isHighPriority,
-    ).length;
+    return insights.where((insight) => insight.isHighPriority).length;
   }
 
   int get criticalInsightCount {
-    return insights.where(
-          (insight) => insight.isCritical,
-    ).length;
+    return insights.where((insight) => insight.isCritical).length;
   }
 
   List<TimelineInsight> get highPriorityInsights {
     return List<TimelineInsight>.unmodifiable(
-      insights.where(
-            (insight) => insight.isHighPriority,
-      ),
+      insights.where((insight) => insight.isHighPriority),
     );
   }
 
   List<TimelineInsight> get criticalInsights {
     return List<TimelineInsight>.unmodifiable(
-      insights.where(
-            (insight) => insight.isCritical,
-      ),
+      insights.where((insight) => insight.isCritical),
     );
   }
 

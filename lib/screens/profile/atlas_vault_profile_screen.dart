@@ -35,13 +35,10 @@ class AtlasVaultProfileScreen extends StatelessWidget {
 
     const dashboardBuilder = AtlasDashboard();
 
-    final AtlasDashboardModel dashboard =
-    dashboardBuilder.build(appState);
+    final AtlasDashboardModel dashboard = dashboardBuilder.build(appState);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Atlas Vault Profile'),
-      ),
+      appBar: AppBar(title: const Text('Atlas Vault Profile')),
       body: VaultScrollView(
         children: [
           AtlasIdentityCard(
@@ -50,8 +47,7 @@ class AtlasVaultProfileScreen extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) =>
-                  const EditCollectorProfileScreen(),
+                  builder: (_) => const EditCollectorProfileScreen(),
                 ),
               );
             },
@@ -68,9 +64,7 @@ class AtlasVaultProfileScreen extends StatelessWidget {
             title: dashboard.score.title,
           ),
           const SizedBox(height: AtlasSpacing.lg),
-          VaultStatusCard(
-            isPremium: authProvider.isPremium,
-          ),
+          VaultStatusCard(isPremium: authProvider.isPremium),
           const SizedBox(height: AtlasSpacing.lg),
           ProfileStatsCard(
             totalPops: dashboard.totalPops,
@@ -98,9 +92,7 @@ class AtlasVaultProfileScreen extends StatelessWidget {
             message: dashboard.confidence.message,
           ),
           const SizedBox(height: AtlasSpacing.lg),
-          AchievementPreviewCard(
-            achievements: dashboard.achievements,
-          ),
+          AchievementPreviewCard(achievements: dashboard.achievements),
           const SizedBox(height: AtlasSpacing.lg),
           MemoryPreviewCard(
             title: dashboard.memory.title,
@@ -108,17 +100,14 @@ class AtlasVaultProfileScreen extends StatelessWidget {
             footer: dashboard.memory.footer,
           ),
           const SizedBox(height: AtlasSpacing.lg),
-          CollectorDetailsCard(
-            profile: profile,
-          ),
+          CollectorDetailsCard(profile: profile),
           const SizedBox(height: AtlasSpacing.lg),
           FilledButton.icon(
             onPressed: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) =>
-                  const EditCollectorProfileScreen(),
+                  builder: (_) => const EditCollectorProfileScreen(),
                 ),
               );
             },
@@ -144,8 +133,7 @@ class _AccountIdentityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String accountEmail =
-    email?.trim().isNotEmpty == true
+    final String accountEmail = email?.trim().isNotEmpty == true
         ? email!.trim()
         : 'No account connected';
 
@@ -159,9 +147,7 @@ class _AccountIdentityCard extends StatelessWidget {
                 Icons.account_circle_outlined,
                 color: AtlasColors.vaultGold,
               ),
-              const SizedBox(
-                width: AtlasSpacing.sm,
-              ),
+              const SizedBox(width: AtlasSpacing.sm),
               Expanded(
                 child: Text(
                   'Atlas Account',
@@ -170,23 +156,17 @@ class _AccountIdentityCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(
-            height: AtlasSpacing.md,
-          ),
+          const SizedBox(height: AtlasSpacing.md),
           Text(
-            isLoggedIn
-                ? accountEmail
-                : 'Using Atlas as Guest',
+            isLoggedIn ? accountEmail : 'Using Atlas as Guest',
             style: AtlasTypography.bodyMedium,
           ),
-          const SizedBox(
-            height: AtlasSpacing.xs,
-          ),
+          const SizedBox(height: AtlasSpacing.xs),
           Text(
             isLoggedIn
                 ? emailVerified
-                ? 'Email verified'
-                : 'Email verification pending'
+                      ? 'Email verified'
+                      : 'Email verification pending'
                 : 'Sign in to connect this collector profile to an Atlas account.',
             style: AtlasTypography.bodySmall.copyWith(
               color: AtlasColors.textSecondary,

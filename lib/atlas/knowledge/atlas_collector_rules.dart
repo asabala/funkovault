@@ -30,39 +30,23 @@ class AtlasCollectorRules {
     'PSA Authenticated',
   };
 
-  static bool isRareVariant(
-      String variant,
-      ) {
-    return rareVariants.contains(
-      variant,
-    );
+  static bool isRareVariant(String variant) {
+    return rareVariants.contains(variant);
   }
 
-  static bool isConventionSticker(
-      String sticker,
-      ) {
-    return conventionStickers.contains(
-      sticker,
-    );
+  static bool isConventionSticker(String sticker) {
+    return conventionStickers.contains(sticker);
   }
 
-  static bool isAuthenticated(
-      String signature,
-      ) {
-    return authenticationTypes.contains(
-      signature,
-    );
+  static bool isAuthenticated(String signature) {
+    return authenticationTypes.contains(signature);
   }
 
-  static bool isLimitedEdition(
-      String limitedEdition,
-      ) {
+  static bool isLimitedEdition(String limitedEdition) {
     return limitedEdition != 'None';
   }
 
-  static bool isExclusive(
-      String retailExclusive,
-      ) {
+  static bool isExclusive(String retailExclusive) {
     return retailExclusive != 'None';
   }
 }

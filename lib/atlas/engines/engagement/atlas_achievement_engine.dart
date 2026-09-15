@@ -4,22 +4,16 @@ import '../../models/atlas_achievement.dart';
 class AtlasAchievementEngine {
   const AtlasAchievementEngine();
 
-  List<AtlasAchievement> evaluate(
-      List<Pop> pops,
-      ) {
+  List<AtlasAchievement> evaluate(List<Pop> pops) {
     final totalPops = pops.length;
 
-    final hasChase =
-    pops.any((pop) => pop.variant == 'Chase');
+    final hasChase = pops.any((pop) => pop.variant == 'Chase');
 
-    final hasSigned =
-    pops.any((pop) => pop.signature != 'Unsigned');
+    final hasSigned = pops.any((pop) => pop.signature != 'Unsigned');
 
-    final hasLimitedEdition =
-    pops.any((pop) => pop.limitedEdition != 'None');
+    final hasLimitedEdition = pops.any((pop) => pop.limitedEdition != 'None');
 
-    final hasGrail =
-    pops.any((pop) => pop.value >= 100);
+    final hasGrail = pops.any((pop) => pop.value >= 100);
 
     return [
       AtlasAchievement(

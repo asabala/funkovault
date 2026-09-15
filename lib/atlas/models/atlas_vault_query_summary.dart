@@ -17,25 +17,20 @@ class AtlasVaultQuerySummary {
 
   bool get hasFilter =>
       filterKey != null &&
-          filterKey!.trim().isNotEmpty &&
-          filterKey!.trim().toLowerCase() != 'all';
+      filterKey!.trim().isNotEmpty &&
+      filterKey!.trim().toLowerCase() != 'all';
 
   bool get hasSearchQuery =>
       searchQuery != null && searchQuery!.trim().isNotEmpty;
 
-  bool get hasValueRange =>
-      minimumValue != null || maximumValue != null;
+  bool get hasValueRange => minimumValue != null || maximumValue != null;
 
-  bool get hasSort =>
-      sortKey != null && sortKey!.trim().isNotEmpty;
+  bool get hasSort => sortKey != null && sortKey!.trim().isNotEmpty;
 
   bool get hasUnsupportedParts => unsupportedParts.isNotEmpty;
 
   bool get hasRecognizedCriteria =>
-      hasFilter ||
-          hasSearchQuery ||
-          hasValueRange ||
-          hasSort;
+      hasFilter || hasSearchQuery || hasValueRange || hasSort;
 
   String get confirmationText {
     if (!hasRecognizedCriteria) {
@@ -175,10 +170,7 @@ class AtlasVaultQuerySummary {
       return '${details.first}, ${details.last}';
     }
 
-    final leadingDetails = details.sublist(
-      0,
-      details.length - 1,
-    );
+    final leadingDetails = details.sublist(0, details.length - 1);
 
     return '${leadingDetails.join(', ')}, ${details.last}';
   }
@@ -190,20 +182,16 @@ class AtlasVaultQuerySummary {
   }
 
   String _normalize(String value) {
-    return value
-        .trim()
-        .toLowerCase()
-        .replaceAll('-', '_')
-        .replaceAll(' ', '');
+    return value.trim().toLowerCase().replaceAll('-', '_').replaceAll(' ', '');
   }
 
   String _humanize(String value) {
     final spaced = value
         .trim()
         .replaceAllMapped(
-      RegExp(r'([a-z])([A-Z])'),
+          RegExp(r'([a-z])([A-Z])'),
           (match) => '${match.group(1)} ${match.group(2)}',
-    )
+        )
         .replaceAll('_', ' ')
         .replaceAll('-', ' ');
 

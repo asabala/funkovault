@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 
 class FormSectionTitle extends StatelessWidget {
-  const FormSectionTitle(
-      this.title, {
-        super.key,
-      });
+  const FormSectionTitle(this.title, {super.key});
 
   final String title;
 
@@ -13,16 +10,10 @@ class FormSectionTitle extends StatelessWidget {
     return Align(
       alignment: Alignment.centerLeft,
       child: Padding(
-        padding: const EdgeInsets.only(
-          bottom: 12,
-          top: 8,
-        ),
+        padding: const EdgeInsets.only(bottom: 12, top: 8),
         child: Text(
           title,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
       ),
     );

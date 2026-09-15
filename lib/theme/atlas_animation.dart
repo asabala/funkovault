@@ -18,40 +18,29 @@ class AtlasAnimation {
   // Durations
   // ----------------------------------------------------------
 
-  static const Duration instant =
-  Duration(milliseconds: 100);
+  static const Duration instant = Duration(milliseconds: 100);
 
-  static const Duration fast =
-  Duration(milliseconds: 200);
+  static const Duration fast = Duration(milliseconds: 200);
 
-  static const Duration standard =
-  Duration(milliseconds: 300);
+  static const Duration standard = Duration(milliseconds: 300);
 
-  static const Duration slow =
-  Duration(milliseconds: 500);
+  static const Duration slow = Duration(milliseconds: 500);
 
-  static const Duration cinematic =
-  Duration(milliseconds: 800);
+  static const Duration cinematic = Duration(milliseconds: 800);
 
-  static const Duration splash =
-  Duration(milliseconds: 2000);
+  static const Duration splash = Duration(milliseconds: 2000);
 
   // ----------------------------------------------------------
   // Curves
   // ----------------------------------------------------------
 
-  static const Curve standardCurve =
-      Curves.easeInOut;
+  static const Curve standardCurve = Curves.easeInOut;
 
-  static const Curve entranceCurve =
-      Curves.easeOutCubic;
+  static const Curve entranceCurve = Curves.easeOutCubic;
 
-  static const Curve exitCurve =
-      Curves.easeInCubic;
+  static const Curve exitCurve = Curves.easeInCubic;
 
-  static const Curve emphasisCurve =
-      Curves.easeOutBack;
+  static const Curve emphasisCurve = Curves.easeOutBack;
 
-  static const Curve gentleCurve =
-      Curves.easeInOutSine;
+  static const Curve gentleCurve = Curves.easeInOutSine;
 }

@@ -12,14 +12,14 @@ class CollectorTrait {
     required this.confidence,
     this.evidence = const <RecommendationEvidence>[],
     this.metadata = const <String, Object?>{},
-  })  : assert(
-  normalizedScore >= 0 && normalizedScore <= 1,
-  'normalizedScore must be between 0 and 1',
-  ),
-        assert(
-        confidence >= 0 && confidence <= 1,
-        'confidence must be between 0 and 1',
-        );
+  }) : assert(
+         normalizedScore >= 0 && normalizedScore <= 1,
+         'normalizedScore must be between 0 and 1',
+       ),
+       assert(
+         confidence >= 0 && confidence <= 1,
+         'confidence must be between 0 and 1',
+       );
 
   /// Stable framework identifier.
   ///
@@ -73,8 +73,7 @@ class CollectorTrait {
 
   bool get isStrong => normalizedScore >= 0.75;
 
-  bool get isModerate =>
-      normalizedScore >= 0.40 && normalizedScore < 0.75;
+  bool get isModerate => normalizedScore >= 0.40 && normalizedScore < 0.75;
 
   bool get isWeak => normalizedScore < 0.40;
 
@@ -122,9 +121,7 @@ class CollectorTrait {
       confidence,
       Object.hashAll(evidence),
       Object.hashAll(
-        metadata.entries.map(
-              (entry) => Object.hash(entry.key, entry.value),
-        ),
+        metadata.entries.map((entry) => Object.hash(entry.key, entry.value)),
       ),
     );
   }

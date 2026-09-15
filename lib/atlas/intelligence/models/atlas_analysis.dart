@@ -12,9 +12,9 @@ class AtlasAnalysis<TResult> {
     this.recommendations = const <Recommendation>[],
     this.metadata = const <String, Object?>{},
   }) : assert(
-  confidence >= 0 && confidence <= 1,
-  'confidence must be between 0 and 1',
-  );
+         confidence >= 0 && confidence <= 1,
+         'confidence must be between 0 and 1',
+       );
 
   // The primary structured result produced by the analyst.
   //
@@ -65,8 +65,7 @@ class AtlasAnalysis<TResult> {
       result: result ?? this.result,
       confidence: confidence ?? this.confidence,
       findings: findings ?? this.findings,
-      recommendations:
-      recommendations ?? this.recommendations,
+      recommendations: recommendations ?? this.recommendations,
       metadata: metadata ?? this.metadata,
     );
   }
@@ -79,10 +78,7 @@ class AtlasAnalysis<TResult> {
             result == other.result &&
             confidence == other.confidence &&
             listEquals(findings, other.findings) &&
-            listEquals(
-              recommendations,
-              other.recommendations,
-            ) &&
+            listEquals(recommendations, other.recommendations) &&
             mapEquals(metadata, other.metadata);
   }
 
@@ -94,12 +90,7 @@ class AtlasAnalysis<TResult> {
       Object.hashAll(findings),
       Object.hashAll(recommendations),
       Object.hashAll(
-        metadata.entries.map(
-              (entry) => Object.hash(
-            entry.key,
-            entry.value,
-          ),
-        ),
+        metadata.entries.map((entry) => Object.hash(entry.key, entry.value)),
       ),
     );
   }

@@ -9,8 +9,7 @@ import 'identity_resolution_preset.dart';
 class IdentityResolutionPresetRegistry
     extends AtlasRegistry<IdentityResolutionPreset> {
   const IdentityResolutionPresetRegistry({
-    List<IdentityResolutionPreset> presets =
-    const <IdentityResolutionPreset>[],
+    List<IdentityResolutionPreset> presets = const <IdentityResolutionPreset>[],
   }) : super(presets);
 
   // Creates an empty registry.
@@ -20,26 +19,20 @@ class IdentityResolutionPresetRegistry
 
   // Creates a registry from a collection of presets.
   factory IdentityResolutionPresetRegistry.fromPresets(
-      Iterable<IdentityResolutionPreset> presets,
-      ) {
+    Iterable<IdentityResolutionPreset> presets,
+  ) {
     return IdentityResolutionPresetRegistry(
-      presets: List<IdentityResolutionPreset>.unmodifiable(
-        presets,
-      ),
+      presets: List<IdentityResolutionPreset>.unmodifiable(presets),
     );
   }
 
   // Returns the preset with the supplied identifier.
-  IdentityResolutionPreset? presetById(
-      String id,
-      ) {
+  IdentityResolutionPreset? presetById(String id) {
     return byId(id);
   }
 
   // Returns true when a preset exists.
-  bool containsPreset(
-      String id,
-      ) {
+  bool containsPreset(String id) {
     return contains(id);
   }
 

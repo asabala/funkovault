@@ -3,10 +3,7 @@ import 'package:flutter/material.dart';
 import '../../models/pop.dart';
 
 class CollectorIdentityChips extends StatelessWidget {
-  const CollectorIdentityChips({
-    super.key,
-    required this.pop,
-  });
+  const CollectorIdentityChips({super.key, required this.pop});
 
   final Pop pop;
 
@@ -25,10 +22,7 @@ class CollectorIdentityChips extends StatelessWidget {
       }
 
       chips.add(
-        Chip(
-          label: Text(cleanValue),
-          visualDensity: VisualDensity.compact,
-        ),
+        Chip(label: Text(cleanValue), visualDensity: VisualDensity.compact),
       );
     }
 
@@ -44,11 +38,7 @@ class CollectorIdentityChips extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.only(top: 6),
-      child: Wrap(
-        spacing: 6,
-        runSpacing: 6,
-        children: chips,
-      ),
+      child: Wrap(spacing: 6, runSpacing: 6, children: chips),
     );
   }
 }

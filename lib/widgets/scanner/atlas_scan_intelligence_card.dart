@@ -8,10 +8,7 @@ import '../atlas/atlas_glass_card.dart';
 import '../atlas/atlas_glass_panel.dart';
 
 class AtlasScanIntelligenceCard extends StatelessWidget {
-  const AtlasScanIntelligenceCard({
-    required this.intelligence,
-    super.key,
-  });
+  const AtlasScanIntelligenceCard({required this.intelligence, super.key});
 
   final AtlasScanIntelligence intelligence;
 
@@ -21,37 +18,22 @@ class AtlasScanIntelligenceCard extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    final List<AtlasScanInsight> insights =
-        intelligence.prioritizedInsights;
+    final List<AtlasScanInsight> insights = intelligence.prioritizedInsights;
 
     return AtlasGlassCard(
       accentColor: intelligence.hasHighPriorityInsights
           ? AtlasColors.warning
           : AtlasColors.intelligenceBlue,
-      padding: const EdgeInsets.all(
-        AtlasSpacing.lg,
-      ),
+      padding: const EdgeInsets.all(AtlasSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _IntelligenceHeader(
-            intelligence: intelligence,
-          ),
-          const SizedBox(
-            height: AtlasSpacing.lg,
-          ),
-          for (
-          int index = 0;
-          index < insights.length;
-          index++
-          ) ...[
-            _AtlasScanInsightTile(
-              insight: insights[index],
-            ),
+          _IntelligenceHeader(intelligence: intelligence),
+          const SizedBox(height: AtlasSpacing.lg),
+          for (int index = 0; index < insights.length; index++) ...[
+            _AtlasScanInsightTile(insight: insights[index]),
             if (index < insights.length - 1)
-              const SizedBox(
-                height: AtlasSpacing.md,
-              ),
+              const SizedBox(height: AtlasSpacing.md),
           ],
         ],
       ),
@@ -60,9 +42,7 @@ class AtlasScanIntelligenceCard extends StatelessWidget {
 }
 
 class _IntelligenceHeader extends StatelessWidget {
-  const _IntelligenceHeader({
-    required this.intelligence,
-  });
+  const _IntelligenceHeader({required this.intelligence});
 
   final AtlasScanIntelligence intelligence;
 
@@ -76,16 +56,10 @@ class _IntelligenceHeader extends StatelessWidget {
           height: 46,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: AtlasColors.intelligenceBlue.withValues(
-              alpha: 0.14,
-            ),
-            borderRadius: BorderRadius.circular(
-              15,
-            ),
+            color: AtlasColors.intelligenceBlue.withValues(alpha: 0.14),
+            borderRadius: BorderRadius.circular(15),
             border: Border.all(
-              color: AtlasColors.intelligenceBlue.withValues(
-                alpha: 0.32,
-              ),
+              color: AtlasColors.intelligenceBlue.withValues(alpha: 0.32),
             ),
           ),
           child: const Icon(
@@ -94,9 +68,7 @@ class _IntelligenceHeader extends StatelessWidget {
             size: 27,
           ),
         ),
-        const SizedBox(
-          width: AtlasSpacing.md,
-        ),
+        const SizedBox(width: AtlasSpacing.md),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -105,9 +77,7 @@ class _IntelligenceHeader extends StatelessWidget {
                 '🧠 Atlas Intelligence',
                 style: AtlasTypography.headingSmall,
               ),
-              const SizedBox(
-                height: AtlasSpacing.xs,
-              ),
+              const SizedBox(height: AtlasSpacing.xs),
               Text(
                 intelligence.hasHighPriorityInsights
                     ? 'Atlas found information that may need your attention.'
@@ -120,13 +90,10 @@ class _IntelligenceHeader extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(
-          width: AtlasSpacing.sm,
-        ),
+        const SizedBox(width: AtlasSpacing.sm),
         _InsightCountBadge(
           count: intelligence.insightCount,
-          hasHighPriorityInsights:
-          intelligence.hasHighPriorityInsights,
+          hasHighPriorityInsights: intelligence.hasHighPriorityInsights,
         ),
       ],
     );
@@ -134,24 +101,17 @@ class _IntelligenceHeader extends StatelessWidget {
 }
 
 class _AtlasScanInsightTile extends StatelessWidget {
-  const _AtlasScanInsightTile({
-    required this.insight,
-  });
+  const _AtlasScanInsightTile({required this.insight});
 
   final AtlasScanInsight insight;
 
   @override
   Widget build(BuildContext context) {
-    final Color accentColor =
-    _accentColorForInsight(
-      insight,
-    );
+    final Color accentColor = _accentColorForInsight(insight);
 
     return AtlasGlassPanel(
       accentColor: accentColor,
-      padding: const EdgeInsets.all(
-        AtlasSpacing.md,
-      ),
+      padding: const EdgeInsets.all(AtlasSpacing.md),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -160,24 +120,15 @@ class _AtlasScanInsightTile extends StatelessWidget {
             height: 42,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: accentColor.withValues(
-                alpha: 0.14,
-              ),
-              borderRadius: BorderRadius.circular(
-                14,
-              ),
+              color: accentColor.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(14),
             ),
             child: Text(
               insight.emoji,
-              style: const TextStyle(
-                fontSize: 21,
-                height: 1,
-              ),
+              style: const TextStyle(fontSize: 21, height: 1),
             ),
           ),
-          const SizedBox(
-            width: AtlasSpacing.md,
-          ),
+          const SizedBox(width: AtlasSpacing.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -188,33 +139,26 @@ class _AtlasScanInsightTile extends StatelessWidget {
                     Expanded(
                       child: Text(
                         insight.displayTitle,
-                        style:
-                        AtlasTypography.headingSmall.copyWith(
+                        style: AtlasTypography.headingSmall.copyWith(
                           color: AtlasColors.textPrimary,
                         ),
                       ),
                     ),
                     if (insight.requiresOnline)
                       const Padding(
-                        padding: EdgeInsets.only(
-                          left: AtlasSpacing.sm,
-                        ),
+                        padding: EdgeInsets.only(left: AtlasSpacing.sm),
                         child: Tooltip(
-                          message:
-                          'Connected intelligence',
+                          message: 'Connected intelligence',
                           child: Icon(
                             Icons.cloud_outlined,
                             size: 18,
-                            color:
-                            AtlasColors.textSecondary,
+                            color: AtlasColors.textSecondary,
                           ),
                         ),
                       ),
                   ],
                 ),
-                const SizedBox(
-                  height: AtlasSpacing.sm,
-                ),
+                const SizedBox(height: AtlasSpacing.sm),
                 Text(
                   insight.message,
                   style: AtlasTypography.bodyMedium.copyWith(
@@ -223,39 +167,26 @@ class _AtlasScanInsightTile extends StatelessWidget {
                   ),
                 ),
                 if (insight.hasDetails) ...[
-                  const SizedBox(
-                    height: AtlasSpacing.md,
-                  ),
-                  for (
-                  final String detail
-                  in insight.details
-                  )
+                  const SizedBox(height: AtlasSpacing.md),
+                  for (final String detail in insight.details)
                     Padding(
-                      padding: const EdgeInsets.only(
-                        bottom: AtlasSpacing.xs,
-                      ),
+                      padding: const EdgeInsets.only(bottom: AtlasSpacing.xs),
                       child: Row(
-                        crossAxisAlignment:
-                        CrossAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             '•',
-                            style:
-                            AtlasTypography.bodyMedium.copyWith(
+                            style: AtlasTypography.bodyMedium.copyWith(
                               color: accentColor,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          const SizedBox(
-                            width: AtlasSpacing.sm,
-                          ),
+                          const SizedBox(width: AtlasSpacing.sm),
                           Expanded(
                             child: Text(
                               detail,
-                              style:
-                              AtlasTypography.bodySmall.copyWith(
-                                color:
-                                AtlasColors.textSecondary,
+                              style: AtlasTypography.bodySmall.copyWith(
+                                color: AtlasColors.textSecondary,
                                 height: 1.35,
                               ),
                             ),
@@ -265,46 +196,31 @@ class _AtlasScanInsightTile extends StatelessWidget {
                     ),
                 ],
                 if (insight.hasRecommendation) ...[
-                  const SizedBox(
-                    height: AtlasSpacing.md,
-                  ),
+                  const SizedBox(height: AtlasSpacing.md),
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.all(
-                      AtlasSpacing.md,
-                    ),
+                    padding: const EdgeInsets.all(AtlasSpacing.md),
                     decoration: BoxDecoration(
-                      color: accentColor.withValues(
-                        alpha: 0.10,
-                      ),
-                      borderRadius: BorderRadius.circular(
-                        14,
-                      ),
+                      color: accentColor.withValues(alpha: 0.10),
+                      borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: accentColor.withValues(
-                          alpha: 0.24,
-                        ),
+                        color: accentColor.withValues(alpha: 0.24),
                       ),
                     ),
                     child: Column(
-                      crossAxisAlignment:
-                      CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           '💡 Atlas Recommendation',
-                          style:
-                          AtlasTypography.bodySmall.copyWith(
+                          style: AtlasTypography.bodySmall.copyWith(
                             color: accentColor,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(
-                          height: AtlasSpacing.xs,
-                        ),
+                        const SizedBox(height: AtlasSpacing.xs),
                         Text(
                           insight.recommendation!,
-                          style:
-                          AtlasTypography.bodyMedium.copyWith(
+                          style: AtlasTypography.bodyMedium.copyWith(
                             color: AtlasColors.textPrimary,
                             height: 1.4,
                           ),
@@ -313,13 +229,8 @@ class _AtlasScanInsightTile extends StatelessWidget {
                     ),
                   ),
                 ],
-                const SizedBox(
-                  height: AtlasSpacing.sm,
-                ),
-                _InsightMetadataRow(
-                  insight: insight,
-                  accentColor: accentColor,
-                ),
+                const SizedBox(height: AtlasSpacing.sm),
+                _InsightMetadataRow(insight: insight, accentColor: accentColor),
               ],
             ),
           ),
@@ -328,16 +239,12 @@ class _AtlasScanInsightTile extends StatelessWidget {
     );
   }
 
-  Color _accentColorForInsight(
-      AtlasScanInsight insight,
-      ) {
-    if (insight.priority ==
-        AtlasScanInsightPriority.critical) {
+  Color _accentColorForInsight(AtlasScanInsight insight) {
+    if (insight.priority == AtlasScanInsightPriority.critical) {
       return AtlasColors.danger;
     }
 
-    if (insight.priority ==
-        AtlasScanInsightPriority.high) {
+    if (insight.priority == AtlasScanInsightPriority.high) {
       return AtlasColors.warning;
     }
 
@@ -349,17 +256,13 @@ class _AtlasScanInsightTile extends StatelessWidget {
         return AtlasColors.success;
 
       case AtlasScanInsightType.variant:
-        return const Color(
-          0xFF9B5DE5,
-        );
+        return const Color(0xFF9B5DE5);
 
       case AtlasScanInsightType.market:
         return AtlasColors.vaultGold;
 
       case AtlasScanInsightType.recommendation:
-        return const Color(
-          0xFF7E57C2,
-        );
+        return const Color(0xFF7E57C2);
 
       case AtlasScanInsightType.warning:
         return AtlasColors.warning;
@@ -368,10 +271,7 @@ class _AtlasScanInsightTile extends StatelessWidget {
 }
 
 class _InsightMetadataRow extends StatelessWidget {
-  const _InsightMetadataRow({
-    required this.insight,
-    required this.accentColor,
-  });
+  const _InsightMetadataRow({required this.insight, required this.accentColor});
 
   final AtlasScanInsight insight;
   final Color accentColor;
@@ -383,20 +283,15 @@ class _InsightMetadataRow extends StatelessWidget {
       runSpacing: AtlasSpacing.xs,
       children: [
         _MetadataBadge(
-          icon: _sourceIcon(
-            insight.source,
-          ),
-          label: _sourceLabel(
-            insight.source,
-          ),
+          icon: _sourceIcon(insight.source),
+          label: _sourceLabel(insight.source),
           accentColor: accentColor,
         ),
         if (insight.requiresOnline)
           _MetadataBadge(
             icon: Icons.cloud_outlined,
             label: 'Online',
-            accentColor:
-            AtlasColors.intelligenceBlue,
+            accentColor: AtlasColors.intelligenceBlue,
           )
         else
           _MetadataBadge(
@@ -408,9 +303,7 @@ class _InsightMetadataRow extends StatelessWidget {
     );
   }
 
-  IconData _sourceIcon(
-      AtlasScanInsightSource source,
-      ) {
+  IconData _sourceIcon(AtlasScanInsightSource source) {
     switch (source) {
       case AtlasScanInsightSource.scan:
         return Icons.qr_code_scanner_rounded;
@@ -432,9 +325,7 @@ class _InsightMetadataRow extends StatelessWidget {
     }
   }
 
-  String _sourceLabel(
-      AtlasScanInsightSource source,
-      ) {
+  String _sourceLabel(AtlasScanInsightSource source) {
     switch (source) {
       case AtlasScanInsightSource.scan:
         return 'Scan';
@@ -476,29 +367,15 @@ class _MetadataBadge extends StatelessWidget {
         vertical: AtlasSpacing.xs,
       ),
       decoration: BoxDecoration(
-        color: accentColor.withValues(
-          alpha: 0.08,
-        ),
-        borderRadius: BorderRadius.circular(
-          999,
-        ),
-        border: Border.all(
-          color: accentColor.withValues(
-            alpha: 0.20,
-          ),
-        ),
+        color: accentColor.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: accentColor.withValues(alpha: 0.20)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            icon,
-            size: 14,
-            color: accentColor,
-          ),
-          const SizedBox(
-            width: AtlasSpacing.xs,
-          ),
+          Icon(icon, size: 14, color: accentColor),
+          const SizedBox(width: AtlasSpacing.xs),
           Text(
             label,
             style: AtlasTypography.bodySmall.copyWith(
@@ -523,8 +400,7 @@ class _InsightCountBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color accentColor =
-    hasHighPriorityInsights
+    final Color accentColor = hasHighPriorityInsights
         ? AtlasColors.warning
         : AtlasColors.intelligenceBlue;
 
@@ -534,17 +410,9 @@ class _InsightCountBadge extends StatelessWidget {
         vertical: AtlasSpacing.xs,
       ),
       decoration: BoxDecoration(
-        color: accentColor.withValues(
-          alpha: 0.12,
-        ),
-        borderRadius: BorderRadius.circular(
-          999,
-        ),
-        border: Border.all(
-          color: accentColor.withValues(
-            alpha: 0.30,
-          ),
-        ),
+        color: accentColor.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: accentColor.withValues(alpha: 0.30)),
       ),
       child: Text(
         '$count',

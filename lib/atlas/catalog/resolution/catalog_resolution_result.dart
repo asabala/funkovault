@@ -7,18 +7,12 @@ import '../models/catalog_match.dart';
 final class CatalogResolutionResult {
   CatalogResolutionResult({
     this.selectedMatch,
-    Iterable<CatalogMatch> candidateMatches =
-    const <CatalogMatch>[],
+    Iterable<CatalogMatch> candidateMatches = const <CatalogMatch>[],
     this.requiresReview = false,
     this.resolutionReason,
-    Map<String, Object?> attributes =
-    const <String, Object?>{},
-  })  : candidateMatches = List.unmodifiable(
-    candidateMatches,
-  ),
-        attributes = Map.unmodifiable(
-          Map<String, Object?>.from(attributes),
-        );
+    Map<String, Object?> attributes = const <String, Object?>{},
+  }) : candidateMatches = List.unmodifiable(candidateMatches),
+       attributes = Map.unmodifiable(Map<String, Object?>.from(attributes));
 
   final CatalogMatch? selectedMatch;
 
@@ -55,14 +49,10 @@ final class CatalogResolutionResult {
       return const <CatalogMatch>[];
     }
 
-    return candidateMatches
-        .skip(1)
-        .toList(growable: false);
+    return candidateMatches.skip(1).toList(growable: false);
   }
 
-  T? attribute<T>(
-      String key,
-      ) {
+  T? attribute<T>(String key) {
     final Object? value = attributes[key];
 
     if (value is T) {
@@ -72,9 +62,7 @@ final class CatalogResolutionResult {
     return null;
   }
 
-  bool hasAttribute(
-      String key,
-      ) {
+  bool hasAttribute(String key) {
     return attributes.containsKey(key);
   }
 }

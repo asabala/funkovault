@@ -14,10 +14,6 @@ class PremiumBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AtlasChip(
-      label: label,
-      icon: icon,
-      size: AtlasChipSize.compact,
-    );
+    return AtlasChip(label: label, icon: icon, size: AtlasChipSize.compact);
   }
 }

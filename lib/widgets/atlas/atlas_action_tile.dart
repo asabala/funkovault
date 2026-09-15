@@ -33,11 +33,7 @@ class AtlasActionTile extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            icon,
-            color: effectiveAccent,
-            size: 28,
-          ),
+          Icon(icon, color: effectiveAccent, size: 28),
           const SizedBox(height: AtlasSpacing.sm),
           Text(
             label,

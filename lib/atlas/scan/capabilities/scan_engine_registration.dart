@@ -16,28 +16,21 @@ class ScanEngineRegistration {
     required String description,
     required EngineCapabilityCategory category,
     required ScanEngineFactory createEngine,
-    AtlasAccessTier minimumAccessTier =
-        AtlasAccessTier.free,
+    AtlasAccessTier minimumAccessTier = AtlasAccessTier.free,
     bool enabledByDefault = true,
     bool requiresOnline = false,
-    Set<String> requiredFeatureFlags =
-    const <String>{},
-    Set<String> requiredDeviceCapabilities =
-    const <String>{},
+    Set<String> requiredFeatureFlags = const <String>{},
+    Set<String> requiredDeviceCapabilities = const <String>{},
     Set<String> tags = const <String>{},
-    Map<String, Object?> attributes =
-    const <String, Object?>{},
+    Map<String, Object?> attributes = const <String, Object?>{},
   }) {
-    final String normalizedCapabilityId =
-    capabilityId.trim();
+    final String normalizedCapabilityId = capabilityId.trim();
 
     final String normalizedEngineId = engineId.trim();
 
-    final String normalizedDisplayName =
-    displayName.trim();
+    final String normalizedDisplayName = displayName.trim();
 
-    final String normalizedDescription =
-    description.trim();
+    final String normalizedDescription = description.trim();
 
     if (normalizedCapabilityId.isEmpty) {
       throw ArgumentError.value(
@@ -84,19 +77,11 @@ class ScanEngineRegistration {
       requiredFeatureFlags: Set<String>.unmodifiable(
         _normalizeValues(requiredFeatureFlags),
       ),
-      requiredDeviceCapabilities:
-      Set<String>.unmodifiable(
-        _normalizeValues(
-          requiredDeviceCapabilities,
-        ),
+      requiredDeviceCapabilities: Set<String>.unmodifiable(
+        _normalizeValues(requiredDeviceCapabilities),
       ),
-      tags: Set<String>.unmodifiable(
-        _normalizeValues(tags),
-      ),
-      attributes:
-      Map<String, Object?>.unmodifiable(
-        attributes,
-      ),
+      tags: Set<String>.unmodifiable(_normalizeValues(tags)),
+      attributes: Map<String, Object?>.unmodifiable(attributes),
     );
   }
 
@@ -143,20 +128,15 @@ class ScanEngineRegistration {
   final Map<String, Object?> attributes;
 
   bool get isPremiumCapability {
-    return minimumAccessTier ==
-        AtlasAccessTier.premium ||
-        minimumAccessTier ==
-            AtlasAccessTier.enterprise;
+    return minimumAccessTier == AtlasAccessTier.premium ||
+        minimumAccessTier == AtlasAccessTier.enterprise;
   }
 
   bool get isEnterpriseCapability {
-    return minimumAccessTier ==
-        AtlasAccessTier.enterprise;
+    return minimumAccessTier == AtlasAccessTier.enterprise;
   }
 
-  bool isAvailableIn(
-      EngineContext context,
-      ) {
+  bool isAvailableIn(EngineContext context) {
     if (!_hasRequiredAccess(context.accessTier)) {
       return false;
     }
@@ -165,18 +145,14 @@ class ScanEngineRegistration {
       return false;
     }
 
-    for (final String featureId
-    in requiredFeatureFlags) {
+    for (final String featureId in requiredFeatureFlags) {
       if (!context.hasFeature(featureId)) {
         return false;
       }
     }
 
-    for (final String capabilityId
-    in requiredDeviceCapabilities) {
-      if (!context.hasDeviceCapability(
-        capabilityId,
-      )) {
+    for (final String capabilityId in requiredDeviceCapabilities) {
+      if (!context.hasDeviceCapability(capabilityId)) {
         return false;
       }
     }
@@ -190,8 +166,8 @@ class ScanEngineRegistration {
     if (engine.engineId != engineId) {
       throw StateError(
         'Capability "$capabilityId" expected engine ID '
-            '"$engineId", but the factory created '
-            '"${engine.engineId}".',
+        '"$engineId", but the factory created '
+        '"${engine.engineId}".',
       );
     }
 
@@ -201,8 +177,7 @@ class ScanEngineRegistration {
   bool hasTag(String tag) {
     final String normalized = tag.trim();
 
-    return normalized.isNotEmpty &&
-        tags.contains(normalized);
+    return normalized.isNotEmpty && tags.contains(normalized);
   }
 
   T? attribute<T>(String key) {
@@ -215,16 +190,11 @@ class ScanEngineRegistration {
     return null;
   }
 
-  bool _hasRequiredAccess(
-      AtlasAccessTier currentTier,
-      ) {
-    return _tierRank(currentTier) >=
-        _tierRank(minimumAccessTier);
+  bool _hasRequiredAccess(AtlasAccessTier currentTier) {
+    return _tierRank(currentTier) >= _tierRank(minimumAccessTier);
   }
 
-  static int _tierRank(
-      AtlasAccessTier tier,
-      ) {
+  static int _tierRank(AtlasAccessTier tier) {
     return switch (tier) {
       AtlasAccessTier.guest => 0,
       AtlasAccessTier.free => 1,
@@ -233,16 +203,10 @@ class ScanEngineRegistration {
     };
   }
 
-  static Set<String> _normalizeValues(
-      Iterable<String> values,
-      ) {
+  static Set<String> _normalizeValues(Iterable<String> values) {
     return values
-        .map(
-          (String value) => value.trim(),
-    )
-        .where(
-          (String value) => value.isNotEmpty,
-    )
+        .map((String value) => value.trim())
+        .where((String value) => value.isNotEmpty)
         .toSet();
   }
 

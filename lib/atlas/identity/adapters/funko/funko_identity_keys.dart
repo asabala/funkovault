@@ -8,73 +8,47 @@ abstract final class FunkoIdentityKeys {
   static const String name = 'funko.identity.name';
   static const String boxNumber = 'funko.identity.box_number';
   static const String upc = 'funko.identity.upc';
-  static const String productionCode =
-      'funko.identity.production_code';
+  static const String productionCode = 'funko.identity.production_code';
   static const String series = 'funko.identity.series';
 
   // Finish modifiers
-  static const String finishGlow =
-      'funko.identity.finish.glow';
-  static const String finishMetallic =
-      'funko.identity.finish.metallic';
-  static const String finishFlocked =
-      'funko.identity.finish.flocked';
-  static const String finishDiamond =
-      'funko.identity.finish.diamond';
-  static const String finishGlitter =
-      'funko.identity.finish.glitter';
-  static const String finishChrome =
-      'funko.identity.finish.chrome';
-  static const String finishTranslucent =
-      'funko.identity.finish.translucent';
+  static const String finishGlow = 'funko.identity.finish.glow';
+  static const String finishMetallic = 'funko.identity.finish.metallic';
+  static const String finishFlocked = 'funko.identity.finish.flocked';
+  static const String finishDiamond = 'funko.identity.finish.diamond';
+  static const String finishGlitter = 'funko.identity.finish.glitter';
+  static const String finishChrome = 'funko.identity.finish.chrome';
+  static const String finishTranslucent = 'funko.identity.finish.translucent';
   static const String finishBloodSplatter =
       'funko.identity.finish.blood_splatter';
-  static const String finishPatina =
-      'funko.identity.finish.patina';
-  static const String finishBronze =
-      'funko.identity.finish.bronze';
-  static const String finishWoodDeco =
-      'funko.identity.finish.wood_deco';
+  static const String finishPatina = 'funko.identity.finish.patina';
+  static const String finishBronze = 'funko.identity.finish.bronze';
+  static const String finishWoodDeco = 'funko.identity.finish.wood_deco';
 
   // Form and scale modifiers
-  static const String scale =
-      'funko.identity.form.scale';
-  static const String build =
-      'funko.identity.form.build';
-  static const String sculpt =
-      'funko.identity.form.sculpt';
-  static const String pose =
-      'funko.identity.form.pose';
-  static const String productForm =
-      'funko.identity.form.product_form';
-  static const String factoryError =
-      'funko.identity.form.factory_error';
+  static const String scale = 'funko.identity.form.scale';
+  static const String build = 'funko.identity.form.build';
+  static const String sculpt = 'funko.identity.form.sculpt';
+  static const String pose = 'funko.identity.form.pose';
+  static const String productForm = 'funko.identity.form.product_form';
+  static const String factoryError = 'funko.identity.form.factory_error';
 
   // Release context
-  static const String stickerClass =
-      'funko.identity.release.sticker_class';
-  static const String stickerName =
-      'funko.identity.release.sticker_name';
-  static const String retailer =
-      'funko.identity.release.retailer';
-  static const String region =
-      'funko.identity.release.region';
-  static const String distribution =
-      'funko.identity.release.distribution';
+  static const String stickerClass = 'funko.identity.release.sticker_class';
+  static const String stickerName = 'funko.identity.release.sticker_name';
+  static const String retailer = 'funko.identity.release.retailer';
+  static const String region = 'funko.identity.release.region';
+  static const String distribution = 'funko.identity.release.distribution';
   static const String productionGeneration =
       'funko.identity.release.production_generation';
 
   // Factory scarcity
-  static const String limitedEdition =
-      'funko.identity.release.limited_edition';
-  static const String pieceCount =
-      'funko.identity.release.piece_count';
-  static const String numberedPiece =
-      'funko.identity.release.numbered_piece';
+  static const String limitedEdition = 'funko.identity.release.limited_edition';
+  static const String pieceCount = 'funko.identity.release.piece_count';
+  static const String numberedPiece = 'funko.identity.release.numbered_piece';
 
   // Temporal context
-  static const String releaseYear =
-      'funko.identity.release.release_year';
+  static const String releaseYear = 'funko.identity.release.release_year';
 
   static const Set<String> coreAnchorKeys = <String>{
     line,
@@ -120,11 +94,7 @@ abstract final class FunkoIdentityKeys {
     releaseYear,
   };
 
-  static const Set<String> contextualKeys = <String>{
-    category,
-    maker,
-    series,
-  };
+  static const Set<String> contextualKeys = <String>{category, maker, series};
 
   static bool isCoreAnchor(String key) {
     return coreAnchorKeys.contains(key);
@@ -151,8 +121,6 @@ abstract final class FunkoIdentityKeys {
   }
 
   static bool isIdentityDefining(String key) {
-    return isCoreAnchor(key) ||
-        isVariantModifier(key) ||
-        isReleaseContext(key);
+    return isCoreAnchor(key) || isVariantModifier(key) || isReleaseContext(key);
   }
 }

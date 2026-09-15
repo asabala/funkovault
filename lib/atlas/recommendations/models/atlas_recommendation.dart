@@ -30,7 +30,7 @@ class AtlasRecommendation {
 
   bool get isHighPriority =>
       priority == AtlasRecommendationPriority.high ||
-          priority == AtlasRecommendationPriority.critical;
+      priority == AtlasRecommendationPriority.critical;
 
   AtlasRecommendation copyWith({
     String? id,

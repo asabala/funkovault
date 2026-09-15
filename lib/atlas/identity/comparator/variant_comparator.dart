@@ -29,11 +29,13 @@ class VariantComparator implements IdentityComparator {
     required IdentityProfile right,
     required IdentityPolicy policy,
   }) {
-    final List<IdentityAttribute> leftAttributes =
-    left.attributesByRole(IdentityRole.variantModifier);
+    final List<IdentityAttribute> leftAttributes = left.attributesByRole(
+      IdentityRole.variantModifier,
+    );
 
-    final List<IdentityAttribute> rightAttributes =
-    right.attributesByRole(IdentityRole.variantModifier);
+    final List<IdentityAttribute> rightAttributes = right.attributesByRole(
+      IdentityRole.variantModifier,
+    );
 
     return leftAttributes.isNotEmpty || rightAttributes.isNotEmpty;
   }
@@ -44,23 +46,23 @@ class VariantComparator implements IdentityComparator {
     required IdentityProfile right,
     required IdentityPolicy policy,
   }) {
-    final List<IdentityAttribute> leftAttributes =
-    _usableVariantAttributes(
+    final List<IdentityAttribute> leftAttributes = _usableVariantAttributes(
       profile: left,
       policy: policy,
     );
 
-    final List<IdentityAttribute> rightAttributes =
-    _usableVariantAttributes(
+    final List<IdentityAttribute> rightAttributes = _usableVariantAttributes(
       profile: right,
       policy: policy,
     );
 
-    final Map<String, IdentityAttribute> leftByKey =
-    _attributesByKey(leftAttributes);
+    final Map<String, IdentityAttribute> leftByKey = _attributesByKey(
+      leftAttributes,
+    );
 
-    final Map<String, IdentityAttribute> rightByKey =
-    _attributesByKey(rightAttributes);
+    final Map<String, IdentityAttribute> rightByKey = _attributesByKey(
+      rightAttributes,
+    );
 
     final Set<String> attributeKeys = <String>{
       ...leftByKey.keys,
@@ -78,17 +80,12 @@ class VariantComparator implements IdentityComparator {
           outcome: IdentityEvidenceOutcome.missingBoth,
           weight: _variantWeight,
           confidence: 0.0,
-          reason:
-          'Neither identity profile contains usable variant evidence.',
-          tags: _evidenceTags(
-            attributeKey: 'role.variant_modifier',
-          ),
+          reason: 'Neither identity profile contains usable variant evidence.',
+          tags: _evidenceTags(attributeKey: 'role.variant_modifier'),
         ),
       );
 
-      notes.add(
-        'No usable variant modifiers were available for comparison.',
-      );
+      notes.add('No usable variant modifiers were available for comparison.');
     } else {
       final List<String> sortedKeys = attributeKeys.toList()..sort();
 
@@ -104,49 +101,45 @@ class VariantComparator implements IdentityComparator {
     }
 
     final bool hasConflict = evidence.any(
-          (IdentityEvidence item) => item.isConflict,
+      (IdentityEvidence item) => item.isConflict,
     );
 
-    final bool hasUncertainEvidence = evidence.any(
-          (IdentityEvidence item) {
-        return item.outcome == IdentityEvidenceOutcome.uncertain;
-      },
-    );
+    final bool hasUncertainEvidence = evidence.any((IdentityEvidence item) {
+      return item.outcome == IdentityEvidenceOutcome.uncertain;
+    });
 
     final bool hasMissingEvidence = evidence.any(
-          (IdentityEvidence item) => item.isMissing,
+      (IdentityEvidence item) => item.isMissing,
     );
 
     final bool hasMatchEvidence = evidence.any(
-          (IdentityEvidence item) => item.supportsMatch,
+      (IdentityEvidence item) => item.supportsMatch,
     );
 
     final double confidence = _calculateConfidence(evidence);
 
-    final bool variantRoleRequired =
-    policy.requiresRole(IdentityRole.variantModifier);
+    final bool variantRoleRequired = policy.requiresRole(
+      IdentityRole.variantModifier,
+    );
 
     final bool missingEvidenceBlocksMatch =
         variantRoleRequired &&
-            hasMissingEvidence &&
-            !policy.allowPartialMatches;
+        hasMissingEvidence &&
+        !policy.allowPartialMatches;
 
-    final bool isMatch = hasMatchEvidence &&
+    final bool isMatch =
+        hasMatchEvidence &&
         !hasConflict &&
         !hasUncertainEvidence &&
         !missingEvidenceBlocksMatch &&
         confidence >= policy.minimumConfidence;
 
     if (hasConflict) {
-      notes.add(
-        'One or more variant modifiers differ between the profiles.',
-      );
+      notes.add('One or more variant modifiers differ between the profiles.');
     }
 
     if (hasUncertainEvidence) {
-      notes.add(
-        'One or more variant modifiers contain unresolved evidence.',
-      );
+      notes.add('One or more variant modifiers contain unresolved evidence.');
     }
 
     if (missingEvidenceBlocksMatch) {
@@ -158,7 +151,7 @@ class VariantComparator implements IdentityComparator {
     if (confidence < policy.minimumConfidence) {
       notes.add(
         'Variant confidence is below the policy minimum of '
-            '${policy.minimumConfidence.toStringAsFixed(2)}.',
+        '${policy.minimumConfidence.toStringAsFixed(2)}.',
       );
     }
 
@@ -180,36 +173,31 @@ class VariantComparator implements IdentityComparator {
   }) {
     return profile
         .attributesByRole(IdentityRole.variantModifier)
-        .where(
-          (IdentityAttribute attribute) {
-        if (!attribute.contributesToIdentity) {
-          return false;
-        }
+        .where((IdentityAttribute attribute) {
+          if (!attribute.contributesToIdentity) {
+            return false;
+          }
 
-        if (policy.requiredClassifications.isNotEmpty &&
-            !policy.includesClassification(
-              attribute.classification,
-            )) {
-          return false;
-        }
+          if (policy.requiredClassifications.isNotEmpty &&
+              !policy.includesClassification(attribute.classification)) {
+            return false;
+          }
 
-        return attribute.hasResolvedValue || attribute.hasConflict;
-      },
-    ).toList(growable: false);
+          return attribute.hasResolvedValue || attribute.hasConflict;
+        })
+        .toList(growable: false);
   }
 
   Map<String, IdentityAttribute> _attributesByKey(
-      List<IdentityAttribute> attributes,
-      ) {
-    final Map<String, IdentityAttribute> result =
-    <String, IdentityAttribute>{};
+    List<IdentityAttribute> attributes,
+  ) {
+    final Map<String, IdentityAttribute> result = <String, IdentityAttribute>{};
 
     for (final IdentityAttribute attribute in attributes) {
       final IdentityAttribute? existing = result[attribute.key];
 
       if (existing == null ||
-          attribute.resolutionConfidence >
-              existing.resolutionConfidence) {
+          attribute.resolutionConfidence > existing.resolutionConfidence) {
         result[attribute.key] = attribute;
       }
     }
@@ -225,9 +213,7 @@ class VariantComparator implements IdentityComparator {
     final String? leftValue = _resolvedValue(leftAttribute);
     final String? rightValue = _resolvedValue(rightAttribute);
 
-    final Map<String, String> tags = _evidenceTags(
-      attributeKey: attributeKey,
-    );
+    final Map<String, String> tags = _evidenceTags(attributeKey: attributeKey);
 
     if (leftAttribute?.hasConflict == true ||
         rightAttribute?.hasConflict == true) {
@@ -238,12 +224,9 @@ class VariantComparator implements IdentityComparator {
         rightValue: rightValue,
         outcome: IdentityEvidenceOutcome.uncertain,
         weight: _variantWeight,
-        confidence: _combinedConfidence(
-          leftAttribute,
-          rightAttribute,
-        ),
+        confidence: _combinedConfidence(leftAttribute, rightAttribute),
         reason:
-        'One or both profiles contain unresolved internal evidence '
+            'One or both profiles contain unresolved internal evidence '
             'for variant attribute $attributeKey.',
         tags: <String, String>{
           ...tags,
@@ -260,7 +243,7 @@ class VariantComparator implements IdentityComparator {
         weight: _variantWeight,
         confidence: 0.0,
         reason:
-        'Both profiles are missing a resolved value for variant '
+            'Both profiles are missing a resolved value for variant '
             'attribute $attributeKey.',
         tags: tags,
       );
@@ -275,7 +258,7 @@ class VariantComparator implements IdentityComparator {
         weight: _variantWeight,
         confidence: rightAttribute?.resolutionConfidence ?? 0.0,
         reason:
-        'The left profile is missing variant attribute '
+            'The left profile is missing variant attribute '
             '$attributeKey while the right profile contains a value.',
         tags: tags,
       );
@@ -290,7 +273,7 @@ class VariantComparator implements IdentityComparator {
         weight: _variantWeight,
         confidence: leftAttribute?.resolutionConfidence ?? 0.0,
         reason:
-        'The right profile is missing variant attribute '
+            'The right profile is missing variant attribute '
             '$attributeKey while the left profile contains a value.',
         tags: tags,
       );
@@ -314,7 +297,7 @@ class VariantComparator implements IdentityComparator {
         weight: _variantWeight,
         confidence: confidence,
         reason:
-        'Both profiles contain the same normalized variant value '
+            'Both profiles contain the same normalized variant value '
             'for $attributeKey.',
         tags: tags,
       );
@@ -329,18 +312,13 @@ class VariantComparator implements IdentityComparator {
       weight: _variantWeight,
       confidence: confidence,
       reason:
-      'The profiles contain different variant values for '
+          'The profiles contain different variant values for '
           '$attributeKey.',
-      tags: <String, String>{
-        ...tags,
-        'reviewReason': 'different_variant',
-      },
+      tags: <String, String>{...tags, 'reviewReason': 'different_variant'},
     );
   }
 
-  String? _resolvedValue(
-      IdentityAttribute? attribute,
-      ) {
+  String? _resolvedValue(IdentityAttribute? attribute) {
     if (attribute == null || !attribute.hasResolvedValue) {
       return null;
     }
@@ -378,9 +356,9 @@ class VariantComparator implements IdentityComparator {
   }
 
   double _combinedConfidence(
-      IdentityAttribute? left,
-      IdentityAttribute? right,
-      ) {
+    IdentityAttribute? left,
+    IdentityAttribute? right,
+  ) {
     final List<double> confidenceValues = <double>[
       if (left != null) left.resolutionConfidence,
       if (right != null) right.resolutionConfidence,
@@ -392,18 +370,15 @@ class VariantComparator implements IdentityComparator {
 
     final double total = confidenceValues.fold<double>(
       0.0,
-          (double sum, double value) => sum + value,
+      (double sum, double value) => sum + value,
     );
 
     return total / confidenceValues.length;
   }
 
-  double _calculateConfidence(
-      List<IdentityEvidence> evidence,
-      ) {
-    final Iterable<IdentityEvidence> participating =
-    evidence.where(
-          (IdentityEvidence item) => item.participatesInDecision,
+  double _calculateConfidence(List<IdentityEvidence> evidence) {
+    final Iterable<IdentityEvidence> participating = evidence.where(
+      (IdentityEvidence item) => item.participatesInDecision,
     );
 
     double totalWeight = 0.0;
@@ -424,9 +399,7 @@ class VariantComparator implements IdentityComparator {
     return (totalScore / totalWeight).clamp(0.0, 1.0);
   }
 
-  Map<String, String> _evidenceTags({
-    required String attributeKey,
-  }) {
+  Map<String, String> _evidenceTags({required String attributeKey}) {
     return <String, String>{
       'comparator': id,
       'comparatorVersion': version,

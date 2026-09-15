@@ -79,10 +79,7 @@ class ValueAnalysis {
 
   bool get hasMultipleValueRecords => valueEventCount > 1;
 
-  bool get isUnchanged =>
-      hasValueHistory &&
-          !hasIncreased &&
-          !hasDecreased;
+  bool get isUnchanged => hasValueHistory && !hasIncreased && !hasDecreased;
 
   bool get hasPositiveGrowth => totalChange > 0;
 
@@ -133,14 +130,10 @@ class ValueAnalysis {
       highestValue: highestValue ?? this.highestValue,
       lowestValue: lowestValue ?? this.lowestValue,
       totalChange: totalChange ?? this.totalChange,
-      percentageChange:
-      percentageChange ?? this.percentageChange,
-      largestIncrease:
-      largestIncrease ?? this.largestIncrease,
-      largestDecrease:
-      largestDecrease ?? this.largestDecrease,
-      valueEventCount:
-      valueEventCount ?? this.valueEventCount,
+      percentageChange: percentageChange ?? this.percentageChange,
+      largestIncrease: largestIncrease ?? this.largestIncrease,
+      largestDecrease: largestDecrease ?? this.largestDecrease,
+      valueEventCount: valueEventCount ?? this.valueEventCount,
       firstRecordedAt: clearFirstRecordedAt
           ? null
           : firstRecordedAt ?? this.firstRecordedAt,

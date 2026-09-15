@@ -5,20 +5,15 @@ import '../../atlas/components/atlas_section_header.dart';
 import '../../atlas/components/atlas_status_chip.dart';
 
 class AcademyAdminInboxHeader extends StatelessWidget {
-  const AcademyAdminInboxHeader({
-    super.key,
-    required this.requestCount,
-  });
+  const AcademyAdminInboxHeader({super.key, required this.requestCount});
 
   final int requestCount;
 
   @override
   Widget build(BuildContext context) {
-    final bool hasRequests =
-        requestCount > 0;
+    final bool hasRequests = requestCount > 0;
 
-    final String requestLabel =
-    requestCount == 1
+    final String requestLabel = requestCount == 1
         ? '1 Request'
         : '$requestCount Requests';
 
@@ -27,23 +22,15 @@ class AcademyAdminInboxHeader extends StatelessWidget {
       subtitle: hasRequests
           ? '$requestLabel available for Academy review.'
           : 'No Academy requests are currently waiting for review.',
-      icon:
-      Icons.admin_panel_settings_rounded,
-      accentColor:
-      AtlasColors.vaultGold,
+      icon: Icons.admin_panel_settings_rounded,
+      accentColor: AtlasColors.vaultGold,
       badge: AtlasStatusChip(
-        label: hasRequests
-            ? requestLabel
-            : 'Inbox Clear',
+        label: hasRequests ? requestLabel : 'Inbox Clear',
         icon: hasRequests
-            ? Icons
-            .mark_email_unread_outlined
+            ? Icons.mark_email_unread_outlined
             : Icons.mark_email_read_outlined,
-        accentColor: hasRequests
-            ? AtlasColors.vaultGold
-            : AtlasColors.success,
-        size:
-        AtlasStatusChipSize.compact,
+        accentColor: hasRequests ? AtlasColors.vaultGold : AtlasColors.success,
+        size: AtlasStatusChipSize.compact,
       ),
     );
   }

@@ -7,10 +7,7 @@ import 'academy_roadmap_topic_preview_launcher.dart';
 import 'academy_topic_roadmap_card.dart';
 
 class FunkoAcademyRoadmapSection extends StatelessWidget {
-  const FunkoAcademyRoadmapSection({
-    super.key,
-    required this.topics,
-  });
+  const FunkoAcademyRoadmapSection({super.key, required this.topics});
 
   final List<AcademyTopic> topics;
 
@@ -25,23 +22,15 @@ class FunkoAcademyRoadmapSection extends StatelessWidget {
       children: [
         const AtlasSectionHeader(
           title: 'Funko Academy Roadmap',
-          subtitle:
-          'Upcoming lessons Atlas Academy is being built to support.',
+          subtitle: 'Upcoming lessons Atlas Academy is being built to support.',
           icon: Icons.route_rounded,
         ),
-        const SizedBox(
-          height: AtlasSpacing.md,
-        ),
-        for (
-        int index = 0;
-        index < topics.length;
-        index++
-        ) ...[
+        const SizedBox(height: AtlasSpacing.md),
+        for (int index = 0; index < topics.length; index++) ...[
           AcademyTopicRoadmapCard(
             topic: topics[index],
             onTap: () {
-              final AcademyTopic topic =
-              topics[index];
+              final AcademyTopic topic = topics[index];
 
               AcademyRoadmapTopicPreviewLauncher.show(
                 context: context,
@@ -52,9 +41,7 @@ class FunkoAcademyRoadmapSection extends StatelessWidget {
             },
           ),
           if (index != topics.length - 1)
-            const SizedBox(
-              height: AtlasSpacing.sm,
-            ),
+            const SizedBox(height: AtlasSpacing.sm),
         ],
       ],
     );

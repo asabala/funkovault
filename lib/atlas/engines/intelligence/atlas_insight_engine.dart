@@ -1,10 +1,7 @@
 import '../../knowledge/atlas_collector_rules.dart';
 
 class AtlasInsight {
-  const AtlasInsight({
-    required this.title,
-    required this.message,
-  });
+  const AtlasInsight({required this.title, required this.message});
 
   final String title;
   final String message;
@@ -25,14 +22,14 @@ class AtlasInsightEngine {
         return const AtlasInsight(
           title: 'Authenticated Signature Detected',
           message:
-          'Atlas recognizes this as an authenticated signed collectible. Signed Pops are tracked separately from unsigned versions.',
+              'Atlas recognizes this as an authenticated signed collectible. Signed Pops are tracked separately from unsigned versions.',
         );
       }
 
       return const AtlasInsight(
         title: 'Signed Collectible Detected',
         message:
-        'Signed Pops are part of collector identity. Atlas will treat this differently from an unsigned version.',
+            'Signed Pops are part of collector identity. Atlas will treat this differently from an unsigned version.',
       );
     }
 
@@ -40,7 +37,7 @@ class AtlasInsightEngine {
       return const AtlasInsight(
         title: 'Limited Edition Detected',
         message:
-        'Limited Edition Pops are part of collector identity. Atlas will distinguish this from a standard release.',
+            'Limited Edition Pops are part of collector identity. Atlas will distinguish this from a standard release.',
       );
     }
 
@@ -48,7 +45,7 @@ class AtlasInsightEngine {
       return const AtlasInsight(
         title: 'Convention Sticker Detected',
         message:
-        'Convention stickers matter. Atlas will distinguish event stickers from shared or standard releases.',
+            'Convention stickers matter. Atlas will distinguish event stickers from shared or standard releases.',
       );
     }
 
@@ -56,7 +53,7 @@ class AtlasInsightEngine {
       return const AtlasInsight(
         title: 'Shared Exclusive Detected',
         message:
-        'Shared Exclusives may look similar to convention releases, but Atlas tracks them separately.',
+            'Shared Exclusives may look similar to convention releases, but Atlas tracks them separately.',
       );
     }
 
@@ -64,7 +61,7 @@ class AtlasInsightEngine {
       return const AtlasInsight(
         title: 'Retail Exclusive Detected',
         message:
-        'Retail exclusives are tracked separately so Atlas can prevent false duplicates and improve search later.',
+            'Retail exclusives are tracked separately so Atlas can prevent false duplicates and improve search later.',
       );
     }
 
@@ -72,14 +69,14 @@ class AtlasInsightEngine {
       return const AtlasInsight(
         title: 'Rare Variant Detected',
         message:
-        'Variants such as Chase, Glow, Flocked, Metallic, and Blacklight are tracked separately from Common Pops.',
+            'Variants such as Chase, Glow, Flocked, Metallic, and Blacklight are tracked separately from Common Pops.',
       );
     }
 
     return const AtlasInsight(
       title: 'Collector Identity Matters',
       message:
-      'Variant, retail exclusive, event sticker, limited edition, and signature help Atlas tell similar Pops apart.',
+          'Variant, retail exclusive, event sticker, limited edition, and signature help Atlas tell similar Pops apart.',
     );
   }
 }

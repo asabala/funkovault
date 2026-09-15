@@ -10,10 +10,7 @@ import '../atlas/atlas_glass_panel.dart';
 import '../atlas/components/atlas_section_header.dart';
 
 class AtlasTimelineIntelligenceCard extends StatelessWidget {
-  const AtlasTimelineIntelligenceCard({
-    super.key,
-    required this.report,
-  });
+  const AtlasTimelineIntelligenceCard({super.key, required this.report});
 
   final AtlasTimelineIntelligenceReport report;
 
@@ -25,8 +22,7 @@ class AtlasTimelineIntelligenceCard extends StatelessWidget {
         children: [
           const AtlasSectionHeader(
             title: 'Atlas Intelligence',
-            subtitle:
-            'Ownership, value, milestones, and timeline observations',
+            subtitle: 'Ownership, value, milestones, and timeline observations',
             icon: Icons.auto_awesome_rounded,
           ),
           const SizedBox(height: AtlasSpacing.lg),
@@ -54,56 +50,42 @@ class AtlasTimelineIntelligenceCard extends StatelessWidget {
           ),
           if (report.insights.isNotEmpty) ...[
             const SizedBox(height: AtlasSpacing.lg),
-            Text(
-              'Insights',
-              style: AtlasTypography.headingSmall,
-            ),
+            Text('Insights', style: AtlasTypography.headingSmall),
             const SizedBox(height: AtlasSpacing.sm),
-            ...report.insights.take(3).map(
+            ...report.insights
+                .take(3)
+                .map(
                   (insight) => Padding(
-                padding: const EdgeInsets.only(
-                  bottom: AtlasSpacing.sm,
+                    padding: const EdgeInsets.only(bottom: AtlasSpacing.sm),
+                    child: _InsightPanel(insight: insight),
+                  ),
                 ),
-                child: _InsightPanel(insight: insight),
-              ),
-            ),
           ],
           if (report.milestones.isNotEmpty) ...[
             const SizedBox(height: AtlasSpacing.md),
-            Text(
-              'Milestones',
-              style: AtlasTypography.headingSmall,
-            ),
+            Text('Milestones', style: AtlasTypography.headingSmall),
             const SizedBox(height: AtlasSpacing.sm),
             Wrap(
               spacing: AtlasSpacing.sm,
               runSpacing: AtlasSpacing.sm,
               children: report.milestones
                   .take(3)
-                  .map(
-                    (milestone) => _MilestoneBadge(
-                  title: milestone.title,
-                ),
-              )
+                  .map((milestone) => _MilestoneBadge(title: milestone.title))
                   .toList(growable: false),
             ),
           ],
           if (report.health.recommendations.isNotEmpty) ...[
             const SizedBox(height: AtlasSpacing.lg),
-            Text(
-              'Recommended Next Steps',
-              style: AtlasTypography.headingSmall,
-            ),
+            Text('Recommended Next Steps', style: AtlasTypography.headingSmall),
             const SizedBox(height: AtlasSpacing.sm),
             AtlasGlassPanel(
               child: Column(
                 children: report.health.recommendations
                     .take(3)
                     .map(
-                      (recommendation) => _RecommendationRow(
-                    recommendation: recommendation,
-                  ),
-                )
+                      (recommendation) =>
+                          _RecommendationRow(recommendation: recommendation),
+                    )
                     .toList(growable: false),
               ),
             ),
@@ -115,9 +97,7 @@ class AtlasTimelineIntelligenceCard extends StatelessWidget {
 }
 
 class _AtlasSummaryPanel extends StatelessWidget {
-  const _AtlasSummaryPanel({
-    required this.report,
-  });
+  const _AtlasSummaryPanel({required this.report});
 
   final AtlasTimelineIntelligenceReport report;
 
@@ -165,9 +145,7 @@ class _AtlasSummaryPanel extends StatelessWidget {
     final parts = <String>[];
 
     if (report.hasOwnershipHistory) {
-      parts.add(
-        'Owned for ${report.ownership.durationLabel.toLowerCase()}',
-      );
+      parts.add('Owned for ${report.ownership.durationLabel.toLowerCase()}');
     }
 
     if (report.hasValueHistory) {
@@ -208,10 +186,7 @@ class _ScorePanel extends StatelessWidget {
     return AtlasGlassPanel(
       child: Column(
         children: [
-          Icon(
-            icon,
-            color: AtlasColors.vaultGold,
-          ),
+          Icon(icon, color: AtlasColors.vaultGold),
           const SizedBox(height: AtlasSpacing.sm),
           Text(
             '$roundedScore%',
@@ -236,9 +211,7 @@ class _ScorePanel extends StatelessWidget {
 }
 
 class _InsightPanel extends StatelessWidget {
-  const _InsightPanel({
-    required this.insight,
-  });
+  const _InsightPanel({required this.insight});
 
   final TimelineInsight insight;
 
@@ -248,10 +221,7 @@ class _InsightPanel extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            _priorityIcon(insight.priority),
-            color: AtlasColors.vaultGold,
-          ),
+          Icon(_priorityIcon(insight.priority), color: AtlasColors.vaultGold),
           const SizedBox(width: AtlasSpacing.md),
           Expanded(
             child: Column(
@@ -278,9 +248,7 @@ class _InsightPanel extends StatelessWidget {
     );
   }
 
-  IconData _priorityIcon(
-      TimelineInsightPriority priority,
-      ) {
+  IconData _priorityIcon(TimelineInsightPriority priority) {
     switch (priority) {
       case TimelineInsightPriority.low:
         return Icons.lightbulb_outline_rounded;
@@ -295,9 +263,7 @@ class _InsightPanel extends StatelessWidget {
 }
 
 class _MilestoneBadge extends StatelessWidget {
-  const _MilestoneBadge({
-    required this.title,
-  });
+  const _MilestoneBadge({required this.title});
 
   final String title;
 
@@ -337,18 +303,14 @@ class _MilestoneBadge extends StatelessWidget {
 }
 
 class _RecommendationRow extends StatelessWidget {
-  const _RecommendationRow({
-    required this.recommendation,
-  });
+  const _RecommendationRow({required this.recommendation});
 
   final String recommendation;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(
-        bottom: AtlasSpacing.sm,
-      ),
+      padding: const EdgeInsets.only(bottom: AtlasSpacing.sm),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

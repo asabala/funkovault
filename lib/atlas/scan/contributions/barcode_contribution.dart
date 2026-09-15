@@ -7,8 +7,7 @@ import 'abstract_recognition_contribution.dart';
 // BarcodeContribution references the original immutable ScanCode rather than
 // duplicating its captured value, format, source, timestamp, validation, and
 // confidence data.
-final class BarcodeContribution
-    extends AbstractRecognitionContribution {
+final class BarcodeContribution extends AbstractRecognitionContribution {
   BarcodeContribution({
     required super.contributionId,
     required super.sourceEngineId,

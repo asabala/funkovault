@@ -10,18 +10,12 @@ import '../../widgets/atlas/components/atlas_status_chip.dart';
 import '../../widgets/premium/premium_badge.dart';
 
 class NotificationsSettingsScreen extends StatelessWidget {
-  const NotificationsSettingsScreen({
-    super.key,
-  });
+  const NotificationsSettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Notifications',
-        ),
-      ),
+      appBar: AppBar(title: const Text('Notifications')),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(
@@ -38,15 +32,13 @@ class NotificationsSettingsScreen extends StatelessWidget {
                 child: AtlasSectionHeader(
                   title: 'Notifications',
                   subtitle:
-                  'Prepare future alerts for drops, wishlist activity, cleanup reminders, value updates, and Premium smart alerts.',
+                      'Prepare future alerts for drops, wishlist activity, cleanup reminders, value updates, and Premium smart alerts.',
                   icon: Icons.notifications_active_rounded,
                   accentColor: AtlasColors.vaultGold,
                 ),
               ),
 
-              const SizedBox(
-                height: AtlasSpacing.lg,
-              ),
+              const SizedBox(height: AtlasSpacing.lg),
 
               const AtlasGlassCard(
                 child: Column(
@@ -55,18 +47,15 @@ class NotificationsSettingsScreen extends StatelessWidget {
                     AtlasSectionHeader(
                       title: 'Notification Status',
                       subtitle:
-                      'Notifications are not connected yet. This screen is ready for future push notifications, in-app alerts, and collector reminders.',
+                          'Notifications are not connected yet. This screen is ready for future push notifications, in-app alerts, and collector reminders.',
                       icon: Icons.notifications_none_rounded,
                     ),
 
-                    SizedBox(
-                      height: AtlasSpacing.lg,
-                    ),
+                    SizedBox(height: AtlasSpacing.lg),
 
                     AtlasActionRow(
                       title: 'In-App Notifications',
-                      description:
-                      'Future alerts can appear inside Atlas.',
+                      description: 'Future alerts can appear inside Atlas.',
                       icon: Icons.notifications_none_rounded,
                       showChevron: false,
                       compact: true,
@@ -77,14 +66,12 @@ class NotificationsSettingsScreen extends StatelessWidget {
                       ),
                     ),
 
-                    SizedBox(
-                      height: AtlasSpacing.sm,
-                    ),
+                    SizedBox(height: AtlasSpacing.sm),
 
                     AtlasActionRow(
                       title: 'Push Notifications',
                       description:
-                      'Future mobile alerts can notify collectors outside the app.',
+                          'Future mobile alerts can notify collectors outside the app.',
                       icon: Icons.phone_android_rounded,
                       showChevron: false,
                       compact: true,
@@ -95,14 +82,12 @@ class NotificationsSettingsScreen extends StatelessWidget {
                       ),
                     ),
 
-                    SizedBox(
-                      height: AtlasSpacing.sm,
-                    ),
+                    SizedBox(height: AtlasSpacing.sm),
 
                     AtlasActionRow(
                       title: 'Premium Smart Alerts',
                       description:
-                      'Advanced alert logic can be added for Premium collectors.',
+                          'Advanced alert logic can be added for Premium collectors.',
                       icon: Icons.workspace_premium_rounded,
                       accentColor: AtlasColors.vaultGold,
                       showChevron: false,
@@ -113,9 +98,7 @@ class NotificationsSettingsScreen extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(
-                height: AtlasSpacing.lg,
-              ),
+              const SizedBox(height: AtlasSpacing.lg),
 
               AtlasGlassCard(
                 child: Column(
@@ -124,18 +107,16 @@ class NotificationsSettingsScreen extends StatelessWidget {
                     const AtlasSectionHeader(
                       title: 'Future Notification Types',
                       subtitle:
-                      'These alert types are staged now so notification logic can be added cleanly later.',
+                          'These alert types are staged now so notification logic can be added cleanly later.',
                       icon: Icons.notifications_active_outlined,
                     ),
 
-                    const SizedBox(
-                      height: AtlasSpacing.lg,
-                    ),
+                    const SizedBox(height: AtlasSpacing.lg),
 
                     AtlasActionRow(
                       title: 'Drop Alerts',
                       description:
-                      'Get future alerts for releases, drops, and collector events.',
+                          'Get future alerts for releases, drops, and collector events.',
                       icon: Icons.event_available_rounded,
                       onTap: () {
                         _showComingSoonMessage(
@@ -145,14 +126,12 @@ class NotificationsSettingsScreen extends StatelessWidget {
                       },
                     ),
 
-                    const SizedBox(
-                      height: AtlasSpacing.sm,
-                    ),
+                    const SizedBox(height: AtlasSpacing.sm),
 
                     AtlasActionRow(
                       title: 'Wishlist Alerts',
                       description:
-                      'Track future wishlist activity, availability, and reminders.',
+                          'Track future wishlist activity, availability, and reminders.',
                       icon: Icons.favorite_border_rounded,
                       onTap: () {
                         _showComingSoonMessage(
@@ -162,14 +141,12 @@ class NotificationsSettingsScreen extends StatelessWidget {
                       },
                     ),
 
-                    const SizedBox(
-                      height: AtlasSpacing.sm,
-                    ),
+                    const SizedBox(height: AtlasSpacing.sm),
 
                     AtlasActionRow(
                       title: 'Cleanup Reminders',
                       description:
-                      'Get reminders for missing values, review tasks, and vault cleanup.',
+                          'Get reminders for missing values, review tasks, and vault cleanup.',
                       icon: Icons.cleaning_services_rounded,
                       onTap: () {
                         _showComingSoonMessage(
@@ -179,14 +156,12 @@ class NotificationsSettingsScreen extends StatelessWidget {
                       },
                     ),
 
-                    const SizedBox(
-                      height: AtlasSpacing.sm,
-                    ),
+                    const SizedBox(height: AtlasSpacing.sm),
 
                     AtlasActionRow(
                       title: 'Value Updates',
                       description:
-                      'Prepare alerts for future value changes and pricing movement.',
+                          'Prepare alerts for future value changes and pricing movement.',
                       icon: Icons.trending_up_rounded,
                       onTap: () {
                         _showComingSoonMessage(
@@ -196,14 +171,12 @@ class NotificationsSettingsScreen extends StatelessWidget {
                       },
                     ),
 
-                    const SizedBox(
-                      height: AtlasSpacing.sm,
-                    ),
+                    const SizedBox(height: AtlasSpacing.sm),
 
                     AtlasActionRow(
                       title: 'Premium Smart Alerts',
                       description:
-                      'Unlock smarter collector alerts, priority reminders, and personalized updates.',
+                          'Unlock smarter collector alerts, priority reminders, and personalized updates.',
                       icon: Icons.auto_awesome_rounded,
                       accentColor: AtlasColors.vaultGold,
                       badge: const PremiumBadge(),
@@ -218,15 +191,13 @@ class NotificationsSettingsScreen extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(
-                height: AtlasSpacing.lg,
-              ),
+              const SizedBox(height: AtlasSpacing.lg),
 
               const AtlasInfoBanner(
                 icon: Icons.info_outline_rounded,
                 title: 'Useful, Not Noisy',
                 message:
-                'Notifications should be added carefully so collectors only get useful alerts and the app never feels noisy.',
+                    'Notifications should be added carefully so collectors only get useful alerts and the app never feels noisy.',
               ),
             ],
           ),
@@ -235,16 +206,9 @@ class NotificationsSettingsScreen extends StatelessWidget {
     );
   }
 
-  static void _showComingSoonMessage(
-      BuildContext context,
-      String message,
-      ) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-        ),
-      ),
-    );
+  static void _showComingSoonMessage(BuildContext context, String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 }

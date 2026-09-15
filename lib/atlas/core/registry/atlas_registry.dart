@@ -5,9 +5,7 @@ import 'atlas_module.dart';
 // Domain-specific registries can compose this registry while retaining
 // responsibility for capability checks and module execution.
 class AtlasRegistry<T extends AtlasModule> {
-  const AtlasRegistry(
-      this._modules,
-      );
+  const AtlasRegistry(this._modules);
 
   final List<T> _modules;
 
@@ -41,39 +39,24 @@ class AtlasRegistry<T extends AtlasModule> {
   }
 
   // Returns all modules satisfying the supplied condition.
-  List<T> where(
-      bool Function(T module) test,
-      ) {
-    return List<T>.unmodifiable(
-      _modules.where(test),
-    );
+  List<T> where(bool Function(T module) test) {
+    return List<T>.unmodifiable(_modules.where(test));
   }
 
   // Returns all registered module identifiers.
   Set<String> get ids {
-    return Set<String>.unmodifiable(
-      _modules.map(
-            (T module) => module.id,
-      ),
-    );
+    return Set<String>.unmodifiable(_modules.map((T module) => module.id));
   }
 
   // Returns all registered module names.
   List<String> get names {
-    return List<String>.unmodifiable(
-      _modules.map(
-            (T module) => module.name,
-      ),
-    );
+    return List<String>.unmodifiable(_modules.map((T module) => module.name));
   }
 
   // Returns all registered module versions by identifier.
   Map<String, String> get versions {
-    return Map<String, String>.unmodifiable(
-      <String, String>{
-        for (final T module in _modules)
-          module.id: module.version,
-      },
-    );
+    return Map<String, String>.unmodifiable(<String, String>{
+      for (final T module in _modules) module.id: module.version,
+    });
   }
 }

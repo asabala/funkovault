@@ -19,14 +19,12 @@ class AtlasMemory {
 class AtlasMemoryEngine {
   const AtlasMemoryEngine();
 
-  AtlasMemory remember({
-    required List<Pop> pops,
-  }) {
+  AtlasMemory remember({required List<Pop> pops}) {
     if (pops.isEmpty) {
       return const AtlasMemory(
         title: 'Your Story Begins Here',
         message:
-        'Add your first collectible and Atlas will begin remembering your journey.',
+            'Add your first collectible and Atlas will begin remembering your journey.',
         footer: 'Every collection starts with one.',
         category: 'beginning',
         priority: 100,
@@ -35,20 +33,17 @@ class AtlasMemoryEngine {
 
     final totalPops = pops.length;
 
-    final grails =
-        pops.where((pop) => pop.value >= 100).length;
+    final grails = pops.where((pop) => pop.value >= 100).length;
 
-    final signed =
-        pops.where((pop) => pop.signature != 'Unsigned').length;
+    final signed = pops.where((pop) => pop.signature != 'Unsigned').length;
 
-    final chase =
-        pops.where((pop) => pop.variant == 'Chase').length;
+    final chase = pops.where((pop) => pop.variant == 'Chase').length;
 
     if (totalPops >= 100) {
       return AtlasMemory(
         title: 'Century Collector',
         message:
-        'Your Vault has reached $totalPops collectibles. That is a milestone worth remembering.',
+            'Your Vault has reached $totalPops collectibles. That is a milestone worth remembering.',
         footer: 'Atlas is tracking your collecting legacy.',
         category: 'milestone',
         priority: 95,
@@ -59,7 +54,7 @@ class AtlasMemoryEngine {
       return AtlasMemory(
         title: 'Grail Memory',
         message:
-        'Atlas found $grails grail-level collectible${grails == 1 ? '' : 's'} in your Vault.',
+            'Atlas found $grails grail-level collectible${grails == 1 ? '' : 's'} in your Vault.',
         footer: 'Great collections are built one meaningful piece at a time.',
         category: 'grail',
         priority: 90,
@@ -70,7 +65,7 @@ class AtlasMemoryEngine {
       return AtlasMemory(
         title: 'Signed Collection',
         message:
-        'You have $signed signed collectible${signed == 1 ? '' : 's'} documented in your Vault.',
+            'You have $signed signed collectible${signed == 1 ? '' : 's'} documented in your Vault.',
         footer: 'Signatures turn collectibles into moments.',
         category: 'signature',
         priority: 80,
@@ -81,7 +76,7 @@ class AtlasMemoryEngine {
       return AtlasMemory(
         title: 'Chase Hunter',
         message:
-        'Your Vault includes $chase Chase collectible${chase == 1 ? '' : 's'}.',
+            'Your Vault includes $chase Chase collectible${chase == 1 ? '' : 's'}.',
         footer: 'The hunt is part of the story.',
         category: 'variant',
         priority: 70,
@@ -91,7 +86,7 @@ class AtlasMemoryEngine {
     return AtlasMemory(
       title: 'Growing Vault',
       message:
-      'Your Vault currently holds $totalPops collectible${totalPops == 1 ? '' : 's'}. Atlas will remember the milestones as it grows.',
+          'Your Vault currently holds $totalPops collectible${totalPops == 1 ? '' : 's'}. Atlas will remember the milestones as it grows.',
       footer: 'Every collection tells a story.',
       category: 'growth',
       priority: 60,

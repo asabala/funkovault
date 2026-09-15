@@ -81,9 +81,7 @@ class RecommendationEvidence {
       value,
       source,
       Object.hashAll(
-        metadata.entries.map(
-              (entry) => Object.hash(entry.key, entry.value),
-        ),
+        metadata.entries.map((entry) => Object.hash(entry.key, entry.value)),
       ),
     );
   }

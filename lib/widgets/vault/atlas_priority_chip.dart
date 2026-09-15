@@ -6,10 +6,7 @@ import '../../theme/atlas_spacing.dart';
 import '../../theme/atlas_typography.dart';
 
 class AtlasPriorityChip extends StatelessWidget {
-  const AtlasPriorityChip({
-    super.key,
-    required this.severity,
-  });
+  const AtlasPriorityChip({super.key, required this.severity});
 
   final String severity;
 
@@ -18,29 +15,17 @@ class AtlasPriorityChip extends StatelessWidget {
     final priority = _priorityStyle(severity);
 
     return Chip(
-      avatar: Icon(
-        priority.icon,
-        size: 18,
-        color: priority.foreground,
-      ),
+      avatar: Icon(priority.icon, size: 18, color: priority.foreground),
       label: Text(
         priority.label,
-        style: AtlasTypography.label.copyWith(
-          color: priority.foreground,
-        ),
+        style: AtlasTypography.label.copyWith(color: priority.foreground),
       ),
       backgroundColor: priority.background,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(
-          AtlasRadius.pill,
-        ),
-        side: BorderSide(
-          color: priority.border,
-        ),
+        borderRadius: BorderRadius.circular(AtlasRadius.pill),
+        side: BorderSide(color: priority.border),
       ),
-      padding: const EdgeInsets.symmetric(
-        horizontal: AtlasSpacing.sm,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: AtlasSpacing.sm),
     );
   }
 

@@ -4,15 +4,11 @@ import 'atlas_registry_entry.dart';
 
 // Performs alias lookups against the Atlas registry.
 final class AtlasAliasMatcher {
-  const AtlasAliasMatcher({
-    required this._registry,
-  });
+  const AtlasAliasMatcher({required this._registry});
 
   final AtlasRegistry _registry;
 
-  List<AtlasRegistryEntry> match(
-      String value,
-      ) {
+  List<AtlasRegistryEntry> match(String value) {
     return _registry.find(value);
   }
 
@@ -20,20 +16,14 @@ final class AtlasAliasMatcher {
     required AtlasRegistryDomain domain,
     required String value,
   }) {
-    return _registry.findByDomain(
-      domain,
-      value,
-    );
+    return _registry.findByDomain(domain, value);
   }
 
   AtlasRegistryEntry? firstMatch({
     required AtlasRegistryDomain domain,
     required String value,
   }) {
-    final matches = matchDomain(
-      domain: domain,
-      value: value,
-    );
+    final matches = matchDomain(domain: domain, value: value);
 
     if (matches.isEmpty) {
       return null;
@@ -42,14 +32,7 @@ final class AtlasAliasMatcher {
     return matches.first;
   }
 
-  bool contains({
-    required AtlasRegistryDomain domain,
-    required String value,
-  }) {
-    return firstMatch(
-      domain: domain,
-      value: value,
-    ) !=
-        null;
+  bool contains({required AtlasRegistryDomain domain, required String value}) {
+    return firstMatch(domain: domain, value: value) != null;
   }
 }

@@ -136,9 +136,7 @@ extension AtlasTimelineEventTypeExtension on AtlasTimelineEventType {
     }
   }
 
-  static AtlasTimelineEventType fromStorageKey(
-      dynamic rawValue,
-      ) {
+  static AtlasTimelineEventType fromStorageKey(dynamic rawValue) {
     final normalized = rawValue
         ?.toString()
         .trim()
@@ -231,12 +229,8 @@ class AtlasTimelineEvent {
 
   bool get wasCreatedByAtlasAi => createdBy == atlasAiCreatedBy;
 
-  factory AtlasTimelineEvent.fromJson(
-      Map<String, dynamic> json,
-      ) {
-    final occurredAt = _readDateTime(
-      json['occurredAt'] ?? json['timestamp'],
-    );
+  factory AtlasTimelineEvent.fromJson(Map<String, dynamic> json) {
+    final occurredAt = _readDateTime(json['occurredAt'] ?? json['timestamp']);
 
     return AtlasTimelineEvent(
       id: json['id']?.toString() ?? '',
@@ -288,15 +282,11 @@ class AtlasTimelineEvent {
       description: description ?? this.description,
       metadata: metadata ?? this.metadata,
       createdBy: createdBy ?? this.createdBy,
-      createdAt: clearCreatedAt
-          ? null
-          : createdAt ?? this.createdAt,
+      createdAt: clearCreatedAt ? null : createdAt ?? this.createdAt,
     );
   }
 
-  static Map<String, dynamic> _readMetadata(
-      dynamic rawMetadata,
-      ) {
+  static Map<String, dynamic> _readMetadata(dynamic rawMetadata) {
     if (rawMetadata is Map) {
       return Map<String, dynamic>.unmodifiable(
         Map<String, dynamic>.from(rawMetadata),
@@ -306,18 +296,12 @@ class AtlasTimelineEvent {
     return const <String, dynamic>{};
   }
 
-  static DateTime _readDateTime(
-      dynamic rawValue,
-      ) {
-    return DateTime.tryParse(
-      rawValue?.toString().trim() ?? '',
-    ) ??
+  static DateTime _readDateTime(dynamic rawValue) {
+    return DateTime.tryParse(rawValue?.toString().trim() ?? '') ??
         DateTime.fromMillisecondsSinceEpoch(0);
   }
 
-  static DateTime? _readNullableDateTime(
-      dynamic rawValue,
-      ) {
+  static DateTime? _readNullableDateTime(dynamic rawValue) {
     final value = rawValue?.toString().trim() ?? '';
 
     if (value.isEmpty) {
@@ -327,18 +311,10 @@ class AtlasTimelineEvent {
     return DateTime.tryParse(value);
   }
 
-  static String _readCreatedBy(
-      dynamic rawValue,
-      ) {
-    final normalized = rawValue
-        ?.toString()
-        .trim()
-        .toLowerCase()
-        .replaceAll(' ', '_') ??
-        '';
+  static String _readCreatedBy(dynamic rawValue) {
+    final normalized =
+        rawValue?.toString().trim().toLowerCase().replaceAll(' ', '_') ?? '';
 
-    return normalized.isEmpty
-        ? manualCreatedBy
-        : normalized;
+    return normalized.isEmpty ? manualCreatedBy : normalized;
   }
 }

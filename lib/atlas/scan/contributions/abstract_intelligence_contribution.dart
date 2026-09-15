@@ -13,26 +13,21 @@ abstract base class AbstractIntelligenceContribution
     required String sourceEngineId,
     required this.createdAt,
     double? confidence,
-    Map<String, Object?> attributes =
-    const <String, Object?>{},
-  })  : contributionId =
-  IntelligenceContributionValidation.requireIdentifier(
-    contributionId,
-    fieldName: 'contributionId',
-  ),
-        sourceEngineId =
-        IntelligenceContributionValidation.requireIdentifier(
-          sourceEngineId,
-          fieldName: 'sourceEngineId',
-        ),
-        confidence =
-        IntelligenceContributionValidation.normalizeConfidence(
-          confidence,
-        ),
-        attributes =
-        IntelligenceContributionValidation.immutableAttributes(
-          attributes,
-        );
+    Map<String, Object?> attributes = const <String, Object?>{},
+  }) : contributionId = IntelligenceContributionValidation.requireIdentifier(
+         contributionId,
+         fieldName: 'contributionId',
+       ),
+       sourceEngineId = IntelligenceContributionValidation.requireIdentifier(
+         sourceEngineId,
+         fieldName: 'sourceEngineId',
+       ),
+       confidence = IntelligenceContributionValidation.normalizeConfidence(
+         confidence,
+       ),
+       attributes = IntelligenceContributionValidation.immutableAttributes(
+         attributes,
+       );
 
   @override
   final String contributionId;
@@ -64,18 +59,13 @@ abstract base class AbstractIntelligenceContribution
     return attributes.isEmpty;
   }
 
-  bool wasProducedBy(
-      String engineId,
-      ) {
+  bool wasProducedBy(String engineId) {
     final String normalized = engineId.trim();
 
-    return normalized.isNotEmpty &&
-        sourceEngineId == normalized;
+    return normalized.isNotEmpty && sourceEngineId == normalized;
   }
 
-  T? attribute<T>(
-      String key,
-      ) {
+  T? attribute<T>(String key) {
     final Object? value = attributes[key];
 
     if (value is T) {
@@ -85,13 +75,10 @@ abstract base class AbstractIntelligenceContribution
     return null;
   }
 
-  bool hasAttribute(
-      String key,
-      ) {
+  bool hasAttribute(String key) {
     final String normalized = key.trim();
 
-    return normalized.isNotEmpty &&
-        attributes.containsKey(normalized);
+    return normalized.isNotEmpty && attributes.containsKey(normalized);
   }
 
   @override

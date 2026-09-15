@@ -26,8 +26,7 @@ abstract final class FunkoIdentityPolicy {
       },
 
       // Only these classifications participate.
-      requiredClassifications:
-      const <IdentityClassification>{
+      requiredClassifications: const <IdentityClassification>{
         IdentityClassification.defining,
         IdentityClassification.influencing,
       },

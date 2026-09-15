@@ -33,8 +33,7 @@ class VaultBreakdownCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final List<_VaultBreakdownItem> items =
-    <_VaultBreakdownItem>[
+    final List<_VaultBreakdownItem> items = <_VaultBreakdownItem>[
       _VaultBreakdownItem(
         label: 'Owned',
         value: ownedCount,
@@ -85,35 +84,22 @@ class VaultBreakdownCard extends StatelessWidget {
         children: [
           const AtlasSectionHeader(
             title: 'Vault Breakdown',
-            subtitle:
-            'Quick snapshot of what is inside your collection.',
+            subtitle: 'Quick snapshot of what is inside your collection.',
             icon: Icons.dashboard_customize_rounded,
             accentColor: AtlasColors.vaultGold,
           ),
-          const SizedBox(
-            height: AtlasSpacing.lg,
-          ),
+          const SizedBox(height: AtlasSpacing.lg),
           Wrap(
             spacing: AtlasSpacing.sm,
             runSpacing: AtlasSpacing.sm,
             children: items
-                .map(
-                  (
-                  _VaultBreakdownItem item,
-                  ) {
-                return _VaultBreakdownChip(
-                  item: item,
-                );
-              },
-            )
-                .toList(
-              growable: false,
-            ),
+                .map((_VaultBreakdownItem item) {
+                  return _VaultBreakdownChip(item: item);
+                })
+                .toList(growable: false),
           ),
           if (onTap != null) ...[
-            const SizedBox(
-              height: AtlasSpacing.lg,
-            ),
+            const SizedBox(height: AtlasSpacing.lg),
             Row(
               children: [
                 const Icon(
@@ -121,9 +107,7 @@ class VaultBreakdownCard extends StatelessWidget {
                   color: AtlasColors.vaultGold,
                   size: 18,
                 ),
-                const SizedBox(
-                  width: AtlasSpacing.sm,
-                ),
+                const SizedBox(width: AtlasSpacing.sm),
                 Expanded(
                   child: Text(
                     'Tap to review Entire Vault',
@@ -147,9 +131,7 @@ class VaultBreakdownCard extends StatelessWidget {
 }
 
 class _VaultBreakdownChip extends StatelessWidget {
-  const _VaultBreakdownChip({
-    required this.item,
-  });
+  const _VaultBreakdownChip({required this.item});
 
   final _VaultBreakdownItem item;
 
@@ -157,21 +139,11 @@ class _VaultBreakdownChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: 150,
-      padding: const EdgeInsets.all(
-        AtlasSpacing.md,
-      ),
+      padding: const EdgeInsets.all(AtlasSpacing.md),
       decoration: BoxDecoration(
-        color: AtlasColors.background.withValues(
-          alpha: 0.72,
-        ),
-        borderRadius: BorderRadius.circular(
-          18,
-        ),
-        border: Border.all(
-          color: Colors.white.withValues(
-            alpha: 0.08,
-          ),
-        ),
+        color: AtlasColors.background.withValues(alpha: 0.72),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
       ),
       child: Row(
         children: [
@@ -180,26 +152,15 @@ class _VaultBreakdownChip extends StatelessWidget {
             height: 34,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: AtlasColors.vaultGold.withValues(
-                alpha: 0.14,
-              ),
-              borderRadius: BorderRadius.circular(
-                12,
-              ),
+              color: AtlasColors.vaultGold.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(
-              item.icon,
-              color: AtlasColors.vaultGold,
-              size: 19,
-            ),
+            child: Icon(item.icon, color: AtlasColors.vaultGold, size: 19),
           ),
-          const SizedBox(
-            width: AtlasSpacing.sm,
-          ),
+          const SizedBox(width: AtlasSpacing.sm),
           Expanded(
             child: Column(
-              crossAxisAlignment:
-              CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   item.value.toString(),
@@ -210,9 +171,7 @@ class _VaultBreakdownChip extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(
-                  height: 2,
-                ),
+                const SizedBox(height: 2),
                 Text(
                   item.label,
                   maxLines: 1,

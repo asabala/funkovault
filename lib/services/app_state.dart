@@ -928,15 +928,15 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> updateOwnerForPops(
-      List<String> popIds,
-      String owner, {
-        String? collectionName,
-      }) async {
-    final String targetCollection =
-        collectionName ?? _selectedCollection;
+    List<String> popIds,
+    String owner, {
+    String? collectionName,
+  }) async {
+    final String targetCollection = collectionName ?? _selectedCollection;
 
-    final String? matchingCollection =
-    _matchingCollectionName(targetCollection);
+    final String? matchingCollection = _matchingCollectionName(
+      targetCollection,
+    );
 
     if (matchingCollection == null) {
       return;
@@ -954,16 +954,11 @@ class AppState extends ChangeNotifier {
       if (popIds.contains(pops[i].id)) {
         final oldPop = pops[i];
 
-        pops[i] = oldPop.copyWith(
-          owner: owner,
-          lastUpdated: now,
-        );
+        pops[i] = oldPop.copyWith(owner: owner, lastUpdated: now);
 
         await addActivity(
           Activity(
-            id: DateTime.now()
-                .millisecondsSinceEpoch
-                .toString(),
+            id: DateTime.now().millisecondsSinceEpoch.toString(),
             popId: oldPop.id,
             action: 'owner_changed',
             popName: oldPop.name,

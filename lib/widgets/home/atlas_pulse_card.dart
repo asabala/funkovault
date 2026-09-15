@@ -30,22 +30,13 @@ class AtlasPulseCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(
-                AtlasIcons.intelligence,
-                color: AtlasColors.vaultGold,
-              ),
+              const Icon(AtlasIcons.intelligence, color: AtlasColors.vaultGold),
               const SizedBox(width: AtlasSpacing.sm),
-              Text(
-                'Atlas Pulse',
-                style: AtlasTypography.headingSmall,
-              ),
+              Text('Atlas Pulse', style: AtlasTypography.headingSmall),
             ],
           ),
           const SizedBox(height: AtlasSpacing.lg),
-          Text(
-            greeting,
-            style: AtlasTypography.headingLarge,
-          ),
+          Text(greeting, style: AtlasTypography.headingLarge),
           const SizedBox(height: AtlasSpacing.xs),
           Text(
             '$dateLabel • $timeLabel',

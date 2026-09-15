@@ -8,9 +8,8 @@ import '../models/atlas_catalog_product.dart';
 import '../models/atlas_catalog_sync_result.dart';
 import '../repository/atlas_catalog_sync_repository.dart';
 
-typedef AtlasCatalogPriceResolver = AtlasCatalogPrice? Function(
-    AtlasCatalogProduct product,
-    );
+typedef AtlasCatalogPriceResolver =
+    AtlasCatalogPrice? Function(AtlasCatalogProduct product);
 
 class AtlasCatalogSyncService {
   const AtlasCatalogSyncService(this._repository);
@@ -82,9 +81,9 @@ class AtlasCatalogSyncService {
           continue;
         }
 
-
-        final ProductUpsertResult upsertResult =
-        await _upsertProductWithRetry(product);
+        final ProductUpsertResult upsertResult = await _upsertProductWithRetry(
+          product,
+        );
 
         final int databaseProductId = upsertResult.productId;
 
@@ -96,11 +95,11 @@ class AtlasCatalogSyncService {
 
         final AtlasCatalogPrice? price =
             priceResolver?.call(product) ??
-                _priceFromProduct(
-                  product,
-                  sourceType: productSourceType,
-                  sourceProductId: sourceProductId,
-                );
+            _priceFromProduct(
+              product,
+              sourceType: productSourceType,
+              sourceProductId: sourceProductId,
+            );
 
         if (price != null && price.hasPrice) {
           await _repository.insertPriceSnapshot(
@@ -126,9 +125,9 @@ class AtlasCatalogSyncService {
         if (rowsFailed == 1) {
           developer.log(
             'Atlas catalog product sync failed.\n'
-                'Product ID: $firstFailureProductId\n'
-                'Product Name: $firstFailureProductName\n'
-                'Error: $firstFailureMessage',
+            'Product ID: $firstFailureProductId\n'
+            'Product Name: $firstFailureProductName\n'
+            'Error: $firstFailureMessage',
             name: 'AtlasCatalogSyncService',
             error: error,
             stackTrace: stackTrace,
@@ -139,11 +138,11 @@ class AtlasCatalogSyncService {
 
     final String? errorMessage = rowsFailed > 0
         ? _buildSyncErrorMessage(
-      rowsFailed: rowsFailed,
-      firstFailureMessage: firstFailureMessage,
-      firstFailureProductId: firstFailureProductId,
-      firstFailureProductName: firstFailureProductName,
-    )
+            rowsFailed: rowsFailed,
+            firstFailureMessage: firstFailureMessage,
+            firstFailureProductId: firstFailureProductId,
+            firstFailureProductName: firstFailureProductName,
+          )
         : null;
 
     final Map<String, Object?> completionMetadata = <String, Object?>{
@@ -183,8 +182,8 @@ class AtlasCatalogSyncService {
   }
 
   Future<ProductUpsertResult> _upsertProductWithRetry(
-      AtlasCatalogProduct product,
-      ) async {
+    AtlasCatalogProduct product,
+  ) async {
     const int maximumAttempts = 3;
 
     for (int attempt = 1; attempt <= maximumAttempts; attempt++) {
@@ -198,18 +197,16 @@ class AtlasCatalogSyncService {
           Error.throwWithStackTrace(error, stackTrace);
         }
 
-        final Duration retryDelay = Duration(
-          milliseconds: 500 * attempt,
-        );
+        final Duration retryDelay = Duration(milliseconds: 500 * attempt);
 
         developer.log(
           'Transient catalog upsert failure. Retrying product.\n'
-              'Product ID: ${_sourceProductIdFrom(product)}\n'
-              'Product Name: ${product.displayName}\n'
-              'Failed attempt: $attempt of $maximumAttempts\n'
-              'Next attempt: ${attempt + 1} of $maximumAttempts\n'
-              'Retry delay: ${retryDelay.inMilliseconds} ms\n'
-              'Error: ${_normalizedFailureMessage(error)}',
+          'Product ID: ${_sourceProductIdFrom(product)}\n'
+          'Product Name: ${product.displayName}\n'
+          'Failed attempt: $attempt of $maximumAttempts\n'
+          'Next attempt: ${attempt + 1} of $maximumAttempts\n'
+          'Retry delay: ${retryDelay.inMilliseconds} ms\n'
+          'Error: ${_normalizedFailureMessage(error)}',
           name: 'AtlasCatalogSyncService',
           error: error,
           stackTrace: stackTrace,
@@ -245,31 +242,23 @@ class AtlasCatalogSyncService {
   }
 
   String _sourceTypeFrom(
-      AtlasCatalogProduct product, {
-        required String fallbackSourceType,
-      }) {
-    return _textAttribute(
-      product,
-      AtlasCatalogAttributeKeys.source,
-    ) ??
+    AtlasCatalogProduct product, {
+    required String fallbackSourceType,
+  }) {
+    return _textAttribute(product, AtlasCatalogAttributeKeys.source) ??
         fallbackSourceType;
   }
 
-  String _sourceProductIdFrom(
-      AtlasCatalogProduct product,
-      ) {
-    return _textAttribute(
-      product,
-      AtlasCatalogAttributeKeys.sourceProductId,
-    ) ??
+  String _sourceProductIdFrom(AtlasCatalogProduct product) {
+    return _textAttribute(product, AtlasCatalogAttributeKeys.sourceProductId) ??
         product.productId.value.trim();
   }
 
   AtlasCatalogPrice? _priceFromProduct(
-      AtlasCatalogProduct product, {
-        required String sourceType,
-        required String sourceProductId,
-      }) {
+    AtlasCatalogProduct product, {
+    required String sourceType,
+    required String sourceProductId,
+  }) {
     final double? lowPrice = _doubleAttribute(
       product,
       AtlasCatalogAttributeKeys.lowPrice,
@@ -301,9 +290,7 @@ class AtlasCatalogSyncService {
       highPrice,
       marketPrice,
       directLowPrice,
-    ].any(
-          (double? value) => value != null && value > 0,
-    );
+    ].any((double? value) => value != null && value > 0);
 
     if (!hasAnyPrice) {
       return null;
@@ -322,9 +309,7 @@ class AtlasCatalogSyncService {
     );
   }
 
-  DateTime? _sourceModifiedAtFrom(
-      AtlasCatalogProduct product,
-      ) {
+  DateTime? _sourceModifiedAtFrom(AtlasCatalogProduct product) {
     final String? value = _textAttribute(
       product,
       AtlasCatalogAttributeKeys.modifiedOn,
@@ -337,10 +322,7 @@ class AtlasCatalogSyncService {
     return DateTime.tryParse(value)?.toUtc();
   }
 
-  String? _textAttribute(
-      AtlasCatalogProduct product,
-      String key,
-      ) {
+  String? _textAttribute(AtlasCatalogProduct product, String key) {
     final Object? value = product.attributes[key];
 
     if (value == null) {
@@ -352,10 +334,7 @@ class AtlasCatalogSyncService {
     return normalized.isEmpty ? null : normalized;
   }
 
-  double? _doubleAttribute(
-      AtlasCatalogProduct product,
-      String key,
-      ) {
+  double? _doubleAttribute(AtlasCatalogProduct product, String key) {
     final Object? value = product.attributes[key];
 
     if (value == null) {
@@ -407,25 +386,19 @@ class AtlasCatalogSyncService {
   }) {
     final StringBuffer message = StringBuffer(
       '$rowsFailed catalog row${rowsFailed == 1 ? '' : 's'} '
-          'failed during sync.',
+      'failed during sync.',
     );
 
     if (firstFailureProductId != null) {
-      message.write(
-        ' First failed product ID: $firstFailureProductId.',
-      );
+      message.write(' First failed product ID: $firstFailureProductId.');
     }
 
     if (firstFailureProductName != null) {
-      message.write(
-        ' Product: $firstFailureProductName.',
-      );
+      message.write(' Product: $firstFailureProductName.');
     }
 
     if (firstFailureMessage != null) {
-      message.write(
-        ' Error: $firstFailureMessage',
-      );
+      message.write(' Error: $firstFailureMessage');
     }
 
     return message.toString();

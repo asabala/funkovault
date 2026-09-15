@@ -27,12 +27,10 @@ class VaultReport {
 
   bool get hasMissingValues => missingValueCount > 0;
 
-  bool get hasMissingPurchaseDates =>
-      missingPurchaseDateCount > 0;
+  bool get hasMissingPurchaseDates => missingPurchaseDateCount > 0;
 
   bool get hasLargestCollection =>
-      largestCollectionName.trim().isNotEmpty &&
-          largestCollectionCount > 0;
+      largestCollectionName.trim().isNotEmpty && largestCollectionCount > 0;
 
   String get healthLabel {
     if (collectionHealthScore >= 95) {
@@ -70,7 +68,7 @@ class VaultReport {
       largestCollectionCount: 0,
       reportTitle: 'Vault Ready',
       reportMessage:
-      'Your Vault is ready. Start adding Pops to unlock Atlas intelligence.',
+          'Your Vault is ready. Start adding Pops to unlock Atlas intelligence.',
     );
   }
 }

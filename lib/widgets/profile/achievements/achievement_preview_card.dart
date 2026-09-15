@@ -7,10 +7,7 @@ import '../../../theme/atlas_typography.dart';
 import '../../atlas/atlas_glass_card.dart';
 
 class AchievementPreviewCard extends StatelessWidget {
-  const AchievementPreviewCard({
-    required this.achievements,
-    super.key,
-  });
+  const AchievementPreviewCard({required this.achievements, super.key});
 
   final List<AtlasAchievement> achievements;
 
@@ -24,10 +21,7 @@ class AchievementPreviewCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Latest Achievement',
-            style: AtlasTypography.headingSmall,
-          ),
+          Text('Latest Achievement', style: AtlasTypography.headingSmall),
           const SizedBox(height: AtlasSpacing.md),
           if (latest == null)
             Text(
@@ -39,10 +33,7 @@ class AchievementPreviewCard extends StatelessWidget {
           else
             Row(
               children: [
-                Text(
-                  latest.icon,
-                  style: const TextStyle(fontSize: 36),
-                ),
+                Text(latest.icon, style: const TextStyle(fontSize: 36)),
                 const SizedBox(width: AtlasSpacing.md),
                 Expanded(
                   child: Column(

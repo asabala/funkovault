@@ -20,12 +20,9 @@ class VaultReportPanel extends StatelessWidget {
 
     final allPops = repository.allPops(appState);
 
-    final duplicateCount =
-        repository.duplicatePopGroups(appState).length;
+    final duplicateCount = repository.duplicatePopGroups(appState).length;
 
-    final missingValueCount = allPops
-        .where((pop) => pop.value <= 0)
-        .length;
+    final missingValueCount = allPops.where((pop) => pop.value <= 0).length;
 
     const missingPurchaseDateCount = 0;
 
@@ -55,58 +52,42 @@ class VaultReportPanel extends StatelessWidget {
       missingPurchaseDateCount: missingPurchaseDateCount,
     );
 
-    final primaryTask =
-    taskEngine.highestPriority(tasks);
+    final primaryTask = taskEngine.highestPriority(tasks);
 
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
-          crossAxisAlignment:
-          CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
               '🛡️ Vault Report',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
 
             const SizedBox(height: 12),
 
             Text(
               primaryTask?.title ?? report.reportTitle,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
             ),
 
             const SizedBox(height: 8),
 
-            Text(
-              primaryTask?.description ??
-                  report.reportMessage,
-            ),
+            Text(primaryTask?.description ?? report.reportMessage),
 
             const SizedBox(height: 16),
 
             Row(
-              mainAxisAlignment:
-              MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
                   'Vault Health',
-                  style: TextStyle(
-                    color: Colors.grey,
-                  ),
+                  style: TextStyle(color: Colors.grey),
                 ),
                 Text(
                   '${report.formattedHealthScore} • ${report.healthLabel}',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
               ],
             ),
@@ -126,8 +107,7 @@ class VaultReportPanel extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) =>
-                            VaultTasksScreen(tasks: tasks),
+                        builder: (_) => VaultTasksScreen(tasks: tasks),
                       ),
                     );
                   },

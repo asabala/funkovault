@@ -5,7 +5,6 @@ import 'identity_resolution_configuration.dart';
 //
 // Presets package a complete resolution configuration for a specific
 // domain, workflow, or matching mode without changing resolver logic.
-abstract interface class IdentityResolutionPreset
-    implements AtlasModule {
+abstract interface class IdentityResolutionPreset implements AtlasModule {
   IdentityResolutionConfiguration get configuration;
 }

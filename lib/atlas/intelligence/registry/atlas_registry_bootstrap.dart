@@ -12,21 +12,13 @@ final class AtlasRegistryBootstrap {
   AtlasRegistry build() {
     final builder = AtlasRegistryBuilder();
 
-    builder.addAll(
-      VariantRegistryProvider().buildEntries(),
-    );
+    builder.addAll(VariantRegistryProvider().buildEntries());
 
-    builder.addAll(
-      RetailerRegistryProvider().buildEntries(),
-    );
+    builder.addAll(RetailerRegistryProvider().buildEntries());
 
-    builder.addAll(
-      StickerRegistryProvider().buildEntries(),
-    );
+    builder.addAll(StickerRegistryProvider().buildEntries());
 
-    builder.addAll(
-      const EventRegistryProvider().buildEntries(),
-    );
+    builder.addAll(const EventRegistryProvider().buildEntries());
 
     return builder.build();
   }

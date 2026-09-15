@@ -12,18 +12,17 @@ import 'catalog_resolution_result.dart';
 // can evolve independently.
 final class CatalogResolutionService {
   CatalogResolutionService(
-      this._repository, [
-        this._matcher = const CatalogMatcher(),
-      ]);
+    this._repository, [
+    this._matcher = const CatalogMatcher(),
+  ]);
 
   final AtlasCatalogRepository _repository;
   final CatalogMatcher _matcher;
 
   Future<CatalogResolutionResult> resolve(
-      CatalogResolutionRequest request,
-      ) async {
-    final List<AtlasCatalogProduct> candidates =
-    await _repository.search(
+    CatalogResolutionRequest request,
+  ) async {
+    final List<AtlasCatalogProduct> candidates = await _repository.search(
       query: request.displayName,
       categoryCode: request.categoryCode,
       brand: request.brand,
@@ -34,8 +33,7 @@ final class CatalogResolutionService {
       variantName: request.variantName,
     );
 
-    final List<CatalogMatch> matches =
-    _matcher.rankCandidates(
+    final List<CatalogMatch> matches = _matcher.rankCandidates(
       candidates: candidates,
       displayName: request.displayName,
       productNumber: request.productNumber,
@@ -45,21 +43,17 @@ final class CatalogResolutionService {
 
     if (matches.isEmpty) {
       return CatalogResolutionResult(
-        resolutionReason:
-        'No catalog matches were found.',
+        resolutionReason: 'No catalog matches were found.',
       );
     }
 
-    final CatalogMatch bestMatch =
-        matches.first;
+    final CatalogMatch bestMatch = matches.first;
 
     return CatalogResolutionResult(
       selectedMatch: bestMatch,
       candidateMatches: matches,
-      requiresReview:
-      bestMatch.requiresReview,
-      resolutionReason:
-      'Resolved using catalog matching.',
+      requiresReview: bestMatch.requiresReview,
+      resolutionReason: 'Resolved using catalog matching.',
     );
   }
 }

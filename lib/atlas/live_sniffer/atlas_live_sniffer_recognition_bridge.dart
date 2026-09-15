@@ -10,8 +10,14 @@ abstract interface class AtlasLiveSnifferRecognitionPlatform {
   });
 }
 
+abstract interface class AtlasLiveSnifferRecognitionTurnoverPlatform {
+  Future<bool> restartSelectedTarget();
+}
+
 final class AtlasLiveSnifferRecognitionBridge
-    implements AtlasLiveSnifferRecognitionPlatform {
+    implements
+        AtlasLiveSnifferRecognitionPlatform,
+        AtlasLiveSnifferRecognitionTurnoverPlatform {
   const AtlasLiveSnifferRecognitionBridge({
     MethodChannel? methodChannel,
     EventChannel? eventChannel,
@@ -33,6 +39,12 @@ final class AtlasLiveSnifferRecognitionBridge
         .map((Object? event) {
           return Map<Object?, Object?>.from(event! as Map);
         });
+  }
+
+  @override
+  Future<bool> restartSelectedTarget() async {
+    return await _methodChannel.invokeMethod<bool>('restartSelectedTarget') ??
+        false;
   }
 
   @override

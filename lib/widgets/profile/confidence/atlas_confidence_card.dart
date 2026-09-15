@@ -23,10 +23,7 @@ class AtlasConfidenceCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Atlas Confidence',
-            style: AtlasTypography.headingSmall,
-          ),
+          Text('Atlas Confidence', style: AtlasTypography.headingSmall),
 
           const SizedBox(height: AtlasSpacing.md),
 
@@ -39,9 +36,7 @@ class AtlasConfidenceCard extends StatelessWidget {
 
           const SizedBox(height: AtlasSpacing.sm),
 
-          LinearProgressIndicator(
-            value: safeConfidence / 100,
-          ),
+          LinearProgressIndicator(value: safeConfidence / 100),
 
           const SizedBox(height: AtlasSpacing.md),
 

@@ -25,12 +25,8 @@ class DuplicateReviewEngine {
     }
 
     return countsByKey.entries
-        .where(
-          (entry) => entry.value > 1,
-    )
-        .map(
-          (entry) => entry.key,
-    )
+        .where((entry) => entry.value > 1)
+        .map((entry) => entry.key)
         .toSet();
   }
 
@@ -41,13 +37,7 @@ class DuplicateReviewEngine {
   List<Pop> filterReviewPops(List<Pop> pops) {
     final duplicateKeys = reviewKeys(pops);
 
-    return pops
-        .where(
-          (pop) => duplicateKeys.contains(
-        reviewKey(pop),
-      ),
-    )
-        .toList();
+    return pops.where((pop) => duplicateKeys.contains(reviewKey(pop))).toList();
   }
 
   List<DuplicateReviewGroup> buildGroups(List<Pop> pops) {
@@ -60,39 +50,31 @@ class DuplicateReviewEngine {
         continue;
       }
 
-      popsByKey.putIfAbsent(
-        key,
-            () => <Pop>[],
-      );
+      popsByKey.putIfAbsent(key, () => <Pop>[]);
 
       popsByKey[key]!.add(pop);
     }
 
     return popsByKey.entries
-        .where(
-          (entry) => entry.value.length > 1,
-    )
+        .where((entry) => entry.value.length > 1)
         .map(
           (entry) => DuplicateReviewGroup(
-        key: entry.key,
-        pops: List<Pop>.unmodifiable(
-          entry.value,
-        ),
-      ),
-    )
+            key: entry.key,
+            pops: List<Pop>.unmodifiable(entry.value),
+          ),
+        )
         .toList();
   }
 
   List<DuplicateReviewGroup> takeVisibleGroups(
-      List<DuplicateReviewGroup> groups,
-      int itemLimit,
-      ) {
+    List<DuplicateReviewGroup> groups,
+    int itemLimit,
+  ) {
     final visibleGroups = <DuplicateReviewGroup>[];
     var visibleItemCount = 0;
 
     for (final group in groups) {
-      final wouldExceedLimit =
-          visibleItemCount + group.itemCount > itemLimit;
+      final wouldExceedLimit = visibleItemCount + group.itemCount > itemLimit;
 
       if (visibleGroups.isNotEmpty && wouldExceedLimit) {
         break;
@@ -111,10 +93,7 @@ class DuplicateReviewEngine {
 }
 
 class DuplicateReviewGroup {
-  const DuplicateReviewGroup({
-    required this.key,
-    required this.pops,
-  });
+  const DuplicateReviewGroup({required this.key, required this.pops});
 
   final String key;
   final List<Pop> pops;
@@ -124,10 +103,7 @@ class DuplicateReviewGroup {
   int get itemCount => pops.length;
 
   int get totalQuantity {
-    return pops.fold<int>(
-      0,
-          (total, pop) => total + pop.quantity,
-    );
+    return pops.fold<int>(0, (total, pop) => total + pop.quantity);
   }
 
   String get name {

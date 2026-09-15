@@ -2,22 +2,10 @@
 //
 // This model remains independent from the camera package so scanner
 // implementations can change without affecting the scan domain.
-enum ScanCodeFormat {
-  upcA,
-  upcE,
-  ean8,
-  ean13,
-  qrCode,
-  unknown,
-}
+enum ScanCodeFormat { upcA, upcE, ean8, ean13, qrCode, unknown }
 
 // Identifies where a scan code entered the Atlas platform.
-enum ScanCodeSource {
-  camera,
-  manualEntry,
-  importedData,
-  externalProvider,
-}
+enum ScanCodeSource { camera, manualEntry, importedData, externalProvider }
 
 // Immutable barcode or QR code captured or supplied to Atlas.
 //
@@ -51,13 +39,11 @@ class ScanCode {
   bool get isNotEmpty => normalizedValue.isNotEmpty;
 
   bool get isUpc {
-    return format == ScanCodeFormat.upcA ||
-        format == ScanCodeFormat.upcE;
+    return format == ScanCodeFormat.upcA || format == ScanCodeFormat.upcE;
   }
 
   bool get isEan {
-    return format == ScanCodeFormat.ean8 ||
-        format == ScanCodeFormat.ean13;
+    return format == ScanCodeFormat.ean8 || format == ScanCodeFormat.ean13;
   }
 
   bool get isQrCode {
@@ -92,8 +78,7 @@ class ScanCode {
   }) {
     return ScanCode(
       rawValue: rawValue ?? this.rawValue,
-      normalizedValue:
-      normalizedValue ?? this.normalizedValue,
+      normalizedValue: normalizedValue ?? this.normalizedValue,
       format: format ?? this.format,
       source: source ?? this.source,
       capturedAt: capturedAt ?? this.capturedAt,
@@ -112,32 +97,21 @@ class ScanCode {
     };
   }
 
-  factory ScanCode.fromMap(
-      Map<String, Object?> map,
-      ) {
+  factory ScanCode.fromMap(Map<String, Object?> map) {
     return ScanCode(
       rawValue: map['rawValue'] as String? ?? '',
-      normalizedValue:
-      map['normalizedValue'] as String? ?? '',
-      format: _formatFromName(
-        map['format'] as String?,
-      ),
-      source: _sourceFromName(
-        map['source'] as String?,
-      ),
-      capturedAt: DateTime.tryParse(
-        map['capturedAt'] as String? ?? '',
-      ) ??
+      normalizedValue: map['normalizedValue'] as String? ?? '',
+      format: _formatFromName(map['format'] as String?),
+      source: _sourceFromName(map['source'] as String?),
+      capturedAt:
+          DateTime.tryParse(map['capturedAt'] as String? ?? '') ??
           DateTime.fromMillisecondsSinceEpoch(0),
       isValid: map['isValid'] as bool? ?? false,
     );
   }
 
-  static ScanCodeFormat _formatFromName(
-      String? name,
-      ) {
-    for (final ScanCodeFormat format
-    in ScanCodeFormat.values) {
+  static ScanCodeFormat _formatFromName(String? name) {
+    for (final ScanCodeFormat format in ScanCodeFormat.values) {
       if (format.name == name) {
         return format;
       }
@@ -146,11 +120,8 @@ class ScanCode {
     return ScanCodeFormat.unknown;
   }
 
-  static ScanCodeSource _sourceFromName(
-      String? name,
-      ) {
-    for (final ScanCodeSource source
-    in ScanCodeSource.values) {
+  static ScanCodeSource _sourceFromName(String? name) {
+    for (final ScanCodeSource source in ScanCodeSource.values) {
       if (source.name == name) {
         return source;
       }

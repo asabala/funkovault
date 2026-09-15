@@ -195,10 +195,10 @@ class CollectionsScreen extends StatelessWidget {
   }
 
   Future<void> _openCollection(
-      BuildContext context,
-      AppState appState,
-      String collectionName,
-      ) async {
+    BuildContext context,
+    AppState appState,
+    String collectionName,
+  ) async {
     final result = await appState.setSelectedCollection(collectionName);
 
     if (!context.mounted) {
@@ -216,7 +216,7 @@ class CollectionsScreen extends StatelessWidget {
         builder: (_) => AtlasRoomScreen(
           roomName: collectionName,
           description:
-          'Your collection room for stats, insights, previews, and collection tools.',
+              'Your collection room for stats, insights, previews, and collection tools.',
           icon: Icons.folder_outlined,
           collectionName: collectionName,
         ),
@@ -322,8 +322,11 @@ class CollectionsScreen extends StatelessWidget {
                 itemBuilder: (context, index) {
                   final collectionName = appState.collectionNames[index];
                   final popCount = appState.collectionPopCount(collectionName);
-                  final collectionValue = appState.collectionValue(collectionName);
-                  final isActive = collectionName == appState.selectedCollection;
+                  final collectionValue = appState.collectionValue(
+                    collectionName,
+                  );
+                  final isActive =
+                      collectionName == appState.selectedCollection;
 
                   return _CollectionGridCard(
                     collectionName: collectionName,
@@ -331,11 +334,7 @@ class CollectionsScreen extends StatelessWidget {
                     collectionValue: collectionValue,
                     isActive: isActive,
                     onOpen: () {
-                      _openCollection(
-                        context,
-                        appState,
-                        collectionName,
-                      );
+                      _openCollection(context, appState, collectionName);
                     },
                     onRename: () {
                       _showRenameCollectionDialog(
@@ -391,8 +390,7 @@ class _CollectionGridCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accentColor =
-    isActive ? AtlasColors.success : AtlasColors.vaultGold;
+    final accentColor = isActive ? AtlasColors.success : AtlasColors.vaultGold;
 
     return AtlasGlassCard(
       onTap: onOpen,
@@ -405,11 +403,7 @@ class _CollectionGridCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(
-                Icons.folder_outlined,
-                color: accentColor,
-                size: 30,
-              ),
+              Icon(Icons.folder_outlined, color: accentColor, size: 30),
               const Spacer(),
               if (isActive)
                 const AtlasStatusChip(

@@ -32,13 +32,11 @@ class CollectorToolsCard extends StatelessWidget {
         const AtlasSectionHeader(
           title: 'Collector Tools',
           subtitle:
-          'Quick access to collection management and Atlas intelligence.',
+              'Quick access to collection management and Atlas intelligence.',
           icon: Icons.dashboard_customize_outlined,
           accentColor: AtlasColors.vaultGold,
         ),
-        const SizedBox(
-          height: AtlasSpacing.md,
-        ),
+        const SizedBox(height: AtlasSpacing.md),
         GridView.count(
           crossAxisCount: 3,
           shrinkWrap: true,
@@ -47,11 +45,7 @@ class CollectorToolsCard extends StatelessWidget {
           mainAxisSpacing: AtlasSpacing.sm,
           childAspectRatio: 0.98,
           children: [
-            AtlasActionTile(
-              icon: Icons.add,
-              label: 'Add Pop',
-              onTap: onAddPop,
-            ),
+            AtlasActionTile(icon: Icons.add, label: 'Add Pop', onTap: onAddPop),
             AtlasActionTile(
               icon: Icons.qr_code_scanner,
               label: 'Scan',

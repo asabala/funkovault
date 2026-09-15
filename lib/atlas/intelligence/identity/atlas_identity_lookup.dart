@@ -66,18 +66,13 @@ final class AtlasIdentityLookup {
     required T Function(String code) fromCode,
     required bool Function(T result) isUnknown,
   }) {
-    final entry = _registry.firstByDomain(
-      domain,
-      value,
-    );
+    final entry = _registry.firstByDomain(domain, value);
 
     if (entry == null) {
       return null;
     }
 
-    final T result = fromCode(
-      entry.id,
-    );
+    final T result = fromCode(entry.id);
 
     if (isUnknown(result)) {
       return null;

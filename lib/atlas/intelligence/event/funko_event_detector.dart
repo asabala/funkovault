@@ -8,11 +8,8 @@ import 'funko_event_evidence.dart';
 import 'funko_event_evidence_source.dart';
 
 // Detects events and contributes them to the shared identity analysis.
-final class FunkoEventDetector
-    implements AtlasIdentityDetector {
-  const FunkoEventDetector({
-    required this.lookup,
-  });
+final class FunkoEventDetector implements AtlasIdentityDetector {
+  const FunkoEventDetector({required this.lookup});
 
   final AtlasIdentityLookup lookup;
 
@@ -22,12 +19,10 @@ final class FunkoEventDetector
     required AtlasIdentityAnalysis analysis,
   }) {
     final Map<FunkoEvent, FunkoEventEvidence> evidence =
-    <FunkoEvent, FunkoEventEvidence>{};
+        <FunkoEvent, FunkoEventEvidence>{};
 
     for (final AtlasIdentityPhrase phrase in phrases) {
-      final FunkoEvent? event = lookup.event(
-        phrase.normalizedText,
-      );
+      final FunkoEvent? event = lookup.event(phrase.normalizedText);
 
       if (event == null) {
         continue;
@@ -35,7 +30,7 @@ final class FunkoEventDetector
 
       evidence.putIfAbsent(
         event,
-            () => FunkoEventEvidence(
+        () => FunkoEventEvidence(
           event: event,
           matchedText: phrase.text,
           source: FunkoEventEvidenceSource.phrase,
@@ -45,9 +40,7 @@ final class FunkoEventDetector
 
     return analysis.copyWith(
       eventResult: FunkoEventDetectionResult(
-        evidence: List<FunkoEventEvidence>.unmodifiable(
-          evidence.values,
-        ),
+        evidence: List<FunkoEventEvidence>.unmodifiable(evidence.values),
       ),
     );
   }

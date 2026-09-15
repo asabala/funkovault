@@ -49,11 +49,9 @@ class AtlasDashboardScreen extends StatelessWidget {
 
     final allPops = repository.allPops(appState);
 
-    final duplicateCount =
-        repository.duplicatePopGroups(appState).length;
+    final duplicateCount = repository.duplicatePopGroups(appState).length;
 
-    final missingValueCount =
-        allPops.where((pop) => pop.value <= 0).length;
+    final missingValueCount = allPops.where((pop) => pop.value <= 0).length;
 
     const missingPurchaseDateCount = 0;
 
@@ -77,8 +75,7 @@ class AtlasDashboardScreen extends StatelessWidget {
       missingValueCount: missingValueCount,
     );
 
-    final smartRecommendations =
-    recommendationEngine.analyze(
+    final smartRecommendations = recommendationEngine.analyze(
       pops: allPops,
       duplicateCount: duplicateCount,
       missingValueCount: missingValueCount,
@@ -88,9 +85,7 @@ class AtlasDashboardScreen extends StatelessWidget {
       recommendations: smartRecommendations,
     );
 
-    final mission = missionEngine.buildMission(
-      decision,
-    );
+    final mission = missionEngine.buildMission(decision);
 
     final briefing = briefingEngine.build(
       appState,
@@ -98,9 +93,7 @@ class AtlasDashboardScreen extends StatelessWidget {
     );
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Atlas Command Center'),
-      ),
+      appBar: AppBar(title: const Text('Atlas Command Center')),
       body: VaultScrollView(
         children: [
           AtlasGreetingCard(
@@ -130,8 +123,7 @@ class AtlasDashboardScreen extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) =>
-                      const VaultHealthScreen(),
+                      builder: (_) => const VaultHealthScreen(),
                     ),
                   );
                 },
@@ -139,9 +131,7 @@ class AtlasDashboardScreen extends StatelessWidget {
               const SizedBox(width: AtlasSpacing.md),
               AtlasStatTile(
                 title: 'Pops',
-                value: repository
-                    .totalPops(appState)
-                    .toString(),
+                value: repository.totalPops(appState).toString(),
                 icon: AtlasIcons.collection,
               ),
             ],
@@ -154,7 +144,7 @@ class AtlasDashboardScreen extends StatelessWidget {
               AtlasStatTile(
                 title: 'Value',
                 value:
-                '\$${repository.totalValue(appState).toStringAsFixed(2)}',
+                    '\$${repository.totalValue(appState).toStringAsFixed(2)}',
                 icon: AtlasIcons.value,
               ),
               const SizedBox(width: AtlasSpacing.md),
@@ -166,9 +156,7 @@ class AtlasDashboardScreen extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => VaultTasksScreen(
-                        tasks: tasks,
-                      ),
+                      builder: (_) => VaultTasksScreen(tasks: tasks),
                     ),
                   );
                 },
@@ -187,14 +175,13 @@ class AtlasDashboardScreen extends StatelessWidget {
                 onTap: duplicateCount == 0
                     ? null
                     : () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) =>
-                      const DuplicateReviewScreen(),
-                    ),
-                  );
-                },
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const DuplicateReviewScreen(),
+                          ),
+                        );
+                      },
               ),
               const SizedBox(width: AtlasSpacing.md),
               AtlasStatTile(
@@ -204,14 +191,13 @@ class AtlasDashboardScreen extends StatelessWidget {
                 onTap: missingValueCount == 0
                     ? null
                     : () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) =>
-                      const MissingValuesScreen(),
-                    ),
-                  );
-                },
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const MissingValuesScreen(),
+                          ),
+                        );
+                      },
               ),
             ],
           ),
@@ -222,15 +208,13 @@ class AtlasDashboardScreen extends StatelessWidget {
             children: [
               AtlasStatTile(
                 title: 'Confidence',
-                value:
-                '${confidence.score.toStringAsFixed(0)}%',
+                value: '${confidence.score.toStringAsFixed(0)}%',
                 icon: AtlasIcons.confidence,
                 onTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) =>
-                      const AtlasConfidenceScreen(),
+                      builder: (_) => const AtlasConfidenceScreen(),
                     ),
                   );
                 },
@@ -244,8 +228,7 @@ class AtlasDashboardScreen extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) =>
-                      const AtlasTimelineScreen(),
+                      builder: (_) => const AtlasTimelineScreen(),
                     ),
                   );
                 },
@@ -265,8 +248,7 @@ class AtlasDashboardScreen extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) =>
-                      const AtlasAchievementsScreen(),
+                      builder: (_) => const AtlasAchievementsScreen(),
                     ),
                   );
                 },
@@ -280,8 +262,7 @@ class AtlasDashboardScreen extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) =>
-                      const AtlasIntelligenceCenter(),
+                      builder: (_) => const AtlasIntelligenceCenter(),
                     ),
                   );
                 },
@@ -291,9 +272,7 @@ class AtlasDashboardScreen extends StatelessWidget {
 
           const SizedBox(height: AtlasSpacing.xl),
 
-          _SectionLabel(
-            text: 'Today',
-          ),
+          _SectionLabel(text: 'Today'),
 
           const SizedBox(height: AtlasSpacing.sm),
 
@@ -303,23 +282,15 @@ class AtlasDashboardScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                AtlasPriorityChip(
-                  severity: decision.severity,
-                ),
+                AtlasPriorityChip(severity: decision.severity),
 
                 const SizedBox(height: AtlasSpacing.md),
 
-                Text(
-                  mission.title,
-                  style: AtlasTypography.headingSmall,
-                ),
+                Text(mission.title, style: AtlasTypography.headingSmall),
 
                 const SizedBox(height: AtlasSpacing.sm),
 
-                Text(
-                  mission.description,
-                  style: AtlasTypography.bodyMedium,
-                ),
+                Text(mission.description, style: AtlasTypography.bodyMedium),
 
                 const SizedBox(height: AtlasSpacing.md),
 
@@ -374,16 +345,13 @@ class AtlasDashboardScreen extends StatelessWidget {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
-                      icon: const Icon(
-                        AtlasIcons.recommendation,
-                      ),
+                      icon: const Icon(AtlasIcons.recommendation),
                       label: const Text('Review Vault Tasks'),
                       onPressed: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) =>
-                                VaultTasksScreen(tasks: tasks),
+                            builder: (_) => VaultTasksScreen(tasks: tasks),
                           ),
                         );
                       },
@@ -416,20 +384,16 @@ class AtlasDashboardScreen extends StatelessWidget {
       return 100;
     }
 
-    final issueCount =
-        duplicateCount + missingValueCount;
+    final issueCount = duplicateCount + missingValueCount;
 
-    final score =
-        100 - ((issueCount / totalPops) * 100);
+    final score = 100 - ((issueCount / totalPops) * 100);
 
     return score.clamp(0, 100);
   }
 }
 
 class _SectionLabel extends StatelessWidget {
-  const _SectionLabel({
-    required this.text,
-  });
+  const _SectionLabel({required this.text});
 
   final String text;
 

@@ -4,11 +4,7 @@ import '../../../theme/atlas_colors.dart';
 import '../../../theme/atlas_symbols.dart';
 import 'atlas_insight_panel.dart';
 
-enum AtlasErrorStateTone {
-  warning,
-  danger,
-  neutral,
-}
+enum AtlasErrorStateTone { warning, danger, neutral }
 
 class AtlasErrorState extends StatelessWidget {
   const AtlasErrorState({
@@ -36,8 +32,7 @@ class AtlasErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String cleanedActionLabel =
-    actionLabel.trim();
+    final String cleanedActionLabel = actionLabel.trim();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -50,22 +45,14 @@ class AtlasErrorState extends StatelessWidget {
           tone: _insightTone,
           maxMessageLines: compact ? 2 : null,
         ),
-        if (onAction != null &&
-            cleanedActionLabel.isNotEmpty) ...[
-          const SizedBox(
-            height: 12,
-          ),
+        if (onAction != null && cleanedActionLabel.isNotEmpty) ...[
+          const SizedBox(height: 12),
           Align(
             alignment: Alignment.centerLeft,
             child: OutlinedButton.icon(
               onPressed: onAction,
-              icon: Icon(
-                Icons.refresh_rounded,
-                color: _accentColor,
-              ),
-              label: Text(
-                cleanedActionLabel,
-              ),
+              icon: Icon(Icons.refresh_rounded, color: _accentColor),
+              label: Text(cleanedActionLabel),
             ),
           ),
         ],
@@ -75,23 +62,17 @@ class AtlasErrorState extends StatelessWidget {
 
   AtlasInsightPanelTone get _insightTone {
     return switch (tone) {
-      AtlasErrorStateTone.warning =>
-      AtlasInsightPanelTone.warning,
-      AtlasErrorStateTone.danger =>
-      AtlasInsightPanelTone.danger,
-      AtlasErrorStateTone.neutral =>
-      AtlasInsightPanelTone.neutral,
+      AtlasErrorStateTone.warning => AtlasInsightPanelTone.warning,
+      AtlasErrorStateTone.danger => AtlasInsightPanelTone.danger,
+      AtlasErrorStateTone.neutral => AtlasInsightPanelTone.neutral,
     };
   }
 
   Color get _accentColor {
     return switch (tone) {
-      AtlasErrorStateTone.warning =>
-      AtlasColors.warning,
-      AtlasErrorStateTone.danger =>
-      AtlasColors.danger,
-      AtlasErrorStateTone.neutral =>
-      AtlasColors.textSecondary,
+      AtlasErrorStateTone.warning => AtlasColors.warning,
+      AtlasErrorStateTone.danger => AtlasColors.danger,
+      AtlasErrorStateTone.neutral => AtlasColors.textSecondary,
     };
   }
 }

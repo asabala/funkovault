@@ -25,5 +25,7 @@ extension AtlasLiveSnifferTargetStateX on AtlasLiveSnifferTargetState {
 
   bool get mayContributeEvidence =>
       this == AtlasLiveSnifferTargetState.acquiring ||
-      this == AtlasLiveSnifferTargetState.locked;
+      this == AtlasLiveSnifferTargetState.locked ||
+      this == AtlasLiveSnifferTargetState.coasting ||
+      this == AtlasLiveSnifferTargetState.reacquiring;
 }

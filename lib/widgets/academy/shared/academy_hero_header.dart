@@ -20,9 +20,7 @@ class AcademyHeroHeader extends StatelessWidget {
     final String cleanedSubtitle = subtitle.trim();
 
     return AtlasSectionHeader(
-      title: cleanedTitle.isEmpty
-          ? 'Atlas Academy'
-          : cleanedTitle,
+      title: cleanedTitle.isEmpty ? 'Atlas Academy' : cleanedTitle,
       subtitle: cleanedSubtitle.isEmpty
           ? 'Learn collector knowledge, strategy, and terminology inside Atlas.'
           : cleanedSubtitle,

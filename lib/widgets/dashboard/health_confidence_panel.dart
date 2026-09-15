@@ -63,16 +63,10 @@ class _MetricCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(
-            vertical: 22,
-            horizontal: 16,
-          ),
+          padding: const EdgeInsets.symmetric(vertical: 22, horizontal: 16),
           child: Column(
             children: [
-              Icon(
-                icon,
-                size: 34,
-              ),
+              Icon(icon, size: 34),
 
               const SizedBox(height: 12),
 
@@ -89,9 +83,7 @@ class _MetricCard extends StatelessWidget {
               Text(
                 title,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Colors.grey,
-                ),
+                style: const TextStyle(color: Colors.grey),
               ),
             ],
           ),

@@ -22,9 +22,7 @@ class PopIdentityBadges extends StatelessWidget {
     final badges = identityEngine.buildBadges(pop);
 
     if (badges.isEmpty && showStandardBadge) {
-      return const AtlasChip(
-        label: '📦 Common / Standard',
-      );
+      return const AtlasChip(label: '📦 Common / Standard');
     }
 
     if (badges.isEmpty) {
@@ -35,11 +33,7 @@ class PopIdentityBadges extends StatelessWidget {
       spacing: AtlasSpacing.sm,
       runSpacing: AtlasSpacing.sm,
       children: badges
-          .map(
-            (badge) => AtlasChip(
-          label: badge.displayLabel,
-        ),
-      )
+          .map((badge) => AtlasChip(label: badge.displayLabel))
           .toList(growable: false),
     );
   }

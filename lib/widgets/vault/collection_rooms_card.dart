@@ -38,13 +38,11 @@ class CollectionRoomsCard extends StatelessWidget {
         const AtlasSectionHeader(
           title: 'Vault Rooms',
           subtitle:
-          'Explore your collection by room, category, and collector workflow.',
+              'Explore your collection by room, category, and collector workflow.',
           icon: Icons.grid_view_rounded,
           accentColor: AtlasColors.vaultGold,
         ),
-        const SizedBox(
-          height: AtlasSpacing.md,
-        ),
+        const SizedBox(height: AtlasSpacing.md),
         GridView.count(
           crossAxisCount: 2,
           shrinkWrap: true,

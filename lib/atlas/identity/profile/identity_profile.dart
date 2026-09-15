@@ -6,9 +6,7 @@ import '../attribute/identity_role.dart';
 // A profile contains all resolved identity attributes for a collectible
 // while preserving the evidence used to determine those values.
 class IdentityProfile {
-  IdentityProfile({
-    required this.attributes,
-  });
+  IdentityProfile({required this.attributes});
 
   // All identity attributes.
   final List<IdentityAttribute> attributes;
@@ -23,8 +21,7 @@ class IdentityProfile {
   List<IdentityAttribute> get identityAttributes {
     return List<IdentityAttribute>.unmodifiable(
       attributes.where(
-            (IdentityAttribute attribute) =>
-        attribute.contributesToIdentity,
+        (IdentityAttribute attribute) => attribute.contributesToIdentity,
       ),
     );
   }
@@ -33,8 +30,7 @@ class IdentityProfile {
   List<IdentityAttribute> get resolvedAttributes {
     return List<IdentityAttribute>.unmodifiable(
       attributes.where(
-            (IdentityAttribute attribute) =>
-        attribute.hasResolvedValue,
+        (IdentityAttribute attribute) => attribute.hasResolvedValue,
       ),
     );
   }
@@ -51,9 +47,7 @@ class IdentityProfile {
   }
 
   // Looks up an attribute by its universal role.
-  IdentityAttribute? attributeByRole(
-      IdentityRole role,
-      ) {
+  IdentityAttribute? attributeByRole(IdentityRole role) {
     for (final attribute in attributes) {
       if (attribute.role == role) {
         return attribute;
@@ -62,15 +56,15 @@ class IdentityProfile {
 
     return null;
   }
+
   List<IdentityAttribute> attributesByRole(IdentityRole role) {
     return attributes
         .where((attribute) => attribute.role == role)
         .toList(growable: false);
   }
+
   // Creates a modified copy.
-  IdentityProfile copyWith({
-    List<IdentityAttribute>? attributes,
-  }) {
+  IdentityProfile copyWith({List<IdentityAttribute>? attributes}) {
     return IdentityProfile(
       attributes: List<IdentityAttribute>.unmodifiable(
         attributes ?? this.attributes,
@@ -81,30 +75,21 @@ class IdentityProfile {
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
       'attributes': attributes
-          .map(
-            (IdentityAttribute attribute) =>
-            attribute.toJson(),
-      )
+          .map((IdentityAttribute attribute) => attribute.toJson())
           .toList(growable: false),
     };
   }
 
-  factory IdentityProfile.fromJson(
-      Map<String, dynamic> json,
-      ) {
+  factory IdentityProfile.fromJson(Map<String, dynamic> json) {
     final List<dynamic> rawAttributes =
-        json['attributes'] as List<dynamic>? ??
-            const <dynamic>[];
+        json['attributes'] as List<dynamic>? ?? const <dynamic>[];
 
     return IdentityProfile(
       attributes: List<IdentityAttribute>.unmodifiable(
         rawAttributes.map(
-              (dynamic attribute) =>
-              IdentityAttribute.fromJson(
-                Map<String, dynamic>.from(
-                  attribute as Map<dynamic, dynamic>,
-                ),
-              ),
+          (dynamic attribute) => IdentityAttribute.fromJson(
+            Map<String, dynamic>.from(attribute as Map<dynamic, dynamic>),
+          ),
         ),
       ),
     );
@@ -120,20 +105,13 @@ class IdentityProfile {
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
-        other is IdentityProfile &&
-            _listsEqual(
-              attributes,
-              other.attributes,
-            );
+        other is IdentityProfile && _listsEqual(attributes, other.attributes);
   }
 
   @override
   int get hashCode => Object.hashAll(attributes);
 
-  static bool _listsEqual<T>(
-      List<T> first,
-      List<T> second,
-      ) {
+  static bool _listsEqual<T>(List<T> first, List<T> second) {
     if (identical(first, second)) {
       return true;
     }

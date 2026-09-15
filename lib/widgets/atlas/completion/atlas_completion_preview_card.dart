@@ -6,12 +6,7 @@ import 'package:funkovault2/theme/atlas_spacing.dart';
 import 'package:funkovault2/theme/atlas_symbols.dart';
 import 'package:funkovault2/theme/atlas_typography.dart';
 
-enum AtlasCompletionPreviewState {
-  idle,
-  loading,
-  loaded,
-  error,
-}
+enum AtlasCompletionPreviewState { idle, loading, loaded, error }
 
 class AtlasCompletionPreviewCard extends StatelessWidget {
   const AtlasCompletionPreviewCard({
@@ -37,40 +32,22 @@ class AtlasCompletionPreviewCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: Colors.transparent,
-      borderRadius: BorderRadius.circular(
-        16,
-      ),
+      borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(
-          16,
-        ),
+        borderRadius: BorderRadius.circular(16),
         child: AnimatedContainer(
-          duration: const Duration(
-            milliseconds: 180,
-          ),
+          duration: const Duration(milliseconds: 180),
           curve: Curves.easeOut,
           width: double.infinity,
-          padding: const EdgeInsets.all(
-            AtlasSpacing.md,
-          ),
+          padding: const EdgeInsets.all(AtlasSpacing.md),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(
-              16,
-            ),
-            color: AtlasColors.intelligenceBlue.withValues(
-              alpha: 0.07,
-            ),
-            border: Border.all(
-              color: _accentColor.withValues(
-                alpha: 0.24,
-              ),
-            ),
+            borderRadius: BorderRadius.circular(16),
+            color: AtlasColors.intelligenceBlue.withValues(alpha: 0.07),
+            border: Border.all(color: _accentColor.withValues(alpha: 0.24)),
           ),
           child: AnimatedSize(
-            duration: const Duration(
-              milliseconds: 220,
-            ),
+            duration: const Duration(milliseconds: 220),
             curve: Curves.easeOutCubic,
             alignment: Alignment.topCenter,
             child: _buildContent(),
@@ -82,14 +59,10 @@ class AtlasCompletionPreviewCard extends StatelessWidget {
 
   Widget _buildContent() {
     return switch (state) {
-      AtlasCompletionPreviewState.idle =>
-          _buildIdleContent(),
-      AtlasCompletionPreviewState.loading =>
-          _buildLoadingContent(),
-      AtlasCompletionPreviewState.loaded =>
-          _buildLoadedContent(),
-      AtlasCompletionPreviewState.error =>
-          _buildErrorContent(),
+      AtlasCompletionPreviewState.idle => _buildIdleContent(),
+      AtlasCompletionPreviewState.loading => _buildLoadingContent(),
+      AtlasCompletionPreviewState.loaded => _buildLoadedContent(),
+      AtlasCompletionPreviewState.error => _buildErrorContent(),
     };
   }
 
@@ -102,9 +75,7 @@ class AtlasCompletionPreviewCard extends StatelessWidget {
           title: 'Collector Progress',
           trailingIcon: Icons.expand_more_rounded,
         ),
-        const SizedBox(
-          height: AtlasSpacing.xs,
-        ),
+        const SizedBox(height: AtlasSpacing.xs),
         Text(
           'View related releases and completion.',
           style: AtlasTypography.bodySmall.copyWith(
@@ -125,21 +96,15 @@ class AtlasCompletionPreviewCard extends StatelessWidget {
           trailingWidget: SizedBox(
             width: 18,
             height: 18,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-            ),
+            child: CircularProgressIndicator(strokeWidth: 2),
           ),
         ),
-        SizedBox(
-          height: AtlasSpacing.sm,
-        ),
+        SizedBox(height: AtlasSpacing.sm),
         Text(
           'Calculating collection progress...',
           style: AtlasTypography.bodySmall,
         ),
-        SizedBox(
-          height: AtlasSpacing.md,
-        ),
+        SizedBox(height: AtlasSpacing.md),
         LinearProgressIndicator(
           minHeight: 6,
           backgroundColor: AtlasColors.surface,
@@ -149,20 +114,15 @@ class AtlasCompletionPreviewCard extends StatelessWidget {
   }
 
   Widget _buildLoadedContent() {
-    final AtlasCompletionResult? completionResult =
-        result;
+    final AtlasCompletionResult? completionResult = result;
 
     if (completionResult == null) {
       return _buildErrorContent();
     }
 
-    final double progress =
-    completionResult.totalReleaseCount == 0
+    final double progress = completionResult.totalReleaseCount == 0
         ? 0
-        : (completionResult.completionPercent / 100).clamp(
-      0,
-      1,
-    );
+        : (completionResult.completionPercent / 100).clamp(0, 1);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -174,9 +134,7 @@ class AtlasCompletionPreviewCard extends StatelessWidget {
               ? Icons.expand_less_rounded
               : Icons.expand_more_rounded,
         ),
-        const SizedBox(
-          height: AtlasSpacing.sm,
-        ),
+        const SizedBox(height: AtlasSpacing.sm),
         Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
@@ -195,9 +153,7 @@ class AtlasCompletionPreviewCard extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(
-          height: AtlasSpacing.xs,
-        ),
+        const SizedBox(height: AtlasSpacing.xs),
         Text(
           completionResult.totalReleaseCount == 1
               ? 'release owned'
@@ -206,44 +162,33 @@ class AtlasCompletionPreviewCard extends StatelessWidget {
             color: AtlasColors.textSecondary,
           ),
         ),
-        const SizedBox(
-          height: AtlasSpacing.sm,
-        ),
+        const SizedBox(height: AtlasSpacing.sm),
         ClipRRect(
-          borderRadius: BorderRadius.circular(
-            999,
-          ),
+          borderRadius: BorderRadius.circular(999),
           child: LinearProgressIndicator(
             value: progress,
             minHeight: 7,
             backgroundColor: AtlasColors.surface,
-            valueColor: AlwaysStoppedAnimation<Color>(
-              _accentColor,
-            ),
+            valueColor: AlwaysStoppedAnimation<Color>(_accentColor),
           ),
         ),
         if (isExpanded) ...[
-          const SizedBox(
-            height: AtlasSpacing.md,
-          ),
+          const SizedBox(height: AtlasSpacing.md),
           Wrap(
             spacing: AtlasSpacing.sm,
             runSpacing: AtlasSpacing.sm,
             children: [
               _PreviewMetric(
                 symbol: AtlasSymbols.owned,
-                label:
-                '${completionResult.ownedReleaseCount} Owned',
+                label: '${completionResult.ownedReleaseCount} Owned',
               ),
               _PreviewMetric(
                 symbol: AtlasSymbols.wishlist,
-                label:
-                '${completionResult.wishlistReleaseCount} Wishlist',
+                label: '${completionResult.wishlistReleaseCount} Wishlist',
               ),
               _PreviewMetric(
                 symbol: AtlasSymbols.missing,
-                label:
-                '${completionResult.missingReleaseCount} Missing',
+                label: '${completionResult.missingReleaseCount} Missing',
               ),
             ],
           ),
@@ -261,9 +206,7 @@ class AtlasCompletionPreviewCard extends StatelessWidget {
           title: 'Collector Progress',
           trailingIcon: Icons.refresh_rounded,
         ),
-        const SizedBox(
-          height: AtlasSpacing.xs,
-        ),
+        const SizedBox(height: AtlasSpacing.xs),
         Text(
           errorMessage?.trim().isNotEmpty == true
               ? errorMessage!.trim()
@@ -277,8 +220,7 @@ class AtlasCompletionPreviewCard extends StatelessWidget {
   }
 
   Color get _accentColor {
-    final AtlasCompletionResult? completionResult =
-        result;
+    final AtlasCompletionResult? completionResult = result;
 
     if (state == AtlasCompletionPreviewState.error) {
       return AtlasColors.warning;
@@ -316,15 +258,8 @@ class _PreviewHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Text(
-          symbol,
-          style: const TextStyle(
-            fontSize: 18,
-          ),
-        ),
-        const SizedBox(
-          width: AtlasSpacing.sm,
-        ),
+        Text(symbol, style: const TextStyle(fontSize: 18)),
+        const SizedBox(width: AtlasSpacing.sm),
         Expanded(
           child: Text(
             title,
@@ -336,21 +271,14 @@ class _PreviewHeader extends StatelessWidget {
         if (trailingWidget != null)
           trailingWidget!
         else if (trailingIcon != null)
-          Icon(
-            trailingIcon,
-            size: 21,
-            color: AtlasColors.textSecondary,
-          ),
+          Icon(trailingIcon, size: 21, color: AtlasColors.textSecondary),
       ],
     );
   }
 }
 
 class _PreviewMetric extends StatelessWidget {
-  const _PreviewMetric({
-    required this.symbol,
-    required this.label,
-  });
+  const _PreviewMetric({required this.symbol, required this.label});
 
   final String symbol;
 
@@ -359,35 +287,17 @@ class _PreviewMetric extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 9,
-        vertical: 5,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(
-          999,
-        ),
-        color: AtlasColors.surface.withValues(
-          alpha: 0.60,
-        ),
-        border: Border.all(
-          color: AtlasColors.border.withValues(
-            alpha: 0.70,
-          ),
-        ),
+        borderRadius: BorderRadius.circular(999),
+        color: AtlasColors.surface.withValues(alpha: 0.60),
+        border: Border.all(color: AtlasColors.border.withValues(alpha: 0.70)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            symbol,
-            style: const TextStyle(
-              fontSize: 14,
-            ),
-          ),
-          const SizedBox(
-            width: 5,
-          ),
+          Text(symbol, style: const TextStyle(fontSize: 14)),
+          const SizedBox(width: 5),
           Text(
             label,
             style: AtlasTypography.bodySmall.copyWith(

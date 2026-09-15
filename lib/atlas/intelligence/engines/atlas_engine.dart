@@ -45,7 +45,7 @@ abstract class AtlasEngine<TInput, TResult> {
     if (issues.isNotEmpty) {
       throw ArgumentError(
         'Unable to run $name.\n'
-            '${issues.map((issue) => '- $issue').join('\n')}',
+        '${issues.map((issue) => '- $issue').join('\n')}',
       );
     }
 

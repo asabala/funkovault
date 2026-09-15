@@ -36,9 +36,7 @@ class AtlasEngineConfiguration {
   }
 
   // Returns the preset matching the supplied stable identifier.
-  IdentityResolutionPreset? identityResolutionPresetById(
-      String id,
-      ) {
+  IdentityResolutionPreset? identityResolutionPresetById(String id) {
     return identityResolutionPresets.presetById(id);
   }
 
@@ -48,24 +46,20 @@ class AtlasEngineConfiguration {
   }) {
     return AtlasEngineConfiguration(
       identityResolutionPresets:
-      identityResolutionPresets ??
-          this.identityResolutionPresets,
+          identityResolutionPresets ?? this.identityResolutionPresets,
       defaultIdentityResolutionPresetId:
-      defaultIdentityResolutionPresetId ??
+          defaultIdentityResolutionPresetId ??
           this.defaultIdentityResolutionPresetId,
     );
   }
 
   Map<String, Object> toMap() {
     return <String, Object>{
-      'defaultIdentityResolutionPresetId':
-      defaultIdentityResolutionPresetId,
-      'identityResolutionPresetIds':
-      identityResolutionPresets.ids.toList(
+      'defaultIdentityResolutionPresetId': defaultIdentityResolutionPresetId,
+      'identityResolutionPresetIds': identityResolutionPresets.ids.toList(
         growable: false,
       ),
-      'identityResolutionPresetVersions':
-      identityResolutionPresets.versions,
+      'identityResolutionPresetVersions': identityResolutionPresets.versions,
     };
   }
 

@@ -12,8 +12,7 @@ class IdentityResolverFactory {
 
   static IdentityResolver fromPreset({
     required IdentityResolutionPreset preset,
-    IdentityDecisionEngine decisionEngine =
-    const IdentityDecisionEngine(),
+    IdentityDecisionEngine decisionEngine = const IdentityDecisionEngine(),
   }) {
     return DefaultIdentityResolver(
       decisionEngine: decisionEngine,

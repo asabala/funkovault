@@ -8,10 +8,7 @@ import '../../atlas/atlas_glass_card.dart';
 import '../../atlas/atlas_glass_panel.dart';
 
 class CollectorDetailsCard extends StatelessWidget {
-  const CollectorDetailsCard({
-    required this.profile,
-    super.key,
-  });
+  const CollectorDetailsCard({required this.profile, super.key});
 
   final CollectorProfile profile;
 
@@ -21,10 +18,7 @@ class CollectorDetailsCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Collector Story',
-            style: AtlasTypography.headingSmall,
-          ),
+          Text('Collector Story', style: AtlasTypography.headingSmall),
           const SizedBox(height: AtlasSpacing.md),
           AtlasGlassPanel(
             child: Column(
@@ -92,11 +86,7 @@ class _ProfileInfoRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(
-          icon,
-          color: AtlasColors.vaultGold,
-          size: 22,
-        ),
+        Icon(icon, color: AtlasColors.vaultGold, size: 22),
         const SizedBox(width: AtlasSpacing.md),
         Expanded(
           child: Column(

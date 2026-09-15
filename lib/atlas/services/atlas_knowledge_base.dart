@@ -21,32 +21,23 @@ import '../models/atlas_knowledge.dart';
 class AtlasKnowledgeBase {
   AtlasKnowledgeBase._();
 
-  static final AtlasKnowledgeBase instance =
-  AtlasKnowledgeBase._();
+  static final AtlasKnowledgeBase instance = AtlasKnowledgeBase._();
 
   final Map<String, AtlasKnowledge> _knowledge = {};
 
-  int get totalKnowledge =>
-      _knowledge.length;
+  int get totalKnowledge => _knowledge.length;
 
-  List<AtlasKnowledge> get allKnowledge =>
-      _knowledge.values.toList();
+  List<AtlasKnowledge> get allKnowledge => _knowledge.values.toList();
 
-  AtlasKnowledge? getKnowledge(
-      String id,
-      ) {
+  AtlasKnowledge? getKnowledge(String id) {
     return _knowledge[id];
   }
 
-  void addKnowledge(
-      AtlasKnowledge knowledge,
-      ) {
+  void addKnowledge(AtlasKnowledge knowledge) {
     _knowledge[knowledge.id] = knowledge;
   }
 
-  bool contains(
-      String id,
-      ) {
+  bool contains(String id) {
     return _knowledge.containsKey(id);
   }
 
@@ -54,16 +45,11 @@ class AtlasKnowledgeBase {
     _knowledge.clear();
   }
 
-  List<AtlasKnowledge> search(
-      String query,
-      ) {
-    final lower =
-    query.toLowerCase();
+  List<AtlasKnowledge> search(String query) {
+    final lower = query.toLowerCase();
 
     return _knowledge.values.where((item) {
-      return item.name
-          .toLowerCase()
-          .contains(lower);
+      return item.name.toLowerCase().contains(lower);
     }).toList();
   }
 }

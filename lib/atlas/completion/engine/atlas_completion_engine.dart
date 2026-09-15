@@ -8,11 +8,8 @@ import 'package:funkovault2/atlas/taxonomy/models/atlas_taxonomy.dart';
 import 'package:funkovault2/models/pop.dart';
 
 final class AtlasCompletionEngine {
-  AtlasCompletionEngine({
-    AtlasCollectorResolver? collectorResolver,
-  }) : _collectorResolver =
-      collectorResolver ??
-          AtlasCollectorResolver.instance;
+  AtlasCompletionEngine({AtlasCollectorResolver? collectorResolver})
+    : _collectorResolver = collectorResolver ?? AtlasCollectorResolver.instance;
 
   final AtlasCollectorResolver _collectorResolver;
 
@@ -20,14 +17,11 @@ final class AtlasCompletionEngine {
     required AtlasCompletionQuery query,
     required Iterable<AtlasCatalogProduct> catalogProducts,
     required List<Pop> collectionPops,
-    Set<String> ownedWishlistIdentityKeys =
-    const <String>{},
+    Set<String> ownedWishlistIdentityKeys = const <String>{},
     String collectionName = 'All Atlas Collections',
   }) {
     final List<AtlasCatalogProduct> normalizedProducts =
-    _normalizeCatalogProducts(
-      catalogProducts,
-    );
+        _normalizeCatalogProducts(catalogProducts);
 
     if (normalizedProducts.isEmpty) {
       return AtlasCompletionResult(
@@ -36,113 +30,78 @@ final class AtlasCompletionEngine {
       );
     }
 
-    final List<AtlasResolvedProduct> resolvedProducts =
-    _collectorResolver.resolveAll(
-      catalogProducts: normalizedProducts,
-      collectionPops: collectionPops,
-      ownedWishlistIdentityKeys:
-      ownedWishlistIdentityKeys,
-      collectionName: collectionName,
-      source: 'Atlas Completion Engine',
-    );
+    final List<AtlasResolvedProduct> resolvedProducts = _collectorResolver
+        .resolveAll(
+          catalogProducts: normalizedProducts,
+          collectionPops: collectionPops,
+          ownedWishlistIdentityKeys: ownedWishlistIdentityKeys,
+          collectionName: collectionName,
+          source: 'Atlas Completion Engine',
+        );
 
-    final List<AtlasCompletionItem> completionItems =
-    <AtlasCompletionItem>[];
+    final List<AtlasCompletionItem> completionItems = <AtlasCompletionItem>[];
 
-    for (final AtlasResolvedProduct resolvedProduct
-    in resolvedProducts) {
-      if (!_matchesQuery(
-        taxonomy: resolvedProduct.taxonomy,
-        query: query,
-      )) {
+    for (final AtlasResolvedProduct resolvedProduct in resolvedProducts) {
+      if (!_matchesQuery(taxonomy: resolvedProduct.taxonomy, query: query)) {
         continue;
       }
 
       if (!query.includeInactiveCatalogItems &&
-          _isInactiveCatalogProduct(
-            resolvedProduct.catalogPop,
-          )) {
+          _isInactiveCatalogProduct(resolvedProduct.catalogPop)) {
         continue;
       }
 
       final bool includeWishlistState =
-          query.includeWishlist &&
-              resolvedProduct.collectorState.isWishlisted;
+          query.includeWishlist && resolvedProduct.collectorState.isWishlisted;
 
       completionItems.add(
         AtlasCompletionItem.build(
-          catalogProduct:
-          resolvedProduct.catalogProduct,
-          taxonomy:
-          resolvedProduct.taxonomy,
-          ownedMatches:
-          resolvedProduct.collectorState.ownedMatches,
-          wishlistMatches:
-          query.includeWishlist
-              ? resolvedProduct
-              .collectorState
-              .wishlistMatches
+          catalogProduct: resolvedProduct.catalogProduct,
+          taxonomy: resolvedProduct.taxonomy,
+          ownedMatches: resolvedProduct.collectorState.ownedMatches,
+          wishlistMatches: query.includeWishlist
+              ? resolvedProduct.collectorState.wishlistMatches
               : const <Pop>[],
           isWishlistOverlayActive:
-          includeWishlistState &&
-              resolvedProduct.collectorState
-                  .isOwnedWishlisted,
-          releaseWeight: _releaseWeightFor(
-            resolvedProduct,
-          ),
+              includeWishlistState &&
+              resolvedProduct.collectorState.isOwnedWishlisted,
+          releaseWeight: _releaseWeightFor(resolvedProduct),
         ),
       );
     }
 
-    completionItems.sort(
-          (
-          AtlasCompletionItem first,
-          AtlasCompletionItem second,
-          ) {
-        final int stateComparison =
-        _stateOrder(
-          first.state,
-        ).compareTo(
-          _stateOrder(
-            second.state,
-          ),
-        );
+    completionItems.sort((
+      AtlasCompletionItem first,
+      AtlasCompletionItem second,
+    ) {
+      final int stateComparison = _stateOrder(
+        first.state,
+      ).compareTo(_stateOrder(second.state));
 
-        if (stateComparison != 0) {
-          return stateComparison;
-        }
+      if (stateComparison != 0) {
+        return stateComparison;
+      }
 
-        final int nameComparison =
-        first.displayName
-            .toLowerCase()
-            .compareTo(
-          second.displayName.toLowerCase(),
-        );
+      final int nameComparison = first.displayName.toLowerCase().compareTo(
+        second.displayName.toLowerCase(),
+      );
 
-        if (nameComparison != 0) {
-          return nameComparison;
-        }
+      if (nameComparison != 0) {
+        return nameComparison;
+      }
 
-        final int numberComparison =
-        (first.productNumber ?? '')
-            .compareTo(
-          second.productNumber ?? '',
-        );
+      final int numberComparison = (first.productNumber ?? '').compareTo(
+        second.productNumber ?? '',
+      );
 
-        if (numberComparison != 0) {
-          return numberComparison;
-        }
+      if (numberComparison != 0) {
+        return numberComparison;
+      }
 
-        return first.productId.compareTo(
-          second.productId,
-        );
-      },
-    );
+      return first.productId.compareTo(second.productId);
+    });
 
-    return AtlasCompletionResult(
-      query: query,
-      items: completionItems,
-    );
+    return AtlasCompletionResult(query: query, items: completionItems);
   }
 
   bool _matchesQuery({
@@ -153,12 +112,8 @@ final class AtlasCompletionEngine {
       return true;
     }
 
-    for (final AtlasCompletionFilter filter
-    in query.filters) {
-      if (!taxonomy.containsNode(
-        scope: filter.scope,
-        id: filter.nodeId,
-      )) {
+    for (final AtlasCompletionFilter filter in query.filters) {
+      if (!taxonomy.containsNode(scope: filter.scope, id: filter.nodeId)) {
         return false;
       }
     }
@@ -167,66 +122,45 @@ final class AtlasCompletionEngine {
   }
 
   List<AtlasCatalogProduct> _normalizeCatalogProducts(
-      Iterable<AtlasCatalogProduct> products,
-      ) {
+    Iterable<AtlasCatalogProduct> products,
+  ) {
     final Map<String, AtlasCatalogProduct> productsById =
-    <String, AtlasCatalogProduct>{};
+        <String, AtlasCatalogProduct>{};
 
     int fallbackIndex = 0;
 
     for (final AtlasCatalogProduct product in products) {
-      final String productId =
-      product.productId.value.trim();
+      final String productId = product.productId.value.trim();
 
       final String key;
 
       if (productId.isNotEmpty) {
         key = productId.toLowerCase();
       } else {
-        key = _fallbackProductKey(
-          product: product,
-          index: fallbackIndex,
-        );
+        key = _fallbackProductKey(product: product, index: fallbackIndex);
       }
 
-      productsById.putIfAbsent(
-        key,
-            () => product,
-      );
+      productsById.putIfAbsent(key, () => product);
 
       fallbackIndex++;
     }
 
-    return List<AtlasCatalogProduct>.unmodifiable(
-      productsById.values,
-    );
+    return List<AtlasCatalogProduct>.unmodifiable(productsById.values);
   }
 
   String _fallbackProductKey({
     required AtlasCatalogProduct product,
     required int index,
   }) {
-    final String normalizedName =
-    _normalizeText(
-      product.displayName,
-    );
+    final String normalizedName = _normalizeText(product.displayName);
 
-    final String normalizedNumber =
-    _normalizeText(
-      product.productNumber ?? '',
-    );
+    final String normalizedNumber = _normalizeText(product.productNumber ?? '');
 
-    final String normalizedVariant =
-    _normalizeText(
-      product.variantName ?? '',
-    );
+    final String normalizedVariant = _normalizeText(product.variantName ?? '');
 
-    final String barcodeKey =
-    product.barcodes
+    final String barcodeKey = product.barcodes
         .map(_normalizeBarcode)
-        .where(
-          (String value) => value.isNotEmpty,
-    )
+        .where((String value) => value.isNotEmpty)
         .join('|');
 
     return <String>[
@@ -239,11 +173,8 @@ final class AtlasCompletionEngine {
     ].join(':');
   }
 
-  bool _isInactiveCatalogProduct(
-      Pop product,
-      ) {
-    final String normalizedStatus =
-    product.productionStatus
+  bool _isInactiveCatalogProduct(Pop product) {
+    final String normalizedStatus = product.productionStatus
         .trim()
         .toLowerCase();
 
@@ -251,8 +182,7 @@ final class AtlasCompletionEngine {
       return false;
     }
 
-    const Set<String> inactiveStatuses =
-    <String>{
+    const Set<String> inactiveStatuses = <String>{
       'cancelled',
       'canceled',
       'prototype',
@@ -261,47 +191,28 @@ final class AtlasCompletionEngine {
       'inactive',
     };
 
-    return inactiveStatuses.contains(
-      normalizedStatus,
-    );
+    return inactiveStatuses.contains(normalizedStatus);
   }
 
-  double _releaseWeightFor(
-      AtlasResolvedProduct resolvedProduct,
-      ) {
-    final Object? rarity =
-    resolvedProduct
-        .catalogProduct
-        .attributes['rarity'];
+  double _releaseWeightFor(AtlasResolvedProduct resolvedProduct) {
+    final Object? rarity = resolvedProduct.catalogProduct.attributes['rarity'];
 
     final String normalizedRarity =
-        rarity
-            ?.toString()
-            .trim()
-            .toLowerCase() ??
-            '';
+        rarity?.toString().trim().toLowerCase() ?? '';
 
-    if (normalizedRarity.contains(
-      'chase',
-    )) {
+    if (normalizedRarity.contains('chase')) {
       return 2;
     }
 
-    if (normalizedRarity.contains(
-      'limited',
-    ) ||
-        normalizedRarity.contains(
-          'numbered',
-        )) {
+    if (normalizedRarity.contains('limited') ||
+        normalizedRarity.contains('numbered')) {
       return 1.5;
     }
 
     return 1;
   }
 
-  int _stateOrder(
-      AtlasCompletionItemState state,
-      ) {
+  int _stateOrder(AtlasCompletionItemState state) {
     return switch (state) {
       AtlasCompletionItemState.owned => 0,
       AtlasCompletionItemState.wishlisted => 1,
@@ -309,29 +220,16 @@ final class AtlasCompletionEngine {
     };
   }
 
-  String _normalizeText(
-      String value,
-      ) {
+  String _normalizeText(String value) {
     return value
         .trim()
         .toLowerCase()
-        .replaceAll(
-      RegExp(r'[^a-z0-9]+'),
-      ' ',
-    )
-        .replaceAll(
-      RegExp(r'\s+'),
-      ' ',
-    )
+        .replaceAll(RegExp(r'[^a-z0-9]+'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
         .trim();
   }
 
-  String _normalizeBarcode(
-      String value,
-      ) {
-    return value.replaceAll(
-      RegExp(r'[^0-9A-Za-z]'),
-      '',
-    );
+  String _normalizeBarcode(String value) {
+    return value.replaceAll(RegExp(r'[^0-9A-Za-z]'), '');
   }
 }

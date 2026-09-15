@@ -79,6 +79,9 @@ class MainActivity : FlutterActivity() {
                 startService(intent)
                 result.success(true)
             }
+            "restartSelectedTarget" -> {
+                result.success(AtlasLiveSnifferService.restartSelectedTargetIfActive())
+            }
             "updateHud" -> {
                 val text = call.argument<String>("text")?.trim().orEmpty()
                 if (text.isEmpty()) {
@@ -134,7 +137,7 @@ class MainActivity : FlutterActivity() {
         if (!canDrawOverlays()) {
             result.error(
                 "overlay_permission_required",
-                "Display-over-other-apps permission is required before Live Sniffer can start.",
+                "Display-over-other-apps permission is required before Atlas LiveLens can start.",
                 null,
             )
             return

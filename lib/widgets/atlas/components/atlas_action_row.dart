@@ -18,9 +18,9 @@ class AtlasActionRow extends StatelessWidget {
     this.showChevron = true,
     this.compact = false,
   }) : assert(
-  icon == null || symbol == null,
-  'Use either icon or symbol, not both.',
-  );
+         icon == null || symbol == null,
+         'Use either icon or symbol, not both.',
+       );
 
   final String title;
   final String description;
@@ -48,11 +48,7 @@ class AtlasActionRow extends StatelessWidget {
             accentColor: accentColor,
             compact: compact,
           ),
-          SizedBox(
-            width: compact
-                ? AtlasSpacing.sm
-                : AtlasSpacing.md,
-          ),
+          SizedBox(width: compact ? AtlasSpacing.sm : AtlasSpacing.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -70,16 +66,12 @@ class AtlasActionRow extends StatelessWidget {
                       ),
                     ),
                     if (badge != null) ...[
-                      const SizedBox(
-                        width: AtlasSpacing.sm,
-                      ),
+                      const SizedBox(width: AtlasSpacing.sm),
                       badge!,
                     ],
                   ],
                 ),
-                const SizedBox(
-                  height: AtlasSpacing.xs,
-                ),
+                const SizedBox(height: AtlasSpacing.xs),
                 Text(
                   description,
                   maxLines: compact ? 2 : null,
@@ -95,17 +87,10 @@ class AtlasActionRow extends StatelessWidget {
             ),
           ),
           if (showChevron && onTap != null) ...[
-            const SizedBox(
-              width: AtlasSpacing.sm,
-            ),
+            const SizedBox(width: AtlasSpacing.sm),
             Padding(
-              padding: EdgeInsets.only(
-                top: compact ? 4 : 7,
-              ),
-              child: Icon(
-                Icons.chevron_right_rounded,
-                color: accentColor,
-              ),
+              padding: EdgeInsets.only(top: compact ? 4 : 7),
+              child: Icon(Icons.chevron_right_rounded, color: accentColor),
             ),
           ],
         ],
@@ -118,14 +103,10 @@ class AtlasActionRow extends StatelessWidget {
 
     return Material(
       color: Colors.transparent,
-      borderRadius: BorderRadius.circular(
-        16,
-      ),
+      borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(
-          16,
-        ),
+        borderRadius: BorderRadius.circular(16),
         child: content,
       ),
     );
@@ -154,30 +135,17 @@ class _ActionIdentity extends StatelessWidget {
       height: size,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: accentColor.withValues(
-          alpha: 0.10,
-        ),
-        borderRadius: BorderRadius.circular(
-          compact ? 12 : 14,
-        ),
-        border: Border.all(
-          color: accentColor.withValues(
-            alpha: 0.22,
-          ),
-        ),
+        color: accentColor.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(compact ? 12 : 14),
+        border: Border.all(color: accentColor.withValues(alpha: 0.22)),
       ),
       child: symbol != null
-          ? Text(
-        symbol!,
-        style: TextStyle(
-          fontSize: compact ? 17 : 19,
-        ),
-      )
+          ? Text(symbol!, style: TextStyle(fontSize: compact ? 17 : 19))
           : Icon(
-        icon ?? Icons.arrow_forward_rounded,
-        color: accentColor,
-        size: compact ? 20 : 22,
-      ),
+              icon ?? Icons.arrow_forward_rounded,
+              color: accentColor,
+              size: compact ? 20 : 22,
+            ),
     );
   }
 }
