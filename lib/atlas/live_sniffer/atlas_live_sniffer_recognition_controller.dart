@@ -73,6 +73,17 @@ final class AtlasLiveSnifferRecognitionController extends ChangeNotifier {
   int _turnoverCandidateHits = 0;
   bool _automaticTurnoverInFlight = false;
 
+  // 6C.5 Auction Fast Acquisition: keep the last fully verified foreground
+  // result visible across the brief remove/replace handoff, while identity
+  // evidence itself is cleared immediately. This is display retention only;
+  // the next Pop never inherits the previous Pop's OCR/catalog evidence.
+  static const Duration _verifiedResultHandoffDuration = Duration(
+    milliseconds: 900,
+  );
+  Timer? _verifiedResultHoldTimer;
+  AtlasLiveSnifferHudSnapshot? _lastVerifiedFeaturedHud;
+  bool _holdingVerifiedFeaturedHud = false;
+
   AtlasLiveSnifferHudSnapshot get hud => _hud;
   bool get sessionActive => _sessionActive;
   AtlasLiveSnifferScanMode get scanMode => _scanMode;
@@ -110,6 +121,7 @@ final class AtlasLiveSnifferRecognitionController extends ChangeNotifier {
     _selectionAnchorY = null;
     _staticClutterTracker.reset();
     _resetTurnoverDetector();
+    _clearVerifiedFeaturedHudMemory();
     _ocrProjectionInFlight = false;
     _selectedEvidenceResolutionPending = false;
     _sessionModeLocked = _scanMode != AtlasLiveSnifferScanMode.automatic;
@@ -163,6 +175,7 @@ final class AtlasLiveSnifferRecognitionController extends ChangeNotifier {
     _selectionAnchorY = null;
     _staticClutterTracker.reset();
     _resetTurnoverDetector();
+    _clearVerifiedFeaturedHudMemory();
     _ocrProjectionInFlight = false;
     _selectedEvidenceResolutionPending = false;
     _sessionModeLocked = false;
@@ -441,6 +454,13 @@ final class AtlasLiveSnifferRecognitionController extends ChangeNotifier {
               : 0,
         ),
       );
+    } else if (frame.isSingleTargetFrame) {
+      // 6C.5: OCR/catalog lookup can take longer than the 250 ms frame pace.
+      // Do not drop a later face of a rotating auction box while a lookup is
+      // still running. Temporal evidence has already absorbed this frame; mark
+      // it pending so the resolver immediately consumes the newest number +
+      // name/series evidence when the in-flight lookup finishes.
+      _selectedEvidenceResolutionPending = true;
     }
   }
 
@@ -633,6 +653,7 @@ final class AtlasLiveSnifferRecognitionController extends ChangeNotifier {
       _awaitingModeChoice = false;
       _multiCandidateStreak = 0;
       _resetTurnoverDetector();
+      _clearVerifiedFeaturedHudMemory();
       _projectedTrackIds.clear();
       _temporalEvidence.clear();
       _ocrProjectionInFlight = false;
@@ -667,6 +688,7 @@ final class AtlasLiveSnifferRecognitionController extends ChangeNotifier {
       // The tap starts a new physical-target generation. Old catalog/OCR work
       // can never carry across this boundary.
       _resetTurnoverDetector();
+      _clearVerifiedFeaturedHudMemory();
       _projectedTrackIds.clear();
       _temporalEvidence.clear();
       _ocrProjectionInFlight = false;
@@ -701,22 +723,26 @@ final class AtlasLiveSnifferRecognitionController extends ChangeNotifier {
       _ocrProjectionInFlight = false;
       _selectedEvidenceResolutionPending = false;
       _sessionGeneration++;
-      _hud = AtlasLiveSnifferHudSnapshot(
-        state: AtlasLiveSnifferHudState.listening,
-        title: switch (action) {
-          'sceneDiscontinuity' => 'New auction scene',
-          'automaticTurnover' => 'New Pop detected',
-          _ => 'New target detected',
-        },
-        statusLabel: 'Reading fresh identity...',
-        detail: 'Old Pop evidence was cleared before scanning this target.',
-      );
+      if (action == 'automaticTurnover') {
+        _startVerifiedResultHandoff();
+      } else {
+        _clearVerifiedFeaturedHudMemory();
+        _hud = AtlasLiveSnifferHudSnapshot(
+          state: AtlasLiveSnifferHudState.listening,
+          title: action == 'sceneDiscontinuity'
+              ? 'New auction scene'
+              : 'New target detected',
+          statusLabel: 'Reading fresh identity...',
+          detail: 'Old Pop evidence was cleared before scanning this target.',
+        );
+      }
       unawaited(_publishHud());
       notifyListeners();
       return;
     }
 
     if (action == 'allVisible') {
+      _clearVerifiedFeaturedHudMemory();
       _activeSelectionGeneration = controlGeneration;
       _targetState = AtlasLiveSnifferTargetState.none;
       _targetX = null;
@@ -862,17 +888,30 @@ final class AtlasLiveSnifferRecognitionController extends ChangeNotifier {
   void _projectFeaturedAuctionMatch(AtlasLiveSnifferAuctionMatch match) {
     final AtlasCatalogProduct? product = match.bestMatch;
     if (product == null || !match.hasLikelyMatch) {
+      // During the short remove/replace handoff, keep the last verified result
+      // visible instead of flashing an unverified number/background read. The
+      // new target is still being scanned and its evidence is fully isolated.
+      if (_holdingVerifiedFeaturedHud) {
+        return;
+      }
+
       _hud = AtlasLiveSnifferHudSnapshot(
         state: AtlasLiveSnifferHudState.listening,
         title: '#${match.candidate.productNumber}',
-        statusLabel: 'Scanning box...',
-        detail: 'Keep the name or front panel visible.',
+        statusLabel: match.isNumberLocked ? 'Number locked' : 'Scanning box...',
+        detail: match.isNumberLocked
+            ? 'Number saved. Looking for the Pop name or franchise...'
+            : 'Keep the name or front panel visible.',
         matchConfidence: match.confidence,
       );
       unawaited(_publishHud());
       notifyListeners();
       return;
     }
+
+    // New same-target identity evidence is now meaningful enough to replace a
+    // retained prior result, even if Atlas still needs variant refinement.
+    _endVerifiedResultHandoff();
 
     if (!match.hasStrongMatch && match.matches.length > 1) {
       _hud = AtlasLiveSnifferHudSnapshot(
@@ -892,7 +931,7 @@ final class AtlasLiveSnifferRecognitionController extends ChangeNotifier {
       match.confidence,
       provisional: !match.hasStrongMatch,
     );
-    _hud = AtlasLiveSnifferHudSnapshot(
+    final AtlasLiveSnifferHudSnapshot projected = AtlasLiveSnifferHudSnapshot(
       state: _stateForStatus(item.statusLabel),
       title: item.title,
       statusLabel: item.statusLabel,
@@ -900,6 +939,10 @@ final class AtlasLiveSnifferRecognitionController extends ChangeNotifier {
       matchConfidence: item.matchConfidence,
       detail: match.hasStrongMatch ? null : 'Refining while the box rotates...',
     );
+    _hud = projected;
+    if (match.hasStrongMatch) {
+      _rememberVerifiedFeaturedHud(projected);
+    }
     unawaited(_publishHud());
     notifyListeners();
   }
@@ -1092,13 +1135,7 @@ final class AtlasLiveSnifferRecognitionController extends ChangeNotifier {
     _ocrProjectionInFlight = false;
     _selectedEvidenceResolutionPending = false;
     _sessionGeneration++;
-    _hud = const AtlasLiveSnifferHudSnapshot(
-      state: AtlasLiveSnifferHudState.listening,
-      title: 'New Pop detected',
-      statusLabel: 'Resetting target...',
-      detail:
-          'LiveLens is clearing the previous identity and acquiring this Pop.',
-    );
+    _startVerifiedResultHandoff();
     unawaited(_publishHud());
     notifyListeners();
     unawaited(_restartSelectedTargetAfterContradiction());
@@ -1121,6 +1158,56 @@ final class AtlasLiveSnifferRecognitionController extends ChangeNotifier {
     );
     unawaited(_publishHud());
     notifyListeners();
+  }
+
+  void _rememberVerifiedFeaturedHud(AtlasLiveSnifferHudSnapshot snapshot) {
+    _verifiedResultHoldTimer?.cancel();
+    _verifiedResultHoldTimer = null;
+    _holdingVerifiedFeaturedHud = false;
+    _lastVerifiedFeaturedHud = snapshot;
+  }
+
+  void _startVerifiedResultHandoff() {
+    _verifiedResultHoldTimer?.cancel();
+    final AtlasLiveSnifferHudSnapshot? retained = _lastVerifiedFeaturedHud;
+    if (retained == null) {
+      _holdingVerifiedFeaturedHud = false;
+      _hud = const AtlasLiveSnifferHudSnapshot(
+        state: AtlasLiveSnifferHudState.listening,
+        title: 'New Pop detected',
+        statusLabel: 'Reading fresh identity...',
+        detail:
+            'Resetting target: clearing the previous identity and acquiring this Pop.',
+      );
+      return;
+    }
+
+    _holdingVerifiedFeaturedHud = true;
+    _hud = retained;
+    _verifiedResultHoldTimer = Timer(_verifiedResultHandoffDuration, () {
+      if (!_sessionActive || !_holdingVerifiedFeaturedHud) return;
+      _holdingVerifiedFeaturedHud = false;
+      _verifiedResultHoldTimer = null;
+      _hud = const AtlasLiveSnifferHudSnapshot(
+        state: AtlasLiveSnifferHudState.listening,
+        title: 'New Pop detected',
+        statusLabel: 'Reading fresh identity...',
+        detail: 'Previous identity evidence was cleared for the new Pop.',
+      );
+      unawaited(_publishHud());
+      notifyListeners();
+    });
+  }
+
+  void _endVerifiedResultHandoff() {
+    _verifiedResultHoldTimer?.cancel();
+    _verifiedResultHoldTimer = null;
+    _holdingVerifiedFeaturedHud = false;
+  }
+
+  void _clearVerifiedFeaturedHudMemory() {
+    _endVerifiedResultHandoff();
+    _lastVerifiedFeaturedHud = null;
   }
 
   void _resetTurnoverDetector() {
@@ -1186,7 +1273,7 @@ final class AtlasLiveSnifferRecognitionController extends ChangeNotifier {
       1,
       provisional: false,
     );
-    _hud = AtlasLiveSnifferHudSnapshot(
+    final AtlasLiveSnifferHudSnapshot projected = AtlasLiveSnifferHudSnapshot(
       state: _stateForStatus(item.statusLabel),
       title: item.title,
       statusLabel: item.statusLabel,
@@ -1194,6 +1281,10 @@ final class AtlasLiveSnifferRecognitionController extends ChangeNotifier {
       matchConfidence: 1,
       detail: 'Barcode confirmed',
     );
+    _hud = projected;
+    if (_scanMode != AtlasLiveSnifferScanMode.allVisible) {
+      _rememberVerifiedFeaturedHud(projected);
+    }
     unawaited(_publishHud());
     notifyListeners();
   }
@@ -1241,6 +1332,8 @@ final class AtlasLiveSnifferRecognitionController extends ChangeNotifier {
     if (perceptionCoordinator != null) {
       unawaited(perceptionCoordinator.dispose());
     }
+    _verifiedResultHoldTimer?.cancel();
+    _verifiedResultHoldTimer = null;
     super.dispose();
   }
 }

@@ -1,21 +1,17 @@
 import 'package:flutter/material.dart';
 
 import '../../academy/academy_ids.dart';
-import '../../academy/config/academy_admin_config.dart';
 import '../../academy/config/academy_request_repository_provider.dart';
 import '../../academy/engines/academy_explainer_engine.dart';
-import '../../academy/helpers/academy_request_message_builder.dart';
 import '../../academy/helpers/ask_atlas_suggestions_builder.dart';
 import '../../academy/models/academy_category.dart';
 import '../../academy/models/academy_lesson.dart';
-import '../../academy/models/academy_request.dart';
 import '../../academy/models/academy_request_submission_result.dart';
 import '../../academy/models/academy_topic.dart';
 import '../../academy/models/academy_track.dart';
 import '../../academy/repository/academy_repository.dart';
 import '../../academy/repository/academy_request_repository_contract.dart';
 import '../../theme/atlas_spacing.dart';
-import '../../widgets/academy/admin/academy_local_admin_tools_section.dart';
 import '../../widgets/academy/ask_atlas/ask_atlas_bottom_sheet_launcher.dart';
 import '../../widgets/academy/shared/academy_hero_header.dart';
 import '../../widgets/academy/shared/academy_snackbars.dart';
@@ -51,10 +47,6 @@ class _AtlasAcademyScreenState extends State<AtlasAcademyScreen> {
 
   String _selectedTrackId = AcademyTrackIds.funkoCollecting;
 
-  List<AcademyRequest> get _adminRequests {
-    return _requestRepository.getRequests();
-  }
-
   int get _newAdminRequestCount {
     return _requestRepository.getNewRequestCount();
   }
@@ -74,13 +66,6 @@ class _AtlasAcademyScreenState extends State<AtlasAcademyScreen> {
     return _selectedTrackId == AcademyTrackIds.funkoCollecting;
   }
 
-  bool get _shouldShowLocalAdminTools {
-    return AcademyAdminConfig.showLocalAdminTools &&
-        (widget.showLocalAdminTools ?? true) &&
-        _requestRepository.storageBehavior ==
-            AcademyRequestStorageBehavior.sessionOnly;
-  }
-
   @override
   void initState() {
     super.initState();
@@ -96,7 +81,7 @@ class _AtlasAcademyScreenState extends State<AtlasAcademyScreen> {
   List<AcademyTopic> get _funkoRoadmapTopics {
     return _repository
         .getRoadmapTopicsForTrack(AcademyTrackIds.funkoCollecting)
-        .take(8)
+        .take(4)
         .toList(growable: false);
   }
 
@@ -154,16 +139,6 @@ class _AtlasAcademyScreenState extends State<AtlasAcademyScreen> {
                   ? _handleTrackRequestSubmitted
                   : null,
             ),
-          if (_shouldShowLocalAdminTools) ...[
-            const SizedBox(height: AtlasSpacing.lg),
-            AcademyLocalAdminToolsSection(
-              newRequestCount: _newAdminRequestCount,
-              requests: _adminRequests,
-              onReviewTap: _handleRequestReviewed,
-              onApproveTap: _handleRequestApproved,
-              onDeclineTap: _handleRequestDeclined,
-            ),
-          ],
         ],
       ),
     );
@@ -295,43 +270,6 @@ class _AtlasAcademyScreenState extends State<AtlasAcademyScreen> {
       newRequestCount: _newAdminRequestCount,
       storageBehavior: result.storageBehavior,
     );
-  }
-
-  void _handleRequestReviewed(AcademyRequest request) {
-    _handleAdminRequestAction(
-      action: () => _requestRepository.markReviewed(request.id),
-      message: AcademyRequestMessageBuilder.reviewed(request),
-    );
-  }
-
-  void _handleRequestApproved(AcademyRequest request) {
-    _handleAdminRequestAction(
-      action: () => _requestRepository.approve(request.id),
-      message: AcademyRequestMessageBuilder.approved(request),
-    );
-  }
-
-  void _handleRequestDeclined(AcademyRequest request) {
-    _handleAdminRequestAction(
-      action: () => _requestRepository.decline(request.id),
-      message: AcademyRequestMessageBuilder.declined(request),
-    );
-  }
-
-  void _handleAdminRequestAction({
-    required bool Function() action,
-    required String message,
-  }) {
-    final bool changed = action();
-
-    if (!changed) {
-      AcademySnackbars.showAdminActionUnavailable(context: context);
-      return;
-    }
-
-    setState(() {});
-
-    AcademySnackbars.showAdminAction(context: context, message: message);
   }
 
   void _showUnsuccessfulSubmission(AcademyRequestSubmissionResult result) {

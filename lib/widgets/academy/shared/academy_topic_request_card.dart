@@ -43,6 +43,11 @@ class _AcademyTopicRequestCardState extends State<AcademyTopicRequestCard> {
         _topicController.text.trim().isNotEmpty;
   }
 
+  bool get _shouldShowRequestInfo {
+    return !_isSubmissionAvailable ||
+        widget.storageBehavior != AcademyRequestStorageBehavior.sessionOnly;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -143,24 +148,20 @@ class _AcademyTopicRequestCardState extends State<AcademyTopicRequestCard> {
                   : const Icon(Icons.send_rounded),
             ),
           ),
-          const SizedBox(height: AtlasSpacing.md),
-          AtlasInfoBanner(
-            icon: _isSubmissionAvailable
-                ? Icons.developer_mode_rounded
-                : Icons.cloud_off_rounded,
-            title: _isSubmissionAvailable
-                ? widget.storageBehavior ==
-                          AcademyRequestStorageBehavior.sessionOnly
-                      ? 'Local Developer Queue'
-                      : 'Review Queue'
-                : 'Requests Unavailable',
-            message: _isSubmissionAvailable
-                ? widget.storageBehavior ==
-                          AcademyRequestStorageBehavior.sessionOnly
-                      ? 'Requests are saved only for this debug session and are lost when the session ends.'
-                      : 'Submitted topics are sent to the Atlas Academy review queue.'
-                : 'Topic requests will be enabled when durable request storage is connected.',
-          ),
+          if (_shouldShowRequestInfo) ...[
+            const SizedBox(height: AtlasSpacing.md),
+            AtlasInfoBanner(
+              icon: _isSubmissionAvailable
+                  ? Icons.inbox_outlined
+                  : Icons.cloud_off_rounded,
+              title: _isSubmissionAvailable
+                  ? 'Review Queue'
+                  : 'Requests Unavailable',
+              message: _isSubmissionAvailable
+                  ? 'Submitted topics are sent to the Atlas Academy review queue.'
+                  : 'Topic requests will be enabled when durable request storage is connected.',
+            ),
+          ],
         ],
       ),
     );

@@ -13,7 +13,6 @@ import 'notifications_settings_screen.dart';
 import 'premium_settings_screen.dart';
 import 'security_settings_screen.dart';
 import 'vault_preferences_screen.dart';
-import '../atlas/ads/atlas_design_system_showcase_screen.dart';
 import '../profile/edit_collector_profile_screen.dart';
 import '../../screens/auth/login_screen.dart';
 import '../../security/auth_provider.dart';
@@ -78,21 +77,6 @@ class SettingsScreen extends StatelessWidget {
                     );
                   },
                 ),
-                AtlasActionRow(
-                  title: 'Premium',
-                  description:
-                      'Manage Premium features, upgrades, and advanced tools.',
-                  icon: Icons.workspace_premium_outlined,
-                  accentColor: AtlasColors.vaultGold,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const PremiumSettingsScreen(),
-                      ),
-                    );
-                  },
-                ),
                 const SizedBox(height: AtlasSpacing.sm),
                 if (authProvider.isLoggedIn)
                   AtlasActionRow(
@@ -136,7 +120,7 @@ class SettingsScreen extends StatelessWidget {
 
           const _SettingsDivider(),
 
-          const _SettingsSectionHeader(title: 'Collection Tools'),
+          const _SettingsSectionHeader(title: 'Collection'),
 
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AtlasSpacing.md),
@@ -261,31 +245,6 @@ class SettingsScreen extends StatelessWidget {
             ),
           ),
 
-          const _SettingsDivider(),
-
-          const _SettingsSectionHeader(title: 'Developer'),
-
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AtlasSpacing.md),
-            child: AtlasActionRow(
-              title: 'ADS Showcase',
-              description:
-                  'Preview Atlas Design System components, maturity, and roadmap.',
-              icon: Icons.dashboard_customize_outlined,
-              accentColor: AtlasColors.intelligenceBlue,
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const AtlasDesignSystemShowcaseScreen(),
-                  ),
-                );
-              },
-            ),
-          ),
-
-          const _SettingsDivider(),
-
           const _SettingsSectionHeader(title: 'Support & About'),
 
           Padding(
@@ -308,7 +267,7 @@ class SettingsScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: AtlasSpacing.sm),
                 const AtlasActionRow(
-                  title: 'Funko Vault',
+                  title: 'Atlas Pulse',
                   description: 'Version 1.0',
                   icon: Icons.info_outline,
                   showChevron: false,
