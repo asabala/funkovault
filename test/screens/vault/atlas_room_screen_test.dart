@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:funkovault2/models/pop.dart';
 import 'package:funkovault2/screens/catalog/funko_catalog_screen.dart';
+import 'package:funkovault2/screens/pop/pop_details_screen.dart';
 import 'package:funkovault2/screens/vault/atlas_room_screen.dart';
 import 'package:funkovault2/services/app_state.dart';
 import 'package:provider/provider.dart';
@@ -135,6 +136,60 @@ void main() {
     expect(screen, isA<FunkoCatalogScreen>());
 
     expect((screen as FunkoCatalogScreen).collectionName, 'Arthur Collection');
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('room Pop tile opens Pop details', (tester) async {
+    final state = _TestAppState();
+    final navigatorObserver = _RecordingNavigatorObserver();
+
+    state.collections['Arthur Collection']!.add(
+      pop(id: 'arthur-pop', name: 'Arthur Pop', value: 25),
+    );
+
+    await pumpRoom(
+      tester,
+      state,
+      collectionName: 'Arthur Collection',
+      navigatorObserver: navigatorObserver,
+    );
+
+    await tester.tap(find.text('Arthur Pop'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(PopDetailsScreen), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('room exposes Pops beyond the old eight-item preview', (
+    tester,
+  ) async {
+    final state = _TestAppState();
+
+    for (var index = 1; index <= 12; index++) {
+      state.collections['Arthur Collection']!.add(
+        pop(
+          id: 'arthur-pop-$index',
+          name: 'Arthur Pop $index',
+          value: index.toDouble(),
+        ),
+      );
+    }
+
+    await pumpRoom(tester, state, collectionName: 'Arthur Collection');
+
+    expect(find.text('Browse all 12 matching Pops.'), findsOneWidget);
+
+    await tester.scrollUntilVisible(
+      find.text('Arthur Pop 12'),
+      600,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Arthur Pop 12'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox.shrink());
   });

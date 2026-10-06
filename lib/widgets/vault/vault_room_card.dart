@@ -31,53 +31,30 @@ class VaultRoomCard extends StatelessWidget {
       onTap: onTap,
       accentColor: effectiveAccent,
       borderRadius: 22,
+      padding: const EdgeInsets.all(AtlasSpacing.md),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Icon(icon, size: 34, color: effectiveAccent),
-
-          const SizedBox(height: AtlasSpacing.md),
-
+          Icon(icon, size: 32, color: effectiveAccent),
+          const SizedBox(height: AtlasSpacing.sm),
           Text(
             title,
             textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: AtlasTypography.headingSmall,
           ),
-
           const SizedBox(height: AtlasSpacing.xs),
-
           Text(
             subtitle,
             textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: AtlasTypography.bodySmall.copyWith(
               color: AtlasColors.textSecondary,
             ),
           ),
-
-          if (lastAdded != null) ...[
-            const SizedBox(height: AtlasSpacing.md),
-
-            Divider(color: Colors.white.withValues(alpha: 0.08)),
-
-            const SizedBox(height: AtlasSpacing.xs),
-
-            Text(
-              'Last Added',
-              style: AtlasTypography.bodySmall.copyWith(
-                color: AtlasColors.textSecondary,
-              ),
-            ),
-
-            const SizedBox(height: AtlasSpacing.xs),
-
-            Text(
-              lastAdded!,
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: AtlasTypography.bodySmall.copyWith(color: effectiveAccent),
-            ),
-          ],
         ],
       ),
     );

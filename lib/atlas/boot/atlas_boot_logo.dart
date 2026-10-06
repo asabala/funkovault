@@ -23,21 +23,51 @@ class AtlasBootLogo extends StatelessWidget {
             border: Border.all(color: AtlasColors.vaultGold, width: 2),
             boxShadow: [
               BoxShadow(
-                color: AtlasColors.intelligenceBlue.withValues(
-                  alpha: 0.25 + (pulse.value * 0.25),
+                color: AtlasColors.vaultGold.withValues(
+                  alpha: 0.16 + (pulse.value * 0.18),
                 ),
                 blurRadius: glow,
                 spreadRadius: 4 + pulse.value * 4,
               ),
             ],
           ),
-          child: const Icon(
-            Icons.shield,
-            size: 64,
-            color: AtlasColors.vaultGold,
-          ),
+          child: const _AtlasMark(),
         );
       },
+    );
+  }
+}
+
+class _AtlasMark extends StatelessWidget {
+  const _AtlasMark();
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        const Icon(
+          Icons.shield_outlined,
+          size: 68,
+          color: AtlasColors.vaultGold,
+        ),
+        Transform.translate(
+          offset: const Offset(0, -1),
+          child: const Icon(
+            Icons.inventory_2_outlined,
+            size: 28,
+            color: AtlasColors.vaultGold,
+          ),
+        ),
+        Transform.translate(
+          offset: const Offset(24, -24),
+          child: const Icon(
+            Icons.auto_awesome,
+            size: 17,
+            color: AtlasColors.vaultGold,
+          ),
+        ),
+      ],
     );
   }
 }

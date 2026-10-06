@@ -18,7 +18,7 @@ class AtlasConstants {
 
   static const String appName = 'Funko Vault';
 
-  static const String platformName = 'Atlas';
+  static const String platformName = 'Atlas Pulse';
 
   static const String platformSubtitle = 'Collector Intelligence Platform';
 
@@ -36,7 +36,7 @@ class AtlasConstants {
   // Atlas Messages
   // ----------------------------------------------------------
 
-  static const String initializing = 'Initializing Atlas Core...';
+  static const String initializing = 'Preparing your collection...';
 
   static const String preparing = 'Preparing your collection...';
 

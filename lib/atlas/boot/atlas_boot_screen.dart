@@ -70,13 +70,13 @@ class _AtlasBootScreenState extends State<AtlasBootScreen>
     _introController.forward();
 
     await _updateStatus(AtlasConstants.preparing, 700);
-    await _updateStatus(AtlasConstants.analyzing, 700);
-    await _updateStatus('Checking Atlas Account...', 700);
+    await _updateStatus('Loading collectible database...', 700);
+    await _updateStatus('Checking your Atlas account...', 700);
 
     await authProvider.initialize();
 
-    await _updateStatus('Loading Collector DNA...', 700);
-    await _updateStatus('Restoring Vault Memory...', 700);
+    await _updateStatus('Loading collection intelligence...', 700);
+    await _updateStatus('Restoring your Vault...', 700);
 
     await const AtlasBootController().initialize();
 
@@ -153,14 +153,23 @@ class _AtlasBootScreenState extends State<AtlasBootScreen>
                         key: ValueKey(_status),
                         textAlign: TextAlign.center,
                         style: AtlasTypography.label.copyWith(
-                          color: AtlasColors.intelligenceBlue,
+                          color: AtlasColors.vaultGold,
                         ),
                       ),
                     ),
                     const SizedBox(height: AtlasSpacing.lg),
-                    const SizedBox(
-                      width: 190,
-                      child: LinearProgressIndicator(),
+                    SizedBox(
+                      width: 210,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(999),
+                        child: LinearProgressIndicator(
+                          minHeight: 5,
+                          backgroundColor: AtlasColors.border,
+                          valueColor: const AlwaysStoppedAnimation<Color>(
+                            AtlasColors.vaultGold,
+                          ),
+                        ),
+                      ),
                     ),
                     const SizedBox(height: AtlasSpacing.xl),
                     Text(

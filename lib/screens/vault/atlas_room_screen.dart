@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import 'entire_vault_screen.dart';
 import '../../atlas/repositories/vault_repository.dart';
+import '../../atlas/taxonomy/services/atlas_vault_room_classifier.dart';
 import '../../models/pop.dart';
 import '../../services/app_state.dart';
 import '../../theme/atlas_colors.dart';
@@ -14,7 +15,7 @@ import '../../widgets/atlas/atlas_stat_tile.dart';
 import '../../widgets/atlas/components/atlas_empty_state.dart';
 import '../../widgets/atlas/components/atlas_info_banner.dart';
 import '../../widgets/atlas/components/atlas_section_header.dart';
-import '../../widgets/vault/vault_scroll_view.dart';
+import '../../widgets/vault/components/vault_pop_tile.dart';
 import '../catalog/funko_catalog_screen.dart';
 import '../scanner/atlas_shelf_scan_screen.dart';
 
@@ -25,6 +26,7 @@ class AtlasRoomScreen extends StatelessWidget {
     required this.description,
     required this.icon,
     this.categoryName,
+    this.vaultRoom,
     this.collectionName,
   });
 
@@ -32,6 +34,7 @@ class AtlasRoomScreen extends StatelessWidget {
   final String description;
   final IconData icon;
   final String? categoryName;
+  final AtlasVaultRoom? vaultRoom;
   final String? collectionName;
 
   @override
@@ -54,123 +57,193 @@ class AtlasRoomScreen extends StatelessWidget {
 
     final missingValueCount = roomPops.where((pop) => pop.value <= 0).length;
 
-    final previewPops = roomPops.take(5).toList();
-
     return Scaffold(
       appBar: AppBar(title: Text(roomName)),
-      body: VaultScrollView(
-        children: [
-          AtlasGlassCard(
-            accentColor: AtlasColors.vaultGold,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                AtlasSectionHeader(
-                  title: roomName,
-                  subtitle: description,
-                  icon: icon,
-                  titleStyle: AtlasTypography.headingLarge,
-                  accentColor: AtlasColors.vaultGold,
-                ),
-                const SizedBox(height: AtlasSpacing.lg),
-                _RoomStatsPanel(
-                  totalPops: roomPops.length,
-                  totalValue: roomValue,
-                  wishlistCount: wishlistCount,
-                ),
-                const SizedBox(height: AtlasSpacing.lg),
-                AtlasInfoBanner(
-                  icon: Icons.auto_awesome_rounded,
-                  title: _roomStatusText(roomPops.length),
-                  message: _roomDescriptionText(roomPops.length),
-                ),
-                const SizedBox(height: AtlasSpacing.lg),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton.icon(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => FunkoCatalogScreen(
-                            collectionName: collectionName,
+      body: SafeArea(
+        child: CustomScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          slivers: [
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(
+                AtlasSpacing.lg,
+                AtlasSpacing.lg,
+                AtlasSpacing.lg,
+                0,
+              ),
+              sliver: SliverList.list(
+                children: [
+                  AtlasGlassCard(
+                    accentColor: AtlasColors.vaultGold,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        AtlasSectionHeader(
+                          title: roomName,
+                          subtitle: description,
+                          icon: icon,
+                          titleStyle: AtlasTypography.headingLarge,
+                          accentColor: AtlasColors.vaultGold,
+                        ),
+                        const SizedBox(height: AtlasSpacing.lg),
+                        _RoomStatsPanel(
+                          totalPops: roomPops.length,
+                          totalValue: roomValue,
+                          wishlistCount: wishlistCount,
+                        ),
+                        const SizedBox(height: AtlasSpacing.lg),
+                        AtlasInfoBanner(
+                          icon: Icons.auto_awesome_rounded,
+                          title: _roomStatusText(roomPops.length),
+                          message: _roomDescriptionText(roomPops.length),
+                        ),
+                        const SizedBox(height: AtlasSpacing.lg),
+                        SizedBox(
+                          width: double.infinity,
+                          child: FilledButton.icon(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => FunkoCatalogScreen(
+                                    collectionName: collectionName,
+                                  ),
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.search_rounded),
+                            label: const Text('Browse Catalog'),
                           ),
                         ),
-                      );
-                    },
-                    icon: const Icon(Icons.search_rounded),
-                    label: const Text('Browse Catalog'),
+                        if (collectionName != null) ...[
+                          const SizedBox(height: AtlasSpacing.sm),
+                          SizedBox(
+                            width: double.infinity,
+                            child: FilledButton.icon(
+                              key: const ValueKey('start-shelf-scan'),
+                              onPressed: () {
+                                Navigator.push<bool>(
+                                  context,
+                                  MaterialPageRoute<bool>(
+                                    builder: (_) => AtlasShelfScanScreen(
+                                      collectionName: collectionName!,
+                                    ),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.view_in_ar_outlined),
+                              label: const Text('Start Shelf Scan'),
+                            ),
+                          ),
+                          const SizedBox(height: AtlasSpacing.sm),
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              key: const ValueKey('open-full-collection'),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute<void>(
+                                    builder: (_) => EntireVaultScreen(
+                                      collectionName: collectionName,
+                                    ),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.inventory_2_outlined),
+                              label: const Text('Open Full Collection'),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: AtlasSpacing.lg),
+                  _RoomInsightCard(
+                    roomName: roomName,
+                    totalPops: roomPops.length,
+                    totalValue: roomValue,
+                    wishlistCount: wishlistCount,
+                    missingValueCount: missingValueCount,
+                  ),
+                  const SizedBox(height: AtlasSpacing.lg),
+                  _RoomCollectionHeader(
+                    roomName: roomName,
+                    totalRoomPops: roomPops.length,
+                  ),
+                  const SizedBox(height: AtlasSpacing.md),
+                ],
+              ),
+            ),
+            if (roomPops.isEmpty)
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(
+                  AtlasSpacing.lg,
+                  0,
+                  AtlasSpacing.lg,
+                  100,
+                ),
+                sliver: const SliverToBoxAdapter(
+                  child: AtlasEmptyState(
+                    eyebrow: 'Your Collection',
+                    title: 'No Pops Found',
+                    message:
+                        'No Pops found in this room yet. Add matching collectibles to start building this room.',
+                    icon: Icons.inventory_2_outlined,
+                    compact: true,
                   ),
                 ),
-                if (collectionName != null) ...[
-                  const SizedBox(height: AtlasSpacing.sm),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton.icon(
-                      key: const ValueKey('start-shelf-scan'),
-                      onPressed: () {
-                        Navigator.push<bool>(
-                          context,
-                          MaterialPageRoute<bool>(
-                            builder: (_) => AtlasShelfScanScreen(
-                              collectionName: collectionName!,
-                            ),
-                          ),
-                        );
-                      },
-                      icon: const Icon(Icons.view_in_ar_outlined),
-                      label: const Text('Start Shelf Scan'),
-                    ),
-                  ),
-                  const SizedBox(height: AtlasSpacing.sm),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      key: const ValueKey('open-full-collection'),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute<void>(
-                            builder: (_) => EntireVaultScreen(
-                              collectionName: collectionName,
-                            ),
-                          ),
-                        );
-                      },
-                      icon: const Icon(Icons.inventory_2_outlined),
-                      label: const Text('Open Full Collection'),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          const SizedBox(height: AtlasSpacing.lg),
-          _RoomInsightCard(
-            roomName: roomName,
-            totalPops: roomPops.length,
-            totalValue: roomValue,
-            wishlistCount: wishlistCount,
-            missingValueCount: missingValueCount,
-          ),
-          const SizedBox(height: AtlasSpacing.lg),
-          _RoomPopPreviewCard(
-            roomName: roomName,
-            roomPops: previewPops,
-            totalRoomPops: roomPops.length,
-          ),
-        ],
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(
+                  AtlasSpacing.lg,
+                  0,
+                  AtlasSpacing.lg,
+                  100,
+                ),
+                sliver: SliverList.builder(
+                  itemCount: roomPops.length,
+                  itemBuilder: (context, index) {
+                    final pop = roomPops[index];
+
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: AtlasSpacing.sm),
+                      child: VaultPopTile(
+                        key: ValueKey('room-pop-${pop.id}'),
+                        pop: pop,
+                        showImage: true,
+                        collectionName: collectionName,
+                      ),
+                    );
+                  },
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
 
   List<Pop> _roomPops(List<Pop> pops) {
+    final resolvedRoom =
+        vaultRoom ?? AtlasVaultRoom.fromDisplayName(categoryName);
+
+    if (resolvedRoom != null) {
+      const classifier = AtlasVaultRoomClassifier();
+
+      return pops.where((pop) {
+        return !pop.isWishlist && classifier.isInRoom(pop, resolvedRoom);
+      }).toList();
+    }
+
     final category = categoryName?.trim().toLowerCase();
 
     if (category == null || category.isEmpty) {
       return pops;
     }
 
+    // Backward compatibility for any custom/legacy room that still supplies a
+    // category string outside the centralized Atlas Vault Room taxonomy.
     return pops.where((pop) {
       return pop.category.trim().toLowerCase() == category;
     }).toList();
@@ -186,7 +259,8 @@ class AtlasRoomScreen extends StatelessWidget {
           'Pop${roomPopCount == 1 ? '' : 's'} in this collection.';
     }
 
-    if (categoryName == null || categoryName!.trim().isEmpty) {
+    if (vaultRoom == null &&
+        (categoryName == null || categoryName!.trim().isEmpty)) {
       return 'Room filters are coming soon.';
     }
 
@@ -210,7 +284,8 @@ class AtlasRoomScreen extends StatelessWidget {
           'and your current Pop preview.';
     }
 
-    if (categoryName == null || categoryName!.trim().isEmpty) {
+    if (vaultRoom == null &&
+        (categoryName == null || categoryName!.trim().isEmpty)) {
       return 'This room will eventually show matching Pops from your '
           'vault, quick stats, value insights, missing grails, wishlist '
           'targets, and Atlas recommendations for this category.';
@@ -339,124 +414,34 @@ class _RoomInsightCard extends StatelessWidget {
   }
 }
 
-class _RoomPopPreviewCard extends StatelessWidget {
-  const _RoomPopPreviewCard({
+class _RoomCollectionHeader extends StatelessWidget {
+  const _RoomCollectionHeader({
     required this.roomName,
-    required this.roomPops,
     required this.totalRoomPops,
   });
 
   final String roomName;
-  final List<Pop> roomPops;
   final int totalRoomPops;
 
   @override
   Widget build(BuildContext context) {
     return AtlasGlassCard(
       accentColor: AtlasColors.vaultGold,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          AtlasSectionHeader(
-            title: 'Room Preview',
-            subtitle: _previewSubtitle,
-            icon: Icons.inventory_2_outlined,
-            accentColor: AtlasColors.vaultGold,
-          ),
-          const SizedBox(height: AtlasSpacing.md),
-          if (roomPops.isEmpty)
-            const AtlasEmptyState(
-              eyebrow: 'Room Preview',
-              title: 'No Pops Found',
-              message:
-                  'No Pops found in this room yet. Add matching collectibles to start building this room.',
-              icon: Icons.inventory_2_outlined,
-              compact: true,
-            )
-          else
-            ...roomPops.map(
-              (pop) => Padding(
-                padding: const EdgeInsets.only(bottom: AtlasSpacing.sm),
-                child: _RoomPopPreviewTile(pop: pop),
-              ),
-            ),
-        ],
+      child: AtlasSectionHeader(
+        title: 'Your $roomName Collection',
+        subtitle: _subtitle,
+        icon: Icons.inventory_2_outlined,
+        accentColor: AtlasColors.vaultGold,
       ),
     );
   }
 
-  String get _previewSubtitle {
+  String get _subtitle {
     if (totalRoomPops == 0) {
       return '$roomName is ready when your matching Pops are added.';
     }
 
-    if (totalRoomPops <= roomPops.length) {
-      return 'Showing all $totalRoomPops matching '
-          'Pop${totalRoomPops == 1 ? '' : 's'}.';
-    }
-
-    return 'Showing ${roomPops.length} of $totalRoomPops matching Pops.';
-  }
-}
-
-class _RoomPopPreviewTile extends StatelessWidget {
-  const _RoomPopPreviewTile({required this.pop});
-
-  final Pop pop;
-
-  @override
-  Widget build(BuildContext context) {
-    final numberLabel = pop.number.trim().isEmpty ? 'No #' : '#${pop.number}';
-
-    final categoryLabel = pop.category.trim().isEmpty
-        ? 'No category'
-        : pop.category.trim();
-
-    final valueLabel = pop.value <= 0
-        ? 'Value needed'
-        : '\$${pop.value.toStringAsFixed(0)}';
-
-    return AtlasGlassPanel(
-      child: Row(
-        children: [
-          const Icon(Icons.inventory_2_outlined, color: AtlasColors.vaultGold),
-          const SizedBox(width: AtlasSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  pop.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AtlasTypography.bodyMedium.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: AtlasSpacing.xs),
-                Text(
-                  '$numberLabel • $categoryLabel',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AtlasTypography.bodySmall.copyWith(
-                    color: AtlasColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: AtlasSpacing.md),
-          Text(
-            valueLabel,
-            style: AtlasTypography.bodySmall.copyWith(
-              color: pop.value <= 0
-                  ? AtlasColors.textSecondary
-                  : AtlasColors.vaultGold,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-    );
+    return 'Browse all $totalRoomPops matching '
+        'Pop${totalRoomPops == 1 ? '' : 's'}.';
   }
 }

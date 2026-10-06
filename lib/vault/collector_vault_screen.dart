@@ -1,31 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../atlas/core/atlas_intelligence.dart';
 import '../atlas/repositories/vault_repository.dart';
+import '../atlas/taxonomy/services/atlas_vault_room_classifier.dart';
+import '../screens/catalog/funko_catalog_screen.dart';
 import '../screens/pop/add_pop_screen.dart';
+import '../screens/profile/edit_collector_profile_screen.dart';
 import '../screens/vault/atlas_room_screen.dart';
 import '../screens/vault/collections_screen.dart';
-import '../screens/profile/edit_collector_profile_screen.dart';
-import '../screens/catalog/funko_catalog_screen.dart';
-import '../screens/scanner/scan_screen.dart';
+import '../screens/vault/entire_vault_screen.dart';
+import '../screens/vault/vault_health_screen.dart';
 import '../screens/vault/wishlist_screen.dart';
-import '../security/auth_provider.dart';
 import '../services/app_state.dart';
 import '../theme/atlas_colors.dart';
 import '../theme/atlas_spacing.dart';
+import '../theme/atlas_typography.dart';
 import 'health/vault_health_engine.dart';
-import '../widgets/vault/atlas_mission_card.dart';
-import '../widgets/vault/atlas_recommendation_card.dart';
+import '../widgets/atlas/atlas_glass_card.dart';
 import '../widgets/vault/collection_rooms_card.dart';
-import '../widgets/vault/collector_tools_card.dart';
-import '../widgets/vault/hero_collector_card.dart';
-import '../widgets/vault/vault_breakdown_card.dart';
-import '../widgets/vault/vault_cleanup_card.dart';
 import '../widgets/vault/vault_health_summary_card.dart';
 import '../widgets/vault/vault_scroll_view.dart';
-import '../screens/vault/entire_vault_screen.dart';
-import '../screens/vault/vault_health_screen.dart';
 
 class CollectorVaultScreen extends StatelessWidget {
   const CollectorVaultScreen({super.key});
@@ -33,20 +27,13 @@ class CollectorVaultScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appState = context.watch<AppState>();
-    final authProvider = context.watch<AuthProvider>();
 
     const repository = VaultRepository();
-    const intelligence = AtlasIntelligence();
     const vaultHealthEngine = VaultHealthEngine();
 
     final allPops = repository.allPops(appState);
     final vaultHealth = vaultHealthEngine.calculate(allPops);
-
-    final recommendation = intelligence.getRecommendation(allPops);
-    final mission = intelligence.getTodayMission(allPops);
-    final confidence = intelligence.getCollectorConfidence(allPops);
-    final collectorType = intelligence.getCollectorType(allPops);
-    final favoriteCategory = intelligence.getFavoriteCategory(allPops);
+    final profile = appState.collectorProfile;
 
     final totalValue = vaultHealth.totalValue;
     final missingValueCount = vaultHealth.needsValueCount;
@@ -54,29 +41,30 @@ class CollectorVaultScreen extends StatelessWidget {
     final health = vaultHealth.healthScore;
     final healthPriority = vaultHealth.priority;
 
-    final profile = appState.collectorProfile;
-
-    final profileInitial = profile.displayName.trim().isEmpty
-        ? 'A'
-        : profile.displayName.trim()[0].toUpperCase();
-
     final ownedCount = allPops.where((pop) => !pop.isWishlist).length;
     final wishlistCount = allPops.where((pop) => pop.isWishlist).length;
-    final exclusiveCount = allPops
-        .where((pop) => _hasMeaningfulValue(pop.retailExclusive))
-        .length;
-    final variantCount = allPops
-        .where((pop) => _hasMeaningfulValue(pop.variant))
-        .length;
-    final stickerCount = allPops
-        .where((pop) => _hasMeaningfulValue(pop.eventSticker))
-        .length;
-    final signedCount = allPops
-        .where((pop) => _hasMeaningfulValue(pop.signature))
-        .length;
-    final limitedCount = allPops
-        .where((pop) => _hasMeaningfulValue(pop.limitedEdition))
-        .length;
+
+    const roomClassifier = AtlasVaultRoomClassifier();
+    final roomCounts = roomClassifier.countsFor(allPops);
+    final animeCount = roomCounts[AtlasVaultRoom.anime] ?? 0;
+    final marvelCount = roomCounts[AtlasVaultRoom.marvel] ?? 0;
+    final dcCount = roomCounts[AtlasVaultRoom.dc] ?? 0;
+    final starWarsCount = roomCounts[AtlasVaultRoom.starWars] ?? 0;
+    final moviesTvCount = roomCounts[AtlasVaultRoom.moviesAndTv] ?? 0;
+    final gamingCount = roomCounts[AtlasVaultRoom.gaming] ?? 0;
+    final sportsCount = roomCounts[AtlasVaultRoom.sports] ?? 0;
+    final musicCount = roomCounts[AtlasVaultRoom.music] ?? 0;
+    final iconsCount = roomCounts[AtlasVaultRoom.icons] ?? 0;
+    final retroToysCount = roomCounts[AtlasVaultRoom.retroToys] ?? 0;
+    final originalsCount = roomCounts[AtlasVaultRoom.originals] ?? 0;
+    final asiaInternationalCount =
+        roomCounts[AtlasVaultRoom.asiaInternational] ?? 0;
+    final otherCount = roomCounts[AtlasVaultRoom.other] ?? 0;
+
+    final profileName = profile.displayName.trim().isEmpty
+        ? 'Collector'
+        : profile.displayName.trim();
+    final profileInitial = profileName[0].toUpperCase();
 
     return Scaffold(
       appBar: AppBar(
@@ -95,27 +83,14 @@ class CollectorVaultScreen extends StatelessWidget {
             icon: const Icon(Icons.folder_copy_outlined),
           ),
           IconButton(
-            tooltip: 'Search',
-            onPressed: () => _openCatalog(context),
-            icon: const Icon(Icons.search),
-          ),
-          IconButton(
             tooltip: 'Vault Health',
             onPressed: () => _openVaultHealth(context),
             icon: const Icon(Icons.health_and_safety_outlined),
           ),
-          IconButton(
-            tooltip: 'Notifications',
-            onPressed: () => _showComingSoonMessage(
-              context,
-              'Notifications are coming soon.',
-            ),
-            icon: const Icon(Icons.notifications_none),
-          ),
           Padding(
             padding: const EdgeInsets.only(right: AtlasSpacing.sm),
             child: IconButton(
-              tooltip: 'Signed in as ${profile.displayName}',
+              tooltip: 'Edit collector profile',
               onPressed: () => _openEditProfile(context),
               icon: Stack(
                 clipBehavior: Clip.none,
@@ -155,112 +130,39 @@ class CollectorVaultScreen extends StatelessWidget {
       ),
       body: VaultScrollView(
         children: [
-          HeroCollectorCard(
-            collectorName: profile.displayName,
-            collectorTitle: profile.collectorTitle,
-            collectorBio: profile.bio,
-            favoriteCategory: profile.favoriteCategory,
-            collectorLevel: profile.collectorLevel,
-            isPremium: authProvider.isPremium,
-            totalPops: allPops.length,
+          _VaultSummaryCard(
+            collectorName: profileName,
+            ownedCount: ownedCount,
             totalValue: totalValue,
             health: health,
-            onEditProfile: () => _openEditProfile(context),
           ),
-          const SizedBox(height: AtlasSpacing.lg),
-          VaultBreakdownCard(
-            ownedCount: ownedCount,
-            wishlistCount: wishlistCount,
-            exclusiveCount: exclusiveCount,
-            variantCount: variantCount,
-            stickerCount: stickerCount,
-            signedCount: signedCount,
-            limitedCount: limitedCount,
-            needsValueCount: missingValueCount,
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const EntireVaultScreen()),
-              );
-            },
-          ),
-          const SizedBox(height: AtlasSpacing.lg),
-          VaultCleanupCard(
-            needsValueCount: missingValueCount,
-            duplicateGroupCount: duplicateGroupCount,
-            wishlistCount: wishlistCount,
-            variantCount: variantCount,
-            exclusiveCount: exclusiveCount,
-            signedCount: signedCount,
-            limitedCount: limitedCount,
-            stickerCount: stickerCount,
-            onCleanupItemTap: (filterKey) {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) =>
-                      EntireVaultScreen(initialFilterKey: filterKey),
-                ),
-              );
-            },
-            onReviewVault: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const EntireVaultScreen()),
-              );
-            },
-          ),
-          const SizedBox(height: AtlasSpacing.lg),
-          VaultHealthSummaryCard(
-            healthScore: health,
-            priority: healthPriority,
-            needsValueCount: missingValueCount,
-            duplicateGroupCount: duplicateGroupCount,
-            onTap: () => _openVaultHealth(context),
-          ),
-          const SizedBox(height: AtlasSpacing.lg),
-          AtlasMissionCard(
-            mission: mission,
-            collectorType: collectorType,
-            confidence: confidence.round(),
-            onContinue: () => _openCatalogWithMessage(
-              context,
-              'Opening the catalog so you can keep building your vault.',
-            ),
-          ),
-          const SizedBox(height: AtlasSpacing.lg),
-          CollectorToolsCard(
-            onAddPop: () {
+          const SizedBox(height: AtlasSpacing.md),
+          _VaultActionBar(
+            onSearch: () => _openCatalog(context),
+            onAdd: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const AddPopScreen()),
               );
             },
-            onScan: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const ScanScreen()),
-              );
-            },
-            onWishlist: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const WishlistScreen()),
-              );
-            },
-            onSearch: () => _openCatalog(context),
-            onValueLookup: () => _openCatalogWithMessage(
-              context,
-              'Value lookup will use the catalog for now.',
-            ),
-            onAtlasAi: () => _openCatalogWithMessage(
-              context,
-              'Atlas AI insights are coming soon. Opening catalog for now.',
-            ),
           ),
           const SizedBox(height: AtlasSpacing.lg),
           CollectionRoomsCard(
-            totalPops: allPops.length,
+            totalPops: ownedCount,
+            wishlistCount: wishlistCount,
+            animeCount: animeCount,
+            marvelCount: marvelCount,
+            dcCount: dcCount,
+            starWarsCount: starWarsCount,
+            moviesTvCount: moviesTvCount,
+            gamingCount: gamingCount,
+            sportsCount: sportsCount,
+            musicCount: musicCount,
+            iconsCount: iconsCount,
+            retroToysCount: retroToysCount,
+            originalsCount: originalsCount,
+            asiaInternationalCount: asiaInternationalCount,
+            otherCount: otherCount,
             onEntireVault: () {
               Navigator.push(
                 context,
@@ -276,62 +178,107 @@ class CollectorVaultScreen extends StatelessWidget {
             onAnime: () => _openRoom(
               context,
               roomName: 'Anime Room',
-              categoryName: 'Anime',
-              description:
-                  'Explore anime Pops in your vault, future wishlist targets, grails, and Atlas recommendations.',
+              room: AtlasVaultRoom.anime,
+              description: 'Explore the Anime collectibles in your Vault.',
               icon: Icons.auto_awesome_rounded,
             ),
             onMarvel: () => _openRoom(
               context,
               roomName: 'Marvel Room',
-              categoryName: 'Marvel',
-              description:
-                  'Track Marvel Pops, value trends, missing heroes, variants, and future vault opportunities.',
+              room: AtlasVaultRoom.marvel,
+              description: 'Explore the Marvel collectibles in your Vault.',
               icon: Icons.bolt_rounded,
             ),
             onDc: () => _openRoom(
               context,
               roomName: 'DC Room',
-              categoryName: 'DC',
-              description:
-                  'Review DC Pops, villains, heroes, exclusives, and collection opportunities.',
+              room: AtlasVaultRoom.dc,
+              description: 'Explore the DC collectibles in your Vault.',
               icon: Icons.shield_rounded,
             ),
             onStarWars: () => _openRoom(
               context,
               roomName: 'Star Wars Room',
-              categoryName: 'Star Wars',
-              description:
-                  'Explore Star Wars Pops, sagas, exclusives, character groups, and collecting opportunities.',
-              icon: Icons.public_rounded,
+              room: AtlasVaultRoom.starWars,
+              description: 'Explore the Star Wars collectibles in your Vault.',
+              icon: Icons.star_rounded,
             ),
             onMoviesTv: () => _openRoom(
               context,
               roomName: 'Movies & TV Room',
-              categoryName: 'Movies & TV',
+              room: AtlasVaultRoom.moviesAndTv,
               description:
-                  'Review movie and TV Pops across your vault, future targets, and recommendation paths.',
+                  'Explore the Movies & TV collectibles in your Vault.',
               icon: Icons.movie_filter_rounded,
             ),
             onGaming: () => _openRoom(
               context,
               roomName: 'Gaming Room',
-              categoryName: 'Gaming',
-              description:
-                  'Explore gaming Pops, franchises, vault gaps, wishlist targets, and collector insights.',
+              room: AtlasVaultRoom.gaming,
+              description: 'Explore the Gaming collectibles in your Vault.',
               icon: Icons.sports_esports_rounded,
+            ),
+            onSports: () => _openRoom(
+              context,
+              roomName: 'Sports Room',
+              room: AtlasVaultRoom.sports,
+              description: 'Explore the Sports collectibles in your Vault.',
+              icon: Icons.sports_football_rounded,
+            ),
+            onMusic: () => _openRoom(
+              context,
+              roomName: 'Music / Rocks Room',
+              room: AtlasVaultRoom.music,
+              description:
+                  'Explore the Music and Rocks collectibles in your Vault.',
+              icon: Icons.music_note_rounded,
+            ),
+            onIcons: () => _openRoom(
+              context,
+              roomName: 'Icons Room',
+              room: AtlasVaultRoom.icons,
+              description:
+                  'Explore the Icons and Ad Icons collectibles in your Vault.',
+              icon: Icons.workspace_premium_rounded,
+            ),
+            onRetroToys: () => _openRoom(
+              context,
+              roomName: 'Retro Toys Room',
+              room: AtlasVaultRoom.retroToys,
+              description: 'Explore the Retro Toys collectibles in your Vault.',
+              icon: Icons.toys_rounded,
+            ),
+            onOriginals: () => _openRoom(
+              context,
+              roomName: 'Originals Room',
+              room: AtlasVaultRoom.originals,
+              description: 'Explore the Funko Originals in your Vault.',
+              icon: Icons.auto_awesome_rounded,
+            ),
+            onAsiaInternational: () => _openRoom(
+              context,
+              roomName: 'Asia / International Room',
+              room: AtlasVaultRoom.asiaInternational,
+              description:
+                  'Explore Asia and international collectibles in your Vault.',
+              icon: Icons.public_rounded,
+            ),
+            onOther: () => _openRoom(
+              context,
+              roomName: 'Other Room',
+              room: AtlasVaultRoom.other,
+              description:
+                  'Explore collectibles outside the primary Vault Rooms.',
+              icon: Icons.inventory_2_outlined,
             ),
           ),
           const SizedBox(height: AtlasSpacing.lg),
-          AtlasRecommendationCard(
-            message: recommendation,
-            confidence: confidence.round(),
-            estimatedCost: favoriteCategory,
-            difficulty: collectorType,
-            onViewDetails: () => _openCatalogWithMessage(
-              context,
-              'Opening catalog details for now.',
-            ),
+          VaultHealthSummaryCard(
+            healthScore: health,
+            priority: healthPriority,
+            needsValueCount: missingValueCount,
+            duplicateGroupCount: duplicateGroupCount,
+            onTap: () => _openVaultHealth(context),
           ),
         ],
       ),
@@ -359,17 +306,12 @@ class CollectorVaultScreen extends StatelessWidget {
     );
   }
 
-  static void _openCatalogWithMessage(BuildContext context, String message) {
-    _showComingSoonMessage(context, message);
-    _openCatalog(context);
-  }
-
   static void _openRoom(
     BuildContext context, {
     required String roomName,
     required String description,
     required IconData icon,
-    required String categoryName,
+    required AtlasVaultRoom room,
   }) {
     Navigator.push(
       context,
@@ -378,31 +320,174 @@ class CollectorVaultScreen extends StatelessWidget {
           roomName: roomName,
           description: description,
           icon: icon,
-          categoryName: categoryName,
+          vaultRoom: room,
         ),
       ),
     );
   }
+}
 
-  static void _showComingSoonMessage(BuildContext context, String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+class _VaultSummaryCard extends StatelessWidget {
+  const _VaultSummaryCard({
+    required this.collectorName,
+    required this.ownedCount,
+    required this.totalValue,
+    required this.health,
+  });
+
+  final String collectorName;
+  final int ownedCount;
+  final double totalValue;
+  final double health;
+
+  @override
+  Widget build(BuildContext context) {
+    return AtlasGlassCard(
+      accentColor: AtlasColors.vaultGold,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "$collectorName's Vault",
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AtlasTypography.headingLarge,
+          ),
+          const SizedBox(height: AtlasSpacing.xs),
+          Text(
+            'Your collection at a glance.',
+            style: AtlasTypography.bodyMedium.copyWith(
+              color: AtlasColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: AtlasSpacing.lg),
+          Row(
+            children: [
+              Expanded(
+                child: _SummaryMetric(
+                  icon: Icons.inventory_2_outlined,
+                  value: '$ownedCount',
+                  label: 'Pops',
+                ),
+              ),
+              Expanded(
+                child: _SummaryMetric(
+                  icon: Icons.attach_money_rounded,
+                  value: _formatMoney(totalValue),
+                  label: 'Value',
+                ),
+              ),
+              Expanded(
+                child: _SummaryMetric(
+                  icon: Icons.health_and_safety_outlined,
+                  value: '${health.round()}%',
+                  label: 'Vault Health',
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 
-  bool _hasMeaningfulValue(String value) {
-    final cleaned = value.trim().toLowerCase();
+  static String _formatMoney(double value) {
+    final whole = value.round().toString();
+    final buffer = StringBuffer(r'$');
 
-    if (cleaned.isEmpty) {
-      return false;
+    for (var index = 0; index < whole.length; index++) {
+      if (index > 0 && (whole.length - index) % 3 == 0) {
+        buffer.write(',');
+      }
+      buffer.write(whole[index]);
     }
 
-    return cleaned != 'none' &&
-        cleaned != 'common' &&
-        cleaned != 'standard' &&
-        cleaned != 'unsigned' &&
-        cleaned != 'no' &&
-        cleaned != 'n/a' &&
-        cleaned != 'na';
+    return buffer.toString();
+  }
+}
+
+class _SummaryMetric extends StatelessWidget {
+  const _SummaryMetric({
+    required this.icon,
+    required this.value,
+    required this.label,
+  });
+
+  final IconData icon;
+  final String value;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Icon(icon, color: AtlasColors.vaultGold, size: 26),
+        const SizedBox(height: AtlasSpacing.xs),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            value,
+            maxLines: 1,
+            style: AtlasTypography.metricSmall.copyWith(
+              color: AtlasColors.vaultGold,
+              fontSize: 22,
+            ),
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: AtlasTypography.bodySmall.copyWith(
+            color: AtlasColors.textSecondary,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _VaultActionBar extends StatelessWidget {
+  const _VaultActionBar({required this.onSearch, required this.onAdd});
+
+  final VoidCallback onSearch;
+  final VoidCallback onAdd;
+
+  @override
+  Widget build(BuildContext context) {
+    return AtlasGlassCard(
+      onTap: onSearch,
+      accentColor: AtlasColors.vaultGold,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AtlasSpacing.md,
+        vertical: AtlasSpacing.sm,
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.search_rounded, color: AtlasColors.intelligenceBlue),
+          const SizedBox(width: AtlasSpacing.md),
+          Expanded(
+            child: Text(
+              'Search Vault...',
+              style: AtlasTypography.bodyLarge.copyWith(
+                color: AtlasColors.textSecondary,
+              ),
+            ),
+          ),
+          Container(
+            width: 1,
+            height: 34,
+            color: Colors.white.withValues(alpha: 0.08),
+          ),
+          const SizedBox(width: AtlasSpacing.sm),
+          IconButton(
+            tooltip: 'Add Pop',
+            onPressed: onAdd,
+            icon: const Icon(Icons.add_rounded, color: AtlasColors.vaultGold),
+          ),
+        ],
+      ),
+    );
   }
 }

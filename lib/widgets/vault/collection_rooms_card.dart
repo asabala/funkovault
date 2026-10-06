@@ -10,6 +10,20 @@ class CollectionRoomsCard extends StatelessWidget {
   const CollectionRoomsCard({
     super.key,
     required this.totalPops,
+    required this.wishlistCount,
+    required this.animeCount,
+    required this.marvelCount,
+    required this.dcCount,
+    required this.starWarsCount,
+    required this.moviesTvCount,
+    required this.gamingCount,
+    required this.sportsCount,
+    required this.musicCount,
+    required this.iconsCount,
+    required this.retroToysCount,
+    required this.originalsCount,
+    required this.asiaInternationalCount,
+    required this.otherCount,
     this.onEntireVault,
     this.onWishlist,
     this.onAnime,
@@ -18,9 +32,30 @@ class CollectionRoomsCard extends StatelessWidget {
     this.onStarWars,
     this.onMoviesTv,
     this.onGaming,
+    this.onSports,
+    this.onMusic,
+    this.onIcons,
+    this.onRetroToys,
+    this.onOriginals,
+    this.onAsiaInternational,
+    this.onOther,
   });
 
   final int totalPops;
+  final int wishlistCount;
+  final int animeCount;
+  final int marvelCount;
+  final int dcCount;
+  final int starWarsCount;
+  final int moviesTvCount;
+  final int gamingCount;
+  final int sportsCount;
+  final int musicCount;
+  final int iconsCount;
+  final int retroToysCount;
+  final int originalsCount;
+  final int asiaInternationalCount;
+  final int otherCount;
   final VoidCallback? onEntireVault;
   final VoidCallback? onWishlist;
   final VoidCallback? onAnime;
@@ -29,6 +64,13 @@ class CollectionRoomsCard extends StatelessWidget {
   final VoidCallback? onStarWars;
   final VoidCallback? onMoviesTv;
   final VoidCallback? onGaming;
+  final VoidCallback? onSports;
+  final VoidCallback? onMusic;
+  final VoidCallback? onIcons;
+  final VoidCallback? onRetroToys;
+  final VoidCallback? onOriginals;
+  final VoidCallback? onAsiaInternational;
+  final VoidCallback? onOther;
 
   @override
   Widget build(BuildContext context) {
@@ -37,8 +79,7 @@ class CollectionRoomsCard extends StatelessWidget {
       children: [
         const AtlasSectionHeader(
           title: 'Vault Rooms',
-          subtitle:
-              'Explore your collection by room, category, and collector workflow.',
+          subtitle: 'Browse your collection by shelf and category.',
           icon: Icons.grid_view_rounded,
           accentColor: AtlasColors.vaultGold,
         ),
@@ -49,67 +90,107 @@ class CollectionRoomsCard extends StatelessWidget {
           physics: const NeverScrollableScrollPhysics(),
           crossAxisSpacing: AtlasSpacing.md,
           mainAxisSpacing: AtlasSpacing.md,
-          childAspectRatio: 0.82,
+          childAspectRatio: 1.16,
           children: [
             VaultRoomCard(
               title: 'Entire Vault',
-              subtitle: '$totalPops Pops',
+              subtitle: _countLabel(totalPops),
               icon: AtlasIcons.collection,
-              lastAdded: 'Recently Updated',
               onTap: onEntireVault,
             ),
             VaultRoomCard(
               title: 'Wishlist',
-              subtitle: 'Items to hunt',
+              subtitle: _itemLabel(wishlistCount),
               icon: AtlasIcons.wishlist,
-              lastAdded: 'Target List',
               onTap: onWishlist,
             ),
             VaultRoomCard(
               title: 'Anime',
-              subtitle: 'Manga shelf',
+              subtitle: _countLabel(animeCount),
               icon: Icons.auto_awesome,
-              lastAdded: 'New Hero',
               onTap: onAnime,
             ),
             VaultRoomCard(
               title: 'Marvel',
-              subtitle: 'Power shelf',
+              subtitle: _countLabel(marvelCount),
               icon: Icons.flash_on,
-              lastAdded: 'Spider-Man',
               onTap: onMarvel,
             ),
             VaultRoomCard(
               title: 'DC',
-              subtitle: 'Hero shelf',
+              subtitle: _countLabel(dcCount),
               icon: Icons.shield,
-              lastAdded: 'Batman Beyond',
               onTap: onDc,
             ),
             VaultRoomCard(
               title: 'Star Wars',
-              subtitle: 'Galaxy shelf',
+              subtitle: _countLabel(starWarsCount),
               icon: Icons.star,
-              lastAdded: 'Darth Vader',
               onTap: onStarWars,
             ),
             VaultRoomCard(
               title: 'Movies & TV',
-              subtitle: 'Screen shelf',
+              subtitle: _countLabel(moviesTvCount),
               icon: Icons.movie_filter_outlined,
-              lastAdded: 'New Release',
               onTap: onMoviesTv,
             ),
             VaultRoomCard(
               title: 'Gaming',
-              subtitle: 'Arcade shelf',
+              subtitle: _countLabel(gamingCount),
               icon: Icons.sports_esports,
-              lastAdded: 'Player One',
               onTap: onGaming,
+            ),
+            VaultRoomCard(
+              title: 'Sports',
+              subtitle: _countLabel(sportsCount),
+              icon: Icons.sports_football_rounded,
+              onTap: onSports,
+            ),
+            VaultRoomCard(
+              title: 'Music / Rocks',
+              subtitle: _countLabel(musicCount),
+              icon: Icons.music_note_rounded,
+              onTap: onMusic,
+            ),
+            VaultRoomCard(
+              title: 'Icons',
+              subtitle: _countLabel(iconsCount),
+              icon: Icons.workspace_premium_rounded,
+              onTap: onIcons,
+            ),
+            VaultRoomCard(
+              title: 'Retro Toys',
+              subtitle: _countLabel(retroToysCount),
+              icon: Icons.toys_rounded,
+              onTap: onRetroToys,
+            ),
+            VaultRoomCard(
+              title: 'Originals',
+              subtitle: _countLabel(originalsCount),
+              icon: Icons.auto_awesome_rounded,
+              onTap: onOriginals,
+            ),
+            VaultRoomCard(
+              title: 'Asia / International',
+              subtitle: _countLabel(asiaInternationalCount),
+              icon: Icons.public_rounded,
+              onTap: onAsiaInternational,
+            ),
+            VaultRoomCard(
+              title: 'Other',
+              subtitle: _countLabel(otherCount),
+              icon: Icons.inventory_2_outlined,
+              onTap: onOther,
             ),
           ],
         ),
       ],
     );
   }
+
+  static String _countLabel(int count) =>
+      '$count ${count == 1 ? 'Pop' : 'Pops'}';
+
+  static String _itemLabel(int count) =>
+      '$count ${count == 1 ? 'Item' : 'Items'}';
 }
