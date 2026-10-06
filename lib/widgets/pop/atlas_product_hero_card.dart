@@ -6,10 +6,7 @@ import '../../../theme/atlas_colors.dart';
 import '../../../theme/atlas_spacing.dart';
 import '../../../theme/atlas_typography.dart';
 import '../atlas/atlas_glass_card.dart';
-import '../atlas/components/atlas_action_row.dart';
 import '../atlas/components/atlas_chip.dart';
-import '../atlas/components/atlas_insight_panel.dart';
-import '../atlas/components/atlas_metric_panel.dart';
 import '../atlas/components/atlas_product_image.dart';
 import 'pop_identity_badges.dart';
 
@@ -20,84 +17,73 @@ class AtlasProductHeroCard extends StatelessWidget {
     required this.heroSummary,
     this.trendPercent,
     this.trendTimeframe = '30d',
-    this.onCompleteListing,
   });
 
   final Pop pop;
   final AtlasHeroSummary heroSummary;
-
-  /// Leave null until Atlas has real historical market data.
   final double? trendPercent;
-
-  /// Examples: 7d, 30d, 90d, 1y.
   final String trendTimeframe;
-
-  /// Opens the edit flow for the highest-priority missing detail.
-  final VoidCallback? onCompleteListing;
 
   @override
   Widget build(BuildContext context) {
-    final numberLabel = pop.number.trim().isEmpty
+    final String numberLabel = pop.number.trim().isEmpty
         ? 'No number'
         : '#${pop.number.trim()}';
-
-    final seriesLabel = pop.series.trim();
-
-    final completionPrompt = _buildCompletionPrompt(pop);
+    final String seriesLabel = pop.series.trim();
 
     return AtlasGlassCard(
+      borderRadius: 26,
+      padding: const EdgeInsets.all(AtlasSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _HeroTopRow(pop: pop),
           const SizedBox(height: AtlasSpacing.lg),
-          Center(child: AtlasProductImage(imageUrl: pop.imageUrl)),
+          LayoutBuilder(
+            builder: (BuildContext context, BoxConstraints constraints) {
+              final double imageWidth = (constraints.maxWidth * 0.62).clamp(
+                176.0,
+                222.0,
+              );
+
+              return Center(
+                child: _PremiumImageFrame(
+                  imageUrl: pop.imageUrl,
+                  width: imageWidth,
+                ),
+              );
+            },
+          ),
           const SizedBox(height: AtlasSpacing.lg),
-          Text(pop.name, style: AtlasTypography.headingLarge),
-          const SizedBox(height: AtlasSpacing.xs),
+          Text(
+            pop.name,
+            style: AtlasTypography.headingLarge.copyWith(
+              fontWeight: FontWeight.w900,
+              height: 1.08,
+            ),
+          ),
+          const SizedBox(height: 4),
           Text(
             seriesLabel.isEmpty ? numberLabel : '$numberLabel • $seriesLabel',
             style: AtlasTypography.bodyMedium.copyWith(
               color: AtlasColors.textSecondary,
+              fontWeight: FontWeight.w600,
             ),
           ),
+          const SizedBox(height: AtlasSpacing.md),
+          PopIdentityBadges(pop: pop, showStandardBadge: false),
           const SizedBox(height: AtlasSpacing.lg),
-          _HeroMarketStats(
+          _CollectibleProfile(pop: pop),
+          const SizedBox(height: AtlasSpacing.lg),
+          _PremiumMarketStats(
             value: pop.value,
             score: heroSummary.normalizedScore,
             classification: heroSummary.classification,
             trendPercent: trendPercent,
             trendTimeframe: trendTimeframe,
           ),
-          const SizedBox(height: AtlasSpacing.lg),
-          AtlasInsightPanel(
-            eyebrow: 'Atlas',
-            title: 'Collector Insight',
-            message: heroSummary.summary,
-            symbol: '🧠',
-            tone: AtlasInsightPanelTone.intelligence,
-          ),
-          const SizedBox(height: AtlasSpacing.lg),
-          Text(
-            'Release Identity',
-            style: AtlasTypography.bodySmall.copyWith(
-              color: AtlasColors.textSecondary,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: AtlasSpacing.sm),
-          PopIdentityBadges(pop: pop, showStandardBadge: true),
-          if (completionPrompt != null) ...[
-            const SizedBox(height: AtlasSpacing.lg),
-            AtlasActionRow(
-              title: 'Complete Listing',
-              description:
-                  '${completionPrompt.actionLabel}. ${completionPrompt.supportingText}',
-              icon: Icons.lightbulb_outline_rounded,
-              accentColor: AtlasColors.vaultGold,
-              onTap: onCompleteListing,
-            ),
-          ],
+          const SizedBox(height: AtlasSpacing.md),
+          _VerificationPanel(pop: pop),
         ],
       ),
     );
@@ -111,14 +97,17 @@ class _HeroTopRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final _PrimaryReleaseBadge releaseBadge = _primaryReleaseBadge(pop);
+
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: Wrap(
-            spacing: AtlasSpacing.sm,
-            runSpacing: AtlasSpacing.sm,
-            children: _buildPrimaryIdentityChips(pop),
+        Flexible(
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: AtlasChip(
+              label: releaseBadge.label,
+              icon: releaseBadge.icon,
+            ),
           ),
         ),
         const SizedBox(width: AtlasSpacing.sm),
@@ -133,8 +122,130 @@ class _HeroTopRow extends StatelessWidget {
   }
 }
 
-class _HeroMarketStats extends StatelessWidget {
-  const _HeroMarketStats({
+class _PremiumImageFrame extends StatelessWidget {
+  const _PremiumImageFrame({required this.imageUrl, required this.width});
+
+  final String imageUrl;
+  final double width;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(2),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: AtlasColors.vaultGold.withValues(alpha: 0.60),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AtlasColors.vaultGold.withValues(alpha: 0.14),
+            blurRadius: 18,
+            spreadRadius: 1,
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(19),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                AtlasColors.vaultGold.withValues(alpha: 0.14),
+                AtlasColors.card,
+                AtlasColors.vaultGold.withValues(alpha: 0.08),
+              ],
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: AtlasProductImage(
+              imageUrl: imageUrl,
+              width: width,
+              height: width * 1.08,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CollectibleProfile extends StatelessWidget {
+  const _CollectibleProfile({required this.pop});
+
+  final Pop pop;
+
+  @override
+  Widget build(BuildContext context) {
+    final details = <String>[
+      if (_profileValue(pop.releaseDate) != null)
+        _profileValue(pop.releaseDate)!,
+      if (_profileValue(pop.productionStatus) != null)
+        _profileValue(pop.productionStatus)!,
+      if (_profileValue(pop.packagingType) != null)
+        _profileValue(pop.packagingType)!,
+      if (_profileValue(pop.size) != null) _profileValue(pop.size)!,
+      if (_profileValue(pop.finish) != null) _profileValue(pop.finish)!,
+    ];
+
+    final uniqueDetails = <String>[];
+    for (final detail in details) {
+      if (!uniqueDetails.any(
+        (existing) => existing.toLowerCase() == detail.toLowerCase(),
+      )) {
+        uniqueDetails.add(detail);
+      }
+    }
+
+    if (uniqueDetails.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'COLLECTIBLE PROFILE',
+          style: AtlasTypography.bodySmall.copyWith(
+            color: AtlasColors.vaultGold,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 0.35,
+          ),
+        ),
+        const SizedBox(height: 5),
+        Text(
+          uniqueDetails.take(3).join(' • '),
+          style: AtlasTypography.bodyMedium.copyWith(
+            color: AtlasColors.textPrimary,
+            height: 1.34,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+String? _profileValue(String value) {
+  final cleaned = value.trim();
+  final normalized = cleaned.toLowerCase();
+
+  if (cleaned.isEmpty ||
+      normalized == 'none' ||
+      normalized == 'unknown' ||
+      normalized == 'not entered' ||
+      normalized == 'standard') {
+    return null;
+  }
+
+  return cleaned;
+}
+
+class _PremiumMarketStats extends StatelessWidget {
+  const _PremiumMarketStats({
     required this.value,
     required this.score,
     required this.classification,
@@ -150,103 +261,441 @@ class _HeroMarketStats extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool hasValue = value > 0;
-
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
-        final bool useVerticalLayout = constraints.maxWidth < 330;
-
-        final AtlasMetricPanel valuePanel = AtlasMetricPanel(
-          label: 'Current Value',
-          value: hasValue ? '\$${value.toStringAsFixed(2)}' : 'Value needed',
-          supportingText: _trendLabel(
-            trendPercent: trendPercent,
-            timeframe: trendTimeframe,
-          ),
-          icon: Icons.attach_money_rounded,
-        );
-
-        final AtlasMetricPanel scorePanel = AtlasMetricPanel(
-          label: 'Collector Score',
-          value: '$score / 100',
-          supportingText: classification,
-          icon: Icons.insights_rounded,
-        );
-
-        if (useVerticalLayout) {
-          return Column(
-            children: [
-              valuePanel,
-              const SizedBox(height: AtlasSpacing.md),
-              scorePanel,
-            ],
-          );
-        }
+        const double gap = AtlasSpacing.sm;
+        final double panelWidth = (constraints.maxWidth - gap) / 2;
 
         return Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(child: valuePanel),
-            const SizedBox(width: AtlasSpacing.md),
-            Expanded(child: scorePanel),
+            SizedBox(
+              width: panelWidth,
+              child: _MetricShell(
+                child: _ValueMetric(
+                  value: value,
+                  trendPercent: trendPercent,
+                  trendTimeframe: trendTimeframe,
+                ),
+              ),
+            ),
+            const SizedBox(width: gap),
+            SizedBox(
+              width: panelWidth,
+              child: _MetricShell(
+                child: _ScoreMetric(
+                  score: score,
+                  classification: classification,
+                ),
+              ),
+            ),
           ],
         );
       },
     );
   }
+}
 
-  String _trendLabel({
-    required double? trendPercent,
-    required String timeframe,
-  }) {
-    final double? trend = trendPercent;
+class _MetricShell extends StatelessWidget {
+  const _MetricShell({required this.child});
 
-    if (trend == null) {
-      return 'No trend yet';
-    }
+  final Widget child;
 
-    final String direction = trend > 0 ? '+' : '';
-
-    return '$direction${trend.toStringAsFixed(1)}% ($timeframe)';
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minHeight: 126),
+      padding: const EdgeInsets.all(AtlasSpacing.md),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: AtlasColors.vaultGold.withValues(alpha: 0.42),
+        ),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AtlasColors.card, AtlasColors.background],
+        ),
+      ),
+      child: child,
+    );
   }
 }
 
-List<Widget> _buildPrimaryIdentityChips(Pop pop) {
-  final chips = <Widget>[];
+class _ValueMetric extends StatelessWidget {
+  const _ValueMetric({
+    required this.value,
+    required this.trendPercent,
+    required this.trendTimeframe,
+  });
 
-  void addChip(String value, IconData icon) {
-    final cleaned = value.trim();
+  final double value;
+  final double? trendPercent;
+  final String trendTimeframe;
 
-    if (_isMeaningfulIdentityValue(cleaned)) {
-      chips.add(AtlasChip(label: cleaned, icon: icon));
-    }
-  }
+  @override
+  Widget build(BuildContext context) {
+    final bool hasValue = value > 0;
 
-  addChip(pop.variant, Icons.auto_awesome_rounded);
-  addChip(pop.retailExclusive, Icons.storefront_outlined);
-  addChip(pop.eventSticker, Icons.local_activity_outlined);
-  addChip(pop.limitedEdition, Icons.numbers_rounded);
-
-  if (_isMeaningfulSignature(pop.signature)) {
-    chips.add(
-      AtlasChip(label: pop.signature.trim(), icon: Icons.draw_outlined),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(
+              Icons.attach_money_rounded,
+              size: 17,
+              color: AtlasColors.vaultGold,
+            ),
+            const SizedBox(width: 4),
+            Expanded(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'CURRENT VALUE',
+                  maxLines: 1,
+                  style: AtlasTypography.bodySmall.copyWith(
+                    color: AtlasColors.textSecondary,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AtlasSpacing.sm),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Expanded(
+              child: Text(
+                hasValue ? '\$${value.toStringAsFixed(2)}' : '—',
+                style: AtlasTypography.headingLarge.copyWith(
+                  color: AtlasColors.vaultGold,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+            const Icon(
+              Icons.show_chart_rounded,
+              color: AtlasColors.vaultGold,
+              size: 32,
+            ),
+          ],
+        ),
+        const SizedBox(height: AtlasSpacing.sm),
+        Text(
+          _trendLabel(trendPercent, trendTimeframe),
+          style: AtlasTypography.bodySmall.copyWith(
+            color: AtlasColors.textSecondary,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
     );
   }
+}
 
-  if (chips.isEmpty) {
-    chips.add(
-      const AtlasChip(
-        label: 'Standard Release',
-        icon: Icons.inventory_2_outlined,
+class _ScoreMetric extends StatelessWidget {
+  const _ScoreMetric({required this.score, required this.classification});
+
+  final int score;
+  final String classification;
+
+  @override
+  Widget build(BuildContext context) {
+    final double progress = (score.clamp(0, 100)) / 100;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(
+              Icons.insights_rounded,
+              size: 17,
+              color: AtlasColors.vaultGold,
+            ),
+            const SizedBox(width: 4),
+            Expanded(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'COLLECTOR SCORE',
+                  maxLines: 1,
+                  style: AtlasTypography.bodySmall.copyWith(
+                    color: AtlasColors.textSecondary,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AtlasSpacing.sm),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                '$score / 100',
+                style: AtlasTypography.headingLarge.copyWith(
+                  color: AtlasColors.vaultGold,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+            SizedBox(
+              width: 46,
+              height: 46,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  CircularProgressIndicator(
+                    value: 1,
+                    strokeWidth: 7,
+                    color: AtlasColors.border,
+                  ),
+                  CircularProgressIndicator(
+                    value: progress,
+                    strokeWidth: 7,
+                    color: AtlasColors.vaultGold,
+                    backgroundColor: Colors.transparent,
+                    strokeCap: StrokeCap.round,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AtlasSpacing.sm),
+        Text(
+          classification,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: AtlasTypography.bodySmall.copyWith(
+            color: AtlasColors.textSecondary,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _VerificationPanel extends StatelessWidget {
+  const _VerificationPanel({required this.pop});
+
+  final Pop pop;
+
+  @override
+  Widget build(BuildContext context) {
+    final bool hasCatalogIdentity =
+        pop.sourceCatalogId.trim().isNotEmpty ||
+        pop.sourceCollectibleId.trim().isNotEmpty ||
+        pop.sourceUpc.trim().isNotEmpty;
+    final bool hasAuthentication =
+        pop.authenticationProvider.trim().isNotEmpty ||
+        pop.authenticityNumber.trim().isNotEmpty;
+    final bool hasCondition =
+        !_isMissingDetail(pop.itemCondition) ||
+        !_isMissingDetail(pop.boxCondition);
+
+    return Container(
+      padding: const EdgeInsets.all(AtlasSpacing.md),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: AtlasColors.vaultGold.withValues(alpha: 0.44),
+        ),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AtlasColors.card, AtlasColors.background],
+        ),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 54,
+                height: 54,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AtlasColors.vaultGold.withValues(alpha: 0.13),
+                  border: Border.all(
+                    color: AtlasColors.vaultGold.withValues(alpha: 0.40),
+                  ),
+                ),
+                child: const Icon(
+                  Icons.verified_user_rounded,
+                  color: AtlasColors.vaultGold,
+                  size: 31,
+                ),
+              ),
+              const SizedBox(width: AtlasSpacing.md),
+              Expanded(
+                child: Text(
+                  'VERIFICATION & AUTHENTICITY',
+                  style: AtlasTypography.bodyMedium.copyWith(
+                    color: AtlasColors.textSecondary,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.25,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AtlasSpacing.md),
+          _VerificationRow(
+            passed: hasCatalogIdentity,
+            text: hasCatalogIdentity
+                ? 'Catalog identity linked'
+                : 'Catalog identity not linked',
+          ),
+          const SizedBox(height: 5),
+          _VerificationRow(
+            passed: hasCondition,
+            text: hasCondition ? _conditionText(pop) : 'Condition not recorded',
+          ),
+          const SizedBox(height: 5),
+          _VerificationRow(
+            passed: hasAuthentication,
+            text: hasAuthentication
+                ? _authenticationText(pop)
+                : 'Authentication not recorded',
+          ),
+          if (_catalogSerial(pop).isNotEmpty) ...[
+            const SizedBox(height: AtlasSpacing.sm),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'SER. #: ${_catalogSerial(pop)}',
+                style: AtlasTypography.bodySmall.copyWith(
+                  color: AtlasColors.textSecondary,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
+}
 
-  return chips.take(3).toList();
+class _VerificationRow extends StatelessWidget {
+  const _VerificationRow({required this.passed, required this.text});
+
+  final bool passed;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color color = passed ? AtlasColors.success : AtlasColors.warning;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(
+          passed ? Icons.check_circle_rounded : Icons.info_outline_rounded,
+          size: 17,
+          color: color,
+        ),
+        const SizedBox(width: AtlasSpacing.sm),
+        Expanded(
+          child: Text(
+            text,
+            style: AtlasTypography.bodySmall.copyWith(
+              color: AtlasColors.textPrimary,
+              fontWeight: FontWeight.w600,
+              height: 1.25,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+_PrimaryReleaseBadge _primaryReleaseBadge(Pop pop) {
+  final List<_PrimaryReleaseBadge> candidates = [
+    _PrimaryReleaseBadge(pop.variant.trim(), Icons.auto_awesome_rounded),
+    _PrimaryReleaseBadge(
+      pop.eventSticker.trim(),
+      Icons.local_activity_outlined,
+    ),
+    _PrimaryReleaseBadge(pop.retailExclusive.trim(), Icons.storefront_outlined),
+    _PrimaryReleaseBadge(pop.limitedEdition.trim(), Icons.numbers_rounded),
+  ];
+
+  for (final _PrimaryReleaseBadge candidate in candidates) {
+    if (_isMeaningfulIdentityValue(candidate.label)) {
+      return candidate;
+    }
+  }
+
+  return const _PrimaryReleaseBadge(
+    'Standard Release',
+    Icons.inventory_2_outlined,
+  );
+}
+
+String _trendLabel(double? trendPercent, String timeframe) {
+  if (trendPercent == null) {
+    return 'Current (No trend yet)';
+  }
+
+  final String direction = trendPercent > 0 ? '+' : '';
+  return '$direction${trendPercent.toStringAsFixed(1)}% ($timeframe)';
+}
+
+String _conditionText(Pop pop) {
+  final String item = pop.itemCondition.trim();
+  final String box = pop.boxCondition.trim();
+
+  if (!_isMissingDetail(box) && !_isMissingDetail(item)) {
+    return 'Condition: Box $box • Item $item';
+  }
+
+  if (!_isMissingDetail(box)) {
+    return 'Box condition: $box';
+  }
+
+  return 'Item condition: $item';
+}
+
+String _authenticationText(Pop pop) {
+  final String provider = pop.authenticationProvider.trim();
+  final String number = pop.authenticityNumber.trim();
+
+  if (provider.isNotEmpty && number.isNotEmpty) {
+    return 'Authentication: $provider • $number';
+  }
+
+  if (provider.isNotEmpty) {
+    return 'Authentication: $provider';
+  }
+
+  return 'Authentication #: $number';
+}
+
+String _catalogSerial(Pop pop) {
+  if (pop.sourceCollectibleId.trim().isNotEmpty) {
+    return pop.sourceCollectibleId.trim();
+  }
+  if (pop.sourceCatalogId.trim().isNotEmpty) {
+    return pop.sourceCatalogId.trim();
+  }
+  return pop.authenticityNumber.trim();
 }
 
 bool _isMeaningfulIdentityValue(String value) {
-  final normalized = value.trim().toLowerCase();
+  final String normalized = value.trim().toLowerCase();
 
   if (normalized.isEmpty) {
     return false;
@@ -259,42 +708,8 @@ bool _isMeaningfulIdentityValue(String value) {
       normalized != 'not entered';
 }
 
-bool _isMeaningfulSignature(String value) {
-  final normalized = value.trim().toLowerCase();
-
-  return normalized.isNotEmpty &&
-      normalized != 'none' &&
-      normalized != 'unsigned' &&
-      normalized != 'not entered';
-}
-
-_CompletionPrompt? _buildCompletionPrompt(Pop pop) {
-  if (_isMissingDetail(pop.boxCondition)) {
-    return const _CompletionPrompt(
-      actionLabel: 'Add Box Condition',
-      supportingText: 'Unlock a more accurate valuation.',
-    );
-  }
-
-  if (_isMissingDetail(pop.itemCondition)) {
-    return const _CompletionPrompt(
-      actionLabel: 'Add Item Condition',
-      supportingText: 'Improve valuation and collection accuracy.',
-    );
-  }
-
-  if (pop.pricePaid <= 0) {
-    return const _CompletionPrompt(
-      actionLabel: 'Add Purchase Price',
-      supportingText: 'Track profit, loss, and collection performance.',
-    );
-  }
-
-  return null;
-}
-
 bool _isMissingDetail(String value) {
-  final normalized = value.trim().toLowerCase();
+  final String normalized = value.trim().toLowerCase();
 
   return normalized.isEmpty ||
       normalized == 'none' ||
@@ -302,12 +717,9 @@ bool _isMissingDetail(String value) {
       normalized == 'unknown';
 }
 
-class _CompletionPrompt {
-  const _CompletionPrompt({
-    required this.actionLabel,
-    required this.supportingText,
-  });
+class _PrimaryReleaseBadge {
+  const _PrimaryReleaseBadge(this.label, this.icon);
 
-  final String actionLabel;
-  final String supportingText;
+  final String label;
+  final IconData icon;
 }

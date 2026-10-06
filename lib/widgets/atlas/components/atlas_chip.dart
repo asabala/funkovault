@@ -76,7 +76,15 @@ class AtlasChip extends StatelessWidget {
             Icon(icon, color: accentColor, size: _iconSize),
             const SizedBox(width: AtlasSpacing.xs),
           ],
-          Text(label, style: _textStyle),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              softWrap: false,
+              style: _textStyle,
+            ),
+          ),
         ],
       ),
     );

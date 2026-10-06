@@ -332,20 +332,20 @@ class _TrackingStatusOverlay extends StatelessWidget {
 
     if (snapshot.hasWorkInFlight) {
       label =
-          'ðŸ§  ${snapshot.activeResolutionCount} resolving â€¢ '
+          '🧠 ${snapshot.activeResolutionCount} resolving • '
           '${snapshot.pendingResolutionCount} queued';
     } else if (snapshot.completedCount > 0) {
       label =
-          'âœ… ${snapshot.completedCount} resolved â€¢ '
+          '✅ ${snapshot.completedCount} resolved • '
           '$activeTrackCount tracked';
     } else if (confirmedTrackCount > 0) {
       label =
-          'ðŸŽ¯ $confirmedTrackCount confirmed â€¢ '
+          '🎯 $confirmedTrackCount confirmed • '
           '$activeTrackCount tracked';
     } else if (activeTrackCount > 0) {
-      label = 'ðŸ‘€ $activeTrackCount tracked â€¢ stabilizing';
+      label = '👀 $activeTrackCount tracked • stabilizing';
     } else {
-      label = 'ðŸ“· Continuous tracking active';
+      label = '📷 Continuous tracking active';
     }
 
     return IgnorePointer(

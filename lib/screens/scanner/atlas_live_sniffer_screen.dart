@@ -95,7 +95,7 @@ class _AtlasLiveSnifferScreenState extends State<AtlasLiveSnifferScreen>
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 AtlasSectionHeader(
-                  title: 'ðŸ“¡ Atlas LiveLens',
+                  title: '📡 Atlas LiveLens',
                   subtitle:
                       'Floating collector intelligence while you browse another app.',
                   icon: Icons.picture_in_picture_alt_rounded,
