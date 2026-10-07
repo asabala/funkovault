@@ -331,6 +331,57 @@ final class AtlasLiveSnifferBoxCandidateExtractor {
       );
     }
 
+    // NAME-FIRST identity acquisition:
+    // A readable selected foreground box is useful evidence even before ML Kit
+    // successfully reads the Funko number badge. Do not discard WOLVERINE,
+    // TIANA, CHUCKLES, etc. just because the number is missing on this frame.
+    if (results.isEmpty && targetScoped && hasFocus) {
+      final List<AtlasLiveSnifferNativeTextBlock> identityBlocks = usableBlocks
+          .where((AtlasLiveSnifferNativeTextBlock block) {
+            return _lettersPattern.hasMatch(block.text) &&
+                _meaningfulWordCount(block.text) >= 1;
+          })
+          .toList(growable: false);
+
+      if (identityBlocks.isNotEmpty) {
+        final String identityText = identityBlocks
+            .map((AtlasLiveSnifferNativeTextBlock block) => block.text.trim())
+            .where((String value) => value.isNotEmpty)
+            .join(' ')
+            .replaceAll(RegExp(r'\s+'), ' ')
+            .trim();
+
+        if (identityText.isNotEmpty) {
+          final double left = identityBlocks
+              .map((AtlasLiveSnifferNativeTextBlock block) => block.left)
+              .reduce((double a, double b) => a < b ? a : b);
+          final double top = identityBlocks
+              .map((AtlasLiveSnifferNativeTextBlock block) => block.top)
+              .reduce((double a, double b) => a < b ? a : b);
+          final double right = identityBlocks
+              .map((AtlasLiveSnifferNativeTextBlock block) => block.right)
+              .reduce((double a, double b) => a > b ? a : b);
+          final double bottom = identityBlocks
+              .map((AtlasLiveSnifferNativeTextBlock block) => block.bottom)
+              .reduce((double a, double b) => a > b ? a : b);
+
+          results.add(
+            AtlasLiveSnifferBoxCandidate(
+              candidateId:
+                  'identity:${(targetX * 24).round()}:${(targetY * 24).round()}',
+              productNumber: '',
+              text: identityText,
+              left: left,
+              top: top,
+              right: right,
+              bottom: bottom,
+              featuredScore: 0.62,
+            ),
+          );
+        }
+      }
+    }
+
     results.sort(
       (AtlasLiveSnifferBoxCandidate a, AtlasLiveSnifferBoxCandidate b) =>
           b.featuredScore.compareTo(a.featuredScore),

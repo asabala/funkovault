@@ -71,14 +71,21 @@ final class AtlasLiveSnifferRecognitionController extends ChangeNotifier {
   final _StaticClutterTracker _staticClutterTracker = _StaticClutterTracker();
   String? _turnoverCandidateNumber;
   int _turnoverCandidateHits = 0;
+  String? _turnoverIdentitySignature;
+  int _turnoverIdentityHits = 0;
   bool _automaticTurnoverInFlight = false;
+  DateTime? _selectedTargetMissingSince;
 
   // 6C.5 Auction Fast Acquisition: keep the last fully verified foreground
   // result visible across the brief remove/replace handoff, while identity
   // evidence itself is cleared immediately. This is display retention only;
   // the next Pop never inherits the previous Pop's OCR/catalog evidence.
   static const Duration _verifiedResultHandoffDuration = Duration(
-    milliseconds: 900,
+    milliseconds: 1500,
+  );
+
+  static const Duration _selectedTargetMissingResetDuration = Duration(
+    milliseconds: 1500,
   );
   Timer? _verifiedResultHoldTimer;
   AtlasLiveSnifferHudSnapshot? _lastVerifiedFeaturedHud;
@@ -268,29 +275,49 @@ final class AtlasLiveSnifferRecognitionController extends ChangeNotifier {
 
     if (extracted.isEmpty) {
       if (frame.isSingleTargetFrame) {
-        // A dedicated header/nameplate OCR pass may contain useful words but no
-        // product number. Once this selection already has numbered evidence,
-        // retain those scoped words so the next catalog projection can use the
-        // character/release name seen on another face of the rotating box.
+        // Name-first firewall: selected-target OCR may establish physical
+        // identity before a readable product number exists. Catalog lookup is
+        // forbidden until visual identity AND a stable number are both present.
         final String evidenceKey = 'selection:$_activeSelectionGeneration';
-        final _TemporalBoxEvidence? existing = _temporalEvidence[evidenceKey];
-        if (existing != null) {
-          final String supplementalText = _candidateExtractor
-              .extractSupplementalText(
-                frame,
-                focusX: _selectionAnchorX ?? _targetX,
-                focusY: _selectionAnchorY ?? _targetY,
-              );
-          if (supplementalText.isNotEmpty) {
-            final _TemporalBoxEvidence updatedEvidence = existing
-                .addSupplementalText(supplementalText, frame.capturedAt);
-            _temporalEvidence[evidenceKey] = updatedEvidence;
+        final String supplementalText = _candidateExtractor
+            .extractSupplementalText(
+              frame,
+              focusX: _selectionAnchorX ?? _targetX,
+              focusY: _selectionAnchorY ?? _targetY,
+            );
 
-            // Number -> name handoff: a rotating box often exposes the number
-            // and title on different faces. As soon as name-only OCR arrives,
-            // immediately re-run the catalog partition using the preserved
-            // number plus the newly accumulated name/series evidence. Do not
-            // wait for another frame that happens to contain the number again.
+        if (supplementalText.isNotEmpty) {
+          final targetBox = frame.trackedBoundingBox;
+          final double centerX = _selectionAnchorX ?? _targetX ?? 0.5;
+          final double centerY = _selectionAnchorY ?? _targetY ?? 0.55;
+
+          final _TemporalBoxEvidence updatedEvidence = _temporalEvidence.update(
+            evidenceKey,
+            (existing) => existing.addSupplementalText(
+              supplementalText,
+              frame.capturedAt,
+            ),
+            ifAbsent: () => _TemporalBoxEvidence.fromVisualText(
+              candidateId: evidenceKey,
+              text: supplementalText,
+              at: frame.capturedAt,
+              left:
+                  targetBox?.left ??
+                  (centerX - 0.20).clamp(0.0, 1.0).toDouble(),
+              top:
+                  targetBox?.top ?? (centerY - 0.24).clamp(0.0, 1.0).toDouble(),
+              right:
+                  targetBox?.right ??
+                  (centerX + 0.20).clamp(0.0, 1.0).toDouble(),
+              bottom:
+                  targetBox?.bottom ??
+                  (centerY + 0.24).clamp(0.0, 1.0).toDouble(),
+            ),
+          );
+
+          _projectVisualAcquisition(updatedEvidence);
+
+          if (updatedEvidence.readyForCatalogVerification) {
             if (!_ocrProjectionInFlight) {
               _ocrProjectionInFlight = true;
               final int generation = _sessionGeneration;
@@ -302,25 +329,10 @@ final class AtlasLiveSnifferRecognitionController extends ChangeNotifier {
                 ),
               );
             } else {
-              // Do not lose a name that arrived while the prior catalog lookup
-              // was still running. The resolver's finally block immediately
-              // consumes the newest selected-target evidence next.
               _selectedEvidenceResolutionPending = true;
             }
-
-            _hud = AtlasLiveSnifferHudSnapshot(
-              state: _hud.state,
-              title: _hud.title,
-              statusLabel: 'Resolving selected Pop...',
-              detail: 'Combining the locked number with the box name...',
-              cachedValue: _hud.cachedValue,
-              matchConfidence: _hud.matchConfidence,
-              items: _hud.items,
-            );
-            unawaited(_publishHud());
-            notifyListeners();
-            return;
           }
+          return;
         }
 
         // No text during a turntable rotation is not a target loss. Preserve the
@@ -331,7 +343,7 @@ final class AtlasLiveSnifferRecognitionController extends ChangeNotifier {
           statusLabel: _targetState == AtlasLiveSnifferTargetState.acquiring
               ? 'Locking selected Pop...'
               : 'Tracking selected Pop...',
-          detail: 'Waiting for a readable name, number, or sticker...',
+          detail: 'Waiting for readable physical identity text...',
           cachedValue: _hud.cachedValue,
           matchConfidence: _hud.matchConfidence,
           items: _hud.items,
@@ -346,7 +358,7 @@ final class AtlasLiveSnifferRecognitionController extends ChangeNotifier {
           statusLabel: _scanMode == AtlasLiveSnifferScanMode.featured
               ? 'Finding featured Pop...'
               : 'Finding visible Pops...',
-          detail: 'Name + number are the fastest identity clues.',
+          detail: 'Reading physical name / franchise evidence first.',
         );
         unawaited(_publishHud());
         notifyListeners();
@@ -401,13 +413,6 @@ final class AtlasLiveSnifferRecognitionController extends ChangeNotifier {
       selected = plausible.take(12).toList(growable: false);
     }
 
-    if (frame.isSingleTargetFrame &&
-        selected.isNotEmpty &&
-        _shouldRestartForContradictoryNumber(selected.first)) {
-      _requestAutomaticTurnover();
-      return;
-    }
-
     final String selectedSupplementalText = frame.isSingleTargetFrame
         ? _candidateExtractor.extractSupplementalText(
             frame,
@@ -416,6 +421,25 @@ final class AtlasLiveSnifferRecognitionController extends ChangeNotifier {
           )
         : '';
 
+    if (frame.isSingleTargetFrame && selected.isNotEmpty) {
+      final AtlasLiveSnifferBoxCandidate foreground = selected.first;
+
+      final bool numberTurnover = _shouldRestartForContradictoryNumber(
+        foreground,
+      );
+
+      final bool identityTurnover = _shouldRestartForContradictoryIdentity(
+        foreground,
+        selectedSupplementalText,
+      );
+
+      if (numberTurnover || identityTurnover) {
+        _requestAutomaticTurnover();
+        return;
+      }
+    }
+
+    _TemporalBoxEvidence? selectedTemporalEvidence;
     final List<AtlasLiveSnifferBoxCandidate> accumulated = selected
         .map((AtlasLiveSnifferBoxCandidate candidate) {
           final String evidenceKey = frame.isSingleTargetFrame
@@ -438,9 +462,19 @@ final class AtlasLiveSnifferRecognitionController extends ChangeNotifier {
             );
             _temporalEvidence[evidenceKey] = evidence;
           }
+          if (frame.isSingleTargetFrame) {
+            selectedTemporalEvidence = evidence;
+          }
           return evidence.toCandidate();
         })
         .toList(growable: false);
+
+    if (frame.isSingleTargetFrame && selectedTemporalEvidence != null) {
+      _projectVisualAcquisition(selectedTemporalEvidence!);
+      if (!selectedTemporalEvidence!.readyForCatalogVerification) {
+        return;
+      }
+    }
 
     if (!_ocrProjectionInFlight) {
       _ocrProjectionInFlight = true;
@@ -469,91 +503,128 @@ final class AtlasLiveSnifferRecognitionController extends ChangeNotifier {
   ) {
     final bool hasEvidence =
         frame.textBlocks.isNotEmpty || frame.barcodes.isNotEmpty;
+
     switch (frame.targetState) {
       case AtlasLiveSnifferTargetState.awaitingSelection:
+        _selectedTargetMissingSince = null;
+
         _hud = const AtlasLiveSnifferHudSnapshot(
           state: AtlasLiveSnifferHudState.listening,
           title: 'Tap the Pop you want to scan',
           statusLabel: 'Target selection',
           detail: 'Recognition is paused until you choose the physical box.',
         );
+
         unawaited(_publishHud());
         notifyListeners();
         return true;
+
       case AtlasLiveSnifferTargetState.coasting:
-        // Fix 6.4: physical tracking no longer gates recognition. If the native
-        // foreground footprint still produced OCR/barcode evidence, let that
-        // evidence continue to identity resolution during the short coast.
-        if (hasEvidence) return false;
+      case AtlasLiveSnifferTargetState.reacquiring:
+        if (hasEvidence) {
+          _selectedTargetMissingSince = null;
+          return false;
+        }
+
+        _selectedTargetMissingSince ??= frame.capturedAt;
+
+        final Duration missingFor = frame.capturedAt.difference(
+          _selectedTargetMissingSince!,
+        );
+
+        if (missingFor >= _selectedTargetMissingResetDuration) {
+          _selectedTargetMissingSince = null;
+          _requestAutomaticTurnover();
+          return true;
+        }
+
         _hud = AtlasLiveSnifferHudSnapshot(
           state: _hud.state,
           title: _hud.title,
-          statusLabel: 'Tracking selected Pop...',
+          statusLabel:
+              frame.targetState == AtlasLiveSnifferTargetState.reacquiring
+              ? 'Reacquiring selected Pop...'
+              : 'Tracking selected Pop...',
           detail: 'Brief visual gap. Holding the foreground identity.',
           cachedValue: _hud.cachedValue,
           matchConfidence: _hud.matchConfidence,
           items: _hud.items,
         );
+
         unawaited(_publishHud());
         notifyListeners();
         return true;
-      case AtlasLiveSnifferTargetState.reacquiring:
-        // Reacquiring is also evidence-capable. A readable foreground number or
-        // name is more useful than waiting for ML Kit to declare a perfect lock.
-        if (hasEvidence) return false;
-        _hud = AtlasLiveSnifferHudSnapshot(
-          state: _hud.state,
-          title: _hud.title,
-          statusLabel: 'Reacquiring selected Pop...',
-          detail: 'Watching the foreground footprint for readable evidence.',
-          cachedValue: _hud.cachedValue,
-          matchConfidence: _hud.matchConfidence,
-          items: _hud.items,
-        );
-        unawaited(_publishHud());
-        notifyListeners();
-        return true;
+
       case AtlasLiveSnifferTargetState.lost:
         final bool manuallySelectedTarget =
             _activeSelectionGeneration > 0 &&
             _selectionAnchorX != null &&
             _selectionAnchorY != null;
-        if (manuallySelectedTarget) {
-          // Native track loss does not revoke a user's tap. Preserve the selected
-          // generation and all accumulated temporal identity evidence. If the
-          // stable foreground ROI still produced OCR/barcode evidence, continue
-          // through normal identity resolution.
-          if (hasEvidence) return false;
-          _hud = AtlasLiveSnifferHudSnapshot(
-            state: _hud.state,
-            title: _hud.title,
-            statusLabel: 'Reacquiring selected Pop...',
+
+        if (!manuallySelectedTarget) {
+          _selectedTargetMissingSince = null;
+
+          _projectedTrackIds.clear();
+          _temporalEvidence.clear();
+          _staticClutterTracker.reset();
+
+          _hud = const AtlasLiveSnifferHudSnapshot(
+            state: AtlasLiveSnifferHudState.listening,
+            title: 'Target lost',
+            statusLabel: 'Watching for the next Pop...',
             detail:
-                'Holding your selected Pop while LiveLens reacquires the tracker.',
-            cachedValue: _hud.cachedValue,
-            matchConfidence: _hud.matchConfidence,
-            items: _hud.items,
+                'Atlas LiveLens will reacquire a persistent replacement automatically.',
           );
+
           unawaited(_publishHud());
           notifyListeners();
           return true;
         }
-        _projectedTrackIds.clear();
-        _temporalEvidence.clear();
-        _staticClutterTracker.reset();
-        _hud = const AtlasLiveSnifferHudSnapshot(
-          state: AtlasLiveSnifferHudState.listening,
-          title: 'Target lost',
-          statusLabel: 'Watching for the next Pop...',
-          detail:
-              'Atlas LiveLens will reacquire a persistent replacement automatically.',
+
+        // A readable target still exists inside the selected physical footprint.
+        // Continue normal OCR processing rather than resetting from one tracker gap.
+        if (hasEvidence) {
+          _selectedTargetMissingSince = null;
+          return false;
+        }
+
+        _selectedTargetMissingSince ??= frame.capturedAt;
+
+        final Duration missingFor = frame.capturedAt.difference(
+          _selectedTargetMissingSince!,
         );
+
+        // A manually selected Pop is allowed to coast through short rotation,
+        // hand-cover, blur, and turntable gaps. But it may NOT own the selection
+        // indefinitely after the physical product has actually left.
+        if (missingFor >= _selectedTargetMissingResetDuration) {
+          _selectedTargetMissingSince = null;
+          _requestAutomaticTurnover();
+          return true;
+        }
+
+        _hud = AtlasLiveSnifferHudSnapshot(
+          state: _hud.state,
+          title: _hud.title,
+          statusLabel: 'Reacquiring selected Pop...',
+          detail:
+              'Holding your selected Pop during a brief target loss. Waiting for it to return.',
+          cachedValue: _hud.cachedValue,
+          matchConfidence: _hud.matchConfidence,
+          items: _hud.items,
+        );
+
         unawaited(_publishHud());
         notifyListeners();
         return true;
+
       case AtlasLiveSnifferTargetState.none:
+        _selectedTargetMissingSince = null;
+        return false;
+
       case AtlasLiveSnifferTargetState.acquiring:
       case AtlasLiveSnifferTargetState.locked:
+        _selectedTargetMissingSince = null;
         return false;
     }
   }
@@ -885,23 +956,70 @@ final class AtlasLiveSnifferRecognitionController extends ChangeNotifier {
     return int.tryParse(value?.toString() ?? '') ?? 0;
   }
 
+  void _projectVisualAcquisition(_TemporalBoxEvidence evidence) {
+    if (_holdingVerifiedFeaturedHud) return;
+
+    final String visualLabel = evidence.visualLabel;
+    final String stableNumber = evidence.stableProductNumber;
+
+    if (!evidence.hasStableVisualIdentity) {
+      _hud = AtlasLiveSnifferHudSnapshot(
+        state: AtlasLiveSnifferHudState.listening,
+        title: 'Selected Pop',
+        statusLabel: 'Reading identity...',
+        detail: 'Keep the character name or franchise visible.',
+      );
+    } else if (stableNumber.isEmpty) {
+      _hud = AtlasLiveSnifferHudSnapshot(
+        state: AtlasLiveSnifferHudState.listening,
+        title: visualLabel,
+        statusLabel: 'Name found',
+        detail: 'Reading Pop number...',
+      );
+    } else {
+      _hud = AtlasLiveSnifferHudSnapshot(
+        state: AtlasLiveSnifferHudState.listening,
+        title: '$visualLabel #$stableNumber',
+        statusLabel: 'Verifying visual identity...',
+        detail: 'Checking the visual name + number against the catalog.',
+      );
+    }
+
+    unawaited(_publishHud());
+    notifyListeners();
+  }
+
   void _projectFeaturedAuctionMatch(AtlasLiveSnifferAuctionMatch match) {
     final AtlasCatalogProduct? product = match.bestMatch;
     if (product == null || !match.hasLikelyMatch) {
       // During the short remove/replace handoff, keep the last verified result
-      // visible instead of flashing an unverified number/background read. The
-      // new target is still being scanned and its evidence is fully isolated.
+      // visible instead of flashing an unverified number/background read.
       if (_holdingVerifiedFeaturedHud) {
         return;
       }
 
+      final _TemporalBoxEvidence? visualEvidence =
+          _activeSelectionGeneration > 0
+          ? _temporalEvidence['selection:$_activeSelectionGeneration']
+          : null;
+      final bool hasVisualIdentity =
+          visualEvidence?.hasStableVisualIdentity ?? false;
+      final String visualLabel = visualEvidence?.visualLabel ?? '';
+      final String visualNumber =
+          visualEvidence?.stableProductNumber ??
+          match.candidate.productNumber.trim();
+
       _hud = AtlasLiveSnifferHudSnapshot(
         state: AtlasLiveSnifferHudState.listening,
-        title: '#${match.candidate.productNumber}',
-        statusLabel: match.isNumberLocked ? 'Number locked' : 'Scanning box...',
-        detail: match.isNumberLocked
-            ? 'Number saved. Looking for the Pop name or franchise...'
-            : 'Keep the name or front panel visible.',
+        title: hasVisualIdentity
+            ? '$visualLabel${visualNumber.isEmpty ? '' : ' #$visualNumber'}'
+            : (visualNumber.isEmpty ? 'Selected Pop' : '#$visualNumber'),
+        statusLabel: hasVisualIdentity
+            ? 'Identity not verified'
+            : (match.isNumberLocked ? 'Number found' : 'Reading identity...'),
+        detail: hasVisualIdentity
+            ? 'The visual name/franchise does not agree with this catalog number yet. Keep scanning.'
+            : 'Keep the character name or franchise visible.',
         matchConfidence: match.confidence,
       );
       unawaited(_publishHud());
@@ -1105,15 +1223,28 @@ final class AtlasLiveSnifferRecognitionController extends ChangeNotifier {
 
     final String oldNumber = existing.productNumber.trim();
     final String newNumber = candidate.productNumber.trim();
-    if (oldNumber.isEmpty || newNumber.isEmpty || oldNumber == newNumber) {
+    if (oldNumber.isEmpty ||
+        newNumber.isEmpty ||
+        _sameNumberFamily(oldNumber, newNumber)) {
       _turnoverCandidateNumber = null;
       _turnoverCandidateHits = 0;
       return false;
     }
 
-    // Only a strong, repeated contradiction may overturn an established
-    // selected-target identity. This protects against one-frame shelf/UI OCR.
-    if (candidate.featuredScore < 0.42) {
+    // Number-based turnover must also come from the selected foreground core.
+    // A repeated shelf/UI number outside the selected Pop may never restart
+    // the physical target.
+    final double anchorX = _selectionAnchorX ?? _targetX ?? 0.5;
+    final double anchorY = _selectionAnchorY ?? _targetY ?? 0.55;
+    final bool insideForegroundCore =
+        (candidate.centerX - anchorX).abs() <= 0.20 &&
+        (candidate.centerY - anchorY).abs() <= 0.18;
+
+    // Only a strong, repeated contradiction from the foreground may overturn
+    // an established selected-target identity.
+    if (!insideForegroundCore || candidate.featuredScore < 0.42) {
+      _turnoverCandidateNumber = null;
+      _turnoverCandidateHits = 0;
       return false;
     }
     if (_turnoverCandidateNumber == newNumber) {
@@ -1125,6 +1256,154 @@ final class AtlasLiveSnifferRecognitionController extends ChangeNotifier {
 
     final int requiredHits = candidate.featuredScore >= 0.62 ? 2 : 3;
     return _turnoverCandidateHits >= requiredHits;
+  }
+
+  bool _shouldRestartForContradictoryIdentity(
+    AtlasLiveSnifferBoxCandidate candidate,
+    String supplementalText,
+  ) {
+    if (_automaticTurnoverInFlight || _activeSelectionGeneration <= 0) {
+      return false;
+    }
+
+    final String evidenceKey = 'selection:$_activeSelectionGeneration';
+    final _TemporalBoxEvidence? existing = _temporalEvidence[evidenceKey];
+
+    if (existing == null || !existing.hasStableVisualIdentity) {
+      _turnoverIdentitySignature = null;
+      _turnoverIdentityHits = 0;
+      return false;
+    }
+
+    // Identity turnover must come from the selected foreground footprint.
+    // Repeated shelf/UI OCR outside this core is static clutter, not a new Pop.
+    final double anchorX = _selectionAnchorX ?? _targetX ?? 0.5;
+    final double anchorY = _selectionAnchorY ?? _targetY ?? 0.55;
+    final bool insideForegroundCore =
+        (candidate.centerX - anchorX).abs() <= 0.20 &&
+        (candidate.centerY - anchorY).abs() <= 0.18;
+
+    if (!insideForegroundCore || candidate.featuredScore < 0.42) {
+      _turnoverIdentitySignature = null;
+      _turnoverIdentityHits = 0;
+      return false;
+    }
+
+    final Set<String> oldTokens = _turnoverIdentityTokens(existing.visualLabel);
+
+    final Set<String> newTokens = _turnoverIdentityTokens(
+      '${candidate.text} $supplementalText',
+    );
+
+    if (oldTokens.isEmpty || newTokens.isEmpty) {
+      return false;
+    }
+
+    final bool overlapsOldIdentity = oldTokens.any(newTokens.contains);
+
+    if (overlapsOldIdentity) {
+      _turnoverIdentitySignature = null;
+      _turnoverIdentityHits = 0;
+      return false;
+    }
+
+    if (newTokens.length < 2) {
+      return false;
+    }
+
+    final List<String> ranked = newTokens.toList(growable: false)..sort();
+    final String signature = ranked.take(4).join('|');
+
+    if (_turnoverIdentitySignature == signature) {
+      _turnoverIdentityHits += 1;
+    } else {
+      _turnoverIdentitySignature = signature;
+      _turnoverIdentityHits = 1;
+    }
+
+    final String oldNumber = existing.stableProductNumber;
+    final String newNumber = candidate.productNumber.trim();
+
+    final bool strongNumberContradiction =
+        oldNumber.isNotEmpty &&
+        newNumber.isNotEmpty &&
+        !_sameNumberFamily(oldNumber, newNumber);
+
+    if (strongNumberContradiction) {
+      return _turnoverIdentityHits >= 2;
+    }
+
+    return _turnoverIdentityHits >= 3;
+  }
+
+  Set<String> _turnoverIdentityTokens(String value) {
+    const Set<String> ignored = <String>{
+      'pop',
+      'funko',
+      'vinyl',
+      'figure',
+      'figures',
+      'animation',
+      'television',
+      'movies',
+      'movie',
+      'games',
+      'game',
+      'heroes',
+      'exclusive',
+      'limited',
+      'edition',
+      'special',
+      'warning',
+      'collectible',
+      'collectibles',
+      'the',
+      'and',
+      'for',
+      'with',
+      'from',
+      'this',
+      'that',
+      'your',
+      'you',
+      'are',
+      'was',
+      'were',
+      'has',
+      'have',
+    };
+
+    return value
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9]+'), ' ')
+        .split(' ')
+        .map((String token) => token.trim())
+        .where((String token) {
+          if (token.length < 3) return false;
+          if (ignored.contains(token)) return false;
+          if (RegExp(r'^\d+$').hasMatch(token)) return false;
+          return true;
+        })
+        .toSet();
+  }
+
+  bool _sameNumberFamily(String a, String b) {
+    final String first = a.trim();
+    final String second = b.trim();
+
+    if (first.isEmpty || second.isEmpty) return false;
+    if (first == second) return true;
+
+    final String longer = first.length >= second.length ? first : second;
+    final String shorter = first.length >= second.length ? second : first;
+
+    // OCR commonly loses one leading digit from a Funko number:
+    // 1372 -> 372, 1782 -> 782, 1127 -> 127.
+    if (longer.length - shorter.length != 1) {
+      return false;
+    }
+
+    return longer.endsWith(shorter);
   }
 
   void _requestAutomaticTurnover() {
@@ -1213,7 +1492,10 @@ final class AtlasLiveSnifferRecognitionController extends ChangeNotifier {
   void _resetTurnoverDetector() {
     _turnoverCandidateNumber = null;
     _turnoverCandidateHits = 0;
+    _turnoverIdentitySignature = null;
+    _turnoverIdentityHits = 0;
     _automaticTurnoverInFlight = false;
+    _selectedTargetMissingSince = null;
   }
 
   void _expireTemporalEvidence(DateTime now) {
@@ -1399,9 +1681,9 @@ final class _StaticClutterObservation {
 final class _TemporalBoxEvidence {
   const _TemporalBoxEvidence({
     required this.candidateId,
-    required this.productNumber,
-    required this.numberVotes,
-    required this.text,
+    required this.numberObservations,
+    required this.textWindows,
+    required this.anchoredIdentityPhrase,
     required this.left,
     required this.top,
     required this.right,
@@ -1411,16 +1693,77 @@ final class _TemporalBoxEvidence {
     required this.lastSeenAt,
   });
 
+  static const int _maxTextWindows = 8;
+  static const int _maxNumberObservations = 6;
+
+  static const int _minimumPhraseVotes = 2;
+  static const int _minimumNumberVotes = 2;
+
+  static const Set<String> _visualNoiseTokens = <String>{
+    'pop',
+    'funko',
+    'vinyl',
+    'figure',
+    'figures',
+    'animation',
+    'games',
+    'game',
+    'television',
+    'movies',
+    'movie',
+    'heroes',
+    'exclusive',
+    'limited',
+    'edition',
+    'special',
+    'chase',
+    'glow',
+    'metallic',
+    'flocked',
+    'diamond',
+    'warning',
+    'ages',
+    'made',
+    'collectible',
+    'collectibles',
+    'the',
+    'and',
+    'for',
+    'with',
+    'from',
+    'this',
+    'that',
+    'your',
+    'you',
+    'are',
+    'was',
+    'were',
+    'has',
+    'have',
+    'their',
+    'standard',
+    'release',
+  };
+
   factory _TemporalBoxEvidence.fromCandidate(
     AtlasLiveSnifferBoxCandidate candidate,
     DateTime at, {
     String? candidateIdOverride,
   }) {
+    final String cleanNumber = candidate.productNumber.trim();
+    final String cleanText = candidate.text.trim();
+
+    final List<String> initialWindows = cleanText.isEmpty
+        ? const <String>[]
+        : <String>[cleanText];
+
     return _TemporalBoxEvidence(
       candidateId: candidateIdOverride ?? candidate.candidateId,
-      productNumber: candidate.productNumber,
-      numberVotes: <String, int>{candidate.productNumber: 1},
-      text: candidate.text,
+      numberObservations: cleanNumber.isEmpty
+          ? const <String>[]
+          : <String>[cleanNumber],
+      textWindows: initialWindows,
+      anchoredIdentityPhrase: '',
       left: candidate.left,
       top: candidate.top,
       right: candidate.right,
@@ -1431,10 +1774,55 @@ final class _TemporalBoxEvidence {
     );
   }
 
+  factory _TemporalBoxEvidence.fromVisualText({
+    required String candidateId,
+    required String text,
+    required DateTime at,
+    required double left,
+    required double top,
+    required double right,
+    required double bottom,
+  }) {
+    final String cleanText = text.trim();
+
+    return _TemporalBoxEvidence(
+      candidateId: candidateId,
+      numberObservations: const <String>[],
+      textWindows: cleanText.isEmpty ? const <String>[] : <String>[cleanText],
+      anchoredIdentityPhrase: '',
+      left: left,
+      top: top,
+      right: right,
+      bottom: bottom,
+      featuredScore: 0.45,
+      hits: 1,
+      lastSeenAt: at,
+    );
+  }
+
   final String candidateId;
-  final String productNumber;
-  final Map<String, int> numberVotes;
-  final String text;
+
+  /// Rolling physical OCR observations from the selected target.
+  final List<String> numberObservations;
+  final List<String> textWindows;
+
+  /// Once Atlas sees a coherent identity phrase repeatedly, it is anchored here.
+  ///
+  /// Example:
+  ///   MICHAEL SCOTT
+  ///   MICHAEL SCOTT
+  ///
+  /// becomes:
+  ///   Michael Scott
+  ///
+  /// Later noisy reads such as:
+  ///   spinner
+  ///   liked
+  ///   scott
+  ///
+  /// are not allowed to rewrite that established identity.
+  final String anchoredIdentityPhrase;
+
   final double left;
   final double top;
   final double right;
@@ -1443,33 +1831,146 @@ final class _TemporalBoxEvidence {
   final int hits;
   final DateTime lastSeenAt;
 
+  // ---------------------------------------------------------------------------
+  // Compatibility
+  // ---------------------------------------------------------------------------
+
+  String get productNumber => stableProductNumber;
+
+  bool get hasStableVisualIdentity => anchoredIdentityPhrase.isNotEmpty;
+
+  String get visualLabel =>
+      anchoredIdentityPhrase.isEmpty ? 'Selected Pop' : anchoredIdentityPhrase;
+
+  bool get readyForCatalogVerification =>
+      hasStableVisualIdentity && stableProductNumber.isNotEmpty;
+
+  // ---------------------------------------------------------------------------
+  // Stable product number
+  // ---------------------------------------------------------------------------
+
+  String get stableProductNumber {
+    if (numberObservations.isEmpty) return '';
+
+    final Map<String, int> familyVotes = <String, int>{};
+
+    for (final String raw in numberObservations) {
+      final String incoming = raw.trim();
+
+      if (incoming.isEmpty) continue;
+      if (!RegExp(r'^\d{1,4}$').hasMatch(incoming)) continue;
+
+      String familyKey = incoming;
+
+      final List<String> existingKeys = familyVotes.keys.toList(
+        growable: false,
+      );
+
+      for (final String existing in existingKeys) {
+        if (!_numbersAreSuffixRelated(existing, incoming)) {
+          continue;
+        }
+
+        final String longer = existing.length >= incoming.length
+            ? existing
+            : incoming;
+
+        if (longer != existing) {
+          final int carriedVotes = familyVotes.remove(existing) ?? 0;
+
+          familyVotes.update(
+            longer,
+            (int count) => count + carriedVotes,
+            ifAbsent: () => carriedVotes,
+          );
+        }
+
+        familyKey = longer;
+        break;
+      }
+
+      familyVotes.update(
+        familyKey,
+        (int count) => count + 1,
+        ifAbsent: () => 1,
+      );
+    }
+
+    if (familyVotes.isEmpty) return '';
+
+    final List<MapEntry<String, int>> ranked = familyVotes.entries.toList()
+      ..sort((a, b) {
+        final int voteOrder = b.value.compareTo(a.value);
+
+        if (voteOrder != 0) {
+          return voteOrder;
+        }
+
+        // If 372 and 1372 have otherwise equivalent evidence,
+        // prefer the longer/full number.
+        return b.key.length.compareTo(a.key.length);
+      });
+
+    final MapEntry<String, int> winner = ranked.first;
+
+    if (winner.value < _minimumNumberVotes) {
+      return '';
+    }
+
+    return winner.key;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Catalog evidence
+  // ---------------------------------------------------------------------------
+
+  String get text {
+    final List<String> parts = <String>[
+      if (anchoredIdentityPhrase.isNotEmpty) anchoredIdentityPhrase,
+      if (stableProductNumber.isNotEmpty) stableProductNumber,
+    ];
+
+    return parts.join(' ');
+  }
+
+  // ---------------------------------------------------------------------------
+  // Temporal updates
+  // ---------------------------------------------------------------------------
+
   _TemporalBoxEvidence add(
     AtlasLiveSnifferBoxCandidate candidate,
     DateTime at,
   ) {
-    final Set<String> parts = <String>{
-      ...text.split(' '),
-      ...candidate.text.split(' '),
-    }..removeWhere((String value) => value.trim().isEmpty);
-    final Map<String, int> updatedVotes = <String, int>{...numberVotes};
-    updatedVotes.update(
-      candidate.productNumber,
-      (int count) => count + 1,
-      ifAbsent: () => 1,
-    );
-    String winningNumber = productNumber;
-    int winningVotes = updatedVotes[winningNumber] ?? 0;
-    for (final MapEntry<String, int> entry in updatedVotes.entries) {
-      if (entry.value > winningVotes) {
-        winningNumber = entry.key;
-        winningVotes = entry.value;
-      }
+    final List<String> updatedNumbers = <String>[...numberObservations];
+
+    final String incomingNumber = candidate.productNumber.trim();
+
+    if (incomingNumber.isNotEmpty &&
+        RegExp(r'^\d{1,4}$').hasMatch(incomingNumber)) {
+      updatedNumbers.add(incomingNumber);
     }
+
+    while (updatedNumbers.length > _maxNumberObservations) {
+      updatedNumbers.removeAt(0);
+    }
+
+    final List<String> updatedText = _appendTextWindow(
+      textWindows,
+      candidate.text,
+      at: at,
+      previousAt: lastSeenAt,
+    );
+
+    final String updatedAnchor = _resolveIdentityAnchor(
+      existingAnchor: anchoredIdentityPhrase,
+      windows: updatedText,
+    );
+
     return _TemporalBoxEvidence(
       candidateId: candidateId,
-      productNumber: winningNumber,
-      numberVotes: Map<String, int>.unmodifiable(updatedVotes),
-      text: parts.join(' '),
+      numberObservations: List<String>.unmodifiable(updatedNumbers),
+      textWindows: List<String>.unmodifiable(updatedText),
+      anchoredIdentityPhrase: updatedAnchor,
       left: candidate.left,
       top: candidate.top,
       right: candidate.right,
@@ -1481,13 +1982,29 @@ final class _TemporalBoxEvidence {
   }
 
   _TemporalBoxEvidence addSupplementalText(String value, DateTime at) {
-    final Set<String> parts = <String>{...text.split(' '), ...value.split(' ')}
-      ..removeWhere((String item) => item.trim().isEmpty);
+    final String clean = value.trim();
+
+    if (clean.isEmpty) {
+      return this;
+    }
+
+    final List<String> updatedText = _appendTextWindow(
+      textWindows,
+      clean,
+      at: at,
+      previousAt: lastSeenAt,
+    );
+
+    final String updatedAnchor = _resolveIdentityAnchor(
+      existingAnchor: anchoredIdentityPhrase,
+      windows: updatedText,
+    );
+
     return _TemporalBoxEvidence(
       candidateId: candidateId,
-      productNumber: productNumber,
-      numberVotes: numberVotes,
-      text: parts.join(' '),
+      numberObservations: numberObservations,
+      textWindows: List<String>.unmodifiable(updatedText),
+      anchoredIdentityPhrase: updatedAnchor,
       left: left,
       top: top,
       right: right,
@@ -1502,9 +2019,10 @@ final class _TemporalBoxEvidence {
     final double temporalBonus = ((hits - 1) * 0.04)
         .clamp(0.0, 0.16)
         .toDouble();
+
     return AtlasLiveSnifferBoxCandidate(
       candidateId: candidateId,
-      productNumber: productNumber,
+      productNumber: stableProductNumber,
       text: text,
       left: left,
       top: top,
@@ -1512,5 +2030,271 @@ final class _TemporalBoxEvidence {
       bottom: bottom,
       featuredScore: (featuredScore + temporalBonus).clamp(0.0, 1.0).toDouble(),
     );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Phrase anchoring
+  // ---------------------------------------------------------------------------
+
+  static String _resolveIdentityAnchor({
+    required String existingAnchor,
+    required List<String> windows,
+  }) {
+    final Map<String, int> phraseVotes = <String, int>{};
+
+    for (final String window in windows) {
+      final Set<String> phrasesSeenThisFrame = _identityPhrases(window);
+
+      for (final String phrase in phrasesSeenThisFrame) {
+        phraseVotes.update(phrase, (int count) => count + 1, ifAbsent: () => 1);
+      }
+    }
+
+    final List<MapEntry<String, int>> eligible = phraseVotes.entries
+        .where((entry) => entry.value >= _minimumPhraseVotes)
+        .toList();
+
+    if (eligible.isEmpty) {
+      return existingAnchor;
+    }
+
+    eligible.sort((a, b) {
+      final int aWords = a.key.split(' ').length;
+      final int bWords = b.key.split(' ').length;
+
+      // Prefer coherent multi-word names over isolated words.
+      final int wordCountOrder = bWords.compareTo(aWords);
+
+      if (wordCountOrder != 0) {
+        return wordCountOrder;
+      }
+
+      final int voteOrder = b.value.compareTo(a.value);
+
+      if (voteOrder != 0) {
+        return voteOrder;
+      }
+
+      return b.key.length.compareTo(a.key.length);
+    });
+
+    final String bestPhrase = eligible.first.key;
+
+    if (existingAnchor.isEmpty) {
+      return _titleCasePhrase(bestPhrase);
+    }
+
+    final String normalizedExisting = _normalizePhrase(existingAnchor);
+    final String normalizedBest = _normalizePhrase(bestPhrase);
+
+    if (normalizedExisting == normalizedBest) {
+      return existingAnchor;
+    }
+
+    // Once a name has been established, noisy rotation OCR is not allowed
+    // to replace it with an unrelated phrase.
+    //
+    // We only permit an upgrade when the newer phrase clearly contains the
+    // already-established identity.
+    //
+    // Example:
+    //   Scott
+    // becomes:
+    //   Michael Scott
+    //
+    // But:
+    //   Michael Scott
+    // does NOT become:
+    //   Spinner Scott Liked
+    if (_isIdentityUpgrade(
+      existing: normalizedExisting,
+      proposed: normalizedBest,
+    )) {
+      return _titleCasePhrase(bestPhrase);
+    }
+
+    return existingAnchor;
+  }
+
+  static bool _isIdentityUpgrade({
+    required String existing,
+    required String proposed,
+  }) {
+    if (existing.isEmpty || proposed.isEmpty) {
+      return false;
+    }
+
+    final List<String> existingTokens = existing.split(' ');
+    final List<String> proposedTokens = proposed.split(' ');
+
+    if (proposedTokens.length <= existingTokens.length) {
+      return false;
+    }
+
+    int existingIndex = 0;
+
+    for (final String token in proposedTokens) {
+      if (existingIndex < existingTokens.length &&
+          token == existingTokens[existingIndex]) {
+        existingIndex++;
+      }
+    }
+
+    return existingIndex == existingTokens.length;
+  }
+
+  static Set<String> _identityPhrases(String value) {
+    final List<String> tokens = _identityTokenList(value);
+
+    if (tokens.isEmpty) {
+      return const <String>{};
+    }
+
+    final Set<String> phrases = <String>{};
+
+    // Multi-word names/series are strongest.
+    //
+    // We create contiguous 2-, 3-, and 4-word phrases from the physical OCR
+    // while preserving the actual OCR word order.
+    for (int length = 2; length <= 4; length++) {
+      if (tokens.length < length) {
+        continue;
+      }
+
+      for (int start = 0; start <= tokens.length - length; start++) {
+        final String phrase = tokens
+            .sublist(start, start + length)
+            .join(' ')
+            .trim();
+
+        if (phrase.isNotEmpty) {
+          phrases.add(phrase);
+        }
+      }
+    }
+
+    // Single-word identities are needed for characters such as:
+    //   Shredder
+    //   Wolverine
+    //   Astarion
+    //
+    // Require a reasonably distinctive length. They still need repeated
+    // temporal votes before they can become authoritative.
+    for (final String token in tokens) {
+      if (token.length >= 5) {
+        phrases.add(token);
+      }
+    }
+
+    return phrases;
+  }
+
+  static List<String> _identityTokenList(String value) {
+    return value
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9]+'), ' ')
+        .split(' ')
+        .map((String token) => token.trim())
+        .where((String token) {
+          if (token.length < 2) {
+            return false;
+          }
+
+          if (_visualNoiseTokens.contains(token)) {
+            return false;
+          }
+
+          if (RegExp(r'^\d+$').hasMatch(token)) {
+            return false;
+          }
+
+          return true;
+        })
+        .toList(growable: false);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Text window management
+  // ---------------------------------------------------------------------------
+
+  static List<String> _appendTextWindow(
+    List<String> existing,
+    String value, {
+    required DateTime at,
+    required DateTime previousAt,
+  }) {
+    final String clean = value.trim();
+
+    if (clean.isEmpty) {
+      return <String>[...existing];
+    }
+
+    final List<String> updated = <String>[...existing];
+
+    // Candidate text and supplemental text from the same native frame count
+    // as ONE OCR observation, not two votes.
+    if (updated.isNotEmpty && at == previousAt) {
+      final String merged = '${updated.last} $clean'
+          .replaceAll(RegExp(r'\s+'), ' ')
+          .trim();
+
+      updated[updated.length - 1] = merged;
+    } else {
+      updated.add(clean);
+    }
+
+    while (updated.length > _maxTextWindows) {
+      updated.removeAt(0);
+    }
+
+    return updated;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Helpers
+  // ---------------------------------------------------------------------------
+
+  static String _normalizePhrase(String value) {
+    return value
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9]+'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+  }
+
+  static String _titleCasePhrase(String phrase) {
+    return phrase
+        .split(' ')
+        .where((String token) => token.isNotEmpty)
+        .map((String token) {
+          return '${token[0].toUpperCase()}${token.substring(1)}';
+        })
+        .join(' ');
+  }
+
+  static bool _numbersAreSuffixRelated(String a, String b) {
+    if (a.isEmpty || b.isEmpty) {
+      return false;
+    }
+
+    if (a == b) {
+      return true;
+    }
+
+    final String longer = a.length >= b.length ? a : b;
+    final String shorter = a.length >= b.length ? b : a;
+
+    // Repair exactly one lost leading digit:
+    //
+    // 1372 <-> 372
+    // 1782 <-> 782
+    // 1127 <-> 127
+    //
+    // Do not treat arbitrary partial reads as related.
+    if (longer.length - shorter.length != 1) {
+      return false;
+    }
+
+    return longer.endsWith(shorter);
   }
 }

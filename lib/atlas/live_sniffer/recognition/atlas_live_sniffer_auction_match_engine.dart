@@ -1,14 +1,22 @@
 import '../../catalog/models/atlas_catalog_product.dart';
 import '../../catalog/services/atlas_catalog_service.dart';
 import '../models/atlas_live_sniffer_box_candidate.dart';
+import 'atlas_live_sniffer_identity_gate.dart';
 
-enum AtlasAuctionMatchStage { scanning, numberLocked, provisional, confirmed }
+enum AtlasAuctionMatchStage {
+  scanning,
+  identityHypothesis,
+  numberLocked,
+  provisional,
+  confirmed,
+}
 
 enum AtlasAuctionRejectionReason {
   none,
   noProductNumber,
   emptyPartition,
   lowTokenOverlap,
+  identityContradiction,
   ambiguousPartition,
   lowConfidence,
   waitingConfirmation,
@@ -61,13 +69,18 @@ final class AtlasLiveSnifferAuctionMatch {
 
   bool get hasLikelyMatch =>
       bestMatch != null &&
+      (stage == AtlasAuctionMatchStage.provisional ||
+          stage == AtlasAuctionMatchStage.confirmed) &&
       confidence >= AtlasLiveSnifferAuctionMatchEngine.provisionalThreshold;
 
   bool get hasStrongMatch =>
       bestMatch != null &&
+      stage == AtlasAuctionMatchStage.confirmed &&
       confidence >= AtlasLiveSnifferAuctionMatchEngine.confirmedThreshold;
 
   bool get isAmbiguous => matches.length > 1 && !hasStrongMatch;
+  bool get isIdentityHypothesis =>
+      stage == AtlasAuctionMatchStage.identityHypothesis;
   bool get isNumberLocked => stage == AtlasAuctionMatchStage.numberLocked;
   bool get isProvisional => stage == AtlasAuctionMatchStage.provisional;
   bool get isConfirmed => stage == AtlasAuctionMatchStage.confirmed;
@@ -86,31 +99,6 @@ final class AtlasLiveSnifferAuctionMatchEngine {
   static const double fallbackBaseline = 0.18;
   static const double singleCandidateSeparationBonus = 0.15;
 
-  // Generic packaging words are useful for proving that OCR is looking at a
-  // Funko box, but they are not product identity. Never let these words turn a
-  // shared product number into a named catalog match.
-  static const Set<String> _nonIdentityTokens = <String>{
-    'pop',
-    'funko',
-    'vinyl',
-    'figure',
-    'figures',
-    'animation',
-    'heroes',
-    'movies',
-    'television',
-    'games',
-    'rocks',
-    'exclusive',
-    'limited',
-    'edition',
-    'collectible',
-    'collectibles',
-    'warning',
-    'ages',
-    'made',
-  };
-
   Future<AtlasLiveSnifferAuctionMatch> match(
     AtlasLiveSnifferBoxCandidate candidate,
   ) async {
@@ -119,50 +107,93 @@ final class AtlasLiveSnifferAuctionMatchEngine {
     final Set<String> evidenceTokens = tokenList.toSet();
 
     final String normalizedProductNumber = candidate.productNumber.trim();
-    final Set<String> identityEvidence = _identityTokens(rawOcr)
-      ..remove(normalizedProductNumber.toLowerCase());
 
-    if (normalizedProductNumber.isEmpty || normalizedProductNumber == '0') {
+    // NAME-FIRST identity authority:
+    // Build a catalog family from selected-target name/franchise OCR first.
+    // A raw number is never allowed to open a global catalog partition.
+    final List<AtlasCatalogProduct> identityFamily =
+        await _searchIdentityFamily(rawOcr);
+
+    if (identityFamily.isEmpty) {
       return AtlasLiveSnifferAuctionMatch(
         candidate: candidate,
         matches: const <AtlasCatalogProduct>[],
         confidence: 0,
-        stage: AtlasAuctionMatchStage.scanning,
+        stage: normalizedProductNumber.isEmpty
+            ? AtlasAuctionMatchStage.scanning
+            : AtlasAuctionMatchStage.numberLocked,
         diagnostics: AtlasAuctionDiagnostics(
           rawOcrText: rawOcr,
           normalizedTokens: evidenceTokens,
           partitionSize: 0,
-          anchorScore: 0,
+          anchorScore: normalizedProductNumber.isEmpty ? 0 : numberAnchorBonus,
           coverageScore: 0,
           separationScore: 0,
           orderBonus: 0,
-          rejectionReason: AtlasAuctionRejectionReason.noProductNumber,
+          rejectionReason: normalizedProductNumber.isEmpty
+              ? AtlasAuctionRejectionReason.lowTokenOverlap
+              : AtlasAuctionRejectionReason.waitingConfirmation,
         ),
       );
     }
 
-    final List<AtlasCatalogProduct> products = await _catalogService.search(
-      productNumber: candidate.productNumber,
-      limit: 20,
-    );
+    // If Atlas has established who the Pop is but not which numbered release,
+    // expose only a safe identity hypothesis to the controller. HAVE?/PRICE
+    // remain blocked until number verification succeeds.
+    if (normalizedProductNumber.isEmpty || normalizedProductNumber == '0') {
+      final List<AtlasCatalogProduct> rankedFamily = _rankIdentityFamily(
+        candidate,
+        identityFamily,
+      );
 
-    if (products.isEmpty) {
-      // A number that does not exist in the catalog is not an identity lock.
-      // Keep scanning so another OCR frame can correct a smudged/misread digit.
       return AtlasLiveSnifferAuctionMatch(
         candidate: candidate,
-        matches: const <AtlasCatalogProduct>[],
-        confidence: 0,
-        stage: AtlasAuctionMatchStage.scanning,
+        matches: List<AtlasCatalogProduct>.unmodifiable(rankedFamily.take(6)),
+        confidence: rankedFamily.isEmpty ? 0 : 0.50,
+        stage: AtlasAuctionMatchStage.identityHypothesis,
         diagnostics: AtlasAuctionDiagnostics(
           rawOcrText: rawOcr,
           normalizedTokens: evidenceTokens,
-          partitionSize: 0,
-          anchorScore: numberAnchorBonus,
-          coverageScore: 0,
+          partitionSize: identityFamily.length,
+          anchorScore: 0,
+          coverageScore: rankedFamily.isEmpty ? 0 : 0.50,
           separationScore: 0,
           orderBonus: 0,
-          rejectionReason: AtlasAuctionRejectionReason.emptyPartition,
+          rejectionReason: AtlasAuctionRejectionReason.waitingConfirmation,
+        ),
+      );
+    }
+
+    // NUMBER SECOND:
+    // The number may only choose a release inside the already-established
+    // identity family. Never broaden back out to all catalog records #372.
+    final List<AtlasCatalogProduct> products = identityFamily
+        .where((AtlasCatalogProduct product) {
+          return (product.productNumber?.trim() ?? '') ==
+              normalizedProductNumber;
+        })
+        .toList(growable: false);
+
+    if (products.isEmpty) {
+      final List<AtlasCatalogProduct> rankedFamily = _rankIdentityFamily(
+        candidate,
+        identityFamily,
+      );
+
+      return AtlasLiveSnifferAuctionMatch(
+        candidate: candidate,
+        matches: List<AtlasCatalogProduct>.unmodifiable(rankedFamily.take(6)),
+        confidence: rankedFamily.isEmpty ? 0 : 0.50,
+        stage: AtlasAuctionMatchStage.identityHypothesis,
+        diagnostics: AtlasAuctionDiagnostics(
+          rawOcrText: rawOcr,
+          normalizedTokens: evidenceTokens,
+          partitionSize: identityFamily.length,
+          anchorScore: numberAnchorBonus,
+          coverageScore: rankedFamily.isEmpty ? 0 : 0.50,
+          separationScore: 0,
+          orderBonus: 0,
+          rejectionReason: AtlasAuctionRejectionReason.waitingConfirmation,
         ),
       );
     }
@@ -176,6 +207,8 @@ final class AtlasLiveSnifferAuctionMatchEngine {
         double orderBonus,
         int identityHits,
         double identityCoverage,
+        bool identityValidated,
+        bool identityContradicted,
       })
     >
     scored =
@@ -185,7 +218,6 @@ final class AtlasLiveSnifferAuctionMatchEngine {
                 candidate,
                 tokenList,
                 evidenceTokens,
-                identityEvidence,
                 product,
               );
               return (
@@ -196,10 +228,23 @@ final class AtlasLiveSnifferAuctionMatchEngine {
                 orderBonus: breakdown.orderBonus,
                 identityHits: breakdown.identityHits,
                 identityCoverage: breakdown.identityCoverage,
+                identityValidated: breakdown.identityValidated,
+                identityContradicted: breakdown.identityContradicted,
               );
             })
             .toList(growable: false)
           ..sort((a, b) {
+            final int contradictionOrder = (a.identityContradicted ? 1 : 0)
+                .compareTo(b.identityContradicted ? 1 : 0);
+            if (contradictionOrder != 0) return contradictionOrder;
+
+            // A candidate must first pass the identity evidence gate. Raw OCR
+            // overlap is only useful after the name/franchise evidence agrees.
+            final int validationOrder = (b.identityValidated ? 1 : 0).compareTo(
+              a.identityValidated ? 1 : 0,
+            );
+            if (validationOrder != 0) return validationOrder;
+
             // A real name/series/character token from the selected box outranks
             // generic OCR coverage. This prevents #926 + "One Piece" from
             // resolving to an unrelated #926 catalog record.
@@ -215,6 +260,28 @@ final class AtlasLiveSnifferAuctionMatchEngine {
           });
 
     final best = scored.first;
+
+    if (best.identityContradicted || !best.identityValidated) {
+      return AtlasLiveSnifferAuctionMatch(
+        candidate: candidate,
+        matches: const <AtlasCatalogProduct>[],
+        confidence: 0,
+        stage: AtlasAuctionMatchStage.numberLocked,
+        diagnostics: AtlasAuctionDiagnostics(
+          rawOcrText: rawOcr,
+          normalizedTokens: evidenceTokens,
+          partitionSize: products.length,
+          anchorScore: best.anchor,
+          coverageScore: best.coverage,
+          separationScore: 0,
+          orderBonus: best.orderBonus,
+          rejectionReason: best.identityContradicted
+              ? AtlasAuctionRejectionReason.identityContradiction
+              : AtlasAuctionRejectionReason.lowTokenOverlap,
+        ),
+      );
+    }
+
     final double secondScore = scored.length > 1 ? scored[1].totalScore : 0;
     final double separation = (best.totalScore - secondScore)
         .clamp(0.0, 1.0)
@@ -251,7 +318,7 @@ final class AtlasLiveSnifferAuctionMatchEngine {
     // Product number narrows the catalog partition; it never names the Pop.
     // Require at least one discriminative identity word from the selected box
     // to overlap the candidate's name/character/series/product line.
-    final bool identityValidated = best.identityHits > 0;
+    final bool identityValidated = best.identityValidated;
     final bool shortNumberNeedsMoreEvidence =
         normalizedProductNumber.length <= 2 && !identityValidated;
     final bool catalogTitleNeedsMoreEvidence = !identityValidated;
@@ -301,12 +368,13 @@ final class AtlasLiveSnifferAuctionMatchEngine {
     double orderBonus,
     int identityHits,
     double identityCoverage,
+    bool identityValidated,
+    bool identityContradicted,
   })
   _scoreBreakdown(
     AtlasLiveSnifferBoxCandidate candidate,
     List<String> rawTokens,
     Set<String> evidence,
-    Set<String> identityEvidence,
     AtlasCatalogProduct product,
   ) {
     final double anchor = candidate.productNumber.isNotEmpty
@@ -321,6 +389,8 @@ final class AtlasLiveSnifferAuctionMatchEngine {
         orderBonus: 0,
         identityHits: 0,
         identityCoverage: 0,
+        identityValidated: false,
+        identityContradicted: false,
       );
     }
 
@@ -330,21 +400,17 @@ final class AtlasLiveSnifferAuctionMatchEngine {
     final Set<String> variantTokens = _tokens(product.variantName ?? '');
     final Set<String> lineTokens = _tokens(product.productLine ?? '');
 
-    final Set<String> productIdentityTokens = <String>{
-      ..._identityTokens(product.displayName),
-      ..._identityTokens(product.characterName ?? ''),
-      ..._identityTokens(product.series ?? ''),
-      ..._identityTokens(product.productLine ?? ''),
-      ..._identityTokens(product.variantName ?? ''),
-    };
-    final int identityHits = productIdentityTokens
-        .where(identityEvidence.contains)
-        .length;
-    final double identityCoverage = productIdentityTokens.isEmpty
-        ? 0.0
-        : (identityHits / productIdentityTokens.length)
-              .clamp(0.0, 1.0)
-              .toDouble();
+    final AtlasLiveSnifferIdentityEvidence identity =
+        AtlasLiveSnifferIdentityGate.evaluate(
+          rawOcr: candidate.text,
+          displayName: product.displayName,
+          characterName: product.characterName,
+          series: product.series,
+          productLine: product.productLine,
+          variantName: product.variantName,
+        );
+    final int identityHits = identity.identityHits;
+    final double identityCoverage = identity.identityCoverage;
 
     double coverage = 0.0;
     coverage += _coverage(evidence, nameTokens) * 0.25;
@@ -374,7 +440,160 @@ final class AtlasLiveSnifferAuctionMatchEngine {
       orderBonus: orderBonus,
       identityHits: identityHits,
       identityCoverage: identityCoverage,
+      identityValidated: identity.validated,
+      identityContradicted: identity.contradicted,
     );
+  }
+
+  Future<List<AtlasCatalogProduct>> _searchIdentityFamily(String rawOcr) async {
+    final List<String> queryTokens = _identityQueryTokens(rawOcr);
+    if (queryTokens.isEmpty) {
+      return const <AtlasCatalogProduct>[];
+    }
+
+    final Map<String, AtlasCatalogProduct> merged =
+        <String, AtlasCatalogProduct>{};
+
+    // Search a few of the strongest foreground words independently. This avoids
+    // requiring the repository to understand an entire noisy OCR sentence.
+    for (final String token in queryTokens.take(4)) {
+      final List<AtlasCatalogProduct> found = await _catalogService.search(
+        query: token,
+        limit: 40,
+      );
+
+      for (final AtlasCatalogProduct product in found) {
+        final AtlasLiveSnifferIdentityEvidence identity =
+            AtlasLiveSnifferIdentityGate.evaluate(
+              rawOcr: rawOcr,
+              displayName: product.displayName,
+              characterName: product.characterName,
+              series: product.series,
+              productLine: product.productLine,
+              variantName: product.variantName,
+            );
+
+        if (!identity.validated || identity.contradicted) {
+          continue;
+        }
+
+        final String key = [
+          product.displayName,
+          product.productNumber ?? '',
+          product.series ?? '',
+          product.variantName ?? '',
+        ].join('|').toLowerCase();
+
+        merged[key] = product;
+      }
+    }
+
+    return List<AtlasCatalogProduct>.unmodifiable(merged.values);
+  }
+
+  List<AtlasCatalogProduct> _rankIdentityFamily(
+    AtlasLiveSnifferBoxCandidate candidate,
+    List<AtlasCatalogProduct> family,
+  ) {
+    final List<({AtlasCatalogProduct product, int hits, double coverage})>
+    ranked =
+        family
+            .map((AtlasCatalogProduct product) {
+              final AtlasLiveSnifferIdentityEvidence identity =
+                  AtlasLiveSnifferIdentityGate.evaluate(
+                    rawOcr: candidate.text,
+                    displayName: product.displayName,
+                    characterName: product.characterName,
+                    series: product.series,
+                    productLine: product.productLine,
+                    variantName: product.variantName,
+                  );
+              return (
+                product: product,
+                hits: identity.identityHits,
+                coverage: identity.identityCoverage,
+              );
+            })
+            .toList(growable: false)
+          ..sort((a, b) {
+            final int hitOrder = b.hits.compareTo(a.hits);
+            if (hitOrder != 0) return hitOrder;
+            return b.coverage.compareTo(a.coverage);
+          });
+
+    return ranked.map((entry) => entry.product).toList(growable: false);
+  }
+
+  List<String> _identityQueryTokens(String value) {
+    const Set<String> ignored = <String>{
+      'pop',
+      'funko',
+      'vinyl',
+      'figure',
+      'figures',
+      'animation',
+      'heroes',
+      'movies',
+      'movie',
+      'television',
+      'games',
+      'game',
+      'rocks',
+      'exclusive',
+      'limited',
+      'edition',
+      'collectible',
+      'collectibles',
+      'warning',
+      'ages',
+      'made',
+      'standard',
+      'release',
+      'special',
+      'chase',
+      'glow',
+      'metallic',
+      'flocked',
+      'diamond',
+      'the',
+      'and',
+      'for',
+      'with',
+      'from',
+      'this',
+      'that',
+      'these',
+      'those',
+      'your',
+      'you',
+      'are',
+      'was',
+      'were',
+      'have',
+      'has',
+    };
+
+    final Set<String> unique = value
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9]+'), ' ')
+        .split(' ')
+        .map((String token) => token.trim())
+        .where((String token) {
+          if (token.length < 3) return false;
+          if (ignored.contains(token)) return false;
+          if (RegExp(r'^\d+$').hasMatch(token)) return false;
+          return true;
+        })
+        .toSet();
+
+    final List<String> result = unique.toList(growable: false)
+      ..sort((String a, String b) {
+        final int lengthOrder = b.length.compareTo(a.length);
+        if (lengthOrder != 0) return lengthOrder;
+        return a.compareTo(b);
+      });
+
+    return result;
   }
 
   bool _checkSequentialOrder(List<String> raw, List<String> target) {
@@ -405,12 +624,4 @@ final class AtlasLiveSnifferAuctionMatchEngine {
   }
 
   Set<String> _tokens(String value) => _tokenList(value).toSet();
-
-  Set<String> _identityTokens(String value) {
-    return _tokenList(value).where((String token) {
-      if (_nonIdentityTokens.contains(token)) return false;
-      if (RegExp(r'^\d+$').hasMatch(token)) return false;
-      return token.length >= 3;
-    }).toSet();
-  }
 }
